@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <link rel="stylesheet" href="midas.css">
+        <script src="controls.js"></script>
+        <script src="midas.js"></script>
+        <script src="mhttpd.js"></script>
+        <script src="mplot.js"></script>
+
+        <title>Online Display</title>
+    </head>
+
+    <script src="dqm/onlineDQM.js"></script>
+    <script type="module">
+        var mPlotGraph = new MPlotGraph(document.getElementById("rpc_plot"));
+        mPlotGraph.param.plot[0].bgcolor = "white";
+
+        let autoUpdater = new PlotAutoUpdater();
+        autoUpdater.addPlot(mPlotGraph);
+
+        let runNumbers = [0]; // Default to the current run. Zero means the current run.
+
+        makeResizable(mPlotGraph, document.getElementById("enclosing_div"));
+
+        window.onAutoRefreshClicked = function() {
+            const isEnabled = document.getElementById('autoRefresh').checked;
+            if(isEnabled) {
+                // Disable the manual refresh button
+                document.getElementById('refresh').disabled = true;
+                // Update immediately, then every 2000 milliseconds
+                autoUpdater.start(2000);
+            }
+            else {
+                // Enable the manual refresh button
+                document.getElementById('refresh').disabled = false;
+                // Setting to zero disables auto updates
+                autoUpdater.updateInterval = 0;
+            }
+        }
+
+        window.onChangeRun = function() {
+            let textBox = document.getElementById("runNumbers");
+            let newValue = parseInt(textBox.value);
+            if(isNaN(newValue)) {
+                textBox.value = runNumbers[0];
+            }
+            else {
+                runNumbers = [newValue];
+                textBox.value = newValue;
+                updateHistogramSelectors();
+            }
+        }
+
+        window.onDQMProgChanged = function() {
+            let selector = document.getElementById("dqmProg");
+            autoUpdater.setDefaultDQMProg(selector.value);
+            updateHistogramSelectors();
+        }
+
+        window.updateHistogramSelectors = function() {
+            listHistograms(runNumbers, document.getElementById("dqmProg").value).then((histograms) => {
+                let selectors = document.getElementsByClassName("histogram-selector");
+                // Clear everything first
+                for(const selector of selectors) {
+
+                    const previousSelection = selector.value;
+                    let newSelection = undefined;
+                    selector.length = 0;
+
+                    for(const [index, histogramName] of histograms.entries()) {
+                        var option = document.createElement('option');
+                        option.text = option.value = histogramName;
+                        selector.add(option);
+
+                        // Persist the current selection when the list is updated
+                        if(previousSelection === option.value) newSelection = option.value;
+                    } // end of loop over entries in `histograms`
+
+                    if(newSelection !== undefined) selector.value = newSelection;
+                    if(selector.length > 0) autoUpdater.changeSource(mPlotGraph, {name: selector.value, runs: runNumbers}, true);
+                } // end of loop of selectors
+            }).catch((error) => {
+                console.log(error);
+            });
+        }
+
+        window.onHistogramSelected = function(id) {
+            let selector = document.getElementById(id);
+            autoUpdater.changeSource(mPlotGraph, {name: selector.value, runs: runNumbers}, true);
+        }
+
+        window.onClearAll = function() {
+            clearHistograms().then(
+                (unusedResult) => {
+                    // Perform a refresh to plot the empty histogram (and any data created since the refresh returned).
+                    autoUpdater.refreshAll();
+                }
+            );
+        }
+
+        window.onAxis = function(id) {
+            let checkbox = document.getElementById(id);
+            if(id == 'logXAxis') mPlotGraph.param.xAxis.log = checkbox.checked;
+            else if(id == 'logYAxis') mPlotGraph.param.yAxis.log = checkbox.checked;
+            else if(id == 'logZAxis') mPlotGraph.param.zAxis.log = checkbox.checked;
+            mPlotGraph.draw();
+        }
+    </script>
+
+    <body class="mcss" onload="mhttpd_init('Generic'); mplot_init(); updateHistogramSelectors();">
+        <!-- These will be filled by mhttpd_start -->
+        <div id="mheader"></div>
+        <div id="msidenav"></div>
+
+        <div id="mmain">
+            <div>
+                Run number (0 for current run): <input type=text id='runNumbers' value='0' onchange='onChangeRun()'/>
+                <select id='dqmProg' onchange='onDQMProgChanged()'>
+                    <option value="ana">Online</option>
+                    <option value="prompt_server">Prompt</option>
+                </select>
+                <br/>
+                <input type=button value='Refresh options' onClick='updateHistogramSelectors()'/>
+                <select class='histogram-selector' id='histogramSelector1' onchange='onHistogramSelected("histogramSelector1")'></select>
+                <input type=button value='Refresh' id='refresh' onClick='onHistogramSelected("histogramSelector1")'/>
+                Auto refresh<input type=checkbox id='autoRefresh' onClick='onAutoRefreshClicked()'/>
+                <input type=button value='Clear all' onClick='onClearAll()'/>
+            </div>
+            <div id="enclosing_div">
+                <div id="rpc_plot"></div>
+                <input type=checkbox id='logXAxis' onchange='onAxis("logXAxis")'>Log x axis</input>
+                <input type=checkbox id='logYAxis' onchange='onAxis("logYAxis")'>Log y axis</input>
+                <input type=checkbox id='logZAxis' onchange='onAxis("logZAxis")'>Log z axis</input>
+            </div>
+        </div>
+    </body>
+</html>
