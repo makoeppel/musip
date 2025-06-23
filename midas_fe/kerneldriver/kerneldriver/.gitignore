@@ -1,0 +1,10 @@
+#
+
+*.cmd
+*.o
+*.order
+*.ko
+*.symvers
+.tmp_versions/
+mudaq.mod
+mudaq.mod.c

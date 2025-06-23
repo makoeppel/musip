@@ -29,6 +29,7 @@ find_package(Midas REQUIRED COMPONENTS manalyzer
     NO_DEFAULT_PATH PATHS "$ENV{MIDASSYS}"
 )
 
+add_subdirectory(midas_fe)
 add_subdirectory(tools)
 add_subdirectory(analyzer)
 #add_subdirectory(tests)
