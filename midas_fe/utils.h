@@ -94,12 +94,11 @@ int getOneHotHigh(midas::odb m_settings, size_t febIDx) {
     return high;
 }
 
-void get_BiasDACs_from_odb(midas::odb m_config, uint8_t * bitpattern_w) {
-    m_settings["BIASDACS"];
-    uint32_t idx = getODBIdx(m_config["Nbits"]);
-    uint32_t offset = getOffset(m_config["Nbits"]);
-    for (midas::odb& subkey : odb) {
-    setParameter(uint8_t * bitpattern_w, uint32_t value, size_t offset, size_t nbits, bool inverted)
+void get_BiasDACs_from_odb(midas::odb m_config, uint8_t * bitpattern_w, size_t febIDx) {
+    uint32_t idx = getODBIdx(m_config["Nbits"], m_settings["BIASDACS"][0].get_name());
+    uint32_t offset = getOffset(m_config["Nbits"], m_settings["BIASDACS"][0].get_name());
+    for (midas::odb& subkey : m_settings["BIASDACS"])
+        offset = setParameter(bitpattern_w, subkey[febIDx], offset, size_t nbits, true);
 }
 
 int InitFEBs(midas::odb m_settings) {
