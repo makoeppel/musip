@@ -5,6 +5,7 @@
 #include <iostream>
 #include <list>
 #include <unistd.h>
+#include <sys/mman.h>
 
 #include "midas.h"
 #include "odbxx.h"
@@ -12,9 +13,8 @@
 #include "mcstd.h"
 #include "mfe.h"
 
-#include "constants.h"
 #include "registers.h"
-#include "util.h"
+#include "utils.h"
 #include "mudaq_device.h"
 
 
@@ -37,65 +37,60 @@ midas::odb m_settings;
 uint8_t bitpattern_mupix[48] = {};
 
 
-int frontend_init() {
+int init_mudaq(mudaq::DmaMudaqDevice* mup) {
+    int fd = open("/dev/mudaq0_dmabuf", O_RDWR);
+    if(fd < 0) {
+        printf("fd = %d\n", fd);
+        return FE_ERR_DRIVER;
+    }
+    dma_buf = reinterpret_cast<uint32_t*>(mmap(nullptr, MUDAQ_DMABUF_DATA_LEN, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0));
+    if(dma_buf == MAP_FAILED) {
+        cm_msg(MERROR, "frontend_init" , "mmap failed: dmabuf = %p\n", MAP_FAILED);
+        return FE_ERR_DRIVER;
+    }
+    dma_buf_local = new(std::align_val_t(8)) uint32_t[MUDAQ_DMABUF_DATA_LEN];
 
-    settings.connect_and_fix_structure("/Equipment/Quads/Settings");
+    // open mudaq
+    mup = new mudaq::DmaMudaqDevice("/dev/mudaq0");
+    if ( !mup->open() ) {
+        std::cout << "Could not open device " << std::endl;
+        cm_msg(MERROR, "frontend_init" , "Could not open device");
+        return FE_ERR_DRIVER;
+    }
+
+    // check mudaq
+    if ( !mup->is_ok() )
+        return FE_ERR_DRIVER;
+    else {
+        cm_msg(MINFO, "frontend_init" , "Mudaq device is ok");
+    }
+
+    // switch off and reset DMA for now
+    mup->disable();
+    usleep(2000);
+
+    // switch off the data generator (just in case ..)
+    mup->write_register(DATAGENERATOR_REGISTER_W, 0x0);
+    usleep(2000);
+
+    // set DMA_CONTROL_W
+    mup->write_register(DMA_CONTROL_W, 0x0);
+
     return SUCCESS;
-
-    // // setup max event size
-    // set_max_event_size(dma_buf_size);
-
-    // // end and start of run
-    // install_begin_of_run(begin_of_run);
-    // install_end_of_run(end_of_run);
-    // install_frontend_exit(frontend_exit_user);
-    // install_frontend_loop(quad_loop);
-
-    // // setup odb and watches
-    // setup_odb();
-
-    // // init dma and mudaq device
-    // #ifdef NO_A10_BOARD
-
-    // #else
-    //     int status = init_mudaq();
-    //     if (status != SUCCESS) return FE_ERR_DRIVER;
-    // #endif
-
-    // usleep(5000);
-
-    // // set reset registers
-    // reset_regs = SET_RESET_BIT_DATA_PATH(reset_regs);
-    // reset_regs = SET_RESET_BIT_DATAGEN(reset_regs);
-    // reset_regs = SET_RESET_BIT_SWB_TIME_MERGER(reset_regs);
-    // reset_regs = SET_RESET_BIT_SWB_STREAM_MERGER(reset_regs);
-
-    // // create ring buffer for readout thread
-    // create_event_rb(0);
-
-    // // create readout thread
-    // ss_thread_create(read_stream_thread, NULL);
-
-    // //Set our transition sequence. The default is 500.
-    // cm_set_transition_sequence(TR_START, 300);
-
-    // //Set our transition sequence. The default is 500. Setting it
-    // // to 700 means we are called AFTER most other clients.
-    // cm_set_transition_sequence(TR_STOP, 700);
-
-    // // set write cache to 10MB
-    // set_cache_size("SYSTEM", 10000000);
-
-    // // set if we are in software mode
-    // odb stream_settings;
-    // stream_settings.connect(path_s);
-    // use_software_dummy = stream_settings["Software dummy"];
-    // use_fpga_events = stream_settings["Use FPGA Events"];
-
-    // return SUCCESS;
 }
 
-int frontend_exit_user() {
+int begin_of_run()
+{
+    return SUCCESS;
+}
+
+int end_of_run()
+{
+    return SUCCESS;
+}
+
+int frontend_exit_user()
+{
     #ifdef NO_A10_BOARD
 
     #else
@@ -105,6 +100,107 @@ int frontend_exit_user() {
             delete mup;
         }
     #endif
+
+    return SUCCESS;
+}
+
+int quad_loop()
+{
+
+   return SUCCESS;
+}
+
+int read_stream_thread(void *)
+{
+    // get mudaq
+    mudaq::DmaMudaqDevice & mu = *mup;
+
+    // tell framework that we are alive
+    signal_readout_thread_active(0, TRUE);
+
+    // obtain ring buffer for inter-thread data exchange
+    int rbh = get_event_rbh(0);
+    int status;
+
+    // serial number on the FPGA
+    uint32_t serial_number = 0;
+
+    // actuall readout loop
+    while(is_readout_thread_enabled()) {
+
+        // don't readout events if we are not running
+        if (!readout_enabled()) {
+            // we start from zero again
+            serial_number = 0;
+            //printf("Not running!\n");
+            // do not produce events when run is stopped
+            ss_sleep(10);// don't eat all CPU
+            continue;
+        }
+    }
+    return SUCCESS;
+}
+
+void sc_settings_changed(midas::odb o)
+{
+    std::string name = o.get_name();
+
+    cm_msg(MINFO, "sc_settings_changed", "Setting changed (%s)", name.c_str());
+
+    if (name == "MupixConfig" && o) {
+        ConfigureASICs(m_settings, bitpattern_mupix);
+        o = false;
+    }
+
+}
+
+int frontend_init() {
+
+    // create ODB and setup watch functions
+    settings.connect_and_fix_structure("/Equipment/Quads/Settings");
+    settings.watch(sc_settings_changed);
+    m_settings.connect("/Equipment/Quads/Settings");
+
+    // setup max event size
+    set_max_event_size(dma_buf_size);
+
+    // end and start of run
+    install_begin_of_run(begin_of_run);
+    install_end_of_run(end_of_run);
+    install_frontend_exit(frontend_exit_user);
+    install_frontend_loop(quad_loop);
+
+    // init dma and mudaq device
+    #ifdef NO_A10_BOARD
+
+    #else
+        int status = init_mudaq();
+        if (status != SUCCESS) return FE_ERR_DRIVER;
+    #endif
+
+    // set reset registers
+    reset_regs = SET_RESET_BIT_DATA_PATH(reset_regs);
+    reset_regs = SET_RESET_BIT_DATAGEN(reset_regs);
+    reset_regs = SET_RESET_BIT_SWB_TIME_MERGER(reset_regs);
+    reset_regs = SET_RESET_BIT_SWB_STREAM_MERGER(reset_regs);
+
+    // create ring buffer for readout thread
+    //create_event_rb(0);
+
+    // create readout thread
+    ss_thread_create(read_stream_thread, NULL);
+
+    //Set our transition sequence. The default is 500.
+    cm_set_transition_sequence(TR_START, 300);
+
+    //Set our transition sequence. The default is 500. Setting it
+    // to 700 means we are called AFTER most other clients.
+    cm_set_transition_sequence(TR_STOP, 700);
+
+    // set write cache to 10MB
+    //set_cache_size("SYSTEM", 10000000);
+
+    ConfigureASICs(m_settings, bitpattern_mupix);
 
     return SUCCESS;
 }

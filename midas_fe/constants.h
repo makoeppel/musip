@@ -1,13 +1,12 @@
 //
 
 #include "registers.h"
+#include "midas.h"
+#include "odbxx.h"
 #include <map>
 
 /* Emulate the hardware */
 #define NO_A10_BOARD 1
-
-/* Maximum number of frontenboards */
-constexpr uint32_t MAX_N_FRONTENDBOARDS = 128;
 
 /* Maximum number of incoming LVDS data links per FEB */
 constexpr uint32_t MAX_LVDS_LINKS_PER_FEB = 36;
@@ -23,6 +22,9 @@ constexpr size_t dma_buf_size = MUDAQ_DMABUF_DATA_LEN;
 constexpr uint32_t dma_buf_nwords = dma_buf_size/sizeof(uint32_t);
 constexpr uint32_t max_requested_words = dma_buf_nwords/2;
 
+/* Link constants */
+constexpr uint32_t MAX_SLOWCONTROL_MESSAGE_SIZE = 100-4;
+constexpr uint32_t MAX_SLOWCONTROL_WRITE_MESSAGE_SIZE = (1<<16)-1;
 
 // Map /Equipment/Quads/Settings
 midas::odb settings = {
@@ -32,7 +34,7 @@ midas::odb settings = {
         {"Datagen Enable", false},
         {"mask_n_generic", 0x0},
         {"use_merger", false},
-        {"max_requested_words", max_requested_words}
+        {"max_requested_words", max_requested_words},
         {"MupixConfig", false},
         {"MupixTDACConfig", false},
         {"ResetASICs", false},
@@ -43,7 +45,7 @@ midas::odb settings = {
         {"DataGenSync", false},
         {"DataGenFullSteam", false},
         {"DataGenRate", 0},
-        {"ResetCounters", 0},
+        {"Reset FEB Counters", false}
     }},
     {"DAQ", {
         {"Commands", {
@@ -51,23 +53,23 @@ midas::odb settings = {
             {"Firmware File", ""},
             {"Firmware FEB ID", 0},
             {"FirmwareLoadProgress", 0.0},
-            {"Reset Counters", false},
+            {"Reset SWB Counters", false},
             {"Set Bypass", false},
             {"Unset Bypass", false},
             {"Set FEBs into running", false},
             {"Set FEBs into idle", false}
         }},
         {"Links", {
-            {"LVDSLinkMask", std::array<bool, MAX_LVDS_LINKS_PER_FEB*N_FEBS>{true}},
-            {"LVDSLinkInvert", std::array<bool, MAX_LVDS_LINKS_PER_FEB*N_FEBS>{false}},
-            {"ASICMask", std::array<bool, N_CHIPS*N_FEBS>{false}},
+            {"LVDSLinkMask", std::array<uint64_t, N_FEBS>{0}},
+            {"LVDSLinkInvert", std::array<uint64_t, N_FEBS>{0}},
+            {"ASICMask", std::array<uint16_t, N_FEBS>{0}},
             {"FEBsActive", std::array<bool, N_FEBS>{false}},
             {"Mapping",  {
                 1,2,3,4,5,6,7,90,91,92,93,
                 8,9,10,11,12,13,14,15,90,91,92,93,
                 99,99,99,99,99,99,99,99,99,99,99,99,
                 99,99,99,99,99,99,99,99,99,99,99,99
-            }},
+            }}
         }},
     }},
     {"Config", {
@@ -157,7 +159,7 @@ midas::odb settings = {
             {"ThPix", std::array<uint32_t, N_CHIPS*N_FEBS>{0}},
             {"ThHigh2", std::array<uint32_t, N_CHIPS*N_FEBS>{0}},
             {"ThLow2", std::array<uint32_t, N_CHIPS*N_FEBS>{0}},
-            {"VDAC1", std::array<uint32_t, N_CHIPS*N_FEBS>{0}},
+            {"VDAC1", std::array<uint32_t, N_CHIPS*N_FEBS>{0}}
         }},
         {"Nbits", {
             // BIASDACS

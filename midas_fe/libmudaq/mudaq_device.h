@@ -27,7 +27,7 @@
         size_t size;
      };
 #else
-    #include "mudaq.h"
+    #include "../kerneldriver/mudaq.h"
 #endif
 
 [[maybe_unused]] static size_t _pagesize(void) { return static_cast<size_t>(sysconf(_SC_PAGESIZE)); }
