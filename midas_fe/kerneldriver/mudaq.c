@@ -2,8 +2,7 @@
 
 #include "mudaq.h"
 
-#include "../include/mudaq_device_constants.h"
-#include "../include/mudaq_registers.h"
+#include "../registers.h"
 
 #include "dmabuf/dmabuf.h"
 

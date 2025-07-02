@@ -13,8 +13,8 @@
 #include "mcstd.h"
 #include "mfe.h"
 
-#include "registers.h"
 #include "utils.h"
+#include "odb_setup.h"
 #include "mudaq_device.h"
 
 
@@ -33,11 +33,12 @@ mudaq::DmaMudaqDevice* mup = nullptr;
 mudaq::DmaMudaqDevice::DataBlock block;
 
 // configuration variables
+FEBSlowcontrolInterface * feb_sc;
 midas::odb m_settings;
 uint8_t bitpattern_mupix[48] = {};
 
 
-int init_mudaq(mudaq::DmaMudaqDevice* mup) {
+int init_mudaq(mudaq::MudaqDevice & mu) {
     int fd = open("/dev/mudaq0_dmabuf", O_RDWR);
     if(fd < 0) {
         printf("fd = %d\n", fd);
@@ -51,30 +52,27 @@ int init_mudaq(mudaq::DmaMudaqDevice* mup) {
     dma_buf_local = new(std::align_val_t(8)) uint32_t[MUDAQ_DMABUF_DATA_LEN];
 
     // open mudaq
-    mup = new mudaq::DmaMudaqDevice("/dev/mudaq0");
-    if ( !mup->open() ) {
+    if ( !mu.open() ) {
         std::cout << "Could not open device " << std::endl;
         cm_msg(MERROR, "frontend_init" , "Could not open device");
         return FE_ERR_DRIVER;
     }
 
     // check mudaq
-    if ( !mup->is_ok() )
+    if ( !mu.is_ok() )
         return FE_ERR_DRIVER;
     else {
         cm_msg(MINFO, "frontend_init" , "Mudaq device is ok");
     }
 
-    // switch off and reset DMA for now
-    mup->disable();
-    usleep(2000);
-
     // switch off the data generator (just in case ..)
-    mup->write_register(DATAGENERATOR_REGISTER_W, 0x0);
+    mu.write_register(DATAGENERATOR_REGISTER_W, 0x0);
     usleep(2000);
 
     // set DMA_CONTROL_W
-    mup->write_register(DMA_CONTROL_W, 0x0);
+    mu.write_register(DMA_CONTROL_W, 0x0);
+
+    feb_sc = new FEBSlowcontrolInterface(mu);
 
     return SUCCESS;
 }
@@ -148,7 +146,13 @@ void sc_settings_changed(midas::odb o)
     cm_msg(MINFO, "sc_settings_changed", "Setting changed (%s)", name.c_str());
 
     if (name == "MupixConfig" && o) {
-        ConfigureASICs(m_settings, bitpattern_mupix);
+        ConfigureASICs(*feb_sc, m_settings, bitpattern_mupix);
+        o = false;
+    }
+
+    // TODO: this can be done in the frontend loop all the time
+    if (name == "InitFEBs" && o) {
+        InitFEBs(*feb_sc, m_settings);
         o = false;
     }
 
@@ -174,15 +178,12 @@ int frontend_init() {
     #ifdef NO_A10_BOARD
 
     #else
-        int status = init_mudaq();
+        mup = new mudaq::DmaMudaqDevice("/dev/mudaq0");
+        int status = init_mudaq(*mup);
         if (status != SUCCESS) return FE_ERR_DRIVER;
+        // switch off and reset DMA for now
+        mup->disable();
     #endif
-
-    // set reset registers
-    reset_regs = SET_RESET_BIT_DATA_PATH(reset_regs);
-    reset_regs = SET_RESET_BIT_DATAGEN(reset_regs);
-    reset_regs = SET_RESET_BIT_SWB_TIME_MERGER(reset_regs);
-    reset_regs = SET_RESET_BIT_SWB_STREAM_MERGER(reset_regs);
 
     // create ring buffer for readout thread
     //create_event_rb(0);
@@ -198,9 +199,10 @@ int frontend_init() {
     cm_set_transition_sequence(TR_STOP, 700);
 
     // set write cache to 10MB
+    // TODO: update MIDAS for this
     //set_cache_size("SYSTEM", 10000000);
 
-    ConfigureASICs(m_settings, bitpattern_mupix);
+    InitFEBs(*feb_sc, m_settings);
 
     return SUCCESS;
 }

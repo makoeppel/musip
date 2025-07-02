@@ -2,7 +2,6 @@
 
 #include <iostream>
 #include <thread>
-#include <chrono>
 #include <math.h>
 
 #include "midas.h"
@@ -61,12 +60,12 @@ int FEBSlowcontrolInterface::FEB_write(size_t febIDx, const uint32_t startaddr, 
     if ( !data.size() ) {
         cm_msg(MERROR, "FEBSlowcontrolInterface::FEB_write", "FEB_write Length zero");
         return ERRCODES::SIZE_ZERO;
-     }
+    }
 
     if ( data.size() > MAX_SLOWCONTROL_WRITE_MESSAGE_SIZE) {
         cm_msg(MERROR, "FEBSlowcontrolInterface::FEB_write", "FEB_write Length of %li too big", data.size());
         return ERRCODES::SIZE_INVALID;
-     }
+    }
 
     // From here on we grab the mutex until the end of the function: One transaction at a time
     const std::lock_guard<std::mutex> lock(sc_mutex);
@@ -288,9 +287,7 @@ void FEBSlowcontrolInterface::FEBsc_resetMain()
     //reset our pointer
     m_FEBsc_wmem_addr=0;
     //reset fpga entity
-    uint32_t old_value = mdev.read_register_rw(RESET_REGISTER_W);
-    mdev.write_register_wait(RESET_REGISTER_W, SET_RESET_BIT_SC_MAIN(old_value), 1000);
-    mdev.write_register(RESET_REGISTER_W, UNSET_RESET_BIT_SC_MAIN(old_value));
+    mdev.toggle_register(RESET_REGISTER_W, SET_RESET_BIT_SC_MAIN(0), 1000);
 }
 
 void FEBSlowcontrolInterface::FEBsc_resetSecondary()
@@ -306,7 +303,7 @@ void FEBSlowcontrolInterface::FEBsc_resetSecondary()
     // NOTE: we have to wait 2**16 * 156.25MHz here, but we wait a bit longer
     while ( (mdev.read_register_ro(SC_STATE_REGISTER_R) & 0x20000000) != 0x20000000 ) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        printf("."); fflush(stdout);
+        fflush(stdout);
         timeout_cnt++;
         if(timeout_cnt>=100){
             cm_msg(MERROR, "FEBsc_resetSecondary()", "Slow control secondary reset FAILED with timeout");
@@ -463,9 +460,3 @@ void FEBSlowcontrolInterface::SC_reply_packet::Print(){
    }
    printf("--- *********** ---\n");
 }
-
-
-
-
-
-
