@@ -31,6 +31,7 @@ uint32_t readout_state_regs = 0;
 bool use_software_dummy = false;
 mudaq::DmaMudaqDevice* mup = nullptr;
 mudaq::DmaMudaqDevice::DataBlock block;
+std::vector<uint32_t> lvds_banks;
 
 // configuration variables
 FEBSlowcontrolInterface * feb_sc;
@@ -105,7 +106,7 @@ int frontend_exit_user()
 int quad_loop()
 {
 
-   return SUCCESS;
+    return SUCCESS;
 }
 
 int read_stream_thread(void *)
@@ -207,14 +208,46 @@ int frontend_init() {
     return SUCCESS;
 }
 
-int read_sc_event(char *pevent, INT)
+int read_sc_event(char *pevent, int off)
 {
+
+    // TODO: move this to the quad_loop
+    // fill lvds bank
+    lvds_banks.clear();
+    uint32_t nlinks = 36;
+    uint32_t offset = 1;
+    for (size_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
+        bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
+        lvds_banks.push_back(febIDx);
+        lvds_banks.push_back(nlinks);
+        if (!FEBActive) {
+            for(uint32_t i=0; i<nlinks; i++){
+                lvds_banks.push_back(0);
+                lvds_banks.push_back(0);
+                lvds_banks.push_back(0);
+                lvds_banks.push_back(0);
+            }
+        } else {
+            std::vector<uint32_t> status(offset+(nlinks*4));
+            feb_sc->FEB_read(febIDx, LVDS_STATUS_START_REGISTER_W, status, false);
+            for(uint32_t i=0; i<nlinks; i++){
+                lvds_banks.push_back(status[offset+i*4]);
+                lvds_banks.push_back(status[offset+i*4+1]);
+                lvds_banks.push_back(status[offset+i*4+2]);
+                lvds_banks.push_back(status[offset+i*4+3]);
+            }
+        }
+    }
 
     // create bank, pdata
     bk_init32a(pevent);
     DWORD *pdata = NULL;
 
-    //scbanks.read(pevent, pdata);
+    // create a bank with the lvds status
+    bk_create(pevent, "PCLS", TID_DWORD, (void **)&pdata);
+    for (auto data : lvds_banks)
+        *pdata++ = data;
+    bk_close(pevent, pdata);
 
     return bk_size(pevent);
 
