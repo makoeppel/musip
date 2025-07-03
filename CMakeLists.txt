@@ -63,7 +63,7 @@ if(CPPLINT_EXECUTABLE)
     foreach(FILE ${CPPLINT_FILES})
         list(APPEND CPPLINT_COMMAND
             COMMAND ${CMAKE_COMMAND} -E echo "Linting ${FILE}"
-            COMMAND ${CPPLINT_EXECUTABLE} --filter=-legal/copyright ${FILE} || true
+            COMMAND ${CPPLINT_EXECUTABLE} --filter=-legal/copyright --linelength=100 ${FILE} || true
         )
     endforeach()
 
