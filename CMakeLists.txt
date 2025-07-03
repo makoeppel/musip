@@ -32,6 +32,7 @@ find_package(Midas REQUIRED COMPONENTS manalyzer
 add_subdirectory(midas_fe)
 add_subdirectory(tools)
 add_subdirectory(analyzer)
+add_subdirectory(tests)
 
 # automated linting and testing
 find_program(CLANG_FORMAT_EXE NAMES clang-format)
@@ -41,6 +42,7 @@ if(CLANG_FORMAT_EXE)
     file(GLOB_RECURSE CLANG_FORMAT_FILES
         "${CMAKE_SOURCE_DIR}/midas_fe/*.cpp"
         "${CMAKE_SOURCE_DIR}/midas_fe/*.h"
+        "${CMAKE_SOURCE_DIR}/tests/*.cpp"
     )
 
     add_custom_target(clangformat
@@ -75,5 +77,3 @@ if(CPPLINT_EXECUTABLE)
 else()
     message(WARNING "cpplint not found. Skipping cpplint target.")
 endif()
-
-#add_subdirectory(tests)
