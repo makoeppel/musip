@@ -3,8 +3,6 @@
 #include "registers.h"
 #include <map>
 
-/* Emulate the hardware */
-//#define NO_A10_BOARD 1
 
 /* Maximum number of incoming LVDS data links per FEB */
 constexpr uint32_t MAX_LVDS_LINKS_PER_FEB = 36;

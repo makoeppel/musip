@@ -126,77 +126,77 @@ namespace mudaq {
 
   mudaq::MudaqDevice::MudaqDevice(const std::string& path) :
     _fd(-1),
-#ifdef NO_SWITCHING_BOARD
-    _path(path)
-#else
-    _path(path),
-    _regs_rw(nullptr),
-    _regs_ro(nullptr),
-    _mem_ro(nullptr),
-    _mem_rw(nullptr)
-#endif
+    #ifdef NO_A10_BOARD
+        _path(path)
+    #else
+        _path(path),
+        _regs_rw(nullptr),
+        _regs_ro(nullptr),
+        _mem_ro(nullptr),
+        _mem_rw(nullptr)
+    #endif
   {
       _last_read_address = 0;
 }
 
 bool MudaqDevice::is_ok() const
 {
-#ifdef NO_SWITCHING_BOARD
-    return true;
-#else
-    bool error = (_fd < 0) ||
-        (_regs_rw == nullptr) ||
-        (_regs_ro == nullptr) ||
-        (_mem_ro == nullptr)  ||
-        (_mem_rw == nullptr);
+    #ifdef NO_A10_BOARD
+        return true;
+    #else
+        bool error = (_fd < 0) ||
+            (_regs_rw == nullptr) ||
+            (_regs_ro == nullptr) ||
+            (_mem_ro == nullptr)  ||
+            (_mem_rw == nullptr);
 
-    return !error;
-#endif
+        return !error;
+    #endif
 }
 
   bool MudaqDevice::open()
 {
-#ifdef NO_SWITCHING_BOARD
-    std::cout << "Dummy mudaq: open()" << std::endl;
-    return true;
-#else
-    // O_SYNC only affects 'write'. not really needed but doesnt hurt and makes
-    // things safer if we later decide to use 'write'.
-    _fd = ::open(_path.c_str(), O_RDWR | O_SYNC);
-    if (_fd < 0) {
-        ERROR("could not open device '%s': %s", _path, strerror(errno));
-        return false;
-    }
-    _regs_rw = mmap_rw(MUDAQ_REGS_RW_INDEX, MUDAQ_REGS_RW_LEN);
-    _regs_ro = mmap_ro(MUDAQ_REGS_RO_INDEX, MUDAQ_REGS_RO_LEN);
-    _mem_rw =  mmap_rw(MUDAQ_MEM_RW_INDEX,  MUDAQ_MEM_RW_LEN);
-    _mem_ro =  mmap_ro(MUDAQ_MEM_RO_INDEX,  MUDAQ_MEM_RO_LEN);
-    return (_regs_rw != nullptr) && (_regs_ro != nullptr) && (_mem_rw != nullptr) && (_mem_ro != nullptr);
-#endif
+    #ifdef NO_A10_BOARD
+        std::cout << "Dummy mudaq: open()" << std::endl;
+        return true;
+    #else
+        // O_SYNC only affects 'write'. not really needed but doesnt hurt and makes
+        // things safer if we later decide to use 'write'.
+        _fd = ::open(_path.c_str(), O_RDWR | O_SYNC);
+        if (_fd < 0) {
+            ERROR("could not open device '%s': %s", _path, strerror(errno));
+            return false;
+        }
+        _regs_rw = mmap_rw(MUDAQ_REGS_RW_INDEX, MUDAQ_REGS_RW_LEN);
+        _regs_ro = mmap_ro(MUDAQ_REGS_RO_INDEX, MUDAQ_REGS_RO_LEN);
+        _mem_rw =  mmap_rw(MUDAQ_MEM_RW_INDEX,  MUDAQ_MEM_RW_LEN);
+        _mem_ro =  mmap_ro(MUDAQ_MEM_RO_INDEX,  MUDAQ_MEM_RO_LEN);
+        return (_regs_rw != nullptr) && (_regs_ro != nullptr) && (_mem_rw != nullptr) && (_mem_ro != nullptr);
+    #endif
 }
 
 void MudaqDevice::close()
 {
 
-#ifdef NO_SWITCHING_BOARD
-    std::cout << "Dummy mudaq: close()" << std::endl;
-#else
-    munmap_wrapper(&_mem_ro,  MUDAQ_MEM_RO_LEN,  "could not unmap read-only memory");
-    munmap_wrapper(&_mem_rw,  MUDAQ_MEM_RW_LEN,  "could not unmap read/write memory");  // added by DvB for rw mem
-    munmap_wrapper(&_regs_ro, MUDAQ_REGS_RO_LEN, "could not unmap read-only registers");
-    munmap_wrapper(&_regs_rw, MUDAQ_REGS_RW_LEN, "could not unmap read/write registers");
-    if (_fd >= 0 && ::close(_fd) < 0) {
-        ERROR("could not close '%s': %s", _path, strerror(errno));
-    }
-    // invalidate the file descriptor
-    _fd = -1;
-#endif
+    #ifdef NO_A10_BOARD
+        std::cout << "Dummy mudaq: close()" << std::endl;
+    #else
+        munmap_wrapper(&_mem_ro,  MUDAQ_MEM_RO_LEN,  "could not unmap read-only memory");
+        munmap_wrapper(&_mem_rw,  MUDAQ_MEM_RW_LEN,  "could not unmap read/write memory");  // added by DvB for rw mem
+        munmap_wrapper(&_regs_ro, MUDAQ_REGS_RO_LEN, "could not unmap read-only registers");
+        munmap_wrapper(&_regs_rw, MUDAQ_REGS_RW_LEN, "could not unmap read/write registers");
+        if (_fd >= 0 && ::close(_fd) < 0) {
+            ERROR("could not close '%s': %s", _path, strerror(errno));
+        }
+        // invalidate the file descriptor
+        _fd = -1;
+    #endif
 
 }
 
 bool MudaqDevice::operator!() const
 {
-    #ifdef NO_SWITCHING_BOARD
+    #ifdef NO_A10_BOARD
         return (_fd < 0);
     #else
         return (_fd < 0) || (_regs_rw == nullptr)
@@ -285,13 +285,13 @@ uint32_t MudaqDevice::read_memory_rw(unsigned idx) const {
 void MudaqDevice::write_dummy_acknowledge(unsigned startaddr, unsigned fpga_id)
 {
 
-#ifdef NO_SWITCHING_BOARD
-    _regs_ro[MEM_WRITEADDR_LOW_REGISTER_R] = 3;
-    _mem_ro[0] = PACKET_TYPE_SC << 26 | PACKET_TYPE_SC_WRITE << 24 | ((uint16_t)(fpga_id & 0x000000FF)) << 8 | 0xBC;
-    _mem_ro[1] = startaddr;
-    _mem_ro[2] = 0x10000;
-    _mem_ro[3] = 0x9c;
-#else
+    #ifdef NO_A10_BOARD
+        _regs_ro[MEM_WRITEADDR_LOW_REGISTER_R] = 3;
+        _mem_ro[0] = PACKET_TYPE_SC << 26 | PACKET_TYPE_SC_WRITE << 24 | ((uint16_t)(fpga_id & 0x000000FF)) << 8 | 0xBC;
+        _mem_ro[1] = startaddr;
+        _mem_ro[2] = 0x10000;
+        _mem_ro[3] = 0x9c;
+    #else
 
 #endif
 
@@ -300,78 +300,78 @@ void MudaqDevice::write_dummy_acknowledge(unsigned startaddr, unsigned fpga_id)
 void MudaqDevice::write_register_ro_dummy(unsigned idx, uint32_t value)
 {
 
-#ifdef NO_SWITCHING_BOARD
-    if(idx > 63){
-        cout << "Invalid register address " << idx << endl;
-        exit (EXIT_FAILURE);
-    }
-    _regs_ro[idx] = value;
-#else
+    #ifdef NO_A10_BOARD
+        if(idx > 63){
+            cout << "Invalid register address " << idx << endl;
+            exit (EXIT_FAILURE);
+        }
+        _regs_ro[idx] = value;
+    #else
 
-#endif
+    #endif
 
 }
 
 void MudaqDevice::read_dummy_acknowledge(unsigned startaddr, int length, unsigned fpga_id)
 {
 
-#ifdef NO_SWITCHING_BOARD
-    _regs_ro[MEM_WRITEADDR_LOW_REGISTER_R] = length+3;
-    _mem_ro[0] = PACKET_TYPE_SC << 26 | PACKET_TYPE_SC_READ << 24 | ((uint16_t)(fpga_id & 0x000000FF)) << 8 | 0xBC;
-    _mem_ro[1] = startaddr;
-    _mem_ro[2] = 0x10000 + length;
+    #ifdef NO_A10_BOARD
+        _regs_ro[MEM_WRITEADDR_LOW_REGISTER_R] = length+3;
+        _mem_ro[0] = PACKET_TYPE_SC << 26 | PACKET_TYPE_SC_READ << 24 | ((uint16_t)(fpga_id & 0x000000FF)) << 8 | 0xBC;
+        _mem_ro[1] = startaddr;
+        _mem_ro[2] = 0x10000 + length;
 
-    // do some dummy counting
-    dummyCounter[0] = 0;
-    dummyCounter[3]++;
-    dummyCounter[5] = dummyCounter[5] + 0x800;
-    dummyCounter[7]++;
-    dummyCounter[63] = 0;
-    for ( int idx = 3; idx < length+3; idx++ ) {
-        // TODO: here we can check what addr we write to and than fill this with some more usefull data for now random
-        if (startaddr == MUTRIG_CNT_ADDR_REGISTER_R) {
-            // NOTE: we have an offset of +2 in the firmware
-            int cidx = idx - 2 - 3;
-            if ( cidx % 64 == 0 ) { // ASIC ID
-                _mem_ro[idx] = cidx / 64;
-            } else if ( cidx % 64 == 1 ) { // DEBUG1
-                _mem_ro[idx] = dummyCounter[1];
-            } else if ( cidx % 64 == 2 ) { // DEBUG2
-                _mem_ro[idx] = dummyCounter[2];
-            } else if ( cidx % 64 == 3 ) { // HitRate
-                _mem_ro[idx] = 12345;
-            } else if ( cidx % 64 == 4 ) { // TimeLow
-                _mem_ro[idx] = dummyCounter[4];
-                dummyCounter[4]++;
-            } else if ( cidx % 64 == 5 ) { // TimeHigh
-                _mem_ro[idx] = dummyCounter[5];
-                dummyCounter[5]++;
-            } else if ( cidx % 64 == 6 ) { // CRCCnt
-                _mem_ro[idx] = 0;
-            } else if ( cidx % 64 == 7 ) { // FrameRate
-                _mem_ro[idx] = std::rand()/((RAND_MAX +1u)/125000001);
-            } else if ( cidx % 64 > 7 && cidx % 64 < 8+32 ) {
-                _mem_ro[idx] = std::rand()/((RAND_MAX +1u)/125000001);
+        // do some dummy counting
+        dummyCounter[0] = 0;
+        dummyCounter[3]++;
+        dummyCounter[5] = dummyCounter[5] + 0x800;
+        dummyCounter[7]++;
+        dummyCounter[63] = 0;
+        for ( int idx = 3; idx < length+3; idx++ ) {
+            // TODO: here we can check what addr we write to and than fill this with some more usefull data for now random
+            if (startaddr == MUTRIG_CNT_ADDR_REGISTER_R) {
+                // NOTE: we have an offset of +2 in the firmware
+                int cidx = idx - 2 - 3;
+                if ( cidx % 64 == 0 ) { // ASIC ID
+                    _mem_ro[idx] = cidx / 64;
+                } else if ( cidx % 64 == 1 ) { // DEBUG1
+                    _mem_ro[idx] = dummyCounter[1];
+                } else if ( cidx % 64 == 2 ) { // DEBUG2
+                    _mem_ro[idx] = dummyCounter[2];
+                } else if ( cidx % 64 == 3 ) { // HitRate
+                    _mem_ro[idx] = 12345;
+                } else if ( cidx % 64 == 4 ) { // TimeLow
+                    _mem_ro[idx] = dummyCounter[4];
+                    dummyCounter[4]++;
+                } else if ( cidx % 64 == 5 ) { // TimeHigh
+                    _mem_ro[idx] = dummyCounter[5];
+                    dummyCounter[5]++;
+                } else if ( cidx % 64 == 6 ) { // CRCCnt
+                    _mem_ro[idx] = 0;
+                } else if ( cidx % 64 == 7 ) { // FrameRate
+                    _mem_ro[idx] = std::rand()/((RAND_MAX +1u)/125000001);
+                } else if ( cidx % 64 > 7 && cidx % 64 < 8+32 ) {
+                    _mem_ro[idx] = std::rand()/((RAND_MAX +1u)/125000001);
+                } else {
+                    _mem_ro[idx] = 0xBEEFBEEF;
+                }
+            } else if ( startaddr == ARRIA_TEMP_REGISTER_RW ) {
+                _FEB_REGS[startaddr] = _FEB_REGS[startaddr] + 5;
+                _mem_ro[idx] = _FEB_REGS[startaddr];
+            } else if ( startaddr == MAX10_ADC_0_1_REGISTER_R) {
+                _FEB_REGS[startaddr] = _FEB_REGS[startaddr] + 5;
+                _mem_ro[idx] = _FEB_REGS[startaddr];
+            } else if ( startaddr == FIREFLY_STATUS_REGISTER_R) {
+                _FEB_REGS[startaddr + idx - 3] = _FEB_REGS[startaddr + idx - 3] + 5;
+                _mem_ro[idx] = _FEB_REGS[startaddr + idx - 3];
             } else {
-                _mem_ro[idx] = 0xBEEFBEEF;
+                _mem_ro[idx] = std::rand()/((RAND_MAX +1u)/4096);
             }
-        } else if ( startaddr == ARRIA_TEMP_REGISTER_RW ) {
-            _FEB_REGS[startaddr] = _FEB_REGS[startaddr] + 5;
-            _mem_ro[idx] = _FEB_REGS[startaddr];
-        } else if ( startaddr == MAX10_ADC_0_1_REGISTER_R) {
-            _FEB_REGS[startaddr] = _FEB_REGS[startaddr] + 5;
-            _mem_ro[idx] = _FEB_REGS[startaddr];
-        } else if ( startaddr == FIREFLY_STATUS_REGISTER_R) {
-            _FEB_REGS[startaddr + idx - 3] = _FEB_REGS[startaddr + idx - 3] + 5;
-            _mem_ro[idx] = _FEB_REGS[startaddr + idx - 3];
-        } else {
-            _mem_ro[idx] = std::rand()/((RAND_MAX +1u)/4096);
         }
-    }
-    _mem_ro[length+3] = 0x9c;
-#else
+        _mem_ro[length+3] = 0x9c;
+    #else
 
-#endif
+    #endif
 
 }
 
@@ -467,24 +467,24 @@ void MudaqDevice::munmap_wrapper(volatile uint32_t** addr, unsigned len,
 
   bool DmaMudaqDevice::open()
   {
-#ifdef NO_SWITCHING_BOARD
-    std::cout << "Dummy DMA mudaq: open()" << std::endl;
-    return true;
-#else
-    if (!MudaqDevice::open()) return false;
-    _dmabuf_ctrl = mmap_ro(MUDAQ_DMABUF_CTRL_INDEX, MUDAQ_DMABUF_CTRL_WORDS);
-    return (_dmabuf_ctrl != nullptr);
-#endif
+    #ifdef NO_A10_BOARD
+        std::cout << "Dummy DMA mudaq: open()" << std::endl;
+        return true;
+    #else
+        if (!MudaqDevice::open()) return false;
+        _dmabuf_ctrl = mmap_ro(MUDAQ_DMABUF_CTRL_INDEX, MUDAQ_DMABUF_CTRL_WORDS);
+        return (_dmabuf_ctrl != nullptr);
+    #endif
   }
 
   void DmaMudaqDevice::close()
   {
-#ifdef NO_SWITCHING_BOARD
-    std::cout << "Dummy DMA mudaq: close()" << std::endl;
-#else
-    munmap_wrapper(&_dmabuf_ctrl, MUDAQ_DMABUF_CTRL_WORDS, "could not unmap dma control buffer");
-    MudaqDevice::close();
-#endif
+    #ifdef NO_A10_BOARD
+        std::cout << "Dummy DMA mudaq: close()" << std::endl;
+    #else
+        munmap_wrapper(&_dmabuf_ctrl, MUDAQ_DMABUF_CTRL_WORDS, "could not unmap dma control buffer");
+        MudaqDevice::close();
+    #endif
   }
 
   bool DmaMudaqDevice::operator!() const

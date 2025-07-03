@@ -12,6 +12,7 @@
 
 #include "mudaq_circular_buffer.hpp"
 #include "../registers.h"
+#include "../missing_hardware.h"
 #include "utils.h"
 
 #include <boost/dynamic_bitset.hpp>
@@ -85,7 +86,7 @@ protected:
 private:
     const std::string       _path;
 
-#ifdef NO_SWITCHING_BOARD
+#ifdef NO_A10_BOARD
     uint32_t _regs_rw[64] = {};
     uint32_t _regs_ro[64] = {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,

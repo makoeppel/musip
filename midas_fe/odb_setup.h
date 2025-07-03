@@ -21,6 +21,7 @@ midas::odb settings = {
         {"mask_n_generic", 0x0},
         {"use_merger", false},
         {"max_requested_words", max_requested_words},
+        {"n_mevents", 10},
         {"MupixConfig", false},
         {"MupixTDACConfig", false},
         {"ResetASICs", false},

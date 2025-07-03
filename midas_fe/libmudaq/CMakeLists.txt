@@ -3,6 +3,7 @@
 add_library(libmudaq STATIC
     mudaq_device.cpp
     FEBSlowcontrolInterface.cpp
+    DummyFEBSlowcontrolInterface.cpp
     ../registers.h
 )
 target_include_directories(libmudaq PUBLIC

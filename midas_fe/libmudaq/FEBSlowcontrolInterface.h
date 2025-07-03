@@ -26,17 +26,17 @@ public:
     FEBSlowcontrolInterface(const FEBSlowcontrolInterface &) = delete;
     FEBSlowcontrolInterface& operator=(const FEBSlowcontrolInterface&) = delete;
 
-    virtual int FEB_write(size_t febIDx, const uint32_t startaddr, const vector<uint32_t> & data, const bool nonincrementing = false, const bool broadcast = false, const uint32_t MSTR_bar = 0);
-    virtual int FEB_write(size_t febIDx, const uint32_t startaddr, const uint32_t data);
-    virtual int FEB_ping(size_t febIDx);
+    virtual int FEB_write(uint32_t febIDx, const uint32_t startaddr, const vector<uint32_t> & data, const bool nonincrementing = false, const bool broadcast = false, const uint32_t MSTR_bar = 0);
+    virtual int FEB_write(uint32_t febIDx, const uint32_t startaddr, const uint32_t data);
+    virtual int FEB_ping(uint32_t febIDx);
 
     // expects data vector with read-length size
-    virtual int FEB_read(size_t febIDx, const uint32_t startaddr, vector<uint32_t> & data, const bool nonincrementing = false);
-    virtual int FEB_read(size_t febIDx, const uint32_t startaddr, uint32_t & data);
+    virtual int FEB_read(uint32_t febIDx, const uint32_t startaddr, vector<uint32_t> & data, const bool nonincrementing = false);
+    virtual int FEB_read(uint32_t febIDx, const uint32_t startaddr, uint32_t & data);
 
     virtual void FEBsc_resetMain();
     virtual void FEBsc_resetSecondary();
-    virtual int FEBsc_NiosRPC(size_t febIDx, uint16_t command, vector<vector<uint32_t> > payload_chunks);
+    virtual int FEBsc_NiosRPC(uint32_t febIDx, uint16_t command, vector<vector<uint32_t> > payload_chunks);
 
     virtual void FPGAHistoInit(int febNumber, int chipNumber);
     virtual void FPGAHistoStart();

@@ -40,7 +40,7 @@ FEBSlowcontrolInterface::~FEBSlowcontrolInterface()
  *      Write enable to SC_MAIN_ENABLE_REGISTER_W
  */
 
-int FEBSlowcontrolInterface::FEB_write(size_t febIDx, const uint32_t startaddr, const vector<uint32_t> & data, const bool nonincrementing, const bool broadcast, const uint32_t MSTR_bar)
+int FEBSlowcontrolInterface::FEB_write(uint32_t febIDx, const uint32_t startaddr, const vector<uint32_t> & data, const bool nonincrementing, const bool broadcast, const uint32_t MSTR_bar)
 {
     uint32_t FPGA_ID = febIDx;
     if ( broadcast )
@@ -149,17 +149,17 @@ int FEBSlowcontrolInterface::FEB_write(size_t febIDx, const uint32_t startaddr, 
     return OK;
 }
 
-int FEBSlowcontrolInterface::FEB_write(size_t febIDx, const uint32_t startaddr, const uint32_t data)
+int FEBSlowcontrolInterface::FEB_write(uint32_t febIDx, const uint32_t startaddr, const uint32_t data)
 {
     return FEB_write(febIDx, startaddr, vector<uint32_t>(1, data) );
 }
 
-int FEBSlowcontrolInterface::FEB_ping(size_t febIDx)
+int FEBSlowcontrolInterface::FEB_ping(uint32_t febIDx)
 {
     return FEB_write(febIDx, STATUS_REGISTER_R, vector<uint32_t>(1, 0), true, false, 0);
 }
 
-int FEBSlowcontrolInterface::FEB_read(size_t febIDx, const uint32_t startaddr, vector<uint32_t> &data, const bool nonincrementing)
+int FEBSlowcontrolInterface::FEB_read(uint32_t febIDx, const uint32_t startaddr, vector<uint32_t> &data, const bool nonincrementing)
 {
     uint32_t FPGA_ID = febIDx;
 
@@ -273,7 +273,7 @@ int FEBSlowcontrolInterface::FEB_read(size_t febIDx, const uint32_t startaddr, v
     return ERRCODES::OK;
 }
 
-int FEBSlowcontrolInterface::FEB_read(size_t febIDx, const uint32_t startaddr, uint32_t &data)
+int FEBSlowcontrolInterface::FEB_read(uint32_t febIDx, const uint32_t startaddr, uint32_t &data)
 {
     vector<uint32_t> d(1,0);
     int status = FEB_read(febIDx, startaddr, d);
@@ -315,7 +315,7 @@ void FEBSlowcontrolInterface::FEBsc_resetSecondary()
     };
 }
 
-int FEBSlowcontrolInterface::FEBsc_NiosRPC(size_t febIDx, uint16_t command, vector<vector<uint32_t> > payload_chunks)
+int FEBSlowcontrolInterface::FEBsc_NiosRPC(uint32_t febIDx, uint16_t command, vector<vector<uint32_t> > payload_chunks)
 {
     int status = 0;
     int index = 0;
