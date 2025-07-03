@@ -3,13 +3,12 @@
 #define __TEST_H__
 
 #include <fcntl.h>
+#include <sys/mman.h>
 #include <unistd.h>
 
-#include <sys/mman.h>
-
 #include <cerrno>
-#include <cstdio>
 #include <cstdint>
+#include <cstdio>
 #include <cstdlib>
 
 #define SGR_RED "\033[0;0;31m"
@@ -27,23 +26,19 @@ struct test_t {
     void open(const char* file) {
         INFO("file = %s\n", file);
         fd = ::open(file, O_RDWR | O_CLOEXEC);
-        if(fd < 0) {
+        if (fd < 0) {
             FATAL("open: errno = %d\n", errno);
             exit(EXIT_FAILURE);
         }
     }
 
-    test_t() {
-        open("/dev/dmabuf0");
-    }
-    ~test_t() {
-        close(fd);
-    }
+    test_t() { open("/dev/dmabuf0"); }
+    ~test_t() { close(fd); }
 
     ssize_t seek_set(ssize_t offset = 0) const {
         INFO("offset = 0x%zx\n", offset);
         ssize_t pos = lseek(fd, offset, SEEK_SET);
-        if(pos < 0) {
+        if (pos < 0) {
             FATAL("lseek(SEEK_SET) < 0\n");
             exit(EXIT_FAILURE);
         }
@@ -53,7 +48,7 @@ struct test_t {
     ssize_t seek_end(ssize_t offset = 0) const {
         INFO("offset = 0x%zx\n", offset);
         ssize_t pos = lseek(fd, offset, SEEK_END);
-        if(pos < 0) {
+        if (pos < 0) {
             FATAL("lseek(SEEK_END) < 0\n");
             exit(EXIT_FAILURE);
         }
@@ -63,7 +58,7 @@ struct test_t {
     void mmap(size_t size, size_t offset) {
         INFO("size = 0x%zx, offset = 0x%zx\n", size, offset);
         addr = (uint32_t*)::mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, offset);
-        if(addr == MAP_FAILED) {
+        if (addr == MAP_FAILED) {
             FATAL("mmap: errno = %d\n", errno);
             exit(EXIT_FAILURE);
         }
@@ -72,7 +67,7 @@ struct test_t {
     void read(void* buffer, size_t size) const {
         INFO("size = 0x%zx\n", size);
         ssize_t n = ::read(fd, buffer, size);
-        if(n != size) {
+        if (n != size) {
             FATAL("read: n = 0x%zx\n", n);
             exit(EXIT_FAILURE);
         }
@@ -81,11 +76,11 @@ struct test_t {
     void write(const void* buffer, size_t size) const {
         INFO("size = 0x%zx\n", size);
         ssize_t n = ::write(fd, buffer, size);
-        if(n != size) {
+        if (n != size) {
             FATAL("write: n = 0x%zx\n", n);
             exit(EXIT_FAILURE);
         }
     }
 };
 
-#endif // __TEST_H__
+#endif  // __TEST_H__

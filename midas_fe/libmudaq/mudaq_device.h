@@ -10,36 +10,37 @@
 #ifndef MUDAQ_DEVICE_HPP
 #define MUDAQ_DEVICE_HPP
 
-#include "mudaq_circular_buffer.hpp"
-#include "../registers.h"
-#include "../missing_hardware.h"
-#include "utils.h"
-
 #include <boost/dynamic_bitset.hpp>
-
 #include <cstdint>
 #include <string>
 
+#include "../missing_hardware.h"
+#include "../registers.h"
+#include "mudaq_circular_buffer.hpp"
+#include "utils.h"
+
 #if __APPLE__
-    #define REQUEST_INTERRUPT_COUNTER     _IOR(MUDAQ_IOC_TYPE, 1, int)
-    #define MUDAQ_IOC_TYPE 102
-    struct mesg {
-        volatile void * address;
-        size_t size;
-     };
+#define REQUEST_INTERRUPT_COUNTER _IOR(MUDAQ_IOC_TYPE, 1, int)
+#define MUDAQ_IOC_TYPE 102
+struct mesg {
+    volatile void* address;
+    size_t size;
+};
 #else
-    #include "../kerneldriver/mudaq.h"
+#include "../kerneldriver/mudaq.h"
 #endif
 
-[[maybe_unused]] static size_t _pagesize(void) { return static_cast<size_t>(sysconf(_SC_PAGESIZE)); }
-int physical_address_check( uint32_t * virtual_address, size_t size );
-int is_page_aligned( void * pointer );
-void * align_page( void * pointer );
+[[maybe_unused]] static size_t _pagesize(void) {
+    return static_cast<size_t>(sysconf(_SC_PAGESIZE));
+}
+int physical_address_check(uint32_t* virtual_address, size_t size);
+int is_page_aligned(void* pointer);
+void* align_page(void* pointer);
 
 namespace mudaq {
 
 class MudaqDevice {
-public:
+   public:
     // a device can exist only once. forbid copying and assignment
     MudaqDevice() = delete;
     MudaqDevice(const MudaqDevice&) = delete;
@@ -72,69 +73,58 @@ public:
 
     void print_registers();
 
-protected:
+   protected:
     volatile uint32_t* mmap_rw(unsigned idx, unsigned len);
     volatile uint32_t* mmap_ro(unsigned idx, unsigned len);
-    void munmap_wrapper(uint32_t** addr, unsigned len,
-                        const std::string& error_msg);
-    void munmap_wrapper(volatile uint32_t** addr, unsigned len,
-                        const std::string& error_msg);
+    void munmap_wrapper(uint32_t** addr, unsigned len, const std::string& error_msg);
+    void munmap_wrapper(volatile uint32_t** addr, unsigned len, const std::string& error_msg);
 
     // needs to be accessible by the dma readout subtype
     int _fd;
 
-private:
-    const std::string       _path;
+   private:
+    const std::string _path;
 
 #ifdef NO_A10_BOARD
     uint32_t _regs_rw[64] = {};
     uint32_t _regs_ro[64] = {
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0,
-        0, 0x20000000, 0, 0, 0, 0xFFFFFFFF, 0xFFFFFFFF, 0, 0, 0, 0, 0, 0, 0, 0, 0
-    };
-    uint32_t _mem_ro[64*1024] = {};
-    uint32_t _mem_rw[64*1024] = {};
+        0, 0, 0, 0, 0, 0,          0, 0, 0, 0,          0,          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0,          0, 0, 0, 0,          0,          0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0,
+        0, 0, 0, 0, 0, 0x20000000, 0, 0, 0, 0xFFFFFFFF, 0xFFFFFFFF, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    uint32_t _mem_ro[64 * 1024] = {};
+    uint32_t _mem_rw[64 * 1024] = {};
     uint32_t dummyCounter[64] = {
-        0, 0xAFFEAFFE, 0xAFFEAFFE, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xBEEFBEEF, 0,
+        0, 0xAFFEAFFE, 0xAFFEAFFE, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,          0, 0, 0,
+        0, 0,          0,          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,          0, 0, 0,
+        0, 0,          0,          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xBEEFBEEF, 0,
     };
     uint32_t _FEB_REGS[65535] = {};
 #else
-    volatile uint32_t*      _regs_rw;
-    volatile uint32_t*      _regs_ro;
-    volatile uint32_t*      _mem_ro;
-    volatile uint32_t*      _mem_rw;  // added by DvB for rw mem
+    volatile uint32_t* _regs_rw;
+    volatile uint32_t* _regs_ro;
+    volatile uint32_t* _mem_ro;
+    volatile uint32_t* _mem_rw;  // added by DvB for rw mem
 #endif
 
-    uint16_t                _last_read_address; // for reading command of slow control
+    uint16_t _last_read_address;  // for reading command of slow control
 
     friend std::ostream& operator<<(std::ostream&, const MudaqDevice&);
 };
 
 class DmaMudaqDevice : public MudaqDevice {
-public:
+   public:
     typedef CircularBufferProxy<MUDAQ_DMABUF_DATA_ORDER_WORDS> DataBuffer;
     typedef CircularSubBufferProxy<MUDAQ_DMABUF_DATA_ORDER_WORDS> DataBlock;
-    enum {
-        READ_ERROR,
-        READ_TIMEOUT,
-        READ_NODATA,
-        READ_SUCCESS
-    };
+    enum { READ_ERROR, READ_TIMEOUT, READ_NODATA, READ_SUCCESS };
 
     // a device can exist only once. forbid copying and assignment
     DmaMudaqDevice() = delete;
-    DmaMudaqDevice(const DmaMudaqDevice &) = delete;
-    DmaMudaqDevice & operator=(const DmaMudaqDevice &) = delete;
+    DmaMudaqDevice(const DmaMudaqDevice&) = delete;
+    DmaMudaqDevice& operator=(const DmaMudaqDevice&) = delete;
 
-    DmaMudaqDevice(const std::string & path);
+    DmaMudaqDevice(const std::string& path);
 
     int enable_continous_readout(int interTrue);
-
 
     void disable();
 
@@ -142,18 +132,19 @@ public:
     virtual void close();
     virtual bool operator!() const;
 
-    int read_block(DataBlock& buffer, volatile uint32_t * pinned_data );
-    int get_current_interrupt_number();  // via ioctl from driver (no need for read_block() function)
+    int read_block(DataBlock& buffer, volatile uint32_t* pinned_data);
+    int get_current_interrupt_number();  // via ioctl from driver (no need for
+                                         // read_block() function)
 
     uint32_t last_written_addr() const;
     uint32_t last_endofevent_addr() const;
 
-private:
-    volatile uint32_t * _dmabuf_ctrl;
+   private:
+    volatile uint32_t* _dmabuf_ctrl;
 
     unsigned _last_end_of_buffer;
 };
 
-} // namespace mudaq
+}  // namespace mudaq
 
-#endif // __MUDAQ_DEVICE_HPP_WKZIQD9F__
+#endif  // __MUDAQ_DEVICE_HPP_WKZIQD9F__

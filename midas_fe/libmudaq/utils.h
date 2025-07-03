@@ -16,7 +16,6 @@
 #define UTILITY_HPP_
 
 #include <boost/format.hpp>
-
 #include <iostream>
 #include <sstream>
 #include <vector>
@@ -24,20 +23,16 @@
 /**
  * recursive boost::format evalatuation w/ variadic parameters
  *
- * based on [https://stackoverflow.com/questions/18347957/a-convenient-logging-statement-for-c-using-boostformat].
+ * based on
+ * [https://stackoverflow.com/questions/18347957/a-convenient-logging-statement-for-c-using-boostformat].
  */
-inline boost::format& eval_format(boost::format& fmt)
-{
-    return fmt;
-}
+inline boost::format& eval_format(boost::format& fmt) { return fmt; }
 template <typename T, typename... Params>
-inline boost::format& eval_format(boost::format& fmt, T arg, Params... parameters)
-{
+inline boost::format& eval_format(boost::format& fmt, T arg, Params... parameters) {
     return eval_format(fmt % arg, parameters...);
 }
 template <typename... Params>
-inline std::string eval_str(const std::string& str, Params... parameters)
-{
+inline std::string eval_str(const std::string& str, Params... parameters) {
     boost::format fmt(str);
     return eval_format(fmt, parameters...).str();
 }
@@ -46,23 +41,15 @@ inline std::string eval_str(const std::string& str, Params... parameters)
  * logging functions using iostreams and boost::format
  */
 
-inline void ERROR(std::string msg)
-{
-    std::cerr << "ERROR: " << msg << std::endl;
-}
+inline void ERROR(std::string msg) { std::cerr << "ERROR: " << msg << std::endl; }
 template <typename... Params>
-inline void ERROR(std::string msg, Params... parameters)
-{
+inline void ERROR(std::string msg, Params... parameters) {
     std::cerr << "ERROR: " << eval_str(msg, parameters...) << std::endl;
 }
 
-inline void DEBUG(std::string msg)
-{
-    std::cout << "DEBUG: " << msg << std::endl;
-}
+inline void DEBUG(std::string msg) { std::cout << "DEBUG: " << msg << std::endl; }
 template <typename... Params>
-inline void DEBUG(std::string msg, Params... parameters)
-{
+inline void DEBUG(std::string msg, Params... parameters) {
     std::cout << "DEBUG: " << eval_str(msg, parameters...) << std::endl;
 }
 
@@ -72,21 +59,14 @@ inline void DEBUG(std::string msg, Params... parameters)
  * from [http://en.wikipedia.org/wiki/Gray_code]
  */
 
-inline uint8_t graycode_decode(uint8_t gray)
-{
+inline uint8_t graycode_decode(uint8_t gray) {
     uint8_t mask;
     for (mask = gray >> 1; mask != 0; mask = mask >> 1) {
         gray = gray ^ mask;
     }
     return gray;
 }
-inline uint8_t graycode_encode(uint8_t binary)
-{
-    return (binary >> 1) ^ binary;
-}
-
-
-
+inline uint8_t graycode_encode(uint8_t binary) { return (binary >> 1) ^ binary; }
 
 /**
  * @brief fileCheck
@@ -95,9 +75,9 @@ inline uint8_t graycode_encode(uint8_t binary)
  *
  * taken from stackoverflow.com
  */
-inline bool fileCheck (const std::string& name) {
-    if (FILE *file = fopen(name.c_str(), "r")) {
-        std::cout<<"Checking file: " << name.c_str() << std::endl;
+inline bool fileCheck(const std::string& name) {
+    if (FILE* file = fopen(name.c_str(), "r")) {
+        std::cout << "Checking file: " << name.c_str() << std::endl;
         fclose(file);
         return true;
     } else {
@@ -105,38 +85,27 @@ inline bool fileCheck (const std::string& name) {
     }
 }
 
-
 template <typename T>
-std::vector<T> convert_to_vec(T t,std::string & s, std::string & seperator)
-{
+std::vector<T> convert_to_vec(T t, std::string& s, std::string& seperator) {
     std::stringstream stream(s);
     T value;
     std::vector<T> v;
-    while(stream >> value)
-    {
+    while (stream >> value) {
         v.push_back(value);
         std::string tmp;
         stream >> tmp;
-        if(tmp!=seperator)
-        {
+        if (tmp != seperator) {
             std::cout << "STRING CONVERSION ERROR!\t" << tmp << std::endl;
-
         }
     }
     return v;
-
 }
 
 template <typename T>
-inline void convert_to_string(std::string & s, std::vector<T> const & v, std::string & seperator)
-{
+inline void convert_to_string(std::string& s, std::vector<T> const& v, std::string& seperator) {
     std::stringstream stream;
-    for(auto tmp : v)
-        stream << tmp << seperator;
-    s=stream.str();
-
+    for (auto tmp : v) stream << tmp << seperator;
+    s = stream.str();
 }
-
-
 
 #endif /* __UTILITY_HPP_UB6F0M92__ */

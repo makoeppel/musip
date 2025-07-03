@@ -12,4 +12,4 @@
 #define M_DEBUG(fmt, ...) \
     pr_debug("[%s/%s] " pr_fmt(fmt), THIS_MODULE->name, __FUNCTION__, ##__VA_ARGS__)
 
-#endif // __KMODULE_H__
+#endif  // __KMODULE_H__
