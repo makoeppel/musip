@@ -11,7 +11,7 @@ This is a MIDAS-based frontend for the Mupix11 based quad moduels.
 - `tests/` – Unit tests for the project
 - `.clang-format` – Project-wide code style config
 
-## 🛠 Build Instructions
+## Build Instructions
 
 ### Prerequisites
 
