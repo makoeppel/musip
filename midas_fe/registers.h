@@ -1,4 +1,24 @@
-
+/**
+ * @file registers.h
+ * @brief Definitions for MUDAQ register and memory layout.
+ *
+ * This header defines constants representing the register indices, lengths,
+ * and memory map for MUDAQ hardware used in the MUPIX DAQ system. These constants
+ * are essential for interfacing with the FPGA registers, control buffers,
+ * and DMA memory regions.
+ *
+ * @details
+ * Categories of definitions include:
+ * - **Register Banks**: Read/Write and Read-Only register indices and lengths.
+ * - **Device Memory**: Indexing, size orders, and masks for address range control.
+ * - **DMA Buffers**: Constants for data and control buffer sizes and alignments.
+ * - **Block Access**: Sizes and masks for FPGA's internal data blocks.
+ *
+ * These definitions ensure correct addressing and bounds checking in low-level
+ * hardware access routines. All sizes are in terms of `uint32_t` words unless otherwise noted.
+ *
+ * @note All memory access is assumed to be 32-bit aligned.
+ */
 
 // MUDAQ registers
 // register banks

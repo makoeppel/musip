@@ -1,8 +1,44 @@
-//
+/**
+ * @file utils.h
+ * @brief Utility functions for bit-level parameter setting and ODB indexing.
+ *
+ * This header provides common utility routines used in frontend configuration
+ * and data preparation tasks. These functions support bitfield encoding
+ * and MIDAS Online Database (ODB) access.
+ *
+ * @details
+ * Included Functions:
+ * - `getODBIdx`: Retrieves the index of a named subkey in a `midas::odb` structure.
+ * - `getOffset`: Computes a bit offset for a named subkey in the ODB.
+ * - `get_DACs_from_odb`: Writes DAC configuration bits from ODB to the bit pattern buffer.
+ * - `get_BiasDACs_from_odb`: Extracts and writes Bias DAC configuration bits for a given ASIC.
+ * - `get_ConfDACs_from_odb`: Extracts and writes Configuration DAC bits for a given ASIC.
+ * - `get_VDACs_from_odb`: Extracts and writes Voltage DAC bits for a given ASIC.
+ * - `InitFEBs`: Initializes all active Front-End Boards (FEBs) using slow control.
+ * - `ConfigureASICs`: Configures all enabled ASICs across active FEBs using bit patterns.
+ * - `generate_random_pixel_hit_swb`: Generates a simulated pixel hit for test data streams.
+ * - `create_dummy_event`: Creates one or more dummy MIDAS events in memory.
+ *
+ * These utilities simplify frontend implementation by abstracting repetitive
+ * logic related to bit encoding and dynamic configuration.
+ *
+ * @note These functions are performance-sensitive and should be used
+ * with care in high-rate paths such as configuration loops.
+ */
 
 #include "FEBSlowcontrolInterface.h"
 #include "bits_utils.h"
 
+/**
+ * @brief Gets the index of a named key in a MIDAS ODB object.
+ *
+ * Searches the top-level keys in a `midas::odb` structure and returns
+ * the index of the key matching the provided name.
+ *
+ * @param odb The `midas::odb` object representing the configuration section.
+ * @param name The name of the subkey to find.
+ * @return uint32_t The index of the key if found, otherwise the total count.
+ */
 uint32_t getODBIdx(midas::odb odb, std::string name) {
     uint32_t idx = 0;
     for (midas::odb& subkey : odb) {
@@ -15,6 +51,16 @@ uint32_t getODBIdx(midas::odb odb, std::string name) {
     return idx;
 }
 
+/**
+ * @brief Computes the bit offset of a named field in a MIDAS ODB structure.
+ *
+ * Iterates through subkeys in an ODB group to determine the bit offset of
+ * a given field, assuming each key represents a sequential bit region.
+ *
+ * @param odb The `midas::odb` group containing configuration fields.
+ * @param name The name of the target field.
+ * @return uint32_t The cumulative bit offset of the named field.
+ */
 uint32_t getOffset(midas::odb odb, std::string name) {
     uint32_t offset = 0;
     for (midas::odb& subkey : odb) {
@@ -27,6 +73,20 @@ uint32_t getOffset(midas::odb odb, std::string name) {
     return offset;
 }
 
+/**
+ * @brief Writes DAC configuration bits from ODB to the bit pattern buffer.
+ *
+ * This function reads DAC values from an ODB configuration and writes them
+ * into a byte buffer as bit-encoded values, using the `setParameter` function.
+ *
+ * @param m_nbits ODB subkey describing bit widths for each DAC parameter.
+ * @param m_config ODB subkey containing DAC values per ASIC.
+ * @param bitpattern_w Target buffer for encoded configuration bits.
+ * @param asicIDx Index of the ASIC to configure.
+ * @param firstWord Name of the first DAC parameter to include.
+ * @param lastWord Name of the last DAC parameter to include.
+ * @param inverted Whether to encode bits in MSB-first (inverted) order.
+ */
 void get_DACs_from_odb(midas::odb m_nbits, midas::odb m_config, uint8_t* bitpattern_w,
                        uint32_t asicIDx, std::string firstWord, std::string lastWord,
                        bool inverted) {
@@ -50,11 +110,30 @@ void get_DACs_from_odb(midas::odb m_nbits, midas::odb m_config, uint8_t* bitpatt
     }
 }
 
+/**
+ * @brief Extracts and writes Bias DAC configuration bits for a given ASIC.
+ *
+ * Calls `get_DACs_from_odb()` with hardcoded range for Bias DAC fields.
+ *
+ * @param m_config ODB root configuration node.
+ * @param bitpattern_w Target buffer for encoded configuration bits.
+ * @param asicIDx Index of the ASIC to configure.
+ */
 void get_BiasDACs_from_odb(midas::odb m_config, uint8_t* bitpattern_w, uint32_t asicIDx) {
     // TOOD: set first ("VNTimerDel") and last word ("Bandgap_on") as a const
     get_DACs_from_odb(m_config["Nbits"], m_config["BIASDACS"], bitpattern_w, asicIDx, "VNTimerDel",
                       "Bandgap_on", true);
 }
+
+/**
+ * @brief Extracts and writes Configuration DAC bits for a given ASIC.
+ *
+ * Calls `get_DACs_from_odb()` with hardcoded range for Conf DAC fields.
+ *
+ * @param m_config ODB root configuration node.
+ * @param bitpattern_w Target buffer for encoded configuration bits.
+ * @param asicIDx Index of the ASIC to configure.
+ */
 
 void get_ConfDACs_from_odb(midas::odb m_config, uint8_t* bitpattern_w, uint32_t asicIDx) {
     // TOOD: set first ("SelFast") and last word ("ckdivend") as a const
@@ -62,12 +141,30 @@ void get_ConfDACs_from_odb(midas::odb m_config, uint8_t* bitpattern_w, uint32_t 
                       "ckdivend", false);
 }
 
+/**
+ * @brief Extracts and writes Voltage DAC bits for a given ASIC.
+ *
+ * Calls `get_DACs_from_odb()` with hardcoded range for VDAC fields.
+ *
+ * @param m_config ODB root configuration node.
+ * @param bitpattern_w Target buffer for encoded configuration bits.
+ * @param asicIDx Index of the ASIC to configure.
+ */
 void get_VDACs_from_odb(midas::odb m_config, uint8_t* bitpattern_w, uint32_t asicIDx) {
     // TOOD: set first ("VCAL") and last word ("ref_Vss") as a const
     get_DACs_from_odb(m_config["Nbits"], m_config["VDACS"], bitpattern_w, asicIDx, "VCAL",
                       "ref_Vss", false);
 }
 
+/**
+ * @brief Initializes all active Front-End Boards (FEBs) using slow control.
+ *
+ * Writes unique FPGA IDs and configures LVDS link settings for each active FEB.
+ *
+ * @param feb_sc Reference to the FEB slow control interface.
+ * @param m_settings MIDAS ODB object containing DAQ link configuration.
+ * @return FE_SUCCESS on success.
+ */
 int InitFEBs(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) {
     for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
         bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
@@ -97,6 +194,17 @@ int InitFEBs(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) {
     return FE_SUCCESS;
 }
 
+/**
+ * @brief Configures all enabled ASICs across active FEBs using bit patterns.
+ *
+ * For each ASIC enabled by the ASIC mask, retrieves DAC configurations from the
+ * ODB, encodes them into a payload, and sends them to the corresponding FEB.
+ *
+ * @param feb_sc Reference to the FEB slow control interface.
+ * @param m_settings MIDAS ODB object containing DAQ and config sections.
+ * @param bitpattern_w Temporary buffer used to build the configuration bitstream.
+ * @return FE_SUCCESS if all ASICs configured successfully; error code otherwise.
+ */
 int ConfigureASICs(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings, uint8_t* bitpattern_w) {
     int status = FE_SUCCESS;
     for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
@@ -138,6 +246,15 @@ int ConfigureASICs(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings, uint8
     return status;
 }
 
+/**
+ * @brief Generates a simulated pixel hit for test data streams.
+ *
+ * Encodes a random chip, column, row, and time-over-threshold (ToT) value
+ * into a 32-bit hit word.
+ *
+ * @param time_stamp Timestamp to embed in the hit word.
+ * @return uint32_t Encoded hit data.
+ */
 uint32_t generate_random_pixel_hit_swb(uint32_t time_stamp) {
     uint32_t tot = rand() % 32;    // 0 to 31
     uint32_t chipID = rand() % 3;  // 0 to 2
@@ -149,6 +266,18 @@ uint32_t generate_random_pixel_hit_swb(uint32_t time_stamp) {
     return hit;
 }
 
+/**
+ * @brief Creates one or more dummy MIDAS events in memory.
+ *
+ * Fills a provided DMA buffer with synthetic event headers and pixel hits.
+ * This simulates what a real event would look like for testing purposes.
+ *
+ * @param dma_buf_dummy Pointer to the target DMA buffer.
+ * @param eventSize Size of a single event (in words).
+ * @param nEvents Number of events to create.
+ * @param serial_number Starting event serial number (incremented internally).
+ * @return Updated serial number after all events are written.
+ */
 int create_dummy_event(uint32_t* dma_buf_dummy, size_t eventSize, int nEvents, int serial_number) {
     for (int i = 0; i < nEvents; i++) {
         // event header

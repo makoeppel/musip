@@ -45,3 +45,10 @@ CMake will download googletests to run the tests.
 cd build
 ./tests/runTests
 ```
+
+### Docs
+If doxygen is installed one can build the docs via.
+
+```bash
+make doc_doxygen
+```

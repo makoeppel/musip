@@ -1,3 +1,32 @@
+/**
+ * @file quads_config_fe.cpp
+ * @brief MIDAS frontend for configuring and controlling MuPix quads.
+ *
+ * This frontend is part of the MIDAS data acquisition system. It handles
+ * initialization, configuration, and control of MuPix devices using either
+ * a real or dummy FEB (Front-End Board) slow control interface. It communicates
+ * with the hardware via a `mudaq::MudaqDevice`, optionally utilizing DMA.
+ *
+ * @details
+ * Key responsibilities of this frontend include:
+ * - Opening and verifying the MuPix hardware device.
+ * - Selecting the appropriate FEB slow control implementation based on compilation flags.
+ * - Initializing LVDS bank configurations and bit patterns.
+ * - Interfacing with the MIDAS Online Database (ODB) to fetch run-time configuration.
+ * - Registering itself with MIDAS using appropriate frontend metadata.
+ *
+ * Preprocessor directives like `NO_A10_BOARD` are used to determine whether
+ * to instantiate a dummy or real FEB control interface, enabling testing on systems
+ * without hardware attached.
+ *
+ * @note Ensure all dependencies (mudaq library, MIDAS, system headers) are present and properly
+ * configured.
+ *
+ * @author
+ * Marius Snella Köppel
+ * @date
+ * 2026-07-04
+ */
 
 #include <stdio.h>
 #include <stdlib.h>

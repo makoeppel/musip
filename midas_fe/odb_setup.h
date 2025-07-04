@@ -1,4 +1,21 @@
-//
+/**
+ * @file odb_setup.h
+ * @brief Default MIDAS ODB structure and initialization for Quads frontend.
+ *
+ * This header defines the structure of the Online Database (ODB) used by the
+ * Quads DAQ frontend, including readout configuration and DAQ command parameters.
+ *
+ * @details
+ * The file maps the following ODB sections:
+ * - `/Equipment/Quads Config/Settings`: Contains readout options (e.g., datagen control,
+ *   dummy mode, ASIC reset, maximum data words, etc.).
+ * - `/Equipment/Quads Config/DAQ`: Includes DAQ-related commands such as firmware loading.
+ *
+ * It uses a `midas::odb` map for structured and type-safe access to parameters,
+ * and provides utility functions like `filled_array` for initializing default values.
+ *
+ * @note This file must be included before using any ODB access in the frontend.
+ */
 
 #include "midas.h"
 #include "odbxx.h"

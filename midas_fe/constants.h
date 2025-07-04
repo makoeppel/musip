@@ -1,4 +1,27 @@
-//
+/**
+ * @file constants.h
+ * @brief Definitions of project-wide constants and event data structures.
+ *
+ * This header centralizes configuration constants used across the MuPix MIDAS
+ * frontend, including parameters for DMA buffering, FEB and chip limits,
+ * slow control protocol constraints, and data format definitions.
+ *
+ * It also declares the `mevent_t` structure, which defines the format for
+ * decoded readout events from MuPix hardware.
+ *
+ * @details
+ * Constants include:
+ * - Maximum LVDS links per FEB
+ * - Number of FEBs and chips
+ * - DMA buffer sizing and usage
+ * - Maximum message sizes for slow control
+ * - Configuration payload lengths
+ *
+ * These constants provide a consistent interface across the data and control
+ * subsystems of the DAQ framework.
+ */
+
+#pragma once
 
 #include <map>
 #include <string>

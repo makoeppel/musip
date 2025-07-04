@@ -77,3 +77,21 @@ if(CPPLINT_EXECUTABLE)
 else()
     message(WARNING "cpplint not found. Skipping cpplint target.")
 endif()
+
+find_package(Doxygen QUIET)
+
+if(DOXYGEN_FOUND)
+    message(STATUS "Doxygen found, enabling documentation target")
+
+    set(DOXYFILE_IN ${CMAKE_CURRENT_SOURCE_DIR}/docs/Doxyfile)
+    set(DOXYGEN_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/docs)
+
+    add_custom_target(doc_doxygen
+        COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYFILE_IN}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/docs
+        COMMENT "Generating API documentation with Doxygen"
+        VERBATIM
+    )
+else()
+    message(STATUS "Doxygen not found, skipping documentation target")
+endif()

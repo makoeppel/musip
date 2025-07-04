@@ -1,3 +1,31 @@
+/**
+ * @file quads_data_fe.cpp
+ * @brief MIDAS frontend for MUPIX data readout and DMA handling.
+ *
+ * This frontend handles the real-time data acquisition for MUPIX devices,
+ * using direct memory access (DMA) to collect data blocks and transfer them
+ * to MIDAS events. It sets up necessary buffers, device interfaces, and ODB
+ * configuration to support robust data streaming.
+ *
+ * @details
+ * Key functionalities:
+ * - Initializes and maps a DMA buffer for high-throughput data acquisition.
+ * - Manages device communication through `mudaq::DmaMudaqDevice`.
+ * - Handles multiple event streams via software buffering (`mevents`).
+ * - Provides run-time configuration through MIDAS Online Database (ODB).
+ * - Supports both real hardware and dummy simulation via preprocessor flags.
+ *
+ * This file complements `quads_config_fe.cpp` by performing the actual
+ * data acquisition, while `quads_config_fe.cpp` handles initialization
+ * and configuration.
+ *
+ * @note Define `NO_A10_BOARD` to build without hardware-specific mappings.
+ *
+ * @author
+ * Marius Snella Köppel
+ * @date
+ * 2026-07-04
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
