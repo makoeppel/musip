@@ -124,6 +124,7 @@ function renderGrid(gridId, data, febID, gridID) {
 
             // Top label (ND / A / B / C)
             const label = document.createElement('div');
+            label.className = 'section-label';
             if ((link.A == link.B) && (link.B == link.C)) {
                 label.textContent = "ND";
             } else if (link.A) {
