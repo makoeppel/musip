@@ -32,6 +32,10 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
+#include <sstream>
+#include <iomanip>
+#include <string>
+
 #include <iostream>
 #include <list>
 
@@ -42,9 +46,6 @@
 #include "mfe.h"
 #include "msystem.h"
 #include "odbxx.h"
-
-#define FMT_HEADER_ONLY
-#include <fmt/core.h>
 
 #include "DummyFEBSlowcontrolInterface.h"
 #include "FEBSlowcontrolInterface.h"
@@ -330,7 +331,9 @@ int create_midas_events(uint32_t* dmaBuffer, uint32_t dmaBufSize, int rbh, uint3
 
         {  // - write DSIN bank
             char* data = nullptr;
-            std::string bank_name = fmt::format("DS{:02d}", i);
+            std::ostringstream oss;
+            oss << "DS" << std::setw(2) << std::setfill('0') << i;
+            std::string bank_name = oss.str();
             bk_create(bankHeader, bank_name.c_str(), TID_UINT32, reinterpret_cast<void**>(&data));
             memcpy(data, &dsin, sizeof(dsin));
             data += sizeof(dsin);
@@ -338,8 +341,10 @@ int create_midas_events(uint32_t* dmaBuffer, uint32_t dmaBufSize, int rbh, uint3
         }
         {  // - write *HIT bank
             char* data = nullptr;
+            std::ostringstream oss;
+            oss << "DS" << std::setw(2) << std::setfill('0') << i;
             std::string bank_name =
-                mevents.begin()->second.front().hits_name.substr(2, 2) + fmt::format("{:02d}", i);
+                mevents.begin()->second.front().hits_name.substr(2, 2) + oss.str();
             bk_create(bankHeader, bank_name.c_str(), TID_UINT32, reinterpret_cast<void**>(&data));
             for (auto& mevent : mevents.begin()->second) {
                 size_t bytes = mevent.hits.size() * sizeof(mevent.hits[0]);

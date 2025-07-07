@@ -195,6 +195,28 @@ int InitFEBs(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) {
 }
 
 /**
+ * @brief Sends a reset to all MuPix chips.
+ *
+ * Sends a reset to all MuPix chips.
+ *
+ * @param feb_sc Reference to the FEB slow control interface.
+ * @param m_settings MIDAS ODB object containing DAQ and config sections.
+ * @return FE_SUCCESS on success.
+ */
+int resetASICs(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) {
+    cm_msg(MINFO, "resetASICs()", "Reset all ASICs");
+    for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
+        bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
+        if (!FEBActive)
+            continue;
+        feb_sc.FEB_write(febIDx, MP_CTRL_RESET_REGISTER_W, 0x00000001);
+        sleep(2);
+        feb_sc.FEB_write(febIDx, MP_CTRL_RESET_REGISTER_W, 0x00000000);
+    }
+    return FE_SUCCESS;
+}
+
+/**
  * @brief Configures all enabled ASICs across active FEBs using bit patterns.
  *
  * For each ASIC enabled by the ASIC mask, retrieves DAC configurations from the
@@ -210,12 +232,10 @@ int ConfigureASICs(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings, uint8
     for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
         uint16_t ASICMask = m_settings["DAQ"]["Links"]["ASICMask"][febIDx];
         bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
-        if (!FEBActive)
-            continue;
+        if (!FEBActive) continue;
         for (uint32_t asicMaskIDx = febIDx * N_CHIPS; asicMaskIDx < (febIDx + 1) * N_CHIPS;
              asicMaskIDx++) {
-            if (!((ASICMask >> asicMaskIDx) & 0x1))
-                continue;
+            if (!((ASICMask >> (asicMaskIDx % N_CHIPS)) & 0x1)) continue;
             cm_msg(MINFO, "ConfigureASICs()",
                    "/Settings/Config/ -> globalASIC-%i -> localASIC-%i on FEB-%i", asicMaskIDx,
                    asicMaskIDx % N_CHIPS, febIDx);

@@ -13,6 +13,7 @@
 #pragma once
 
 #include <stdlib.h>
+#include <cstdint>
 
 #include <vector>
 

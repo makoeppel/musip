@@ -61,6 +61,8 @@ midas::odb m_settings;
 uint8_t bitpattern_mupix[48] = {};
 mudaq::DmaMudaqDevice* mup = nullptr;
 std::vector<uint32_t> lvds_banks = {};
+std::vector<uint32_t> matrix_banks = {};
+std::vector<uint32_t> temp_banks = {};
 
 // runstart
 reset reset_protocol;
@@ -197,6 +199,11 @@ void sc_settings_changed(midas::odb o) {
         InitFEBs(*feb_sc, m_settings);
         o = false;
     }
+
+    if (name == "ResetASICs" && o) {
+        resetASICs(*feb_sc, m_settings);
+        o = false;
+    }
 }
 
 int frontend_init() {
@@ -253,14 +260,7 @@ int read_sc_event(char* pevent, int off) {
         bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
         lvds_banks.push_back(febIDx);
         lvds_banks.push_back(nlinks);
-        if (!FEBActive) {
-            for (uint32_t i = 0; i < nlinks; i++) {
-                lvds_banks.push_back(0);
-                lvds_banks.push_back(0);
-                lvds_banks.push_back(0);
-                lvds_banks.push_back(0);
-            }
-        } else {
+        if (FEBActive) {
             std::vector<uint32_t> status(offset + (nlinks * 4));
             feb_sc->FEB_read(febIDx, LVDS_STATUS_START_REGISTER_W, status, false);
             for (uint32_t i = 0; i < nlinks; i++) {
@@ -269,8 +269,45 @@ int read_sc_event(char* pevent, int off) {
                 lvds_banks.push_back(status[offset + i * 4 + 2]);
                 lvds_banks.push_back(status[offset + i * 4 + 3]);
             }
+        } else {
+            for (uint32_t i = 0; i < nlinks; i++) {
+                lvds_banks.push_back(0);
+                lvds_banks.push_back(0);
+                lvds_banks.push_back(0);
+                lvds_banks.push_back(0);
+            }
         }
     }
+
+    // fill matrix bank
+    matrix_banks.clear();
+    for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
+        bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
+        matrix_banks.push_back(febIDx);
+        matrix_banks.push_back(nlinks);
+        if (FEBActive) {
+            std::vector<uint32_t> data(1);
+            feb_sc->FEB_read(febIDx, MP_IS_A_0_REGISTER_R, data);
+            matrix_banks.push_back(data[0]);
+            feb_sc->FEB_read(febIDx, MP_IS_A_1_REGISTER_R, data);
+            matrix_banks.push_back(data[0]);
+            feb_sc->FEB_read(febIDx, MP_IS_B_0_REGISTER_R, data);
+            matrix_banks.push_back(data[0]);
+            feb_sc->FEB_read(febIDx, MP_IS_B_1_REGISTER_R, data);
+            matrix_banks.push_back(data[0]);
+            feb_sc->FEB_read(febIDx, MP_IS_C_0_REGISTER_R, data);
+            matrix_banks.push_back(data[0]);
+            feb_sc->FEB_read(febIDx, MP_IS_C_1_REGISTER_R, data);
+            matrix_banks.push_back(data[0]);
+        } else {
+            matrix_banks.push_back(0);
+            matrix_banks.push_back(0);
+            matrix_banks.push_back(0);
+            matrix_banks.push_back(0);
+            matrix_banks.push_back(0);
+            matrix_banks.push_back(0);
+        }
+    };
 
     // create bank, pdata
     bk_init32a(pevent);
@@ -278,6 +315,11 @@ int read_sc_event(char* pevent, int off) {
 
     // create a bank with the lvds status
     bk_create(pevent, "PCLS", TID_DWORD, (void**)&pdata);
+    for (auto data : lvds_banks) *pdata++ = data;
+    bk_close(pevent, pdata);
+
+    // create a bank with the matrix status
+    bk_create(pevent, "PCMS", TID_DWORD, (void**)&pdata);
     for (auto data : lvds_banks) *pdata++ = data;
     bk_close(pevent, pdata);
 
