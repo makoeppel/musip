@@ -1,0 +1,27 @@
+.grid-container {
+    display: flex;
+    gap: 20px;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(2, 60px);
+    grid-template-rows: repeat(2, 60px);
+    gap: 10px;
+}
+
+.cell {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #aaa;
+}
+
+.section {
+    flex: 1;
+    width: 100%;
+}
+
+.green  { background-color: green; }
+.yellow { background-color: yellow; }
+.orange { background-color: orange; }
+.red    { background-color: red; }

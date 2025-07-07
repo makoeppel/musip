@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Encoding -->
+    <meta charset="UTF-8">
+
+    <link rel="stylesheet" href="midas.css">
+
+    <script src="controls.js"></script>
+    <script src="midas.js"></script>
+    <script src="mhttpd.js"></script>
+    <script src="quads.js" defer></script>
+
+    <link rel="stylesheet" type="text/css" href="quads.css">
+
+    <title>Quad module operation</title>
+</head>
+
+<body class="mcss" onload="mhttpd_init('Quads')" style="margin-left: 15px; margin-top: 15px;">
+    <!-- header and side navigation will be filled in mhttpd_start -->
+    <div id="mheader"></div>
+    <div id="msidenav"></div>
+
+    <div id="mmain">
+    <div name="modb" data-odb-path="/Equipment/Quads Config/Variables/PCLS" onchange="update_pcls(this.value)"></div>
+    <!-- <div name="modb" data-odb-path="/Equipment/Quads Config/Variables/PCMS" onchange="update_pcms(this.value); draw()"></div> -->
+
+    <h2>Configuration</h2>
+
+    <h2>4 Selectable 2x2 Grids</h2>
+    <div class="grid-container">
+        <div class="grid" id="grid0" data-grid-id="0"></div>
+        <div class="grid" id="grid1" data-grid-id="1"></div>
+        <div class="grid" id="grid2" data-grid-id="2"></div>
+        <div class="grid" id="grid3" data-grid-id="3"></div>
+    </div>
+
+    <p><strong>Selected cell indices:</strong> <span id="selectedDisplay"></span></p>
+
+    <div class="container">
+        <table class="mtable" id="sensorSelection">
+            <tr><th colspan="3" class="mtableheader">Sensor selection</th></tr>
+            <td>
+                <canvas width="700px" height="200px" id="SensorSelectionCanvas"></canvas>
+
+                <div class="container" style="justify-content: space-between; width: 100%;">
+                    <span>selected sensors: <span id="sensor_selection">None</span></span>
+                    <!-- align this span to the right side with a constant offset of 20 px-->
+                    <span style="margin-left: auto; margin-right: 30px; width: 90px;">active: <span id="active_selection">None</span></span>
+                    <div>
+                        <button class="mbutton" onclick="selectAll()">Select all</button>
+                        <button class="mbutton" onclick="deselectAll()">Deselect all</button>
+                    </div>
+                </div>
+            </td>
+        </table>
+    </div>
+
+</body>
+</html>
+
