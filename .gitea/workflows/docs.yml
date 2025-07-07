@@ -21,9 +21,10 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install mkdocs mkdocs-material mkdoxy
+          pip install mkdocs mkdocs-material mkdoxy mkdocs-with-pdf
           sudo apt-get update
           sudo apt-get install -y doxygen
 
       - name: Build MkDocs
         run: mkdocs build
+        working-directory: site/pdf/document.pdf

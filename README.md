@@ -56,6 +56,7 @@ We use mkdocs for generating the documentation:
 pip install mkdocs
 pip install mkdocs-material
 pip install mkdoxy
+pip install mkdocs-with-pdf
 ```
 
 If its installed one can generate the documentation via:

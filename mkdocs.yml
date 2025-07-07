@@ -2,6 +2,7 @@ site_name: musip-midas Documentation
 
 plugins:
   - search
+  - with-pdf
   - mkdoxy:
       projects:
         musip: # name of project must be alphanumeric + numbers (without spaces)
