@@ -27,9 +27,3 @@ jobs:
 
       - name: Build MkDocs
         run: mkdocs build
-
-      - name: Upload documentation artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: mkdocs-site
-          path: site/pdf/document.pdf
