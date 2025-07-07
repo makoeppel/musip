@@ -79,6 +79,26 @@ function updateSelectedDisplay() {
         Array.from(selectedCells).sort((a, b) => a - b).join(", ");
 }
 
+async function sendStateToBackend() {
+    const ASICMask = [0, 0, 0, 0];
+    const LVDSLinkMask = [0, 0, 0, 0];
+    const LVDSLinkInvert = [0, 0, 0, 0];
+
+    for(let asic of selectedCells)
+        ASICMask[parseInt(asic / nASICsPerFEB)] |= (1 << asic % nASICsPerFEB);
+
+    for (let feb = 0; feb < nFEBs; feb++) {
+        for (let l = 0; l < nASICsPerFEB * nLinksPerASIC; l++) {
+            if (maskedLinks[feb][l]) LVDSLinkMask[feb] |= (1 << l);
+            if (invertedLinks[feb][l]) LVDSLinkInvert[feb] |= (1 << l);
+        }
+    }
+
+    await setODBValue("/Equipment/Quads Config/Settings/DAQ/Links/ASICMask", ASICMask);
+    await setODBValue("/Equipment/Quads Config/Settings/DAQ/Links/LVDSLinkMask", LVDSLinkMask);
+    await setODBValue("/Equipment/Quads Config/Settings/DAQ/Links/LVDSLinkInvert", LVDSLinkInvert);
+}
+
 function renderGrid(gridId, data, febID, gridID) {
     const grid = document.getElementById(gridId);
     grid.innerHTML = '';
