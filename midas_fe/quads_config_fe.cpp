@@ -25,7 +25,7 @@
  * @author
  * Marius Snella Köppel
  * @date
- * 2026-07-04
+ * 2025-07-04
  */
 
 #include <stdio.h>
@@ -127,14 +127,14 @@ int write_command_by_name(const char* name, uint32_t payload = 0, uint16_t addre
 int begin_of_run() {
 // bring the FEBs into running
 #ifndef NO_A10_BOARD
-    odb r("/Runinfo/Run number");
+    midas::odb r("/Runinfo/Run number");
     uint32_t run_number = r;
-    mu.write_register(RUN_NR_REGISTER_W, run_number);
+    mup->write_register(RUN_NR_REGISTER_W, run_number);
     uint32_t start_setup = 0;
     start_setup = SET_RESET_BIT_RUN_START_ACK(start_setup);
     start_setup = SET_RESET_BIT_RUN_END_ACK(start_setup);
-    mu.write_register_wait(RESET_REGISTER_W, start_setup, 1000);
-    mu.write_register(RESET_REGISTER_W, 0x0);
+    mup->write_register_wait(RESET_REGISTER_W, start_setup, 1000);
+    mup->write_register(RESET_REGISTER_W, 0x0);
 
     // send run start
     write_command_by_name("Abort Run");
@@ -147,16 +147,15 @@ int begin_of_run() {
     uint32_t link_active_from_register;
     uint16_t timeout_cnt = 300;
     uint32_t link_active_from_odb = 0;
-    for (int idx = 0; idx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); ++i)
-        if (m_settings["DAQ"]["Links"]["FEBsActive"][i])
+    for (int idx = 0; idx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); ++idx)
+        if (m_settings["DAQ"]["Links"]["FEBsActive"][idx])
             link_active_from_odb = link_active_from_odb || (1 << idx);
     printf("Waiting for run prepare acknowledge from all FEBs\n");
     // TODO: test this part of checking the run number
     do {
         timeout_cnt--;
-        link_active_from_register = mup.read_register_ro(RUN_NR_ACK_REGISTER_R);
-        printf("%u  %" PRIx64 "  %" PRIx64 "\n", timeout_cnt, link_active_from_odb,
-               link_active_from_register);
+        link_active_from_register = mup->read_register_ro(RUN_NR_ACK_REGISTER_R);
+        printf("%u  %u %u\n", timeout_cnt, link_active_from_odb, link_active_from_register);
         usleep(10000);
     } while ((link_active_from_register & link_active_from_odb) != link_active_from_odb &&
              (timeout_cnt > 0));

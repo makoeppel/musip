@@ -4,12 +4,14 @@ This is a MIDAS-based frontend for the Mupix11 based quad moduels.
 
 ## 📁 Project Structure
 
-- `midas_fe/` – Core frontend source code
 - `analyzer/` – Analysis utilities
-- `tools/` – Helper tools and scripts (mainly for the analyzer)
 - `custom/` – Custom pages for MIDAS
+- `docs/` – Documentation folder
+- `midas_fe/` – Core frontend source code
 - `tests/` – Unit tests for the project
+- `tools/` – Helper tools and scripts (mainly for the analyzer)
 - `.clang-format` – Project-wide code style config
+- `mkdocs.yml` – Setup for the documentation
 
 ## Build Instructions
 
@@ -43,12 +45,21 @@ CMake will download googletests to run the tests.
 
 ```bash
 cd build
-./tests/runTests
+./tests/sample_test
+./tests/bits_utils_test
 ```
 
 ### Docs
-If doxygen is installed one can build the docs via.
+We use mkdocs for generating the documentation:
 
 ```bash
-make doc_doxygen
+pip install mkdocs
+pip install mkdocs-material
+pip install mkdoxy
+```
+
+If its installed one can generate the documentation via:
+```bash
+make doc_mkdocs
+make serve_mkdocs
 ```

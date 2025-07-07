@@ -24,7 +24,7 @@
  * @author
  * Marius Snella Köppel
  * @date
- * 2026-07-04
+ * 2025-07-04
  */
 
 #include <stdio.h>
@@ -134,8 +134,9 @@ int begin_of_run() {
     if (m_settings["Readout"]["Datagen Enable"]) {
         // setup data generator
         cm_msg(MINFO, "quad_fe", "Use datagenerator with divider register %i",
-               (int)stream_settings["Datagen Divider"]);
-        mu.write_register(DATAGENERATOR_DIVIDER_REGISTER_W, stream_settings["Datagen Divider"]);
+               (int)m_settings["Readout"]["Datagen Divider"]);
+        mu.write_register(DATAGENERATOR_DIVIDER_REGISTER_W,
+                          m_settings["Readout"]["Datagen Divider"]);
         readout_state_regs = SET_USE_BIT_GEN_LINK(readout_state_regs);
     }
 #endif
@@ -169,7 +170,7 @@ int begin_of_run() {
     mu.write_register(FARM_EVENT_ID_REGISTER_W, eventID_data);
 
     // link masks
-    mu.write_register(SWB_GENERIC_MASK_REGISTER_W, stream_settings["mask_n_generic"]);
+    mu.write_register(SWB_GENERIC_MASK_REGISTER_W, m_settings["Readout"]["mask_n_generic"]);
 
     // release reset
     mu.write_register_wait(RESET_REGISTER_W, 0x0, 100);

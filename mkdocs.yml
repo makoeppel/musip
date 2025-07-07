@@ -1,0 +1,35 @@
+site_name: musip-midas Documentation
+
+plugins:
+  - search
+  - mkdoxy:
+      projects:
+        musip: # name of project must be alphanumeric + numbers (without spaces)
+          src-dirs: midas_fe/ # path to source code (support multiple paths separated by space) => INPUT
+          full-doc: True # if you want to generate full documentation
+          doxy-cfg: # standard doxygen configuration (key: value)
+            FILE_PATTERNS: "*.cpp *.h*" # specify file patterns to filter out
+            RECURSIVE: True # recursive search in source directories
+
+nav:
+  - Home: README.md
+  - Frontends:
+      - Quad Config: musip/quads__config__fe_8cpp.md
+      - Quad Readout: musip/quads__data__fe_8cpp.md
+  - Utils:
+      - Bits utils: musip/bits__utils_8h.md
+      - Constants: musip/constants_8h.md
+      - Missing Hardware: musip/missing__hardware_8h.md
+      - ODB Setup: musip/odb__setup_8h.md
+      - General Utils: musip/utils_8h.md
+  - Registers:
+    - A10 Counter: registers/a10_counters.md
+    - A10 PCIe: registers/a10_pcie_registers.md
+    - FEB Slow Control: registers/feb_sc_registers.md
+    - FEB LVDS: registers/lvds_registers.md
+    - FEB MuPix: registers/mupix_registers.md
+    - FEB MuTRiG: registers/mutrig_registers.md
+    - FEB Sorter: registers/sorter_registers.md
+
+theme:
+  name: material

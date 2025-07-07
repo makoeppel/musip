@@ -59,6 +59,7 @@ if(CPPLINT_EXECUTABLE)
     file(GLOB_RECURSE CPPLINT_FILES
         "${CMAKE_SOURCE_DIR}/midas_fe/*.cpp"
         "${CMAKE_SOURCE_DIR}/midas_fe/*.h"
+        "${CMAKE_SOURCE_DIR}/midas_fe/registers/*.h"
     )
 
     set(CPPLINT_COMMAND "")
@@ -78,20 +79,32 @@ else()
     message(WARNING "cpplint not found. Skipping cpplint target.")
 endif()
 
-find_package(Doxygen QUIET)
+find_program(MKDOCS_EXECUTABLE mkdocs QUIET)
 
-if(DOXYGEN_FOUND)
-    message(STATUS "Doxygen found, enabling documentation target")
+if(MKDOCS_EXECUTABLE)
+    # Set docs directory and build output
+    set(DOCS_SOURCE_DIR "${CMAKE_SOURCE_DIR}/docs")
+    set(MKDOCS_CONFIG_FILE "${CMAKE_SOURCE_DIR}/mkdocs.yml")
+    set(MKDOCS_OUTPUT_DIR "${CMAKE_BINARY_DIR}/site")
 
-    set(DOXYFILE_IN ${CMAKE_CURRENT_SOURCE_DIR}/docs/Doxyfile)
-    set(DOXYGEN_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/docs)
-
-    add_custom_target(doc_doxygen
-        COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYFILE_IN}
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/docs
-        COMMENT "Generating API documentation with Doxygen"
+    # Custom target to build MkDocs documentation
+    add_custom_target(doc_mkdocs
+        COMMAND ${CMAKE_COMMAND} -E env
+                MKDOCS_CONFIG_FILE=${MKDOCS_CONFIG_FILE}
+                mkdocs build
+                --config-file ${MKDOCS_CONFIG_FILE}
+                --site-dir ${MKDOCS_OUTPUT_DIR}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Generating documentation with MkDocs"
         VERBATIM
     )
+
+    add_custom_target(serve_mkdocs
+        COMMAND ${MKDOCS_EXECUTABLE} serve
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Serving MkDocs documentation at http://127.0.0.1:8000/"
+        USES_TERMINAL
+    )
 else()
-    message(STATUS "Doxygen not found, skipping documentation target")
+    message(STATUS "Mkdocs not found, skipping documentation target")
 endif()
