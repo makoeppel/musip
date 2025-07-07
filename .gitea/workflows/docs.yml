@@ -21,7 +21,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install mkdocs mkdocs-material mkdocs-doxygen-plugin
+          pip install mkdocs mkdocs-material mkdoxy
           sudo apt-get update
           sudo apt-get install -y doxygen
 
