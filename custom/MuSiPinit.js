@@ -1,0 +1,60 @@
+// Must be loaded before Mudas.js
+
+// This part to be changed depending on instrument
+var instrName     = "MuSiP";
+var instrColor    = "#FF0000";
+var elogLink      = "https://lem03.psi.ch:8000/Si-Pixel/";
+var autoRunPath   = "/home/mu3e/debug_online/online/userfiles/sequencer";
+
+// Make a Map for instrument specific ODBs
+var instrODB = {
+    runStatus:     "/Runinfo/State",
+    runTitle:      "/Experiment/Run Parameters/comment",
+    runNumber:     "/Runinfo/Run number",
+    autorunStatus: "/AutoRun/Status",
+    startTime:     "/Runinfo/Start time",
+    stopTime:      "/Runinfo/Stop time",
+    eventRate:     "/Equipment/Quads Data/Statistics/Events per sec.",
+    protonCurr:    "/Equipment/Scaler/Variables/RATE/Ip",
+    totalStats:    "/Equipment/Quads Data/Statistics/Events sent",
+    sampleName:    "/Info/Sample Name",
+    // This depends on the used equipment
+    sampleTemp:    "/Equipment/SampleCryo/Variables/Input[0]",
+    magField:      "",
+    impEnergy:     "/Info/Implantation Energy (keV)",
+    pID:           "/Info/File_Header_Info/Proposal Number",
+    pPI:           "/Info/File_Header_Info/Main Proposer",
+    pGRP:          "/Info/File_Header_Info/P-Group",
+}
+// This is the tab ordering
+// Buttons go in tabBtns and html goes into tabFrames
+var instrTabs = {
+    runControl : {
+	order   : 1,              // or according to order    
+	label   : "Run Control",  // Label of the tab
+	addFunc : "",             // preferably always empty
+	htmlFile: "RunControl_tab.html", // HTML file name for the tab
+	style   : "Tab",          // Tab or Menu
+    },
+    autoRun : {
+	order   : 2,              
+	label   : "Auto Run",  
+	addFunc : "",
+	htmlFile: "AutoRun_tab.html", 
+	style   : "Tab",          
+    },
+    samCryo : {
+	order   : 3,              
+	label   : "Sample Cryo.",  
+        addFunc : "histRefresh();",
+	//addFunc : "",
+	htmlFile: "Cryo_tab.html", 
+	style   : "Tab",          
+    },
+}
+
+
+
+// End of changeable part
+
+

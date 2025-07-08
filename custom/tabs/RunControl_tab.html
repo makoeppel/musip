@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html class="mcss">
+  <head>
+    <title>Run Control</title>
+    <meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+  </head>
+  <body>
+    <div>
+      <div class="col-full">
+	<input class="mbutton" id="startButton" type="button" value="Start" onclick="startRun();runStatus(-2);" style="visibility: visible;">
+	<input class="mbutton" id="stopButton" type="button" value="Stop" onclick="stopRun();runStatus(-2);" style="visibility: visible;">
+	<input class="mbutton" id="pauseButton" type="button" value="Pause" onclick="pauseRun();runStatus(-2);" style="visibility: visible;">
+	<input class="mbutton" id="resumeButton" type="button" value="Resume" onclick="resumeRun();runStatus(-2);" style="visibility: visible;">
+	<input class="mbutton" id="writeButton" type="button" value="Write" onclick="modbset('/Analyzer/Forced Write Data Flag','y');" style="visibility: visible;float:right">
+      </div>
+      <div class="row">
+	<div class="col-1">
+          <table class="guitable" style="width: 100%; height:250px">
+	    <tr>
+	      <td class="gray_td" style="width: 10em;"></td>
+	      <td class="nocol_td">Demand</td>
+	      <td class="nocol_td">Readback</td>
+	    </tr>
+	    <tr>
+	      <td class="gray_td">Sample Temp.</td>
+	      <td id="SampleT" class="nocol_td"><span class="modbvalue" id="sampleTempD" data-odb-path="/Equipment/SampleCryo/Variables/Output[0]" data-format="f2.1" data-odb-editable="1"></span><span id="unitTD">K</span></td>
+	      <td class="yellow_td"><span class="modbvalue" id="sampleTempR" data-format="f2" data-odb-path="/Equipment/SampleCryo/Variables/Input[0]"></span>/<span class="modbvalue" id="sampleTempR" data-format="f2" data-odb-path="/Equipment/SampleCryo/Variables/Input[1]"></span>  <span id="unitTR">K</span><span style="float:right"><a id="histTLink" onclick="mhistory_dialog('SampleCryo','SampleTemp');"><img src="Graph.ico" width="20" height="15"></a></span></td>
+	    </tr>
+	    <tr id="RateRow">
+	      <td class="gray_td">Ramp Rate</td>
+	      <td id="RateT" class="nocol_td"><span class="modbvalue" data-odb-path="/Equipment/SampleCryo/Variables/Output[6]" data-format="f2.1" data-odb-editable="1"></span> K/min</td>
+	      <td class="yellow_td"><span class="modbvalue" data-format="f2" data-odb-path="/Equipment/SampleCryo/Variables/Input[15]"></span> K/min</td>
+	    </tr>
+	    <tr>
+	      <td class="gray_td">Heater</td>
+	      <td class="nocol_td">
+		<select class="modbselect" data-odb-path="/Equipment/SampleCryo/Variables/Output[4]">
+		  <option value="1">Low</option>
+		  <option value="2">Medium</option>
+		  <option value="3">High</option>
+		</select>
+	      </td>
+	      <td id="Heater" class="yellow_td"><span class="modbvalue" data-odb-path="/Equipment/SampleCryo/Variables/Input[8]" data-format="f1"></span>%<span style="float:right"><a onclick="mhistory_dialog('SampleCryo','Heater');"><img src="Graph.ico" width="20" height="15"></a></span></td>
+	    </tr>
+	    <tr id="PRow">
+	      <td class="gray_td">P</td>
+	      <td class="nocol_td"><span class="modbvalue" data-odb-path="/Equipment/SampleCryo/Variables/Output[1]" data-format="f2.1" data-odb-editable="1"></span></td>
+	      <td class="yellow_td"><span class="modbvalue" data-format="f2" data-odb-path="/Equipment/SampleCryo/Variables/Input[10]"></span></td>
+	    </tr>
+	    <tr id="IRow">
+	      <td class="gray_td">I</td>
+	      <td class="nocol_td"><span class="modbvalue" data-odb-path="/Equipment/SampleCryo/Variables/Output[2]" data-format="f2.1" data-odb-editable="1"></span></td>
+	      <td class="yellow_td"><span class="modbvalue" data-format="f2" data-odb-path="/Equipment/SampleCryo/Variables/Input[11]"></span></td>
+	    </tr>
+	    <tr id="DRow">
+	      <td class="gray_td">D</td>
+	      <td class="nocol_td"><span class="modbvalue" data-odb-path="/Equipment/SampleCryo/Variables/Output[3]" data-format="f2.1" data-odb-editable="1"></span></td>
+	      <td class="yellow_td"><span class="modbvalue" data-format="f2" data-odb-path="/Equipment/SampleCryo/Variables/Input[12]"></span></td>
+	    </tr>
+	    <tr>
+	      <td class="gray_td">Magnetic Field</td>
+	      <td class="nocol_td">
+		<span class="modbvalue" data-format="f1"
+		      data-validate="setFieldCurrent" data-odb-editable="1"></span> G
+	      </td>
+	      <td class="yellow_td">
+		<span class="modbvalue" data-format="f1" ></span> G
+	      </td>
+	    </tr>
+	  </table>              
+	</div>
+	<div class="col-2">
+	  
+		  <div class="mjshistory" data-group="Sample" data-panel="Temperature" style="width:100%;height:250px"></div>
+	</div>
+      </div>
+    </div>
+  </body>
+</html>
+
+

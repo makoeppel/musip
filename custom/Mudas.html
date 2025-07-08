@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html class="mcss">
+  <head>
+    <meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=0.7">
+    <link rel="stylesheet" href="midas.css">
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <script src="midas.js"></script>
+    <script src="mhttpd.js"></script>
+    <script src="mhistory.js"></script>
+    <script src="controls.js"></script>
+    <script src="odbbrowser.js"></script>
+    <script src="filesrw.js"></script>
+    <script src="MuSiPinit.js"></script>
+    <script src="Mudas.js"></script>
+    <title>Mudas MuSiP</title>
+  </head>
+  <body class="mcss" onload="fillODBs();mhttpd_init('Mudas'); Mudas_init_once();Mudas_init();">
+    <!-- header and side navigation will be filled in mhttpd_start -->
+    <div id="mheader"></div>
+    <div id="msidenav"></div>
+    <div id="mmain" style="border-radius: 12px;display: flex; flex-direction: column; height: 99.5vh;">
+      <table class="mtable" style="border-spacing: 0px;padding:0px; width: 99%;flex-grow: 1;">
+        <tr>
+          <td><table id="alarmsTable" style="padding: 0px;width: 100%;"></table></td>
+        </tr>
+        <tr>
+          <td>
+            <div id="topRow" class="col-full">
+              <table class="guitable">
+                <tr><td colspan="4"><center><span id="instrName"></span></center></td></tr>
+                <tr>
+                  <td style="width:100px">Run <span id="runNumber" onchange="updateFitLink();" class="modbvalue"></span>:</td>
+                  <td style="width:150px" id="StatusRow">
+                    <a id="musrfitRun" target="fitwin"><img src="MuSRFit.png" width="20rem" height="16rem"></a>
+                    <span style="float:left;vertical-align: top;" id="runStatusBanner"></span>
+                    <span class="modbvalue" id="runStatus" onchange="runStatus(this.value);" style="float:left;visibility:hidden;"></span>
+                  </td>
+                  <td style="width:100px">Sequencer: </td>
+                  <td>
+                    <span style="padding: 0.0em 1.0em 0.0em 1.0em;border-radius:5px;box-shadow: 5px 5px 5px grey;width:250px;" id="AutorRunState"></span>
+                    <span id="autorunStatus" class="modb" onload="setLARState(this);" onchange="setLARState(this);"></span>
+                    <span style="float:right;">
+                      <a id="elogLink" target="_blank">
+                        <img src="https://lem03.psi.ch:8000/LEM_Experiment/elog.png">
+		      </a>
+		    </span>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="width:100px">Title: </td>
+                  <td colspan="3">
+                    <span id="runTitle" class="modbvalue" data-size="120" data-odb-editable="1"></span>
+                  </td>
+                </tr>
+              </table>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td colspan="4">
+            <div id="infoRow">
+              <div class="col-1a">
+                <table class="guitable">
+                  <tr>
+                    <td style="width:10em;">Start time:</td>
+                    <td>
+		      <span id="startTime" class="modbvalue"></span>
+		    </td>
+		  </tr>
+		  <tr>
+		    <td id="stopTimetd">Stop time: </td>
+                    <td>
+		      <span id="vstopTimetd"></span>
+		      <span id="stopTime" class="modbvalue"></span>
+		    </td>
+		  </tr>
+		  <tr>
+		    <td>Event rate: </td>
+		    <td>
+		      <span id="eventRate" class="modbvalue" data-format="f0"></span> /s  
+		      <span style="float:right"><a style="cursor: pointer" onclick="mhistory_dialog('Rates','LEmuPos');"><img src="Graph.ico" width="20" height="15"></a></span>
+		    </td>
+		  </tr>
+		  <tr>
+		    <td>Total stats: </td>
+		    <td>
+                      <span id="totalStats" data-formula="x/1e6" data-format="f3" class="modbvalue" ></span> M
+                    </td>
+                  </tr>
+                </table>
+              </div>
+              <div class="col-2a">
+                <table class="guitable">
+                  <tr>
+                    <td style="width:10em;">Sample:</td>
+                    <td>
+		      <span id="sampleName" class="modbvalue" data-odb-editable="1"></span>
+		      <a id="SearchDBlink" target="searchwin"><!-- &#8981;--> 
+		        <img src="SearchDB.png" height="16rem">
+		      </a>
+		    </td>
+		  </tr>
+                  <tr><td>Temperature:</td><td><span id="sampleTemp" class="modbvalue" data-format="f2"></span> K <span style="float:right"><a style="cursor: pointer" onclick="mhistory_dialog('SampleCryo','SampleTemp');"><img src="Graph.ico" width="20" height="15"></a></span></td></tr>
+                  <tr><td>Field:</td><td><span id="magField" class="modbvalue" data-format="f1"></span> G                </td></tr>
+                  <tr><td colspan="2">&nbsp;</td></tr>
+                </table>
+              </div>
+              <div class="col-3a">
+                <table class="guitable">
+                  <tr>
+                    <td style="width:10em;">Proposal ID:</td>
+                    <td id="propID"><span id="pID" class="modbvalue" data-odb-editable="1" onchange="propODB(0);"></span></td>
+                    <td id="propBtn" rowspan="3"><input class="mbutton" id="propFromDuo" type="button" value="From DUO" onclick="propODB(1);" style="float:right;visibility: hidden;"> </td>
+                  </tr>
+                  <tr>
+                    <td>P-Group:</td>
+                    <td id="propGRP"><span id="pGRP" name="modbvalue" data-odb-editable="1" onchange="propODB(0);"></span>   </td>
+                  </tr>
+                  <tr>
+                    <td>PI:</td>
+                    <td id="propPI"><span id="pPI" class="modbvalue" data-odb-editable="1" onchange="propODB(0);"></span>      </td>
+                  </tr>
+                  <tr>
+                    <td colspan="2">&nbsp;</td>
+                  </tr>
+                  <!--<tr>
+                      <td colspan="2">
+                        <span id="autorunStatus" style="font-family:monospace;font-size:70%;" class="modbvalue"></span>
+                      </td>
+                  </tr>-->
+                </table>
+              </div>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <div id="tabsRow" class="col-full" style="flex: 1 1 auto;">
+              <div id="tabBtns" class="w3-bar w3-padding-0 w3-small w3-mobile">
+                <div id="beforeMenu" class="w3-dropdown-hover w3-hover">
+                  <button class="w3-button w3-round w3-hide-medium"><b>More...</b></button>
+                  <div id="tabMenu" class="w3-dropdown-content w3-bar-block w3-card-4r">
+		    <a class="w3-bar-item w3-button w3-round" onclick="openTab(event,this.id)" id="100"><b>HIPA</b></a>
+		    <a href="http://musruser.psi.ch" target="_blank" class="w3-bar-item w3-button w3-round" onclick=""><b>musruser</b></a>
+		  </div>
+		</div>
+		<div style="line-height: 0.8rem;" class="w3-bar-item w3-button w3-round w3-right">
+		  <a style="cursor: pointer" title="Hide information row" onclick="showHide('infoRow',this);">-</a><br>
+		  <a style="cursor: pointer" id="Maximize" title="Maximize" onclick="showHide('infoRow',this);showHide('topRow',this);">&#10064;</a>
+                  <a style="cursor: pointer" title="Move up" onclick="swapDiv('tabsRow','infoRow',this)">&uarr;</a>
+                </div>
+              </div>
+            </div>
+          </td>
+        </tr>
+        <tr style="background-color:#f2f2f2;flex-grow: 1;">
+          <td style="width:100%;height: 100%;vertical-align:top">
+              <div id="tabFrames">
+                <div id="Tab100" class="tabcontent">
+                  <center><img style="align:center;height: 100%;" alt="HIPA Status comes here just in a moment" id="HIPAimg"></center>
+                </div>
+              </div>
+          </td>
+        </tr>
+      </table>
+      <script>
+	// First odbs and tabs
+	fillTabs();
+	fillODBs();
+
+        // getUrlVars should ignore #
+        var getVars = getUrlVars();
+        
+        // Check which tab is selected, if none take default
+        if (getVars["tab"] == null) {
+	   getVars["tab"]="1";
+	}
+        getVars["tab"] = getVars["tab"].replace("#","");
+        
+	// Check miminized state
+	if (getVars["min"] == 1) {
+           //window.location.href += "min=1";
+           showHide("infoRow","");
+           showHide("topRow","");
+	   document.getElementById("Maximize").innerHTML = "&#128471;";
+          // show side menu
+          // mhttpd_show_menu(1);
+           //mhttpdConfigSet('hideMenu', false);		    
+        }
+        
+        // Click on tab
+        //console.log("tab=",getVars["tab"]);
+	document.getElementById(getVars["tab"]).click();
+
+	// Rezise histories when window is resized
+	window.addEventListener("resize", histResize);
+	var doit;
+	function histResize() {
+	   clearTimeout(doit);
+           doit = setTimeout(histRefresh, 100);
+        }
+
+        // Check whether the sequencer is running
+        checkProgram("lemAutoRunFE");
+        
+        // Auto snippet generation buttons
+        let larSnippets = `
+          <table class="guitable">
+            <tr><td class="gray_td">
+                Run Blocks
+            </td></tr>
+            <tr><td>
+                <input class="mbutton" id="tempLoop" type="button" value="Temperature Loop" onclick="insertSnippet(this)" style="width:150px;">
+            </td></tr>
+            <tr><td>
+                <input class="mbutton" id="hvLoop" type="button" value="Sample HV Loop" onclick="insertSnippet(this)" style="width:150px;">
+            </td></tr>
+            <tr><td>
+                <input class="mbutton" id="setTitle" type="button" value="Single Run" onclick="insertSnippet(this)" style="width:150px;">
+            </td></tr>
+            <tr><td class="gray_td">
+                Set Commands
+            </td></tr>
+            <tr><td>
+                <input class="mbutton" id="setTemp" type="button" value="Temperature" onclick="insertSnippet(this)" style="width:150px;">
+            </td></tr>
+            <tr><td>
+                <input class="mbutton" id="setField" type="button" value="Magnetic Field" onclick="insertSnippet(this)" style="width:150px;">
+            </td></tr>
+            <tr><td>
+                <input class="mbutton" id="setSamHV" type="button" value="Sample HV" onclick="insertSnippet(this)" style="width:150px;">
+            </td></tr>
+            <tr><td>
+                <input class="mbutton" id="setSR" type="button" value="SR Angle" onclick="insertSnippet(this)" style="width:150px;">
+            </td></tr>
+            <tr><td>
+                <input class="mbutton" id="setRA" type="button" value="Ring Anode" onclick="insertSnippet(this)" style="width:150px;">
+            </td></tr>
+            <tr><td>
+                <input class="mbutton" id="setODB" type="button" value="General ODB" onclick="insertSnippet(this)" style="width:150px;">
+            </td></tr>
+            <tr><td class="gray_td">
+                Other
+            </td></tr>
+            <tr><td>
+                <input class="mbutton" id="degMagnet" type="button" value="Degauss Magnet" onclick="insertSnippet(this)" style="width:150px;">
+            </td></tr>
+            <tr><td>
+                <input class="mbutton" id="trHV" type="button" value="Transport HV" onclick="insertSnippet(this)" style="width:150px;">
+            </td></tr>
+            <tr><td>
+                <input class="mbutton" id="warmupDate" type="button" value="Warmup" onclick="insertSnippet(this)" style="width:150px;">
+            </td></tr>
+            <tr><td>
+                <label class="switch"><input id="enablePop" type="checkbox" checked><span class="slider round"></span></label> Enable Pop-Up
+            </td></tr>
+          </table>`;
+        let lard = dlgGeneral({html: larSnippets,iddiv: "LAR Snippets",width: 170,height: 540,x: window.innerWidth-200,y: window.innerHeight-745});
+        lard.shouldDestroy = false;
+        // divorce fropm standard dialogs
+        lard.classList.remove("dlgFrame");
+        lard.className = "dlgProgress";
+        let closeSnpBtn = lard.querySelector("#cvsClose").parentElement;
+        // Instead of remove, repurpose to hide
+        //closeSnpBtn.remove();
+        dlgHide(lard);       
+        // Create a new observer instance
+        const visibilityObserver = new MutationObserver((mutations) => {
+           mutations.forEach((mutation) => {
+              if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                 const visibility = mutation.target.style.display;
+                 //progressBars.checked = !(visibility === 'none');
+              }
+           });
+        });
+        // Configuration of the visibility observer:
+        const visibilityConfig = { attributes: true, attributeFilter: ['style'] };
+        // Start observing the targetProgress dialog display status
+        //visibilityObserver.observe(d, visibilityConfig);
+        
+        // Check open in new tab
+        let inNewTab = document.getElementById("inNewTab");
+        if (localStorage.getItem("inNewTab") && inNewTab) {
+           inNewTab.checked = true;
+        }
+        
+        // Check background color
+        let lToDcheck = document.getElementById("darkMode");
+        if (localStorage.getItem("darkMode") && lToDcheck) {
+           lToDcheck.checked = localStorage.getItem("darkMode");
+        }
+        lightToDark(lToDcheck);
+        
+        // Check follow current line
+        let scrToCurr = document.getElementById("scrollToCurr");
+        if (localStorage.getItem("scrollToCurr") && scrToCurr) {
+           scrToCurr.checked = localStorage.getItem("scrollToCurr");
+        }
+
+        function windowResize() {
+           const tabFrames = document.getElementById("tabFrames");
+           // Calculate scrollbar width
+           const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+           
+           // Visible width of the window accounting for scrollbar
+           let winWidth = Math.max(document.documentElement.clientWidth, window.innerWidth) - scrollbarWidth;
+           
+           // Visible height of the window
+           let winHeight = Math.max(document.documentElement.clientHeight, window.innerHeight);
+           
+           // Set tabFrames height and width to fit the remaining space in the viewport
+           //tabFrames.style.width = winWidth - tabFrames.getBoundingClientRect().left -200 + "px";
+           //tabFrames.style.height = winHeight - tabFrames.getBoundingClientRect().top - 20 + "px";
+           
+           // Adjust editor dimensions
+           //const editorTop = editor.getBoundingClientRect().top;
+           //editor.style.height = winHeight - editorTop - 20 + "px"; 
+           //editor.style.width = winWidth - editor.getBoundingClientRect().left - infoColumn.getBoundingClientRect().width - 10 + "px";
+           //editor.style.maxWidth = editor.style.width;
+           
+           // Adjust infoColumn and lineNumbers heights to match the editor height
+           //infoColumn.style.height = editor.style.height;
+           //lineNumbers.style.height = editor.style.height;
+        }
+        
+        //window.addEventListener("resize", windowResize);
+        //windowResize();
+
+      </script>
+  </body>
+</html>
