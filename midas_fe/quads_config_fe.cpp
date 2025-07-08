@@ -320,7 +320,7 @@ int read_sc_event(char* pevent, int off) {
 
     // create a bank with the matrix status
     bk_create(pevent, "PCMS", TID_DWORD, (void**)&pdata);
-    for (auto data : lvds_banks) *pdata++ = data;
+    for (auto data : matrix_banks) *pdata++ = data;
     bk_close(pevent, pdata);
 
     return bk_size(pevent);

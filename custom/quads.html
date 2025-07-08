@@ -27,15 +27,30 @@
 
     <h2>Configuration</h2>
 
-    <h2>4 Selectable 2x2 Grids</h2>
     <div class="grid-container">
-        <div class="grid" id="grid0" data-grid-id="0"></div>
-        <div class="grid" id="grid1" data-grid-id="1"></div>
-        <div class="grid" id="grid2" data-grid-id="2"></div>
-        <div class="grid" id="grid3" data-grid-id="3"></div>
+        <div class="grid-wrapper" data-grid-id="0">
+            <h3 style="text-align: center;">Quad 0</h3>
+            <div class="grid" id="grid0" data-grid-id="0"></div>
+        </div>
+        <div class="grid-wrapper" data-grid-id="1">
+            <h3 style="text-align: center;">Quad 1</h3>
+            <div class="grid" id="grid1" data-grid-id="1"></div>
+        </div>
+    </div>
+    <br>
+    <div class="grid-container">
+        <div class="grid-wrapper" data-grid-id="2">
+            <h3 style="text-align: center;">Quad 2</h3>
+            <div class="grid" id="grid2" data-grid-id="2"></div>
+        </div>
+        <div class="grid-wrapper" data-grid-id="3">
+            <h3 style="text-align: center;">Quad 3</h3>
+            <div class="grid" id="grid3" data-grid-id="3"></div>
+        </div>
     </div>
 
     <p><strong>Selected cell indices:</strong> <span id="selectedDisplay"></span></p>
+    <button class="mbutton" onclick="sendStateToBackend()">Save Configuration</button>
 
     <div class="container">
         <table class="mtable" id="sensorSelection">
