@@ -13,6 +13,7 @@
     <script src="filesrw.js"></script>
     <script src="MuSiPinit.js"></script>
     <script src="Mudas.js"></script>
+    <script src="sequencer.js"></script>
     <title>Mudas MuSiP</title>
   </head>
   <body class="mcss" onload="fillODBs();mhttpd_init('Mudas'); Mudas_init_once();Mudas_init();">
@@ -202,69 +203,8 @@
         }
 
         // Check whether the sequencer is running
-        checkProgram("lemAutoRunFE");
-        
-        // Auto snippet generation buttons
-        let larSnippets = `
-          <table class="guitable">
-            <tr><td class="gray_td">
-                Run Blocks
-            </td></tr>
-            <tr><td>
-                <input class="mbutton" id="tempLoop" type="button" value="Temperature Loop" onclick="insertSnippet(this)" style="width:150px;">
-            </td></tr>
-            <tr><td>
-                <input class="mbutton" id="hvLoop" type="button" value="Sample HV Loop" onclick="insertSnippet(this)" style="width:150px;">
-            </td></tr>
-            <tr><td>
-                <input class="mbutton" id="setTitle" type="button" value="Single Run" onclick="insertSnippet(this)" style="width:150px;">
-            </td></tr>
-            <tr><td class="gray_td">
-                Set Commands
-            </td></tr>
-            <tr><td>
-                <input class="mbutton" id="setTemp" type="button" value="Temperature" onclick="insertSnippet(this)" style="width:150px;">
-            </td></tr>
-            <tr><td>
-                <input class="mbutton" id="setField" type="button" value="Magnetic Field" onclick="insertSnippet(this)" style="width:150px;">
-            </td></tr>
-            <tr><td>
-                <input class="mbutton" id="setSamHV" type="button" value="Sample HV" onclick="insertSnippet(this)" style="width:150px;">
-            </td></tr>
-            <tr><td>
-                <input class="mbutton" id="setSR" type="button" value="SR Angle" onclick="insertSnippet(this)" style="width:150px;">
-            </td></tr>
-            <tr><td>
-                <input class="mbutton" id="setRA" type="button" value="Ring Anode" onclick="insertSnippet(this)" style="width:150px;">
-            </td></tr>
-            <tr><td>
-                <input class="mbutton" id="setODB" type="button" value="General ODB" onclick="insertSnippet(this)" style="width:150px;">
-            </td></tr>
-            <tr><td class="gray_td">
-                Other
-            </td></tr>
-            <tr><td>
-                <input class="mbutton" id="degMagnet" type="button" value="Degauss Magnet" onclick="insertSnippet(this)" style="width:150px;">
-            </td></tr>
-            <tr><td>
-                <input class="mbutton" id="trHV" type="button" value="Transport HV" onclick="insertSnippet(this)" style="width:150px;">
-            </td></tr>
-            <tr><td>
-                <input class="mbutton" id="warmupDate" type="button" value="Warmup" onclick="insertSnippet(this)" style="width:150px;">
-            </td></tr>
-            <tr><td>
-                <label class="switch"><input id="enablePop" type="checkbox" checked><span class="slider round"></span></label> Enable Pop-Up
-            </td></tr>
-          </table>`;
-        let lard = dlgGeneral({html: larSnippets,iddiv: "LAR Snippets",width: 170,height: 540,x: window.innerWidth-200,y: window.innerHeight-745});
-        lard.shouldDestroy = false;
-        // divorce fropm standard dialogs
-        lard.classList.remove("dlgFrame");
-        lard.className = "dlgProgress";
-        let closeSnpBtn = lard.querySelector("#cvsClose").parentElement;
-        // Instead of remove, repurpose to hide
-        //closeSnpBtn.remove();
-        dlgHide(lard);       
+        checkProgram("Sequencer");
+
         // Create a new observer instance
         const visibilityObserver = new MutationObserver((mutations) => {
            mutations.forEach((mutation) => {

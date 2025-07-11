@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html class="mcss">
+  <head>
+    <title>Sequencer</title>
+  </head>
+  <body>
+    <table id="seqTable" style="width:100%;border: 0px none;">       
+      <tr style="background-color: #f2f2f2;">
+        <td colspan="4">
+          <span class="dropdown">
+            <button class="dropmenu" id="file-menu">File</button>
+            <div class="dropdown-content">
+              <div onclick="addETab(document.getElementById('addETab'));"><span class="label">New</span><span class="shortcut">Alt+N</span></div>
+              <div onclick="seqOpen();"><span class="label">Open</span><span class="shortcut">Alt+O</span></div>
+	      <div class="noteditor" onclick="seqSave();"><span class="label">Save</span><span class="shortcut">Ctrl+S</span></div>
+ 	      <div class="noteditor" onclick="seqSave('');"><span class="label">Save As...</span><span class="shortcut">Alt+S</span></div>
+            </div>
+          </span>
+          <span class="dropdown">
+            <button class="dropmenu" id="edit-menu">Edit</button>
+            <div class="dropdown-content">
+              <div class="undoMenu" onclick="editMenu('Undo');"><span class="label">Undo</span><span class="shortcut">Ctrl+Z</span></div>
+              <div class="redoMenu" onclick="editMenu('Redo');"><span class="label">Redo</span><span class="shortcut">Ctrl+R</span></div>
+            </div>
+          </span>
+          <span class="dropdown">
+            <button class="dropmenu" id="commands-menu">Commands</button>
+            <div class="dropdown-content">
+              <div class="seqbtn Stopped" onclick="startSeq();"><span class="label">Start</span></div>
+              <div class="seqbtn Stopped" onclick="debugSeq();"><span class="label">Debug</span></div>
+              <div class="seqbtn Stopped Running Paused StopAfter SetAsNext" onclick="setAsNext();"><span class="label">Set As Next</span></div>
+              <div class="seqbtn Running Paused StopAfter" onclick="stopSeq();"><span class="label">Stop</span></div>
+              <div class="seqbtn Running StopAfter" onclick="modbset('/Sequencer/Command/Pause script',true);"><span class="label">Pause</span></div>
+              <div class="seqbtn Paused" onclick="modbset('/Sequencer/Command/Resume script',true);"><span class="label">Resume</span></div>
+              <div class="seqbtn Running Paused StopAfter" onclick="modbset('/Sequencer/Command/Step over',true);"><span class="label">Step Over</span></div>
+              <div class="seqbtn Running Paused" onclick="modbset('/Sequencer/Command/Stop after run',true);"><span class="label">Stop After Run</span></div>
+              <div class="seqbtn Running Paused StopAfter Exclusive" style="background-color: var(--myellow);" onclick="modbset('/Sequencer/Command/Cancel stop after run',true);"><span class="label">Cancel Stop After Run</span></div>
+              <div class="seqbtn Stopped Running Paused StopAfter" onclick="checkEditorContent();"><span class="label">Validate Syntax</span></div>
+            </div>
+          </span>
+          <span class="dropdown">
+            <button class="dropmenu">Options</button>
+            <div class="dropdown-content">
+              <div>
+                <span class="label"><input type="checkbox" id="scrollToCurr" onchange="scrollToCurr(this);">
+                  <label for="scrollToCurr">Follow current line&nbsp;</label></span>
+              </div>
+              <div>
+                <span class="label"><input type="checkbox" checked id="showParTable" onchange="showParTable('varContainer');">
+                  <label for="showParTable">Show variables&nbsp;</label></span>
+              </div>
+              <div>
+                <span class="label"><input type="checkbox" checked id="showNextFile" onchange="showFNTable('nextFNContainer');">
+                  <label for="showNextFile">Show next filename&nbsp;</label></span>
+              </div>
+              <div>
+                <span class="label"><input type="checkbox" checked id="showProgressBars" onchange="showProgress(this);">
+                  <label for="showProgressBars">Show progress bars&nbsp;</label></span>
+              </div>
+              <div>
+                <span class="label"><input type="checkbox" id="inNewTab" onchange="toggleCheck(this);" onload="if (localStorage.getItem(this.id)) this.checked">
+                  <label for="inNewTab">Open in new tabs&nbsp;</label></span>
+              </div>
+              <div>
+                <span class="label"><input type="checkbox" id="darkMode" onchange="lightToDark(this);"/>
+                  <label for="darkMode">Dark mode&nbsp;</label></span>
+              </div>
+            </div>
+          </span>
+          <span class="dropdown">
+            <button class="dropmenu">Help</button>
+            <div class="dropdown-content">
+              <a target="_blank" href="https://midas.triumf.ca/MidasWiki/index.php/Sequencer">Syntax Help</a>
+              <div onclick="dlgHelp();"><span class="label">Editor Help</span></div>
+            </div>
+          </span>
+          <!--Monitor state to update buttons, message etc.-->
+          <span class="modb" data-odb-path="/Sequencer/State/Running" onchange="showParTable('varContainer');seqState(updateBtns);"></span>
+          <span class="modb" data-odb-path="/Sequencer/State/Finished" onchange="seqState(updateBtns);"></span>
+          <span class="modb" data-odb-path="/Sequencer/State/Paused" onchange="seqState(updateBtns);"></span>
+          <span class="modb" data-odb-path="/Sequencer/State/Stop after run" onchange="seqState(updateBtns);"></span>
+          <span class="modb" data-odb-path="/Sequencer/State/Message" onchange="mslMessage(this.value);"></span>
+          <span class="modb" data-odb-path="/Sequencer/Script/Lines" onchange="load_msl();"></span>
+          <span class="modb" data-odb-path="/Sequencer/State/SCurrent line number" onchange="hlLine(this.value);"></span>
+          <span class="modb" data-odb-path="/Sequencer/State/Filename" onload="load_msl();" onchange="load_msl();"></span>
+          <span class="modb" data-odb-path="/Sequencer/State/Next Filename" onload="showFNTable('nextFNContainer');" onchange="showFNTable('nextFNContainer');"></span>
+          <span class="modb" data-odb-path="/Sequencer/State/SError line" onchange="hlLine(this.value,'var(--mred)');"></span>
+          <span class="modb" data-odb-path="/Sequencer/State/Error" onchange="if (this.value) {dlgMessage('Sequencer Error',this.value,false,true);}"></span>
+        </td>
+      </tr>
+      <tr style="background-color: #f2f2f2;">
+        <td>
+          <div id="iconsRow">
+            <img src="/icons/file-plus.svg" title="New File Alt+N" onclick="addETab(document.getElementById('addETab'));">
+            <img src="/icons/folder-open.svg" title="Open File Alt+O" onclick="seqOpen();">
+            <img src="/icons/save.svg" title="Save File Ctrl+S" class="noteditor" onclick="seqSave();">
+            <img src="/icons/list-add.svg" title="Set As Next" class="SetAsNext" onclick="setAsNext();">
+            <img src="/icons/rotate-ccw.svg" title="Undo Ctrl+Z" class="undoMenu" onclick="editMenu('Undo');">
+            <img src="/icons/rotate-cw.svg" title="Redo Ctrl+R" class="redoMenu" onclick="editMenu('Redo');">
+            <img src="/icons/validate-syntax.svg" title="Validate Syntax" class="seqbtn Stopped Running Paused StopAfter" onclick="checkEditorContent(this);" id="vldBtn">
+            <img src="/icons/play.svg" title="Start" class="seqbtn Stopped" onclick="startSeq();">
+            <img src="/icons/debug.svg" title="Debug" class="seqbtn Stopped" onclick="debugSeq();">
+            <img src="/icons/square.svg" title="Stop" class="seqbtn Running Paused StopAfter" onclick="stopSeq();">
+            <img src="/icons/stop-at-end.svg" title="Stop After Run" class="seqbtn Running Paused" onclick="modbset('/Sequencer/Command/Stop after run',true);">
+            <img src="/icons/cancel-stop-at-end.svg" style="background-color: var(--myellow);" title="Cancel Stop After Run" class="seqbtn Running Paused StopAfter Exclusive" onclick="modbset('/Sequencer/Command/Cancel stop after run',true);">
+            <img src="/icons/pause.svg" title="Pause" class="seqbtn Running StopAfter" onclick="modbset('/Sequencer/Command/Pause script',true);">
+            <img src="/icons/resume.svg" title="Resume" class="seqbtn Paused" onclick="modbset('/Sequencer/Command/Resume script',true);">
+            <img src="/icons/step-over.svg" title="Step Over" class="seqbtn Running Paused StopAfter" onclick="modbset('/Sequencer/Command/Step over',true);">
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td style="vertical-align: top; background-color: #f0f0f0; height:100%" id="mslControl" colspan="4">
+          <div id="etabContainer">
+            <span class="msl_msg"></span>
+            <span class="msl_err"></span>
+            <span class="msl_fatal"></span>
+            <div class="etab">
+              <button class="seqstate etablinks edt_active" id="etab1-btn" title="" onclick="openETab(this);">
+                <span class="editbtn" title="Edit sequence" onclick="askToEdit(true,event);">&#9998;</span>
+                <span class="modbvalue" onload="this.title = this.value;" onchange="this.title = this.value;" data-odb-path="/Sequencer/State/Filename"></span>
+              </button>
+              <button class="etablinks" id="addETab" onclick="addETab(this);">&#43;</button>
+            </div>
+            <div id="etab1" style="width: 100%; display:flex;" class="etabcontent">
+              <pre id="lineNumbers1" class="edt_linenum"></pre>
+              <pre id="editorTab1" class="edt_area" spellcheck="false" ondblclick="askToEdit();" contenteditable="false"></pre>
+              <span id="infoColumn" class="info_column">
+                <span class="modb" data-odb-path="/Sequencer/Variables" onload="sessionStorage.setItem('variables',this.value);varTable('varContainer',JSON.parse(this.value));" onchange="sessionStorage.setItem('variables',this.value);varTable('varContainer',JSON.parse(this.value));"></span>
+                <span class="modb" data-odb-path="/Sequencer/Param" onload="sessionStorage.setItem('parameters',this.value);" onchange="sessionStorage.setItem('parameters',this.value);"></span>
+                <span class="modb" data-odb-path="/Experiment/Edit on sequence" onload="sessionStorage.setItem('editonseq',this.value);" onchange="sessionStorage.setItem('editonseq',this.value);"></span>
+                <span style="display: none;" id="varContainer"></span>
+		<span style="display: none;" id="nextFNContainer"></span>
+              </span>
+            </div>
+            <div id="lastETab"></div>
+          </div>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

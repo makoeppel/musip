@@ -19,8 +19,8 @@ var instrODB = {
     totalStats:    "/Equipment/Quads Data/Statistics/Events sent",
     sampleName:    "/Info/Sample Name",
     // This depends on the used equipment
-    sampleTemp:    "/Equipment/SampleCryo/Variables/Input[0]",
-    magField:      "",
+    //sampleTemp:    "/Equipment/SampleCryo/Variables/Input[0]",
+    //magField:      "tt",
     impEnergy:     "/Info/Implantation Energy (keV)",
     pID:           "/Info/File_Header_Info/Proposal Number",
     pPI:           "/Info/File_Header_Info/Main Proposer",
@@ -32,28 +32,18 @@ var instrTabs = {
     runControl : {
 	order   : 1,              // or according to order    
 	label   : "Run Control",  // Label of the tab
-	addFunc : "",             // preferably always empty
+	addFunc : "mhistory_init();",             // preferably always empty
 	htmlFile: "RunControl_tab.html", // HTML file name for the tab
 	style   : "Tab",          // Tab or Menu
     },
     autoRun : {
 	order   : 2,              
-	label   : "Auto Run",  
+	label   : "Sequencer",  
 	addFunc : "",
-	htmlFile: "AutoRun_tab.html", 
-	style   : "Tab",          
-    },
-    samCryo : {
-	order   : 3,              
-	label   : "Sample Cryo.",  
-        addFunc : "histRefresh();",
-	//addFunc : "",
-	htmlFile: "Cryo_tab.html", 
+	htmlFile: "Sequencer_tab.html", 
 	style   : "Tab",          
     },
 }
-
-
 
 // End of changeable part
 

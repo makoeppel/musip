@@ -549,26 +549,15 @@ var startupCount = 0;
 function Mudas_init_once() {
    // update run state
    runStatus();
-   // Configure setup 
-   setupInit();
    // hide side menu
    // mhttpd_show_menu(0);
    // Check proposal ID against DUO
    propODB(0);
-   // Setup APD page
-   showSegment();
    // Update link to musrfit
    updateFitLink();
-   // Update cryostat page
-   updateSamcryo();
-   // Transport options
-   selColl("none");
-   // HV settings
-   mkEquipmentTable("HV",0,15,"HVTable");
-   mkEquipmentTable("Beamline",0,39,"blTable");
-   //prepEditor();
    // add event listiners to lar editor area
    checkSyntaxEvent();
+   mhistory_init();
 }
 
 // Function to run onload to setup needed options and update period of GUI
@@ -578,13 +567,13 @@ function Mudas_init() {
    document.getElementById("HIPAimg").src = "https://gfa-status.web.psi.ch/hipa-info-1024x768.png" + "?" + Date();
 
    // AutoRun update
-   load_lar();
-   
+   load_msl();
+   seqState(updateBtns);
    // Check alarms
    triggerAlarms();
 
    // Vacuum update
-   update_vacuum();
+   //update_vacuum();
 
    // Running time update
    // This is a workaround, needed only for running time
@@ -909,7 +898,7 @@ function compProp(prop_odb,proposer_odb,pgrp_odb,flag) {
    d.setHours(d.getHours() - 6);
    let curr_date = d.toISOString().slice(0,-5);
    let instrument = instrName.toLowerCase();
-   if (instrument === "musip") instrument="lmu development";
+    if (instrument === "musip") instrument="hal-9500";
    //let web_duo = 'https://duo.psi.ch/duo/rest.php/cal/smus/'+instrument+'/'+curr_date+'/?SECRET=change-bib-eva-grille';
    let web_duo = 'https://duo.psi.ch/duo/api.php/v1/CalendarInfos/scheduled/smus?beamline='+instrument+'&SECRET=change-bib-eva-grille';
    // let web_duo = 'https://duo.psi.ch/duo/rest.php/cal/smus/lem/'+curr_date+'/?SECRET=change-bib-eva-grille';
