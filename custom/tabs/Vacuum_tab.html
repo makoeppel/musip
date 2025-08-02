@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html class="mcss">
+<head>
+   <meta charset="UTF-8">
+   <title>Prep. Chamber</title>
+</head>
+
+<body>
+  <table class="guitable">
+    <tr> 
+      <th class="mtableheader">Prep. Chamber</th>
+    </tr>
+    <tr>
+      <td style="width: 90%;" align="center">
+        <svg id="pump_svg" xmlns="http://www.w3.org/2000/svg" viewbox="0 0 800 350" preserveAspectRatio="xMidYMin meet" width="800">
+          
+          <!-- vacuum chamber -->         
+          <rect class="chamber" x="35" y="140" rx="30" ry="30" width="220" height="170" />
+          <text x="70" y="230" style="font-family:Arial;font-size:20px">Vacuum Chamber</text>
+
+          <!-- buffer volume -->         
+          <rect class="chamber" x="480" y="180" rx="10" ry="10" width="100" height="50" />
+          <text x="500" y="210" style="font-family:Arial;font-size:20px">Buffer</text>
+
+          <!-- pumping lines -->
+          <line class="pump_line" x1="255" y1="205" x2="480" y2="205" />   <!-- main to buffer -->
+          <line class="pump_line" x1="580" y1="205" x2="700" y2="205" />   <!-- buffer to rough pump -->
+          <polyline class="pump_line" points="255,280 670,280 670,205" />  <!-- vent line -->
+                   
+          <!-- gate valve -->
+          <polyline id="gate_valve" points="280,170 330,240 330,170 280,240 280,170"/>
+          <!-- buffer valve -->
+          <polyline id="buffer_valve" points="600,185 650,225 650,185 600,225 600,185"/>
+          <!-- bypass valve -->
+          <polyline id="bypass_valve" points="500,260 550,300 550,260 500,300 500,260"/>
+                    
+          <!-- turbo pump  -->
+          <circle class="turbo_pump" cx ="410" cy ="205" r ="40" />
+          <circle class="turbo_pump" cx ="410" cy ="205" r ="15" />
+          <line class="turbo_pump" x1="380" y1="178" x2="450" y2="195" />         
+          <line class="turbo_pump" x1="380" y1="232" x2="450" y2="215" />
+	  <a href="#" onclick="mhistory_dialog('Sample','Turbo');"><text x="390" y="140" font-size="18px"><tspan class="modbvalue" data-odb-path="/Equipment/Pump/Variables/Input[3]" data-format="f0"></tspan>%</text></a>
+
+
+          <!-- rough pump -->
+          <circle class="rough_pump" cx ="735" cy ="205" r ="35" />
+          <line class="rough_pump" x1="710" y1="180" x2="767" y2="192" />         
+          <line class="rough_pump" x1="710" y1="230" x2="767" y2="218" />          
+
+          <!-- Gti gauge -->          
+          <line class="pump_line" x1="145" y1="140" x2="145" y2="125" />
+          <circle id="gti_gauge" cx="145" cy="105" r="20" />
+          <polyline points="130,90 145,125 160,90" style="fill:none;stroke:black;stroke-width:2" />
+          <line x1="125" y1="105" x2="165" y2="105" style="fill:none;stroke:black;stroke-width:2" />
+          <a href="#" onclick="mhistory_dialog('Sample','Vacuum');"><text x="110" y="55" font-size="18px"><tspan class="modbvalue" data-odb-path="/Equipment/Pump/Variables/Input[2]" data-format="e2"></tspan> mbar</text></a>
+         
+          <!-- GP gauge -->          
+          <line class="pump_line" x1="530" y1="180" x2="530" y2="165" />
+          <circle id="gp_gauge" cx="530" cy="145" r="20" />
+          <polyline points="515,130 530,165 545,130" style="fill:none;stroke:black;stroke-width:2" />
+          <line x1="510" y1="145" x2="550" y2="145" style="fill:none;stroke:black;stroke-width:2" />
+	  <a href="#" onclick="mhistory_dialog('Sample','Vacuum Buffer');"><text x="500" y="95" font-size="18px"><tspan class="modbvalue" data-odb-path="/Equipment/Pump/Variables/Input[1]" data-format="f2"></tspan> mbar</text></a>
+         
+        </svg>
+      </td>
+    </tr>
+    <tr>
+      <td align="center">
+	<input class="mbutton" id="startPS" type="button" value="Pump" onclick="modbset('/Equipment/Pump/Variables/Output',1);">
+	<input class="mbutton" id="ventPS" type="button" value="Vent" onclick="modbset('/Equipment/Pump/Variables/Output',2);">
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+

@@ -44,28 +44,41 @@
 	      <td id="Heater" class="yellow_td"><span class="modbvalue" data-odb-path="/Equipment/SampleCryo/Variables/Input[8]" data-format="f1"></span>%<span style="float:right"><a onclick="mhistory_dialog('Sample','Heater');"><img src="Graph.ico" width="20" height="15"></a></span></td>
 	    </tr>
 	    <tr id="PRow">
-	      <td class="gray_td">P</td>
-	      <td class="nocol_td"><span class="modbvalue" data-odb-path="/Equipment/SampleCryo/Variables/Output[1]" data-format="f2.1" data-odb-editable="1"></span></td>
-	      <td class="yellow_td"><span class="modbvalue" data-format="f2" data-odb-path="/Equipment/SampleCryo/Variables/Input[10]"></span></td>
-	    </tr>
-	    <tr id="IRow">
-	      <td class="gray_td">I</td>
-	      <td class="nocol_td"><span class="modbvalue" data-odb-path="/Equipment/SampleCryo/Variables/Output[2]" data-format="f2.1" data-odb-editable="1"></span></td>
-	      <td class="yellow_td"><span class="modbvalue" data-format="f2" data-odb-path="/Equipment/SampleCryo/Variables/Input[11]"></span></td>
-	    </tr>
-	    <tr id="DRow">
-	      <td class="gray_td">D</td>
-	      <td class="nocol_td"><span class="modbvalue" data-odb-path="/Equipment/SampleCryo/Variables/Output[3]" data-format="f2.1" data-odb-editable="1"></span></td>
-	      <td class="yellow_td"><span class="modbvalue" data-format="f2" data-odb-path="/Equipment/SampleCryo/Variables/Input[12]"></span></td>
+	      <td class="gray_td">P / I / D</td>
+	      <td class="nocol_td"><span class="modbvalue" data-odb-path="/Equipment/SampleCryo/Variables/Output[1]" data-format="f2.1" data-odb-editable="1"></span>
+		/ <span class="modbvalue" data-odb-path="/Equipment/SampleCryo/Variables/Output[2]" data-format="f2.1" data-odb-editable="1"></span>
+		/ <span class="modbvalue" data-odb-path="/Equipment/SampleCryo/Variables/Output[3]" data-format="f2.1" data-odb-editable="1"></span>
+	      </td>
+	      <td class="yellow_td"><span class="modbvalue" data-format="f2" data-odb-path="/Equipment/SampleCryo/Variables/Input[10]"></span>
+		/ <span class="modbvalue" data-format="f2" data-odb-path="/Equipment/SampleCryo/Variables/Input[11]"></span>
+		/ <span class="modbvalue" data-format="f2" data-odb-path="/Equipment/SampleCryo/Variables/Input[12]"></span>
+	      </td>
 	    </tr>
 	    <tr>
-	      <td class="gray_td">Magnetic Field</td>
+	      <td class="gray_td">Magnet Current</td>
 	      <td class="nocol_td">
 		<span class="modbvalue" data-format="f1"
-		      data-validate="setFieldCurrent" data-odb-editable="1"></span> G
+		data-odb-path="/Equipment/Danfysik_PABA_Magnet/Variables/Output[2]" data-odb-editable="1"></span> A
 	      </td>
 	      <td class="yellow_td">
-		<span class="modbvalue" data-format="f1" ></span> G
+		<span class="modbvalue" data-format="f1" data-odb-path="/Equipment/Danfysik_PABA_Magnet/Variables/Input[3]"></span> A
+	      </td>
+	    </tr>
+	    <tr>
+	      <td class="gray_td">Slits</td>
+	      <td class="nocol_td">
+		<span class="modbvalue" id="slitsValue" data-format="f1" data-odb-path="/Info/Slits" data-odb-editable="1"></span>
+		<span style="float: right;"><input class="mbutton" id="slitsButton" type="button" value="Set" onclick="setSlits(document.getElementById('slitsValue').value);" style="visibility: visible;"></span>
+	      </td>
+	      <td class="yellow_td">
+		<span class="modbvalue" data-format="f1" data-odb-path="/Equipment/EPICS/Variables/Measured[8]"></span>/
+		<span class="modbvalue" data-format="f1" data-odb-path="/Equipment/EPICS/Variables/Measured[9]"></span>/
+		<span class="modbvalue" data-format="f1" data-odb-path="/Equipment/EPICS/Variables/Measured[10]"></span>/
+		<span class="modbvalue" data-format="f1" data-odb-path="/Equipment/EPICS/Variables/Measured[11]"></span>/
+		<span class="modbvalue" data-format="f1" data-odb-path="/Equipment/EPICS/Variables/Measured[14]"></span>/
+		<span class="modbvalue" data-format="f1" data-odb-path="/Equipment/EPICS/Variables/Measured[15]"></span>/
+		<span class="modbvalue" data-format="f1" data-odb-path="/Equipment/EPICS/Variables/Measured[16]"></span>/
+		<span class="modbvalue" data-format="f1" data-odb-path="/Equipment/EPICS/Variables/Measured[17]"></span>
 	      </td>
 	    </tr>
 	  </table>              

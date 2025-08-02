@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html class="mcss">
+<head>
+  <title>Kentax</title>
+  <meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+</head>
+<body>
+  <table style="width: 100%;border: 0px none;">
+    <!--
+    <tr>
+      <td>
+	<div class="col-full">Kentax Commands:
+	  <select id="Command" onchange="autorunCommand(this.value)">
+	    <option value="Idle">Idle</option>
+	    <option value="cmd1.seq">Command 1</option>
+	  </select>
+	</div>
+      </td>
+    </tr>
+    -->
+    <tr>
+      <td>
+	<div class="row">
+	  <div class="col-1">
+	    <table class="guitable" style="width: 100%;min-height:262px;">
+	      <tr><td colspan="3" class="group_name"> Kentax</td></tr>
+	      <tr>
+		<td></td>
+		<td class="nocol_td"> Demand</td>
+		<td class="nocol_td"> Readback</td>
+              </tr>
+              <tr>
+                <td class="gray_td"> Temperature</td>
+                <td class="nocol_td">&nbsp;<span class="modbvalue" data-odb-path="/Equipment/Kentax/Variables/Output[0]" data-odb-editable="1"></span> C</td>
+                <td class="yellow_td">&nbsp;<span class="modbvalue" data-format="f2" data-odb-path="/Equipment/Kentax/Variables/Input[0]"></span> C<span style="float:right"><a href="#" onclick="mhistory_dialog('Deposition','Kentax');"><img src="Graph.ico" width="20" height="15"></a></span></td>
+              </tr>
+              <tr>
+                <td class="gray_td"> Heater</td>
+                <td class="nocol_td">&nbsp;</td>
+                <td class="yellow_td">&nbsp;<span class="modbvalue" data-format="f2" data-odb-path="/Equipment/Kentax/Variables/Input[5]"></span> %<span style="float:right"><a href="#" onclick="mhistory_dialog('Deposition','Kentax');"><img src="Graph.ico" width="20" height="15"></a></span></td>
+              </tr>
+              <tr>
+                <td class="gray_td"> P </td>
+                <td class="nocol_td">&nbsp;<span class="modbvalue" data-odb-path="/Equipment/Kentax/Variables/Output[1]" data-odb-editable="1"></span></td>
+                <td class="yellow_td">&nbsp;<span class="modbvalue" data-odb-path="/Equipment/Kentax/Variables/Input[2]"></span><span style="float:right"><a href="#" onclick="mhistory_dialog('Deposition','Kentax');"><img src="Graph.ico" width="20" height="15"></a></span></td>
+              </tr>
+	      <tr>
+		<td class="gray_td"> I </td>
+		<td class="nocol_td">&nbsp;<span class="modbvalue" data-odb-path="/Equipment/Kentax/Variables/Output[2]" data-odb-editable="1"></span></td>
+		<td class="yellow_td">&nbsp;<span class="modbvalue" data-odb-path="/Equipment/Kentax/Variables/Input[3]"></span></td>
+	      </tr>
+	      <tr>
+		<td class="gray_td"> D </td>
+		<td class="nocol_td">&nbsp;<span class="modbvalue" data-odb-path="/Equipment/Kentax/Variables/Output[3]" data-odb-editable="1"></span></td>
+		<td class="yellow_td">&nbsp;<span class="modbvalue" data-odb-path="/Equipment/Kentax/Variables/Input[4]"></span><span style="float:right"><a href="#" onclick="mhistory_dialog('Deposition','Kentax');"><img src="Graph.ico" width="20" height="15"></a></span></td>
+	      </tr>
+	      <tr>
+		<td class="gray_td"> Inst. Mode</td>
+		<td class="nocol_td">&nbsp;<span class="modbvalue" data-odb-path="/Equipment/Kentax/Variables/Output[4]" data-odb-editable="1"></span></td>
+                <td class="yellow_td">&nbsp;<span class="modbvalue" data-odb-path="/Equipment/Kentax/Variables/Input[6]"></span></td>
+	      </tr>
+	    </table> 		  
+	  </div>
+	  <div class="col-2">
+	    <table class="guitable" style="width: 100%;">
+	      <tr>
+		<td align="center" id="KentaxHist"><div class="mjshistory" data-group="Deposition" data-panel="Kentax" style="width:100%;height:250px"></div></td>
+	      </tr>
+	    </table>
+          </div>
+	</div>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

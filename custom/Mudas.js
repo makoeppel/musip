@@ -898,9 +898,9 @@ function compProp(prop_odb,proposer_odb,pgrp_odb,flag) {
    d.setHours(d.getHours() - 6);
    let curr_date = d.toISOString().slice(0,-5);
    let instrument = instrName.toLowerCase();
-    if (instrument === "musip") instrument="hal-9500";
+    if (instrument === "musip") instrument = "LMU%20Developments";
    //let web_duo = 'https://duo.psi.ch/duo/rest.php/cal/smus/'+instrument+'/'+curr_date+'/?SECRET=change-bib-eva-grille';
-   let web_duo = 'https://duo.psi.ch/duo/api.php/v1/CalendarInfos/scheduled/smus?beamline='+instrument+'&SECRET=change-bib-eva-grille';
+    let web_duo = `https://duo.psi.ch/duo/api.php/v1/CalendarInfos/scheduled/smus?beamline=${instrument}&SECRET=change-bib-eva-grille`;
    // let web_duo = 'https://duo.psi.ch/duo/rest.php/cal/smus/lem/'+curr_date+'/?SECRET=change-bib-eva-grille';
    console.log(web_duo);
    fetch(web_duo,{method:'POST'})
@@ -4441,4 +4441,23 @@ function drawCloseButton(c, mark) {
    ctx.moveTo(c.width/2+3, c.height/2-3);
    ctx.lineTo(c.width/2-3, c.height/2+3);
    ctx.stroke();
+}
+
+
+function setSlits(value) {
+    paths= ["/Equipment/EPICS/Variables/Demand[8]",
+	    "/Equipment/EPICS/Variables/Demand[9]",
+	    "/Equipment/EPICS/Variables/Demand[10]",
+	    "/Equipment/EPICS/Variables/Demand[11]",
+	    "/Equipment/EPICS/Variables/Demand[14]",
+	    "/Equipment/EPICS/Variables/Demand[15]",
+	    "/Equipment/EPICS/Variables/Demand[16]",
+	    "/Equipment/EPICS/Variables/Demand[17]"
+	   ];
+    values = Array(8).fill(value);
+    mjsonrpc_db_paste(paths,values).then(function (rpc) {
+	console.log(paths,values);
+    }).catch(function (error) {
+        console.error(error);
+    });    
 }
