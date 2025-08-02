@@ -1,7 +1,7 @@
-# Build sample SCFE
+# Build Tectra HC3500 PSU SCFE (UDIAN AI-516P, modbus)
 cmake_minimum_required(VERSION 3.03)
 
-project(sample_scfe VERSION 1.0)
+project(hc3500_scfe VERSION 1.0)
 
 find_package(Midas PATHS $ENV{MIDASSYS} REQUIRED)
 
@@ -15,30 +15,29 @@ message(STATUS "The install dir is: ${install_path}")
 set(install_path "$ENV{MIDAS_PREFIX}/bin")
 message(STATUS "The install dir is: ${install_path}")
 
-#--- set default install prefix -----------------------------------------------
 set (DRIVERS
   $ENV{MIDASSYS}/drivers/class/multi.cxx
   tcpip_rs232.cxx
-  lem_generic.cxx
-  ets_logout.cxx
-  LakeShore336.cxx
-  bronkhorst.cxx
-  thcd_100.cxx
+  hc3500.cxx
 )
 
-add_executable(sample_scfe 
-  sample_scfe.cxx 
+set (LIBS
+  -lz -lpthread -lutil -lrt
+)
+
+add_executable(HC3500_scfe 
+  hc3500_scfe.cxx 
   ${DRIVERS}
 )
 
 set_property(
   TARGET
-    sample_scfe
+    HC3500_scfe
   PROPERTY
     CXX_STANDARD 11
 )
 
-target_include_directories(sample_scfe 
+target_include_directories(HC3500_scfe 
   PRIVATE
     $ENV{MIDASSYS}/drivers
     $ENV{MIDASSYS}/include
@@ -48,14 +47,15 @@ target_include_directories(sample_scfe
     $ENV{MIDAS_WORK}/drivers/device
 )
 
-target_link_libraries(sample_scfe 
-  midas::mfe
-  midas::midas
+target_link_libraries(HC3500_scfe 
+  $ENV{MIDAS_PREFIX}/lib/libmfe.a 
+  $ENV{MIDAS_PREFIX}/lib/libmidas.a
+  ${LIBS}
 )
 
 install(
   TARGETS
-    sample_scfe
+    HC3500_scfe
   RUNTIME DESTINATION
     ${install_path}
 )

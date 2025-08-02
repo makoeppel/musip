@@ -1,0 +1,111 @@
+{
+   "/MIDAS version": "2.1",
+   "/filename": "linkSVSHV20.json",
+   "/ODB path": "/History/Links/linkSVSHV20",
+   "Common": {
+      "Event ID/key": {
+         "type": 4,
+         "access_mode": 7,
+         "last_written": 1714648581
+      },
+      "Event ID": "0x01fe"
+   },
+   "Mod1_Temperature/key": {
+      "type": 16,
+      "link": "/Equipment/SCSHV20/Settings/Devices/PHV20_1/DD/NODELOG/Temperature",
+      "access_mode": 7,
+      "last_written": 1714648779
+   },
+   "Mod1_Temperature": "/Equipment/SCSHV20/Settings/Devices/PHV20_1/DD/NODELOG/Temperature",
+   "Mod1_Load/key": {
+      "type": 16,
+      "link": "/Equipment/SCSHV20/Settings/Devices/PHV20_1/DD/NODELOG/Load",
+      "access_mode": 7,
+      "last_written": 1714648779
+   },
+   "Mod1_Load": "/Equipment/SCSHV20/Settings/Devices/PHV20_1/DD/NODELOG/Load",
+   "Mod1_Supply24V/key": {
+      "type": 16,
+      "link": "/Equipment/SCSHV20/Settings/Devices/PHV20_1/DD/NODELOG/TSupply24V",
+      "access_mode": 7,
+      "last_written": 1714648779
+   },
+   "Mod1_Supply24V": "/Equipment/SCSHV20/Settings/Devices/PHV20_1/DD/NODELOG/Supply24V",
+   "Mod1_Supply24C/key": {
+      "type": 16,
+      "link": "/Equipment/SCSHV20/Settings/Devices/PHV20_1/DD/NODELOG/Supply24C",
+      "access_mode": 7,
+      "last_written": 1714648779
+   },
+   "Mod1_Supply24C": "/Equipment/SCSHV20/Settings/Devices/PHV20_1/DD/NODELOG/Supply24C",
+   "Mod1_HV_Enable/key": {
+      "type": 16,
+      "link": "/Equipment/SCSHV20/Settings/Devices/PHV20_1/DD/HVLOG/HV_Enable",
+      "access_mode": 7,
+      "last_written": 1714648779
+   },
+   "Mod1_HV_Enable": "/Equipment/SCSHV20/Settings/Devices/PHV20_1/DD/HVLOG/HV_Enable",
+   "Mod1_HV_Set/key": {
+      "type": 16,
+      "link": "/Equipment/SCSHV20/Settings/Devices/PHV20_1/DD/HVLOG/HV_Set",
+      "access_mode": 7,
+      "last_written": 1714648779
+   },
+   "Mod1_HV_Set": "/Equipment/SCSHV20/Settings/Devices/PHV20_1/DD/HVLOG/HV_Set",
+   "Mod1_HV_Read/key": {
+      "type": 16,
+      "link": "/Equipment/SCSHV20/Settings/Devices/PHV20_1/DD/HVLOG/HV_Read",
+      "access_mode": 7,
+      "last_written": 1714648779
+   },
+   "Mod1_HV_Read": "/Equipment/SCSHV20/Settings/Devices/PHV20_1/DD/HVLOG/HV_Read",
+   "Mod2_Temperature/key": {
+      "type": 16,
+      "link": "/Equipment/SCSHV20/Settings/Devices/PHV20_2/DD/NODELOG/Temperature",
+      "access_mode": 7,
+      "last_written": 1714648779
+   },
+   "Mod2_Temperature": "/Equipment/SCSHV20/Settings/Devices/PHV20_2/DD/NODELOG/Temperature",
+   "Mod2_Load/key": {
+      "type": 16,
+      "link": "/Equipment/SCSHV20/Settings/Devices/PHV20_2/DD/NODELOG/Load",
+      "access_mode": 7,
+      "last_written": 1714648779
+   },
+   "Mod2_Load": "/Equipment/SCSHV20/Settings/Devices/PHV20_2/DD/NODELOG/Load",
+   "Mod2_Supply24V/key": {
+      "type": 16,
+      "link": "/Equipment/SCSHV20/Settings/Devices/PHV20_2/DD/NODELOG/TSupply24V",
+      "access_mode": 7,
+      "last_written": 1714648779
+   },
+   "Mod2_Supply24V": "/Equipment/SCSHV20/Settings/Devices/PHV20_2/DD/NODELOG/Supply24V",
+   "Mod2_Supply24C/key": {
+      "type": 16,
+      "link": "/Equipment/SCSHV20/Settings/Devices/PHV20_2/DD/NODELOG/Supply24C",
+      "access_mode": 7,
+      "last_written": 1714648779
+   },
+   "Mod2_Supply24C": "/Equipment/SCSHV20/Settings/Devices/PHV20_2/DD/NODELOG/Supply24C",
+   "Mod2_HV_Enable/key": {
+      "type": 16,
+      "link": "/Equipment/SCSHV20/Settings/Devices/PHV20_2/DD/HVLOG/HV_Enable",
+      "access_mode": 7,
+      "last_written": 1714648779
+   },
+   "Mod2_HV_Enable": "/Equipment/SCSHV20/Settings/Devices/PHV20_2/DD/HVLOG/HV_Enable",
+   "Mod2_HV_Set/key": {
+      "type": 16,
+      "link": "/Equipment/SCSHV20/Settings/Devices/PHV20_2/DD/HVLOG/HV_Set",
+      "access_mode": 7,
+      "last_written": 1714648779
+   },
+   "Mod2_HV_Set": "/Equipment/SCSHV20/Settings/Devices/PHV20_2/DD/HVLOG/HV_Set",
+   "Mod2_HV_Read/key": {
+      "type": 16,
+      "link": "/Equipment/SCSHV20/Settings/Devices/PHV20_2/DD/HVLOG/HV_Read",
+      "access_mode": 7,
+      "last_written": 1714648779
+   },
+   "Mod2_HV_Read": "/Equipment/SCSHV20/Settings/Devices/PHV20_2/DD/HVLOG/HV_Read"
+}
