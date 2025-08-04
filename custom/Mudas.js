@@ -31,7 +31,7 @@ td {
     padding-left: 5px;
     padding-right: 5px;
     padding-top: 0px;
-    padding-bottom: 0px
+    padding-bottom: 0px;
     margin-left: auto;
     margin-right: auto;
     margin-top: 0px;
@@ -681,7 +681,7 @@ function triggerAlarms() {
 		  newAlarm.id = element + "Alarm";
 		  newAlarm.className = "alarmRow";
 		  newAlarm.style.backgroundColor = bgcol;
-		  let alarmHTML = "<td align=center style='font-weight: bold;'>\n"+allAlarms[element]["alarm class"]+":"+allAlarms[element]["alarm message"];
+		  let alarmHTML = "<td align='center' style='font-weight: bold;'>\n"+allAlarms[element]["alarm class"]+":"+allAlarms[element]["alarm message"];
 		  alarmHTML += "<button class='mbutton' type='button' style='float:right;' onclick=\"mhttpd_reset_alarm('" + element + "');\">Reset</button>\n</td>\n";
 		  newAlarm.innerHTML = alarmHTML;
                }

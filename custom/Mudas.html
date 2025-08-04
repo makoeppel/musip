@@ -14,6 +14,7 @@
     <script src="MuSiPinit.js"></script>
     <script src="Mudas.js"></script>
     <script src="sequencer.js"></script>
+    <script src="mgui.js"></script>
     <title>Mudas MuSiP</title>
   </head>
   <body class="mcss" onload="fillODBs();mhttpd_init('Mudas'); Mudas_init_once();Mudas_init();">
@@ -39,8 +40,10 @@
                   </td>
                   <td style="width:100px">Sequencer: </td>
                   <td>
-                    <span style="padding: 0.0em 1.0em 0.0em 1.0em;border-radius:5px;box-shadow: 5px 5px 5px grey;width:250px;" id="AutorRunState"></span>
-                    <span id="autorunStatus" class="modb" onload="setLARState(this);" onchange="setLARState(this);"></span>
+                    <span style="padding: 0.0em 1.0em 0.0em 1.0em;border-radius:5px;box-shadow: 5px 5px 5px grey;width:250px;" class="seqstate" id="AutorRunState"></span>
+                    <span class="modb" data-odb-path="/Sequencer/State/Running" onload="seqState(setSeqtate);" onchange="seqState(setSeqtate);"></span>
+                    <span class="modb" data-odb-path="/Sequencer/State/Paused" onload="seqState(setSeqtate);" onchange="seqState(setSeqtate);"></span>
+                    <span class="modb" data-odb-path="/Sequencer/State/Finished" onload="seqState(setSeqtate);" onchange="seqState(setSeqtate);"></span>
                     <span style="float:right;">
                       <a id="elogLink" target="_blank">
                         <img src="https://lem03.psi.ch:8000/LEM_Experiment/elog.png">
@@ -207,7 +210,13 @@
 
         // Check whether the sequencer is running
         checkProgram("Sequencer");
-
+	// set state
+	function setSeqtate(state) {
+	    let e = document.getElementById("AutorRunState");
+	    e.innerText = state;
+	}
+	seqCSS();
+	
         // Create a new observer instance
         const visibilityObserver = new MutationObserver((mutations) => {
            mutations.forEach((mutation) => {
