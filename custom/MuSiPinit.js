@@ -9,12 +9,12 @@ var autoRunPath   = "/home/mu3e/debug_online/online/userfiles/sequencer";
 // Make a Map for instrument specific ODBs
 var instrODB = {
     runStatus:     "/Runinfo/State",
-    runTitle:      "/Experiment/Run Parameters/comment",
+    runTitle:      "/Info/Run Title",
     runNumber:     "/Runinfo/Run number",
-    autorunStatus: "/AutoRun/Status",
+    autorunStatus: "/Sequencer/State/Running",
     startTime:     "/Runinfo/Start time",
     stopTime:      "/Runinfo/Stop time",
-    eventRate:     "/Equipment/PixelsLabor/Statistics/Events per sec.",
+    eventRate:     "/Equipment/SwitchingLabor/Variables/SCCN[41]",
     protonCurr:    "/Equipment/Scaler/Variables/RATE/Ip",
     totalStats:    "/Equipment/PixelsLabor/Statistics/Events sent",
     sampleName:    "/Info/Sample Name",
@@ -44,7 +44,7 @@ var instrTabs = {
 	style   : "Tab",          
     },
     Vacuum : {
-	order   : 2,              
+	order   : 3,              
 	label   : "Vacuum",  
 	addFunc : "",
 	htmlFile: "Vacuum_tab.html", 

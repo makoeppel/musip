@@ -83,7 +83,7 @@
 		  <tr>
 		    <td>Event rate: </td>
 		    <td>
-		      <span id="eventRate" class="modbvalue" data-format="f0"></span> /s  
+		      <span id="eventRate" class="modbvalue"></span> /s  
 		      <span style="float:right"><a style="cursor: pointer" onclick="mhistory_dialog('Rates','LEmuPos');"><img src="Graph.ico" width="20" height="15"></a></span>
 		    </td>
 		  </tr>
@@ -149,6 +149,7 @@
                 <div id="beforeMenu" class="w3-dropdown-hover w3-hover">
                   <button class="w3-button w3-round w3-hide-medium"><b>More...</b></button>
                   <div id="tabMenu" class="w3-dropdown-content w3-bar-block w3-card-4r">
+		    <a onclick="histList();" class="w3-bar-item w3-button w3-round"><b>Histories</b></a>
 		    <a class="w3-bar-item w3-button w3-round" onclick="openTab(event,this.id)" id="100"><b>HIPA</b></a>
 		    <a href="http://musruser.psi.ch" target="_blank" class="w3-bar-item w3-button w3-round" onclick=""><b>musruser</b></a>
 		  </div>

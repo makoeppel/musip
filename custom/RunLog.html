@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html class="mcss">
+<head>
+  <meta http-Equiv="Cache-Control" Content="no-cache" />
+  <meta http-Equiv="Pragma" Content="no-cache" />
+  <meta http-Equiv="Expires" Content="0" />
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="midas.css">
+  <script src="controls.js"></script>
+  <script src="midas.js"></script>
+  <script src="mhttpd.js"></script>
+  <script type="text/javascript">
+    // ToDo: get the runlog file name from the ODB
+    // Path: /Logger/Data dir
+    // File name:  ??
+
+    function LoadFile() {
+       var oFrame = document.getElementById("frmFile");
+       var strRawContents = oFrame.contentWindow.document.body.childNodes[0].innerHTML;
+       // Get tne number of requested lines to show
+       var nlines = document.getElementById("numlines").value;
+       var dispLines = "";
+	var tabLines = "<tr style='font-family:\"Fixed\"; font-size:120%'><td><b>Run</b></td><td><b>Start Time</b></td><td><b>Duration h:m:s</b></td><td><b>Title</b></td><td><b>Sample</b></td><td><b>Temperature (K)</b></td><td><b>Field (A)</b></td></tr>";
+       // Clean up file if needed
+       while (strRawContents.indexOf("\r") >= 0) strRawContents = strRawContents.replace("\r", "");
+       // Split file into lines
+       var arrLines = strRawContents.split("\n");
+       console.log("number of lines in file ="+arrLines.length);
+       // The number of requested lines should not be larger than the actual number of lines
+       if (nlines > arrLines.length) {
+         nlines=arrLines.length-2;
+         document.getElementById("numlines").value = nlines;
+       }
+       for (var i = arrLines.length-2; i > arrLines.length-2-nlines; i--) {
+         var curLine = arrLines[i];
+         var words = curLine.split('\t');
+	   const startDate = new Date(words[1]);  
+	   const endDate = new Date(words[2]);
+	   // Calculate the difference in milliseconds
+	   const diffMs = endDate - startDate;
+	   
+	   // Convert to total seconds
+	   let totalSeconds = Math.floor(diffMs / 1000);
+	   
+	   // Calculate h:m:s
+	   const hours = Math.floor(totalSeconds / 3600);
+	   totalSeconds %= 3600;
+	   const minutes = Math.floor(totalSeconds / 60);
+	   const seconds = totalSeconds % 60;
+	   
+	   // Format the result
+	   const duration = `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+	   
+           var tabLine = `<tr><td>${words[0]}</td><td>${words[1]}</td><td>${duration}</td><td>${words[3]}</td><td>${words[4]}</td><td>${words[5]}</td><td>${words[6]}</td></tr>`;
+           dispLines = [dispLines,curLine].join('<br>\n');
+           tabLines = [tabLines,tabLine].join('\n');
+       }
+	document.getElementById('runlogtable').innerHTML = tabLines;
+    }
+
+    function goSearchDB() {
+       var fromRun = document.getElementById("fromrun").value;
+       var toRun = document.getElementById("torun").value;
+       var year = new Date().getFullYear();
+       if (fromRun > 0 && toRun > 0) {
+// send to SearchDB.cgi
+// http://musruser.psi.ch/cgi-bin/SearchDB.cgi?AREA=LEM&YEAR=2020&AFTER=&BEFORE=&RUN=&Rmin=100&Rmax=200&Phrases=&go=Search
+         var url = "http://musruser.psi.ch/cgi-bin/SearchDB.cgi?AREA=LEM&YEAR=" + year + "&AFTER=&BEFORE=&RUN=&Rmin=" + fromRun + "&Rmax=" + toRun + "&Phrases=&go=Search";
+         window.open(url);
+       }
+    }
+   </script>
+   <title>MuSiP Run Log Page</title>
+  </head>
+<body class="mcss" onload="mhttpd_init('RunLog');">
+<!-- header and side navigation will be filled in mhttpd_start -->
+<iframe id="frmFile" src="runlog.log" onload="LoadFile();" style="display: none;"></iframe>
+<div id="mheader"></div>
+<div id="msidenav"></div>
+
+<div id="mmain">
+  <table style='width: 90%' class="mtable">
+    <tr><th align="center" class="mtableheader">MuSiP Run Log</th></tr>
+    <tr><td id="Controls" align="center" class=msgService></td></tr>
+    <tr><td bgcolor="#FFFFFF" align="center"></td></tr>
+    <tr id="counter"><td>Number of lines to show
+      <input type="number" id="numlines" name="numlines" value="10" step="10" min="0" onchange="LoadFile();">
+    </td></tr>
+    <tr><td bgcolor="#FFFFFF">
+      <table style='font-family:"Fixed",monospace; font-size:100%; border: 0px none;width: 100%' class="mtable" id="runlogtable">
+      </table>
+    </td></tr>
+  </table>
+</div>
+
+</body>
+</html>
