@@ -11,30 +11,28 @@ function Mudas_init() {
 
    // Vacuum update
    update_vacuum('Pump');
-   update_vacuum('PrePump','1');
-
-    // timing update
-    clearTimeout(updateTimerId);
-    if (updatePeriod > 0) {
-        if (updatePeriod == 500) {
-            startupCount++;
-            if (startupCount > 2)
-		updatePeriod = 3000;
-        }
-        updateTimerId = setTimeout('Mudas_init()', updatePeriod);
-    }
-    
+   runStatus();
+   // timing update
+   clearTimeout(updateTimerId);
+   if (updatePeriod > 0) {
+       if (updatePeriod == 500) {
+           startupCount++;
+           if (startupCount > 2)
+              updatePeriod = 3000;
+       }
+       updateTimerId = setTimeout('Mudas_init()', updatePeriod);
+   }   
 }
 
 function Mudas_init_once() {
     // Sequence state
     seqState();
+    load_msl();
+    seqState(updateBtns);
 
     // update run state
     runStatus(-2);
-    load_msl();
-
-//    mhistory_reset();
+    mhistory_init();
 //    console.log("calling it...");
 //    mhistory_init_one('KentaxHist');
 }
