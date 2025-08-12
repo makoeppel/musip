@@ -50,7 +50,7 @@ cd build
 ```
 
 ### Docs
-We use mkdocs for generating the documentation:
+We use mkdocs and doxygen for generating the documentation. You should have the doxygen package installed on your system, then:
 
 ```bash
 pip install mkdocs
@@ -59,7 +59,7 @@ pip install mkdoxy
 pip install mkdocs-with-pdf
 ```
 
-If its installed one can generate the documentation via:
+Once all these are installed one can generate the documentation via:
 ```bash
 make doc_mkdocs
 make serve_mkdocs
