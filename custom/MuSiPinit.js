@@ -14,7 +14,7 @@ var instrODB = {
     autorunStatus: "/Sequencer/State/Running",
     startTime:     "/Runinfo/Start time",
     stopTime:      "/Runinfo/Stop time",
-    eventRate:     "/Equipment/SwitchingLabor/Variables/SCCN[41]",
+    eventRate:     "/Equipment/Scaler/Variables/RATE[3]",
     protonCurr:    "/Equipment/Scaler/Variables/RATE/Ip",
     totalStats:    "/Equipment/PixelsLabor/Statistics/Events sent",
     sampleName:    "/Info/Sample Name",
