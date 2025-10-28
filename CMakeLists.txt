@@ -23,7 +23,7 @@ find_package(Boost 1.74 REQUIRED
     COMPONENTS filesystem program_options system
 )
 find_package(ROOT REQUIRED
-    COMPONENTS MathCore RIO Hist Tree Net RHTTP Gui XMLIO
+    COMPONENTS Core MathCore RIO Hist Tree Net RHTTP Gui XMLIO
 )
 find_package(Midas REQUIRED COMPONENTS manalyzer
     NO_DEFAULT_PATH PATHS "$ENV{MIDASSYS}"

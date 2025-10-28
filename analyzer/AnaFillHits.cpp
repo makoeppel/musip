@@ -39,6 +39,7 @@ void AnaFillHits::BeginRun(TARunInfo* runinfo) {
     SrNo = pPlotCollection->getOrCreateHistogram1DD("serialnumber", 250, 0, 2.0e05, error);
     timestamp = pPlotCollection->getOrCreateHistogram1DD("timestamp", 250, 0, 4.0e08, error);
     SrNo_ts = pPlotCollection->getOrCreateHistogram2DD("serialnumber_timestamp", 250, 0, 2.0e05, 250, 0, 4.0e08, error);
+    SrNo_ts_mutrig = pPlotCollection->getOrCreateHistogram2DD("serialnumber_timestamp_mutrig", 250, 0, 2.0e05, 250, 0, 4.0e08, error);
 
 };
 
