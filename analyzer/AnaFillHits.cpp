@@ -108,9 +108,22 @@ TAFlowEvent* AnaFillHits::Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* f
                 pixelHits_.emplace_back(*current);
             } // end of loop over all pixelhits
         }
+        /**/
+        // Mutrig bank names are DHTD (for switching board debug hits).
+        // New name is TD00-TD99
+        else if(bank.name == "DHTD" || (isIndexedName && firstTwoChars == "TD")) {
+            const mutrighit* dataStart = reinterpret_cast<const mutrighit*>(rawData);
+            const mutrighit* dataEnd = reinterpret_cast<const mutrighit*>(rawData + bank.data_size);
+            // Add all of these hits to the end
+            mutrigHits_.insert(mutrigHits_.end(), dataStart, dataEnd);
+
+            SrNo_ts_mutrig->Fill(static_cast<double>(sr_num), static_cast<double>(timestampFromDSIN));
+        }
+
+        /**/
     } // end of loop over all Midas banks
 
-    flow = new HitVectorFlowEvent(flow, h, std::move(pixelHits_));
+    flow = new HitVectorFlowEvent(flow, h, std::move(pixelHits_), std::move(mutrigHits_));
     // After a std::move, objects are in an undefined state. So we
     // reset as default constructed vectors.
     pixelHits_ = std::vector<pixelhit>();

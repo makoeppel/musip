@@ -3,6 +3,7 @@
 #include "manalyzer.h"
 
 #include "AnaQuadHistos.h"
+#include "AnaMutrigHistos.h"
 #include "AnaFillHits.h"
 //#include "AnaMusip.h"
 #include "musip/dqm/DQMManager.hpp"
@@ -360,6 +361,7 @@ int main(int argc, char* argv[]) {
     // The second parameter is whether the module is enabled by default when not otherwise specified.
     TARegister fillhits(new TAFactoryTemplateWithConfig<AnaFillHits>("fillhits", true));
     TARegister quad(new TAFactoryTemplateWithConfig<AnaQuadHistos>("quad", true));
+    TARegister mutrig(new TAFactoryTemplateWithConfig<AnaMutrigHistos>("mutrig", true));
     //TARegister musip(new TAFactoryWrapper<AnaMusipFactory>("musip", true));
 
     // We want to save all plots at the end of each run. So create a new TARunObject

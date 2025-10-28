@@ -6,6 +6,7 @@ set(minalyzer_analyzers_headers
     AnaFillHits.h
     #AnaMusip.h
     AnaQuadHistos.h
+    AnaMutrigHistos.h
     json.h
     root_helpers.h
 )
@@ -15,6 +16,7 @@ set(minalyzer_analyzers_sources
     AnaFillHits.cpp
     #AnaMusip.cpp
     AnaQuadHistos.cpp
+    AnaMutrigHistos.cpp
 )
 
 #
