@@ -1,0 +1,9 @@
+{   "mutrig": {
+        "enabled": true,
+        "tot_channels": [1,2,3,4],
+        "tdiff_channelpairs": {
+            "det1_internal": [1,2],
+            "det2_internal": [3,4]
+        }
+    }
+}

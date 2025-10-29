@@ -1,6 +1,8 @@
 #include "AnaMutrigHistos.h"
 
 #include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
+
 #include "AnalyzerEquipment.h"
 #include "HitVectorFlowEvent.h"
 
@@ -9,6 +11,7 @@
 #include "musip/dqm/PlotCollection.hpp"
 #include "musip/dqm/DQMManager.hpp"
 #include <numeric>
+#include <unordered_map>
 
 AnaMutrigHistos::AnaMutrigHistos(const boost::property_tree::ptree& config, TARunInfo* runinfo)
     : TARunObject(runinfo)
@@ -16,8 +19,45 @@ AnaMutrigHistos::AnaMutrigHistos(const boost::property_tree::ptree& config, TARu
     fModuleName = "MutrigHistos";
 
     enabled_ = config.get<bool>("enabled", true);
+    
+
+    printf("<Beginning of %s Module configuration>\n",fModuleName);
+    boost::property_tree::write_json(std::cout, config);
+    printf("<End of %s Module configuration>\n",fModuleName);
+    
     // If this module is disabled, don't do anything else.
     if(!enabled_) return;
+
+    // parse mutrig -> tdiff_channelpairs into vector<pair<int,int>> using boost::property_tree
+    if (auto pairs_opt = config.get_child_optional("tdiff_channelpairs")) {
+        const boost::property_tree::ptree &pairs = *pairs_opt;
+        for (const auto &entry : pairs) {
+            const boost::property_tree::ptree &arr = entry.second;
+            std::vector<int> vals;
+            for (const auto &elem : arr) {
+                try {
+                    vals.push_back(elem.second.get_value<int>());
+                } catch (...) {
+                    // ignore malformed element
+                }
+            }
+            if (vals.size() == 2) {
+                tdiff_channelpairs_[std::pair<int,int>(vals[0], vals[1])]= entry.first;
+            }
+        }
+    }
+
+    // parse mutrig -> tot_channels into vector<int>
+    if (auto tot_opt = config.get_child_optional("tot_channels")) {
+        const boost::property_tree::ptree &tot = *tot_opt;
+        for (const auto &elem : tot) {
+            try {
+                tot_channels_.push_back(elem.second.get_value<int>());
+            } catch (...) {
+                // ignore malformed element
+            }
+        }
+    }
 
     /*
     online = false;
@@ -55,20 +95,35 @@ void AnaMutrigHistos::BeginRun(TARunInfo* runinfo) {
     //Number of duplicate hits (ChannelID is plotted):
     h_nHitsDuplicate  = pPlotCollection_->getOrCreateHistogram1DD("nHitsDuplicate", 2, -0.5, 1.5, error);
 
-    //TOT (Energy) of single channel
-    for(int i=0; i<n_CHANNELS ; i++){
-        h_tot[i] = pPlotCollection_->getOrCreateHistogram1DD(TString::Format("h_tot_%d",i).Data(), 512, 0, 512, error);
+    //TOT (Energy) of single channel -- create only for channels listed in tot_channels_ (configuration):
+    for (int ch : tot_channels_) {
+        printf("Creating ToT histogram for channel %d\n", ch);
+        h_tot_[ch] = pPlotCollection_->getOrCreateHistogram1DD(
+            TString::Format("h_tot_%d", ch).Data(),
+            512, 0, 512, error
+        );
     }
+
+    //1D Time difference between hits between channels, paired in tdiff_channelpairs_ (configuration):
+    for (const auto &chpair : tdiff_channelpairs_) {
+        printf("Creating TimeStampDelta histogram for channel pair %s : (%d, %d)\n", chpair.second.c_str(), chpair.first.first, chpair.first.second);
+        TString histoname = TString::Format("TimeStampDelta_%s", chpair.second.c_str());
+        h_tdiff_channelpairs_[chpair.first] = pPlotCollection_->getOrCreateHistogram1DD(
+            histoname.Data(),
+            2048, -1e6 * binsize_ns, 1e6 * binsize_ns, error
+        );
+    }
+    
 
     /////////  2D histos  ///////////
     //ToT (Energy) vs Channel:
     TString histoname = "Channel_ToT";
     h_channel_tot = pPlotCollection_->getOrCreateHistogram2DF(histoname.Data(), n_CHANNELS, -0.5, n_CHANNELS - 0.5, 512, 0, 512, error);
     //Coarse time vs ASIC:
-    histoname = "h_ASIC_CoarseTime";
+    histoname = "ASIC_CoarseTime";
     h_ASIC_CoarseTime = pPlotCollection_->getOrCreateHistogram2DF(histoname.Data(), n_ASICs, -0.5, n_ASICs - 0.5, 0x7fff, 0, 0x7fff, error);
     //Fine time vs ASIC:
-    histoname = "h_ASIC_FineTime";
+    histoname = "ASIC_FineTime";
     h_ASIC_FineTime = pPlotCollection_->getOrCreateHistogram2DF(histoname.Data(), n_ASICs, -0.5, n_ASICs - 0.5, 0x1f,    0, 0x1f, error);
     //delta times between consecutive hits in 1 channel (2D)
     histoname = "Channel_TimeStampDeltaSameChannel";
@@ -79,26 +134,6 @@ void AnaMutrigHistos::BeginRun(TARunInfo* runinfo) {
     //delta times between the hit and rms time in an event vs ChannelID
     histoname = "Channel_TimeStampRMSTime";
     h_channel_TimeStampRMSTime = pPlotCollection_->getOrCreateHistogram2DF(histoname.Data(), n_CHANNELS,               - 0.5,                 n_CHANNELS - 0.5,  2048, -6e9, 6e9, error);
-
-    // Mutrig clustering histograms
-    /*
-    TL_numberOfClusters = pPlotCollection_->getOrCreateHistogram1DI("MutrigClustersPerEvent", 30, -0.5, 29.5, error); // how many cluster we expect in one event (frame)?
-    TL_numberOfHitsPerCluster = pPlotCollection_->getOrCreateHistogram1DI("MutrigHitsPerCluster", 20, -0.5, 19.5, error); // how big are the clusters?
-    TL_ClustersSizevsNumberofCLusters = pPlotCollection_->getOrCreateHistogram2DF("MutrigClusterSizevsNumberofClusters", 20, -0.5, 19.5, 30, -0.5, 29.5, error); // how big are the clusters?
-    TL_ClustersSizevsMeanClusterTime = pPlotCollection_->getOrCreateHistogram2DF("MutrigClusterSizevsMeanClusterTime", 20, -0.5, 19.5, 2048, 0, 6e9, error);
-    TL_ClusterNumbervsModuleID = pPlotCollection_->getOrCreateHistogram2DF("MutrigClusterNumbervsmModuleID", n_FEBs, -0.5, n_FEBs - 0.5, 30, -0.5, 29.5, error);
-    TL_ClusterModuleIDvsModuleID = pPlotCollection_->getOrCreateHistogram2DF("ModuleIDClusterCorrelations", n_FEBs, -0.5, n_FEBs - 0.5, n_FEBs, -0.5, n_FEBs - 0.5, error);
-    */
-
-    /*
-    if(online) {
-        eventsSinceOdbUpdate_ = 0;
-        midas::odb odbRollingAverages = { { "hitsPerEvent", 0.0f } };
-        odbRollingAverages.connect(
-            "/Equipment/MinAna/Variables/RollingAverages", true
-        ); // `true` to overwrite existing values
-    }
-    */
 }
 
 void AnaMutrigHistos::EndRun(TARunInfo* runinfo) {
@@ -138,7 +173,7 @@ TAFlowEvent* AnaMutrigHistos::AnalyzeFlowEvent(TARunInfo*, TAFlags* flags, TAFlo
 
     //fill event-based observables
     h_nHits->Fill(hitevent->mutrighits.size());
-
+    //loop over hits
     for(auto& hit : hitevent->mutrighits) {
         int cnt =0;
         auto last_hit = last_hits[hit.channel()];
@@ -156,8 +191,11 @@ TAFlowEvent* AnaMutrigHistos::AnalyzeFlowEvent(TARunInfo*, TAFlags* flags, TAFlo
             && (hit.channel()   == last_hit.channel())
         );
 
-	    if(hit.channel() <= n_CHANNELS)
-	        h_tot[hit.channel()]->Fill(hit.tot());
+        // fill per-channel ToT histogram only if this channel is in tot_channels_
+        auto it = h_tot_.find(hit.channel());
+        if (it != h_tot_.end()) {
+            it->second->Fill(hit.tot());
+        }
 
         h_channel_tot->Fill(hit.channel(), hit.tot()); // in units of 50ps
 
@@ -170,8 +208,19 @@ TAFlowEvent* AnaMutrigHistos::AnalyzeFlowEvent(TARunInfo*, TAFlags* flags, TAFlo
             h_channel_TimeStampDeltaSameChannel->Fill(hit.channel(), timeStampDelta*binsize_ns);
         }
 
+        //time differences of hits in paired channel
+        for (auto& hitB : hitevent->mutrighits) {
+            if (hit.channel() == hitB.channel()) continue;
+            auto itA = h_tdiff_channelpairs_.find(std::make_pair(hit.channel(), hitB.channel()));
+            auto itB = h_tdiff_channelpairs_.find(std::make_pair(hitB.channel(), hit.channel()));
+            int64_t timeStampDelta = hit.timestamp() - last_hit.timestamp(); // in units of 50ps
+            if (itA != h_tdiff_channelpairs_.end())
+                itA->second->Fill( timeStampDelta * binsize_ns );
+                else if (itB != h_tdiff_channelpairs_.end())
+                    itB->second->Fill( timeStampDelta * binsize_ns );
+        }
 
-	    last_hits[hit.channel()]=hit;
+        last_hits[hit.channel()]=hit;
     }
 
     return flow;

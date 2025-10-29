@@ -5,6 +5,10 @@
 #include "musip/dqm/dqmfwd.hpp"
 #include <boost/property_tree/ptree_fwd.hpp>
 #include "hits.h"
+#include <vector>
+#include <utility>
+#include <unordered_map>
+#include <TH1D.h>
 
 // Forward declarations
 class TH1D;
@@ -23,7 +27,7 @@ public:
     };
     TAFlowEvent* AnalyzeFlowEvent(TARunInfo*, TAFlags* flags, TAFlowEvent* flow);
 
-protected:
+private:
     bool enabled_;
     static const int n_ASICs = 2;
     static const int n_CHANNELS = n_ASICs * 32;
@@ -39,8 +43,7 @@ protected:
     musip::dqm::Histogram1DD* h_nHits {}; //number of hits per frame
     musip::dqm::Histogram1DD* h_nHitsDuplicate {}; //number of duplicate hits in frame
 
-    musip::dqm::Histogram1DD* h_tot[n_CHANNELS] {}; //ToT of hits per channel
-
+    std::unordered_map<int, musip::dqm::Histogram1DD*> h_tot_; //ToT of hits per channel
     //2D histos
     musip::dqm::Histogram2DF* h_channel_tot {}; //ToT vs channel
     musip::dqm::Histogram2DF* h_ASIC_CoarseTime {}; //course time vs asic id
@@ -48,6 +51,7 @@ protected:
     musip::dqm::Histogram2DF* h_channel_TimeStampDeltaSameChannel {}; //time difference t-t_prev for the same channel (tileid) vs tileid
     musip::dqm::Histogram2DF* h_channel_TimeStampDeltaAverageTime {}; //time difference between the hit and average time in an event vs TileID
     musip::dqm::Histogram2DF* h_channel_TimeStampRMSTime {}; //rms time of all hits vs TileID
+    std::map<std::pair<int,int>, musip::dqm::Histogram1DD*> h_tdiff_channelpairs_; //time difference between hits in channel pairs
     std::map<uint16_t, mutrighit> last_hits;
     
     // Tile clusters
@@ -76,6 +80,9 @@ protected:
     RollingAverage totalOverEvents_; ///< The total of all events in previousEvents
     size_t eventsSinceOdbUpdate_;
     */
+    std::map<std::pair<int,int>,std::string> tdiff_channelpairs_; // filled from config mutrig.tdiff_channelpairs
+    std::vector<int> tot_channels_; // filled from config mutrig.tot_channels
+
 };
 
 #endif
