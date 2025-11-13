@@ -28,8 +28,8 @@ AnaMutrigHistos::AnaMutrigHistos(const boost::property_tree::ptree& config, TARu
     // If this module is disabled, don't do anything else.
     if(!enabled_) return;
 
-    // parse mutrig -> tdiff_channelpairs into vector<pair<int,int>> using boost::property_tree
-    if (auto pairs_opt = config.get_child_optional("tdiff_channelpairs")) {
+    // parse mutrig -> channelpairs into vector<pair<int,int>> using boost::property_tree
+    if (auto pairs_opt = config.get_child_optional("channelpairs")) {
         const boost::property_tree::ptree &pairs = *pairs_opt;
         for (const auto &entry : pairs) {
             const boost::property_tree::ptree &arr = entry.second;
@@ -42,7 +42,7 @@ AnaMutrigHistos::AnaMutrigHistos(const boost::property_tree::ptree& config, TARu
                 }
             }
             if (vals.size() == 2) {
-                tdiff_channelpairs_[std::pair<int,int>(vals[0], vals[1])]= entry.first;
+                channelpairs_[std::pair<int,int>(vals[0], vals[1])]= entry.first;
             }
         }
     }
@@ -55,6 +55,30 @@ AnaMutrigHistos::AnaMutrigHistos(const boost::property_tree::ptree& config, TARu
                 tot_channels_.push_back(elem.second.get_value<int>());
             } catch (...) {
                 // ignore malformed element
+            }
+        }
+    }
+
+    //parse enable flags for histograms
+    tdiff_enabled_ = config.get<bool>("tdiff_enabled", true);
+    timewalk_enabled_ = config.get<bool>("timewalk_enabled", false);
+    tdiff_timewalk_enabled_ = config.get<bool>("tdiff_timewalk_enabled", false);
+    
+    //parse energy cuts for timewalk correction
+    if (auto cuts_opt = config.get_child_optional("timewalk_energycuts")) {
+        const boost::property_tree::ptree &cuts = *cuts_opt;
+        for (const auto &entry : cuts) {
+            const boost::property_tree::ptree &arr = entry.second;
+            std::vector<int> vals;
+            for (const auto &elem : arr) {
+                try {
+                    vals.push_back(elem.second.get_value<int>());
+                } catch (...) {
+                    // ignore malformed element
+                }
+            }
+            if (vals.size() == 2) {
+                timewalk_energycuts_[std::stoi(entry.first)] = std::make_pair(vals[0], vals[1]);
             }
         }
     }
@@ -105,13 +129,35 @@ void AnaMutrigHistos::BeginRun(TARunInfo* runinfo) {
     }
 
     //1D Time difference between hits between channels, paired in tdiff_channelpairs_ (configuration):
-    for (const auto &chpair : tdiff_channelpairs_) {
-        printf("Creating TimeStampDelta histogram for channel pair %s : (%d, %d)\n", chpair.second.c_str(), chpair.first.first, chpair.first.second);
-        TString histoname = TString::Format("TimeStampDelta_%s", chpair.second.c_str());
-        h_tdiff_channelpairs_[chpair.first] = pPlotCollection_->getOrCreateHistogram1DD(
-            histoname.Data(),
-            2048, -1e6 * binsize_ns, 1e6 * binsize_ns, error
-        );
+    for (const auto &chpair : channelpairs_) {
+        printf("Creating histograms for channel pair \n");
+        if(tdiff_enabled_ == true) {
+            printf("Creating TimeStampDelta histogram for channel pair %s : (%d, %d)\n", chpair.second.c_str(), chpair.first.first, chpair.first.second);
+            TString histoname = TString::Format("TimeStampDelta_%s", chpair.second.c_str());
+            h_tdiff_channelpairs_[chpair.first] = pPlotCollection_->getOrCreateHistogram1DD(
+                histoname.Data(),
+                401, -2e2 * binsize_ns, 2e2 * binsize_ns, error
+            );
+        }
+        if(tdiff_timewalk_enabled_ == true) {
+            printf("Creating TimeStampDelta_Timewalk histogram for channel pair %s : (%d, %d)\n", chpair.second.c_str(), chpair.first.first, chpair.first.second);
+            TString histoname = TString::Format("TimeStampDelta_Timewalk_%s", chpair.second.c_str());
+            h_tdiff_tw_channelpairs_[chpair.first] = pPlotCollection_->getOrCreateHistogram1DD(
+                histoname.Data(),
+                401, -2e2 * binsize_ns, 2e2 * binsize_ns, error
+            );
+        }
+        if(timewalk_enabled_ == true) {
+            //create timewalk histogram for each channelpair
+            printf("Creating Timewalk histograms for channel pair %s : (%d, %d)\n", chpair.second.c_str(), chpair.first.first, chpair.first.second);
+            TString histoname = TString::Format("Timewalk_ChannelPair_%s", chpair.second.c_str());
+            h_timewalk_[chpair.first] = pPlotCollection_->getOrCreateHistogram2DF(
+                histoname.Data(),
+                128, 0, 512,
+                200, -2e2 * binsize_ns, 2e2 * binsize_ns,
+                error
+            );
+        }
     }
     
 
@@ -134,6 +180,8 @@ void AnaMutrigHistos::BeginRun(TARunInfo* runinfo) {
     //delta times between the hit and rms time in an event vs ChannelID
     histoname = "Channel_TimeStampRMSTime";
     h_channel_TimeStampRMSTime = pPlotCollection_->getOrCreateHistogram2DF(histoname.Data(), n_CHANNELS,               - 0.5,                 n_CHANNELS - 0.5,  2048, -6e9, 6e9, error);
+
+    printf("Done setting up histograms\n");
 }
 
 void AnaMutrigHistos::EndRun(TARunInfo* runinfo) {
@@ -210,14 +258,33 @@ TAFlowEvent* AnaMutrigHistos::AnalyzeFlowEvent(TARunInfo*, TAFlags* flags, TAFlo
 
         //time differences of hits in paired channel
         for (auto& hitB : hitevent->mutrighits) {
-            if (hit.channel() == hitB.channel()) continue;
+            if ( (hit.channel() >= hitB.channel()) ) continue;
+            int64_t timeStampDelta = ((int64_t) hit.timestamp()) - hitB.timestamp(); // in units of 50ps
+            if(abs(timeStampDelta * binsize_ns) >= 10) continue; // cut out 10ns
+
+            
             auto itA = h_tdiff_channelpairs_.find(std::make_pair(hit.channel(), hitB.channel()));
             auto itB = h_tdiff_channelpairs_.find(std::make_pair(hitB.channel(), hit.channel()));
-            int64_t timeStampDelta = hit.timestamp() - last_hit.timestamp(); // in units of 50ps
+            //fill time difference histogram, if found
             if (itA != h_tdiff_channelpairs_.end())
                 itA->second->Fill( timeStampDelta * binsize_ns );
                 else if (itB != h_tdiff_channelpairs_.end())
                     itB->second->Fill( timeStampDelta * binsize_ns );
+
+            //get energy cuts for timewalk correction
+            auto cutItB = timewalk_energycuts_.find(hitB.channel());
+            if( (cutItB != timewalk_energycuts_.end()) &&
+                (cutItB->second.first < hitB.tot()) &&
+                (cutItB->second.second > hitB.tot()) ) {
+                    //fill timewalk 2D histogram for hitB
+                    auto twItB = h_timewalk_.find(std::make_pair(hit.channel(), hitB.channel()));
+                    if(twItB != h_timewalk_.end()) {
+                        twItB->second->Fill(
+                            hit.tot(),
+                            timeStampDelta * binsize_ns
+                        );
+                    }
+            }
         }
 
         last_hits[hit.channel()]=hit;

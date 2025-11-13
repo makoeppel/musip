@@ -1,9 +1,20 @@
 {   "mutrig": {
         "enabled": true,
-        "tot_channels": [1,2,3,4],
-        "tdiff_channelpairs": {
-            "det1_internal": [1,2],
-            "det2_internal": [3,4]
+        "tot_channels": [32,33,34,35,36],
+        "channelpairs": {
+            "det1_internal": [34,35],
+            "det2_internal": [32,33],
+            "sync_to_scint": [32,34]
+        },
+
+        "tdiff_enabled": true,
+        "timewalk_enabled": true,
+        "tdiff_timewalk_enabled": false,
+        "timewalk_energycuts": {
+            "34": [100, 512],
+            "35": [100, 512],
+            "32": [100, 512],
+            "33": [100, 512]
         }
     }
 }

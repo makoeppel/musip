@@ -52,6 +52,9 @@ private:
     musip::dqm::Histogram2DF* h_channel_TimeStampDeltaAverageTime {}; //time difference between the hit and average time in an event vs TileID
     musip::dqm::Histogram2DF* h_channel_TimeStampRMSTime {}; //rms time of all hits vs TileID
     std::map<std::pair<int,int>, musip::dqm::Histogram1DD*> h_tdiff_channelpairs_; //time difference between hits in channel pairs
+    std::map<std::pair<int,int>, musip::dqm::Histogram1DD*> h_tdiff_tw_channelpairs_; //time difference between hits in channel pairs with timewalk correction
+    std::map<std::pair<int,int>, musip::dqm::Histogram2DF*> h_timewalk_; //timewalk histograms for each channel
+
     std::map<uint16_t, mutrighit> last_hits;
     
     // Tile clusters
@@ -80,8 +83,12 @@ private:
     RollingAverage totalOverEvents_; ///< The total of all events in previousEvents
     size_t eventsSinceOdbUpdate_;
     */
-    std::map<std::pair<int,int>,std::string> tdiff_channelpairs_; // filled from config mutrig.tdiff_channelpairs
+    std::map<std::pair<int,int>,std::string> channelpairs_; // filled from config mutrig.tdiff_channelpairs
     std::vector<int> tot_channels_; // filled from config mutrig.tot_channels
+    bool tdiff_enabled_ = true; // filled from config mutrig.tdiff_enabled
+    bool timewalk_enabled_ = true; // filled from config mutrig.timewalk_enabled
+    bool tdiff_timewalk_enabled_ = true; // filled from config mutrig.tdiff_timewalk_enabled
+    std::map<int, std::pair<int,int>> timewalk_energycuts_; // filled from config mutrig.timewalk_energycuts
 
 };
 
