@@ -25,6 +25,11 @@ var instrODB = {
     pID:           "/Info/File_Header_Info/Proposal Number",
     pPI:           "/Info/File_Header_Info/Main Proposer",
     pGRP:          "/Info/File_Header_Info/P-Group",
+   //Logic, tdc and histogram configuration:
+   logicDir:      '/Equipment/TDC/Logic/',
+   histogramDir:  '/Equipment/TDC/Histograms/',
+   histScalerDir:  '/Equipment/TDC/Vme_Statistics/',
+   tdcSettingsDir:'/Equipment/TDC/Settings/',
 }
 // This is the tab ordering
 // Buttons go in tabBtns and html goes into tabFrames
@@ -50,6 +55,14 @@ var instrTabs = {
 	htmlFile: "Vacuum_tab.html", 
 	style   : "Tab",          
     },
+   tdc : {
+      order   : 4,              
+      label   : "TDC Settings",  
+      addFunc : "",             
+      htmlFile: "TDC_tab.html", 
+      //style   : "Tab",        
+      style   : "Menu",          
+   }, 
 }
 
 // End of changeable part

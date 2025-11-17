@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html class="mcss">
+
+<head>
+	<title>TDC</title>
+</head>
+<body>
+	<table class="oddeven guitable">
+		<tr>
+			<td colspan="4">
+	  TDC configuration file 
+	  <input class="mbutton"  id="selectTDC" type="button" value="Browse"
+	   title="Load a saved TDC configuration."
+	   onclick="displayTDCconfig();">
+	   <input class="mbutton"  id="saveTDC" type="button" value="Save"
+	    title="Save the current TDC configuration."
+		onclick="saveTDCconfig();">
+	   <input class="mbutton"  id="loadV1190" type="button" value="Browse .v1190"
+	    title="Load a historic .v1190 file."
+		onclick="displayTDCv1190();">
+		<input class="mbutton stoppedEditable" disabled id="editTDC" type="button" value="Edit"
+		 onclick="editTDCconfig();">
+	  <input class="mbutton activeBrowsed" id="resetTDC" type="button" value="Reset" onclick="initTDCconfig();" style="width:100px;float:right;" disabled="">
+	  <input class="mbutton loadTDC" id="loadTDC" type="button" value="Apply" onclick="applyLastTDCConfig();" style="width:100px; visibility: visible;float:right;" disabled="">
+	  <!-- hidden run state monitor to toggle button state-->
+	  <span id="runStatusValue" name="modbvalue" data-odb-path="/Runinfo/State" style="display: none;" onchange="disableByRunStatus();" onload="disableByRunStatus();"></span>
+			</td>
+		</tr>
+		<tr>
+			<td>Data window</td>
+			<td>
+				<span id="d_window_t">
+					<!--hidden triggers to update data window: -->
+					<span name="modbvalue"
+						data-odb-path="/Equipment/TDC/Settings/Time_Per_Bin"
+						data-odb-editable="0" style="display: none;"
+						onload="changedResolution(this.value)"
+						onchange="changedResolution(this.value)"></span>
+					<!--End of hidden triggers to update data window: -->
+					<span name="modbvalue"  id="tdc_DatWindow_odb" 
+						data-odb-path="/Equipment/TDC/Logic/Data_Window"
+						data-odb-editable="0" style="display: inline;"
+						data-formula="TDCresolution*x"></span>
+					<input id="tdc_DatWindow_input"
+						type="text" size="2" style="display: none;"
+						onchange="dataWindowInputChanged()">
+				</span> &mu;s
+				<input id="tdc_DatWindow_button" class="mbutton stoppedEditable" 
+					id="changeDataWindow" type="button" value="Change"
+					onclick="changeDataWindow();"
+					style="width:70px;">
+				<span class="tdcNewVal_General" style="visibility: hidden;">
+					<span id="TDC_LOAD_Data_Window" ></span> ch.
+				</span>
+			</td>
+			<td>Muon Delay</td>
+			<td><span name="modbvalue" class="tdc_editable" data-odb-path="/Equipment/TDC/Logic/Muon_Delay"></span>
+				<span id="TDC_LOAD_Muon_Delay" class="tdcNewVal_General" style="visibility: hidden;"></span>
+			</td>
+		</tr>
+		<tr>
+			<td>Resolution</td>
+			<td><span name="modbvalue" data-odb-path="/Equipment/TDC/Settings/Time_Per_Bin"
+				data-formula="x*1000000" data-format="f1"
+				></span> ps
+				<span class="tdcNewVal_General" style="visibility: hidden;">
+					<span  id="TDC_LOAD_Time_Per_Bin" ></span> &mu;s
+				</span>
+			</td>
+			<td>Positron Delay</td>
+			<td><span name="modbvalue" class="tdc_editable" data-odb-path="/Equipment/TDC/Logic/Positron_Delay"></span>
+				<span id="TDC_LOAD_Positron_Delay" class="tdcNewVal_General" style="visibility: hidden;"></span>
+			</td>
+		</tr>
+		<tr>
+			<td>Instrument</td>
+			<td><span name="modbvalue" data-odb-path="/Experiment/Name"></span>
+				<span id="TDC_LOAD_INSTRUMENT" class="tdcNewVal_General" style="visibility: hidden;"></span>
+			</td>
+			<td>Muon Coincidence</td>
+			<td><span name="modbvalue"  class="tdc_editable" data-odb-path="/Equipment/TDC/Logic/Muon_Coincidence_Window"></span>
+				<span id="TDC_LOAD_Muon_Coincidence_Window" class="tdcNewVal_General" style="visibility: hidden;"></span>
+			</td>
+		</tr>
+		<tr>
+			<td>Type</td>
+			<td><span name="modbvalue" data-odb-path="/Equipment/TDC/Settings/Type"></span>
+				<span id="TDC_LOAD_Type" class="tdcNewVal_General" style="visibility: hidden;"></span>
+			</td>
+			<td>Positron Coincidence</td>
+			<td><span name="modbvalue"
+					class="tdc_editable"
+					data-odb-path="/Equipment/TDC/Logic/Positron_Coincidence_Window"></span>
+				<span id="TDC_LOAD_Positron_Coincidence_Window" class="tdcNewVal_General" style="visibility: hidden;"></span>
+			</td>
+		</tr>
+		<tr>
+			<td>Description</td>
+			<td><span name="modbvalue" class="tdc_editable" data-odb-path="/Equipment/TDC/Logic/Description"></span>
+				<span id="TDC_LOAD_Description" class="tdcNewVal_General" style="visibility: hidden;"></span>
+			</td>
+			<td>Veto Coincidence (pre/post)</td>
+			<td><span name="modbvalue" class="tdc_editable" data-odb-path="/Equipment/TDC/Logic/Veto_Pre_Coincidence_Window"></span>
+				<span id="TDC_LOAD_Veto_Pre_Coincidence_Window" class="tdcNewVal_General" style="visibility: hidden;"></span>/
+				<span name="modbvalue" class="tdc_editable" data-odb-path="/Equipment/TDC/Logic/Veto_Post_Coincidence_Window"></span>
+				<span id="TDC_LOAD_Veto_Post_Coincidence_Window" class="tdcNewVal_General" style="visibility: hidden;"></span>
+			</td>
+		</tr>
+		<tr>
+			<td class="tdc_filename">File Name</td>
+			<td class="tdc_filename"><span id="TDC_ODB_FILENAME" name="modbvalue" data-odb-path="/Equipment/TDC/Settings/SettingsFile"></span>
+				<span id="TDC_LOAD_FILENAME" class="tdcNewVal_General" style="visibility: hidden;"></span>
+			</td>
+			<td>T0 offset</td>
+			<td><span name="modbvalue" class="tdc_editable" data-odb-path="/Equipment/TDC/Logic/T0_OffSet"></span>
+				<span id="TDC_LOAD_T0_OffSet" class="tdcNewVal_General" style="visibility: hidden;"></span>
+			</td>
+		</tr>
+		<tr>
+			<td >Pre-Pilup Window</td>
+			<td >
+				<span name="modbvalue" 
+					data-odb-path="/Equipment/TDC/Logic/Pre_Pileup_Window"
+					data-odb-editable="0" style="display: inline;"
+					data-formula="TDCresolution*x"></span> &mu;s
+					<span class="tdcNewVal_General" style="visibility: hidden;">
+						<span id="TDC_LOAD_Pre_Pileup_Window" ></span> ch.
+					</span>
+			</td>
+			<td >Post-Pilup Window</td>
+			<td >
+				<span name="modbvalue" 
+					data-odb-path="/Equipment/TDC/Logic/Post_Pileup_Window"
+					data-odb-editable="0" style="display: inline;"
+					data-formula="TDCresolution*x"></span> &mu;s
+					<span class="tdcNewVal_General" style="visibility: hidden;">
+						<span id="TDC_LOAD_Post_Pileup_Window" ></span> ch.
+					</span>
+			</td>
+		</tr>
+		<tr>
+			<td  colspan="4">
+			<div class="row">
+				<div class="col-1">
+					<div style="text-align: center">
+					<span style="text-align: center"><b>Logic configuration</b></span>
+					</div>
+				  <div id="chanDefinition" style="overflow: auto; max-height: 400px;">
+					  <table style="width:100%;" id="channelTable"></table>
+				  </div>
+				</div>
+				<div class="col-2">
+					<div style="text-align: center">
+					<span style="text-align: center"><b>Histogram configuration</b></span>
+					</div>
+				  <div id="histDefinition" style="overflow: auto; max-height: 400px;">
+					  <table style="width:100%;" id="histogramTable"></table>
+				  </div>
+				</div>
+			</div>
+			</td>
+		</tr>
+	</table>
+</body>
+
+</html>
