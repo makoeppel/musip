@@ -37,10 +37,14 @@ protected:
     //
     musip::dqm::PlotCollection* pPlotCollection = nullptr;
     musip::dqm::Histogram1DD* SrNo = nullptr;
+    musip::dqm::Histogram1DD* timePixelvsMutrig = nullptr;
     musip::dqm::Histogram1DD* timestamp = nullptr;
     musip::dqm::Histogram2DD* SrNo_ts = nullptr;
-
     musip::dqm::Histogram2DD* SrNo_ts_mutrig = nullptr;
+
+    uint64_t timestampFromLastPixelDSIN = 0;
+    uint64_t timestampFromLastMutrigDSIN = 0;
+    uint64_t timestampFromDSIN = 0;
 };
 
 #endif

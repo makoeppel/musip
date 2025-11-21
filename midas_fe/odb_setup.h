@@ -41,6 +41,7 @@ midas::odb settings = {
       {"MupixConfig", false},
       {"MupixTDACConfig", false},
       {"ResetASICs", false},
+      {"ADC Continuous Readout", false},
       {"DataGenEnable", false},
       {"DataGenDisable", false},
       {"DataGenBeforeSorter", false},

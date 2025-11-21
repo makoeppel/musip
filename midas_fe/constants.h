@@ -51,6 +51,11 @@ constexpr uint32_t MAX_SLOWCONTROL_WRITE_MESSAGE_SIZE = (1 << 16) - 1;
 constexpr uint32_t length_32bits = 12;
 constexpr uint32_t length = length_32bits * 4;
 
+/* Configuration for ADC */
+enum class ADC_Mode : uint8_t {Single = 0b0100, Sequence = 0b0010, All = 0b0001};
+enum class ADC_Command : uint8_t {Reset = 0b1000, Configure = 0b0100, Measure = 0b0010};
+enum class ADC_Mux_Address : uint8_t {ref_vssa = 0, Baseline = 1, blpix = 2, thpix = 3, blpix_2 = 4, ThLow = 5, ThHigh = 6, TEST_OUT = 7, vssa = 8, thpix_2 = 9, VCAL = 10, VTemp1 = 11, VTemp2 = 12};
+
 // readout event structure
 struct mevent_t {
     struct dsin_t {

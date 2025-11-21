@@ -62,7 +62,7 @@ uint8_t bitpattern_mupix[48] = {};
 mudaq::DmaMudaqDevice* mup = nullptr;
 std::vector<uint32_t> lvds_banks = {};
 std::vector<uint32_t> matrix_banks = {};
-std::vector<uint32_t> temp_banks = {};
+std::vector<uint32_t> adc_banks = {};
 
 // runstart
 reset reset_protocol;
@@ -204,6 +204,11 @@ void sc_settings_changed(midas::odb o) {
         resetASICs(*feb_sc, m_settings);
         o = false;
     }
+
+    if (name == "ADC Continuous Readout" && o) {
+        adcContinuousReadout(*feb_sc, m_settings);
+        o = false;
+    }
 }
 
 int frontend_init() {
@@ -309,6 +314,55 @@ int read_sc_event(char* pevent, int off) {
         }
     };
 
+    // fill ADC bank
+    adc_banks.clear();
+    for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
+        bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
+        if (FEBActive) {
+            vector<uint32_t> adcdata(N_CHIPS * 4 * 3);
+            std::cout << "adcdata " << adcdata.size() << " febIDx " << febIDx << std::endl;
+            for (auto data : adcdata) printf("0x%08x ", data);
+            std::cout << std::endl;
+            feb_sc->FEB_read(febIDx, MP_READBACK_MEMS_START_REGISTER_R, adcdata);
+            for (uint32_t c = 0; c < N_CHIPS * 3; c++ ) {
+                adc_banks.push_back((c/3 >> 8) & 0xFF);
+                adc_banks.push_back((c/3) & 0xFF);
+                adc_banks.push_back((adcdata[0 + 4*c] & 0xFF));
+                adc_banks.push_back(((adcdata[0 + 4*c] >> 8) & 0xFF));
+                adc_banks.push_back(((adcdata[0 + 4*c] >>16) & 0xFF));
+                adc_banks.push_back(((adcdata[0 + 4*c] >>24) & 0xFF));
+                adc_banks.push_back((adcdata[1 + 4*c] & 0xFF));
+                adc_banks.push_back(((adcdata[1 + 4*c] >> 8) & 0xFF));
+                adc_banks.push_back(((adcdata[1 + 4*c] >>16) & 0xFF));
+                adc_banks.push_back(((adcdata[1 + 4*c] >>24) & 0xFF));
+                adc_banks.push_back((adcdata[2 + 4*c] & 0xFF));
+                adc_banks.push_back(((adcdata[2 + 4*c] >> 8) & 0xFF));
+                adc_banks.push_back(((adcdata[2 + 4*c] >>16) & 0xFF));
+                adc_banks.push_back(((adcdata[2 + 4*c] >>24) & 0xFF));
+                adc_banks.push_back((adcdata[3 + 4*c] & 0xFF));
+            }
+        } else {
+            for (uint32_t c = 0; c < N_CHIPS * 3; c++ ) {
+                adc_banks.push_back((c/3 >> 8) & 0xFF);
+                adc_banks.push_back((c/3) & 0xFF);
+                adc_banks.push_back(0);
+                adc_banks.push_back(0);
+                adc_banks.push_back(0);
+                adc_banks.push_back(0);
+                adc_banks.push_back(0);
+                adc_banks.push_back(0);
+                adc_banks.push_back(0);
+                adc_banks.push_back(0);
+                adc_banks.push_back(0);
+                adc_banks.push_back(0);
+                adc_banks.push_back(0);
+                adc_banks.push_back(0);
+                adc_banks.push_back(0);
+            }
+        }
+    }
+    std::cout << "adc_banks " << adc_banks.size() << std::endl;
+
     // create bank, pdata
     bk_init32a(pevent);
     DWORD* pdata = NULL;
@@ -322,6 +376,12 @@ int read_sc_event(char* pevent, int off) {
     bk_create(pevent, "PCMS", TID_DWORD, (void**)&pdata);
     for (auto data : matrix_banks) *pdata++ = data;
     bk_close(pevent, pdata);
+
+    // create a bank with the ADC status
+    BYTE* pbyte = NULL;
+    bk_create(pevent, "PVSC", TID_BYTE, (void**)&pbyte);
+    for (auto data : adc_banks) *pbyte++ = data;
+    bk_close(pevent, pbyte);
 
     return bk_size(pevent);
 }

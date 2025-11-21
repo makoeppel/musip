@@ -40,6 +40,7 @@ void AnaFillHits::BeginRun(TARunInfo* runinfo) {
     timestamp = pPlotCollection->getOrCreateHistogram1DD("timestamp", 250, 0, 4.0e08, error);
     SrNo_ts = pPlotCollection->getOrCreateHistogram2DD("serialnumber_timestamp", 250, 0, 2.0e05, 250, 0, 4.0e08, error);
     SrNo_ts_mutrig = pPlotCollection->getOrCreateHistogram2DD("serialnumber_timestamp_mutrig", 250, 0, 2.0e05, 250, 0, 4.0e08, error);
+    timePixelvsMutrig = pPlotCollection->getOrCreateHistogram1DD("timePixelvsMutrig", 2048, 0, 2048, error);
 
 };
 
@@ -56,6 +57,8 @@ TAFlowEvent* AnaFillHits::Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* f
         *flags |= TAFlag_SKIP_PROFILE; // Set the profiler to ignore this module
         return flow;
     }
+
+    if(event->event_id != 301) return flow;
 
     eventheader h;
     h.event_id = event->event_id;
@@ -88,7 +91,6 @@ TAFlowEvent* AnaFillHits::Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* f
         // First check for DSIN slow control banks. Old name was DSIN, new name is DS00-DS99.
         // We just want to pull out the timestamp.
         uint32_t sr_num = 0;
-        uint64_t timestampFromDSIN = 0;
         if(bank.name == "DSIN" || (isIndexedName && firstTwoChars == "DS")) {
             const febdata* febData = reinterpret_cast<const febdata*>(rawData);
             sr_num = h.serial_number;
@@ -108,8 +110,8 @@ TAFlowEvent* AnaFillHits::Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* f
                 // If we got this far through the loop, we passed all checks and we want the hit
                 pixelHits_.emplace_back(*current);
             } // end of loop over all pixelhits
+            timestampFromLastPixelDSIN = timestampFromDSIN;
         }
-        /**/
         // Mutrig bank names are DHTD (for switching board debug hits).
         // New name is TD00-TD99
         else if(bank.name == "DHTD" || (isIndexedName && firstTwoChars == "TD")) {
@@ -119,15 +121,24 @@ TAFlowEvent* AnaFillHits::Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* f
             mutrigHits_.insert(mutrigHits_.end(), dataStart, dataEnd);
 
             SrNo_ts_mutrig->Fill(static_cast<double>(sr_num), static_cast<double>(timestampFromDSIN));
+            timestampFromLastMutrigDSIN = timestampFromDSIN;
         }
 
-        /**/
+        // if (timestampFromLastPixelDSIN == 0 || timestampFromLastMutrigDSIN == 0) continue;
+        // else timePixelvsMutrig->Fill(timestampFromLastPixelDSIN-timestampFromLastMutrigDSIN);
+
     } // end of loop over all Midas banks
+
+    // for (auto pixel : pixelHits_)
+    //     for (auto mutrig : mutrigHits_)
+    //         if (mutrig.channel() == 32 && (pixel.time() - mutrig.time8ns()) < 2048 && pixel.chipid() / 4 == 2)
+    //             timePixelvsMutrig->Fill(pixel.time() - mutrig.time8ns());
 
     flow = new HitVectorFlowEvent(flow, h, std::move(pixelHits_), std::move(mutrigHits_));
     // After a std::move, objects are in an undefined state. So we
     // reset as default constructed vectors.
     pixelHits_ = std::vector<pixelhit>();
+    mutrigHits_ = std::vector<mutrighit>();
 
     return flow;
 }

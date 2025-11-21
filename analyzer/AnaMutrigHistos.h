@@ -54,6 +54,7 @@ private:
     std::map<std::pair<int,int>, musip::dqm::Histogram1DD*> h_tdiff_channelpairs_; //time difference between hits in channel pairs
     std::map<std::pair<int,int>, musip::dqm::Histogram1DD*> h_tdiff_tw_channelpairs_; //time difference between hits in channel pairs with timewalk correction
     std::map<std::pair<int,int>, musip::dqm::Histogram2DF*> h_timewalk_; //timewalk histograms for each channel
+    std::map<std::pair<int,int>, musip::dqm::Histogram2DF*> h_ecorrelation_; //e-e histograms for each channelpair
 
     std::map<uint16_t, mutrighit> last_hits;
     
@@ -86,6 +87,7 @@ private:
     std::map<std::pair<int,int>,std::string> channelpairs_; // filled from config mutrig.tdiff_channelpairs
     std::vector<int> tot_channels_; // filled from config mutrig.tot_channels
     bool tdiff_enabled_ = true; // filled from config mutrig.tdiff_enabled
+    bool ecorrelation_enabled_ = true; // filled from config mutrig.ecorrelation_enabled
     bool timewalk_enabled_ = true; // filled from config mutrig.timewalk_enabled
     bool tdiff_timewalk_enabled_ = true; // filled from config mutrig.tdiff_timewalk_enabled
     std::map<int, std::pair<int,int>> timewalk_energycuts_; // filled from config mutrig.timewalk_energycuts

@@ -63,6 +63,7 @@ AnaMutrigHistos::AnaMutrigHistos(const boost::property_tree::ptree& config, TARu
     tdiff_enabled_ = config.get<bool>("tdiff_enabled", true);
     timewalk_enabled_ = config.get<bool>("timewalk_enabled", false);
     tdiff_timewalk_enabled_ = config.get<bool>("tdiff_timewalk_enabled", false);
+    ecorrelation_enabled_ = config.get<bool>("ecorrelation_enabled", false);
     
     //parse energy cuts for timewalk correction
     if (auto cuts_opt = config.get_child_optional("timewalk_energycuts")) {
@@ -158,6 +159,21 @@ void AnaMutrigHistos::BeginRun(TARunInfo* runinfo) {
                 error
             );
         }
+
+	if(ecorrelation_enabled_ == true) {
+            //create e-e histogram for each channelpair
+            printf("Creating E-E corellation histograms for channel pair %s : (%d, %d)\n", chpair.second.c_str(), chpair.first.first, chpair.first.second);
+            TString histoname = TString::Format("Ecorrelation_ChannelPair_%s", chpair.second.c_str());
+            h_ecorrelation_[chpair.first] = pPlotCollection_->getOrCreateHistogram2DF(
+                histoname.Data(),
+                128, 0, 512,
+                128, 0, 512,
+                error
+            );
+	
+    //energy-energy corellation
+    histoname = "ecorrelation";
+	}
     }
     
 
@@ -285,10 +301,21 @@ TAFlowEvent* AnaMutrigHistos::AnalyzeFlowEvent(TARunInfo*, TAFlags* flags, TAFlo
                         );
                     }
             }
+	    //fill energy correlations
+	    {
+	        auto eeItB = h_ecorrelation_.find(std::make_pair(hit.channel(), hitB.channel()));
+                if(eeItB != h_ecorrelation_.end()) {
+                    eeItB->second->Fill(hit.tot(),hitB.tot());
+                }
+            }
         }
 
         last_hits[hit.channel()]=hit;
     }
 
     return flow;
+
 }
+
+
+

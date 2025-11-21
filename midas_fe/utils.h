@@ -266,6 +266,44 @@ int ConfigureASICs(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings, uint8
     return status;
 }
 
+uint64_t calculateADCCommand(ADC_Command adcCommand, uint16_t adcDivisionFactor, ADC_Mode adcMode) {
+    constexpr uint64_t SteerADC = 0b100000;
+
+    return ((static_cast<uint64_t>(adcMode) & 0xf) << 24)
+        | ( static_cast<uint64_t>(adcDivisionFactor & 0x03ff) << 14)
+        | ((static_cast<uint64_t>(adcCommand) & 0xf) << 10)
+        | (SteerADC << 4);
+}
+
+void sendCommand(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings, uint64_t command){
+    uint32_t highBits = (command >> 32);
+    uint32_t lowBits = (command & 0xffffffff);
+
+    vector<uint32_t> commands(2 * N_CHIPS);
+    for (int i = 0; i < 2 * N_CHIPS; i += 2) {
+        commands[i] = lowBits;
+        commands[i+1] = highBits;
+    }
+
+    for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
+        bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
+        if (!FEBActive) continue;
+        feb_sc.FEB_write(febIDx, MP_CTRL_EXT_CMD_START_REGISTER_W, commands);
+    }
+
+    // TODO: Test how short this can be, maybe even remove completely
+    constexpr auto waitTimeBetweenWrites = std::chrono::milliseconds(10);
+    std::this_thread::sleep_for(waitTimeBetweenWrites);
+}
+
+
+void adcContinuousReadout(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings){
+    std::cout << "send adc\n";
+    sendCommand(feb_sc, m_settings, calculateADCCommand(ADC_Command::Reset, 0x3f0, ADC_Mode::All));
+    sendCommand(feb_sc, m_settings, calculateADCCommand(ADC_Command::Configure, 0x3f0, ADC_Mode::All));
+    sendCommand(feb_sc, m_settings, calculateADCCommand(ADC_Command::Measure, 0x3f0, ADC_Mode::All));
+}
+
 /**
  * @brief Generates a simulated pixel hit for test data streams.
  *
