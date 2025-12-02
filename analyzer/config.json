@@ -1,0 +1,27 @@
+{   "mutrig": {
+        "enabled": true,
+        "tot_channels": [32,33,34,35,36,37],
+        "channelpairs": {
+            "m_vs_forward_left": [32,36],
+            "m_vs_forward_right": [32,37],
+            "m_vs_backward_left": [32,34],
+            "m_vs_backward_right": [32,35],
+            "m_internal": [32,33],
+            "forward_internal": [36,37],
+            "backward_internal": [34,35]
+        },
+
+        "tdiff_enabled": true,
+        "ecorrelation_enabled": true,
+        "timewalk_enabled": true,
+        "tdiff_timewalk_enabled": false,
+        "timewalk_energycuts": {
+            "32": [100, 150],
+            "33": [100, 150],
+            "34": [60, 120],
+            "35": [60, 120],
+            "36": [30, 75],
+            "37": [30, 75]
+        }
+    }
+}

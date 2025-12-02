@@ -473,7 +473,7 @@ int frontend_init() {
     cm_set_transition_sequence(TR_STOP, 700);
 
     // set write cache to 10MB
-    set_cache_size("SYSTEM", 10000000);
+    //set_cache_size("SYSTEM", 10000000);
 
     return SUCCESS;
 }

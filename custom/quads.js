@@ -99,6 +99,11 @@ async function sendStateToBackend() {
     await setODBValue("/Equipment/Quads Config/Settings/DAQ/Links/LVDSLinkInvert", LVDSLinkInvert);
 }
 
+async function configure() {
+    await sendStateToBackend();
+    await setODBValue("/Equipment/Quads Config/Settings/Readout/MupixConfig", 1);
+}
+
 function renderGrid(gridId, data, febID, gridID) {
     const grid = document.getElementById(gridId);
     grid.innerHTML = '';
@@ -164,7 +169,6 @@ function renderGrid(gridId, data, febID, gridID) {
             invert.checked = invertedLinks[link.feb][link.idx];
             invert.addEventListener('click', e => {
                 e.stopPropagation(); // prevent cell toggle
-                maskedLinks[link.feb][link.idx] = invert;
                 invertedLinks[link.feb][link.idx] = invert.checked;
             });
             checkboxGroup.appendChild(invert);
@@ -281,9 +285,10 @@ function update_pcms(input){
             const grid = Math.floor(asic / 4);
             const link = l % 3;
 
-            cells[febIndex][grid][grid_asic][link].A = parseInt(data[offset+2]);
-            cells[febIndex][grid][grid_asic][link].B = parseInt(data[offset+4]);
-            cells[febIndex][grid][grid_asic][link].C = parseInt(data[offset+6]);
+            var mask = 1 << l;
+            cells[febIndex][grid][grid_asic][link].A = parseInt(data[offset+2] & mask);
+            cells[febIndex][grid][grid_asic][link].B = parseInt(data[offset+4] & mask);
+            cells[febIndex][grid][grid_asic][link].C = parseInt(data[offset+6] & mask);
         }
         offset += 8;
     }
