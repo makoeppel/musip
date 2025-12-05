@@ -49,6 +49,12 @@ cd build
 ./tests/bits_utils_test
 ```
 
+There are also some test managed with pytest.
+```bash
+cd tests
+pytest
+```
+
 ### Docs
 We use mkdocs and doxygen for generating the documentation. You should have the doxygen package installed on your system, then:
 
