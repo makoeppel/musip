@@ -22,3 +22,22 @@ Loading script /home/mu3e/online/online/userfiles/sequencer/pixels/python_qc/scr
 Running user's `define_params()` function
 Script loaded successfully
 ```
+
+# tdac writing
+Tdac writing for a chip would work like this:
+write 32 bit words, 4* 8bit tdac in each word
+order:
+    col 0 -> 255, starting with col 0, physical col addr.
+    row 0 -> row 255 for each col, starting with row0, physical row addr.
+
+    example:
+    start with col 0 ..
+    (32 bit)  : [8 bit tdac, 8 bit tdac, 8 bit tdac, 8 bit tdac]
+    word 0    : [row 3     , row 2     , row 1     , row 0     ]
+    word 1    : [row 7     , row 6     , row 5     , row 4     ]
+    word 2    : [row 11    , row 10    , row 9     , row 8     ]
+    ...
+    word 63   : [row 255   , row 254   , row253    , row 252   ]
+    now col 1 ..
+    word 64   : [row 3     , row 2     , row 1     , row 0     ]
+    ...

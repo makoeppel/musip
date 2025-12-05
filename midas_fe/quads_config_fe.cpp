@@ -225,7 +225,7 @@ void sc_settings_changed(midas::odb o) {
     }
 
     if (name == "MupixTDACConfig" && o) {
-        WriteTDACs(*feb_sc, m_settings);
+        ConfigureTDACs(*feb_sc, m_settings);
         o = false;
     }
 }
