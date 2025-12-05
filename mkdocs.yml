@@ -31,6 +31,8 @@ nav:
     - FEB MuPix: registers/mupix_registers.md
     - FEB MuTRiG: registers/mutrig_registers.md
     - FEB Sorter: registers/sorter_registers.md
+  - configuration:
+    - Pixel Tuning: pixel_tuning.md
 
 theme:
   name: material

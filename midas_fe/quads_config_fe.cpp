@@ -209,6 +209,25 @@ void sc_settings_changed(midas::odb o) {
         adcContinuousReadout(*feb_sc, m_settings);
         o = false;
     }
+
+    if (name == "Run Cycle FEB" && o) {
+        // send run start
+        write_command_by_name("Abort Run");
+        usleep(500000);  // we sleep here to wait until the command is processed
+        write_command_by_name("Stop Reset");
+        usleep(500000);  // we sleep here to wait until the command is processed
+        write_command_by_name("Run Prepare", run_number);
+        usleep(500000);  // we sleep here to wait until the command is processed
+        write_command_by_name("Sync");
+        usleep(500000);  // we sleep here to wait until the command is processed
+        write_command_by_name("Start Run");
+        o = false;
+    }
+
+    if (name == "MupixTDACConfig" && o) {
+        WriteTDACs(*feb_sc, m_settings);
+        o = false;
+    }
 }
 
 int frontend_init() {

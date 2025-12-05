@@ -266,6 +266,100 @@ int ConfigureASICs(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings, uint8
     return status;
 }
 
+/**
+ * @brief Read TDAC file from a given path.
+ *
+ * Tries to read a TDAC file from a given path. If the path is not present an empty
+ * TDAC configuration (no pixel is masked) is created.
+ *
+ * @param vec Reference to the bitpattern vector.
+ * @param path Path to th file.
+ * @return FE_SUCCESS if the file is read; error code otherwise.
+ */
+int read_tdac_file(vector<uint32_t>& vec, std::string path) {
+  std::ifstream file;
+  file.open(path);
+  if(file.fail()){
+    cm_msg(MERROR, "read_tdac_file" , "Could not find tdac file %s", path.c_str());
+    vec.clear();
+    for(int i = 0; i<256*64; i++){
+        vec.push_back(0x47474747); // has to be 47 as it send directly to the chip
+        return FE_SUCCESS;
+    }
+  }
+  else {
+    vec.resize(256 * 64);
+    file.read(reinterpret_cast<char*>(&vec[0]), 256 * 64 * sizeof(uint32_t));
+    const uint32_t mask = 0x07070707;
+    for (int col = 0; col < 256; ++col) {
+        for (int row = 0; row < 62; ++row) {
+            uint32_t val = vec[col * 64 + row];
+            vec[col * 64 + row] = val ^ mask;
+        }
+        uint32_t val2 = vec[col * 64 + 62];
+        vec[col * 64 + 62] = val2 ^ 0x0707;
+        vec[col * 64 + 63] = 0xda00da00 | ((col&0xff) << 16);; // if read from file the last three values need to be inverted.
+    }
+  }
+  file.close();
+  return FE_SUCCESS;
+}
+
+/**
+ * @brief Write TDACs to all enabled ASICs across active FEBs.
+ *
+ * For each ASIC enabled by the ASIC mask, retrieves TDAC configurations from a TDAC
+ * file, encodes them into a payload, and sends them to the corresponding FEB.
+ *
+ * @param feb_sc Reference to the FEB slow control interface.
+ * @param m_settings MIDAS ODB object containing DAQ and config sections.
+ * @return FE_SUCCESS if all ASICs configured successfully; error code otherwise.
+ */
+int WriteTDACs(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) {
+    int status = FE_SUCCESS;
+    resetASICs(feb_sc, m_settings);
+    for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
+        uint16_t ASICMask = m_settings["DAQ"]["Links"]["ASICMask"][febIDx];
+        bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
+        if (!FEBActive) continue;
+        for (uint32_t asicMaskIDx = febIDx * N_CHIPS; asicMaskIDx < (febIDx + 1) * N_CHIPS;
+             asicMaskIDx++) {
+            if (!((ASICMask >> (asicMaskIDx % N_CHIPS)) & 0x1)) continue;
+            cm_msg(MINFO, "WriteTDACs()",
+                   "/Settings/Config/ -> globalASIC-%i -> localASIC-%i on FEB-%i", asicMaskIDx,
+                   asicMaskIDx % N_CHIPS, febIDx);
+
+            // read TDAC file
+            // TODO: we only read the first TDAC file, this is hardcoded change me
+            std::string path = m_settings["Config"]["TDACS"]["F0"];
+            std::vector<uint32_t> tdac_chip(64*256);
+            read_tdac_file(tdac_chip, path);
+
+            // write TDAC
+            uint32_t N_DCOLS_PER_PAGE = 8;
+            uint32_t PAGESIZE2 = 128 * N_DCOLS_PER_PAGE;
+            uint8_t N_PAGES_PER_CHIP = 128 / N_DCOLS_PER_PAGE;
+
+            uint8_t pages_remaining = N_PAGES_PER_CHIP;
+
+            while (pages_remaining > 0) {
+                std::vector<uint32_t> free_pages = { 0 };
+                feb_sc.FEB_read(febIDx, MP_CTRL_N_FREE_PAGES_REGISTER_R, free_pages);
+                //printf("free_pages: %d %d\n", free_pages[0], N_PAGES_PER_CHIP-pages_remaining);
+                if (free_pages[0] == 0) continue;
+                std::vector<uint32_t> tdac_page(PAGESIZE2);
+                uint8_t current_page = N_PAGES_PER_CHIP-pages_remaining;
+                tdac_page = std::vector<uint32_t>(tdac_chip.begin() + current_page * PAGESIZE2, tdac_chip.begin() + (current_page + 1) * PAGESIZE2);
+
+                feb_sc.FEB_write(febIDx, MP_CTRL_TDAC_START_REGISTER_W + (asicMaskIDx % N_CHIPS), tdac_page, true, false);
+
+                pages_remaining--;
+            }
+        }
+    }
+    return FE_SUCCESS;
+}
+
 uint64_t calculateADCCommand(ADC_Command adcCommand, uint16_t adcDivisionFactor, ADC_Mode adcMode) {
     constexpr uint64_t SteerADC = 0b100000;
 
