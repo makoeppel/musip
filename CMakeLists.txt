@@ -26,16 +26,18 @@ message(STATUS "ANALYZER_GIT_REF: ${ANALYZER_GIT_REF}")
 find_package(Boost 1.74 REQUIRED
     COMPONENTS filesystem program_options system
 )
-find_package(ROOT REQUIRED
+find_package(ROOT
     COMPONENTS Core MathCore RIO Hist Tree Net RHTTP Gui XMLIO
 )
-find_package(Midas REQUIRED COMPONENTS manalyzer
+find_package(Midas
     NO_DEFAULT_PATH PATHS "$ENV{MIDASSYS}"
 )
 
 add_subdirectory(midas_fe)
 add_subdirectory(tools)
-add_subdirectory(analyzer)
+if(ROOT_FOUND)
+    add_subdirectory(analyzer)
+endif()
 add_subdirectory(tests)
 
 # automated linting and testing
