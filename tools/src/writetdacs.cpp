@@ -29,7 +29,7 @@ void printUsage(std::ostream& stream) {
 }
 } // end of the unnamed namespace
 
-int main(int argc, char* argv[]) {
+int write_tdacs_main(int argc, char* argv[]) {
     musip::TDACFile tdacFile;
     std::string output("tdac.bin");
 
@@ -102,6 +102,12 @@ int main(int argc, char* argv[]) {
             std::cerr << "Got error '" << error.message() << "' when saving to filename '" << output << "'\n";
         }
     }
+
+    return 0;
+}
+
+int main(int argc, char* argv[]) {
+    return write_tdacs_main(argc, argv);
 }
 
 namespace { // Start of the unnamed namespace

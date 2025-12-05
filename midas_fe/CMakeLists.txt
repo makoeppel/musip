@@ -4,10 +4,12 @@ add_subdirectory(libmudaq)
 
 if(APPLE)
     message(WARNING "[online] we dont build kerneldriver")
-    message(STATUS "[online] BUILD_KERNEL=${BUILD_KERNEL}")
     message(STATUS "[online] APPLE=${APPLE}")
-else()
+elseif(BUILD_KERNEL)
     add_subdirectory(kerneldriver)
+else()
+    message(WARNING "[online] we dont build kerneldriver")
+    message(STATUS "[online] BUILD_KERNEL=${BUILD_KERNEL}")
 endif()
 
 

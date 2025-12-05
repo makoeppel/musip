@@ -14,6 +14,14 @@ if(NOT CMAKE_CXX_STANDARD)
    set(CMAKE_CXX_STANDARD 17)
 endif()
 
+add_compile_options(
+    "-Wall" "-Wextra"
+    #"-Werror"
+)
+
+# build options
+option(BUILD_KERNEL "Build kerneldriver" ON)
+
 find_package(Git 1.8 REQUIRED)
 execute_process(
     COMMAND ${GIT_EXECUTABLE} describe --long --dirty --abbrev=16 --all
@@ -29,9 +37,15 @@ find_package(Boost 1.74 REQUIRED
 find_package(ROOT
     COMPONENTS Core MathCore RIO Hist Tree Net RHTTP Gui XMLIO
 )
-find_package(Midas
-    NO_DEFAULT_PATH PATHS "$ENV{MIDASSYS}"
-)
+if(ROOT_FOUND)
+    find_package(Midas REQUIRED COMPONENTS manalyzer
+        NO_DEFAULT_PATH PATHS "$ENV{MIDASSYS}"
+    )
+else()
+    find_package(Midas
+        NO_DEFAULT_PATH PATHS "$ENV{MIDASSYS}"
+    )
+endif()
 
 add_subdirectory(midas_fe)
 add_subdirectory(tools)

@@ -20,9 +20,10 @@ jobs:
           # Install system dependencies
           sudo apt-get update
           sudo DEBIAN_FRONTEND=noninteractive apt-get -y install \
-            gcc g++ cmake git python3-all libssl-dev libz-dev \
+            gcc g++ cmake git python3-all python3-pip libssl-dev libz-dev \
             libcurl4-gnutls-dev sqlite3 libsqlite3-dev libboost-all-dev \
             linux-headers-generic libfmt-dev
+          pip install pytest
 
           # build Midas
           git clone https://marius_koeppel@bitbucket.org/tmidas/midas.git
@@ -40,8 +41,12 @@ jobs:
           cp midas_fe/missing_hardware_software_only.h midas_fe/missing_hardware.h
           cmake -S . -B ./build -DBUILD_KERNEL=Off
           cmake --build ./build -j2
-          sudo cmake --install ./build
+          cmake --install ./build
 
           # run tests
-          ./tests/sample_test
-          ./tests/bits_utils_test
+          ./build/tests/sample_test
+          ./build/tests/bits_utils_test
+
+          # run pytest
+          cd tests
+          pytest
