@@ -21,9 +21,9 @@ AnaMutrigHistos::AnaMutrigHistos(const boost::property_tree::ptree& config, TARu
     enabled_ = config.get<bool>("enabled", true);
     
 
-    printf("<Beginning of %s Module configuration>\n",fModuleName);
+    printf("<Beginning of %s Module configuration>\n", fModuleName.c_str());
     boost::property_tree::write_json(std::cout, config);
-    printf("<End of %s Module configuration>\n",fModuleName);
+    printf("<End of %s Module configuration>\n", fModuleName.c_str());
     
     // If this module is disabled, don't do anything else.
     if(!enabled_) return;

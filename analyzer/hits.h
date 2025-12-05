@@ -45,7 +45,7 @@ struct mutrighit {
     [[nodiscard]] int64_t time()             const {return timestamp()*50e-3;} //returns time in ns
 
     void Print(){
-        printf("x64:%llx channel:%2.2x tot:%u t:%u time:%8.8x\n", hitdata, channel(), tot(), timestamp(), time());
+        printf("x64:%llx channel:%2.2x tot:%u t:%lld time:%8.8llx\n", hitdata, channel(), tot(), timestamp(), time());
     }
 };
 

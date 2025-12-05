@@ -1,0 +1,47 @@
+name: Build and Test Software
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install deps, build and run tests
+        run: |
+          set -euxo pipefail
+
+          # Install system dependencies
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get -y install \
+            gcc g++ cmake git python3-all libssl-dev libz-dev \
+            libcurl4-gnutls-dev sqlite3 libsqlite3-dev libboost-all-dev \
+            linux-headers-generic libfmt-dev
+
+          # build Midas
+          git clone https://marius_koeppel@bitbucket.org/tmidas/midas.git
+          cd midas
+          git submodule update --init --recursive
+          cmake -S . -B ./build \
+            -DNO_MYSQL=1 -DNO_NVIDIA=1 -DNO_OPENCV=1 -DNO_PGSQL=1 -DNO_SQLITE=1
+          cmake --build ./build -j2
+          sudo cmake --install ./build
+          export MIDASSYS="$(pwd)"
+          cd ..
+
+          # build mu3e/online (this repo)
+          git submodule update --init --recursive
+          cp midas_fe/missing_hardware_software_only.h midas_fe/missing_hardware.h
+          cmake -S . -B ./build -DBUILD_KERNEL=Off
+          cmake --build ./build -j2
+          sudo cmake --install ./build
+
+          # run tests
+          ./tests/sample_test
+          ./tests/bits_utils_test
