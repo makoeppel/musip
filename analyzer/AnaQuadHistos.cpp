@@ -147,16 +147,6 @@ std::tuple<uint32_t, uint32_t> AnaQuadHistos::get_quad_global_col_row(pixelhit h
             break;
     }
 
-    if ( hit.chipid() == 5 || hit.chipid() == 7 )
-        finalCol = 255 - finalCol;
-    if ( hit.chipid() == 6 || hit.chipid() == 4 )
-        finalCol = 511 - finalCol + 256;
-
-    if ( hit.chipid() == 13 || hit.chipid() == 15 )
-        finalCol = 255 - finalCol;
-    if ( hit.chipid() == 14 || hit.chipid() == 12 )
-        finalCol = 511 - finalCol + 256;
-
     return std::make_tuple(finalCol, finalRow);
 }
 
@@ -196,19 +186,19 @@ std::vector<uint8_t> AnaQuadHistos::create_mask_file(const TH2F* hitmap, uint32_
     std::pair<double, double> MeanAndSigma = CalculateMeanAndSigma(hitmap);
     double mean = MeanAndSigma.first;
     double sigma = MeanAndSigma.second;
-    double noiseLimit = mean + noiseThreshold * sigma;
+    double noiseLimit = mean + 3 * sigma;
 
     if (( Ncol != 256) || (Nrow != 250)) std::cout<< "WARNING! In DQAnomalyChecker::DetectAndMaskNoisyPixelsFromHitmap: Ncol vs Nrows in pixel hitmap doesn't match what is expected! Ncol = " << Ncol << ", Nrow = " << Nrow << ". The pixel mask might be nonsense."<< std::endl;
 
     int tot_noisy_pixels = 0;
     for (int binx = 1; binx <= Ncol; binx++) {
         for (int biny = 1; biny <= Nrow; biny++) {
-            if (hitmap->GetBinContent(binx, biny) > noiseThreshold) {
+            if (hitmap->GetBinContent(binx, biny) > noiseLimit) {
                 vec.push_back(0x00);
                 tot_noisy_pixels++;
                 maskmap[chipID]->Fill(binx-1, biny-1);
             } else {
-                vec.push_back(0x40);
+                vec.push_back(0x47);
             }
         }
         // fill up col
@@ -232,13 +222,16 @@ void AnaQuadHistos::EndRun(TARunInfo* runinfo) {
 
     // write mask file
     for ( int index = 0; index < 16; index++ ) {
-        std::string path = "/home/mu3e/mu3e/debug_online/online/userfiles/maskfiles/mask_analyser";
-        std::ofstream file;
-        std::string data = "/mask_" + std::to_string(index) + ".bin";
-        file.open(path + data, std::ios::binary);
+        mask_files[index] = create_mask_file(hitmaps[index]->asRootObject("myHistogram", "My histogram title").get(), index, 0.5);
 
-        file.write((char*) mask_files[index].data(), mask_files[index].size() * sizeof(uint8_t));
-        file.close();
+        std::string path = "/home/mu3e/mu3e/debug_online/online/userfiles/maskfiles/mask_analyser";
+        std::string data = "/mask_" + std::to_string(index) + ".bin";
+
+        // write new file
+        std::ofstream out_file;
+        out_file.open(path + data, std::ios::binary);
+        out_file.write((char*) mask_files[index].data(), mask_files[index].size() * sizeof(uint8_t));
+        out_file.close();
     }
 
 }
@@ -274,7 +267,6 @@ TAFlowEvent* AnaQuadHistos::AnalyzeFlowEvent(TARunInfo*, TAFlags* flags, TAFlowE
         hitToA[hit.chipid()]->Fill(cur_hitToA);
         hitTime[hit.chipid()]->Fill(localTime);
 
-        //mask_files[hit.chipid()] = create_mask_file(hitmaps[hit.chipid()]->asRootObject("myHistogram", "My histogram title").get(), hit.chipid(), 0.5);
     }
 
     return flow;
