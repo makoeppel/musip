@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Encoding -->
+    <meta charset="UTF-8">
+
+    <link rel="stylesheet" href="midas.css">
+    <link rel="stylesheet" href="Quads/quads.css">
+
+    <script src="controls.js"></script>
+    <script src="midas.js"></script>
+    <script src="mhttpd.js"></script>
+    <script src="mplot.js"></script>
+    <script src="dqm/onlineDQM.js"></script>
+    <script src="mhistory.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="Quads/tabs.css">
+
+    <title>Timing Scintillator operation</title>
+</head>
+
+<body class="mcss" style="margin-left: 15px; margin-top: 15px;">
+    <!-- header and side navigation will be filled in mhttpd_start -->
+    <div id="mheader"></div>
+    <div id="msidenav"></div>
+
+    <div id="mmain">
+    <h2>Power Managment</h2>
+
+    <div class="container" id="div_LVHV">
+        <table class="mtable" id="LVsupplies">
+            <tr><th colspan="8" class="mtableheader">LV SUPPLIES</th></tr>
+            <tr>
+                <th>Device</th>
+                <th>Channel</th>
+                <th colspan=2>State</th>
+                <th>Demand Voltage</th>
+                <th>Voltage</th>
+                <th>Current Limit</th>
+                <th>Current</th>
+                <th>Description</th>
+            </tr>
+            <tbody id="LVsupplies-body">
+            <!-- rows will be populated dynamically from TimingScint_config.js LV_devices -->
+            </tbody>
+        </table>
+
+        <table class="mtable" id="HVsupplies">
+            <tr><th colspan="8" class="mtableheader">HV SUPPLIES</th></tr>
+            <tr>
+                <th>Device</th>
+                <th>Channel</th>
+                <th colspan=2>State</th>
+                <th>Demand Voltage</th>
+                <th>Voltage</th>
+                <th>Current Limit</th>
+                <th>Current (uA)</th>
+                <th>Description</th>
+            </tr>
+            <tbody id="HVsupplies-body">
+            <!-- rows will be populated dynamically from TimingScint_config.js LV_devices -->
+            </tbody>
+	    <!--
+            <tr>
+                <th>0</th>
+                <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/HVSUPPLY0/Variables/State[0]" data-color="lightgreen" data-background-color="red"></div></td>
+                <td style="text-align: center"><input type="checkbox" name="CheckboxPixels" class="modbcheckbox" data-odb-path="/Equipment/HVSUPPLY0/Variables/Set State[0]"></input></td>
+                <td><div class="modbvalue" data-odb-path="/Equipment/HVSUPPLY0/Variables/Demand Voltage[0]" data-odb-editable="1"></div></td>
+                <td><div class="modbvalue" data-format="e3" data-odb-path="/Equipment/HVSUPPLY0/Variables/Voltage[0]"></div></td>
+                <td><div class="modbvalue" data-format="e3" data-odb-path="/Equipment/HVSUPPLY0/Variables/Current Limit[0]" data-odb-editable="1" data-formula="x"></div></td>
+                <td><div id="keithley_curr" data-format="e3" class="modbvalue" data-odb-path="/Equipment/HVSUPPLY0/Variables/Current[0]" data-formula="1000000*x"></div></td>
+                <td id="HVSUPPLY0_0" style="text-align: center">Quad 3 (70µm)</td>
+            </tr>
+	    -->
+</table>
+
+
+    </div>
+
+    <h2>System control</h2>
+
+    <div class="container" id="div_ModuleControl">
+        <table class="mtable" id="ModuleControl">
+            <div class="modb" data-odb-path="/Equipment/TilesLabor/Variables/TDSM" onchange="updateBoardStatus(this.value);"></div>
+            <div class="modb" data-odb-path="/Equipment/TilesLabor/Variables/TDCF" onchange="applyColors(this.value, 'tdcf');"></div>
+            <div class="modb" data-odb-path="/Equipment/TilesLabor/Variables/TDCE" onchange="applyColors(this.value, 'tdce');"></div>
+            <div class="modb" data-odb-path="/Equipment/TilesLabor/Variables/TDCH" onchange="applyColors(this.value, 'tdch');"></div>
+
+            <tr><th colspan="14" class="mtableheader">Module Control, Status & Monitoring</th></tr>
+            <tr>
+                <th> Board </th>
+                <th >MuTriG Power</th>
+                <th>Init</th>
+                <th>Inj</th>
+                <th colspan="2"> ASIC VCC</th>
+
+                <th>MuTriG Mask</th>
+                <th>LVDS Mask</th>
+                <th colspan="2">Board V</th>
+                <th >Module board T</th>
+            <th  colspan="3">Counters</th>
+            </tr>
+
+            <tr>
+            <th></th>
+            <th style="text-align: center">
+                <button class="mbutton" id="Pall" name="Power_all" onclick="setGlobalASICpower(true);" >Enable Power</button>
+                <button class="mbutton" id="Pall" name="Power_all_n" onclick="setGlobalASICpower(false);" >Disable Power</button>
+                </th>
+            <th style="text-align: center"><input type="checkbox" class="modbcheckbox" data-odb-path="/Equipment/TilesLabor/TMB_control/init_tmb" style="width:20px; height: 20px;" data-odb-editable="false"></input></th>
+            <th style="text-align: center"><input type="checkbox" class="modbcheckbox" data-odb-path="/Equipment/TilesLabor/Commands/TestPulsesTDC" style="width:20px; height: 20px;" data-odb-editable="false"></input></th>
+            <th>A</th>
+            <th>D</th>
+            <tbody id="ModuleControl-body">
+            <!-- rows will be populated dynamically from BoardControl.js -->
+            </tbody>
+        </table>
+    </div>
+
+    <div class="container" id="div_actions">
+        <table class="mtable" id="table_actions">
+            <tr><th colspan="3" class="mtableheader">Actions</th></tr>
+            <tr>
+                <th>Action</th>
+                <th>Execute</th>
+                <th>Settings</th>
+            </tr>
+            <tr>
+                <th>Configure chips</th>
+                <td style="text-align: center"><button class="mbutton" onclick="mutrig_configure_all()">Configure all</button></td>
+                <td style="text-align: center"></td>
+            </tr>
+            <tr>
+                <th>Analog test out</th>
+                <td style="text-align: center">
+                    <button class="mbutton" onclick="mutrig_atestout_selected()">Set TestOut</button>
+                    <button class="mbutton" onclick="set_mutrig_testout(null, 0)">Disable TestOut</button>
+                </td>
+                <td style="text-align: center">
+                    <select name="TestOut" id="inputTestOut">
+                        <option value=0>no selection </option>
+                        <option value=3>Timing trigger monitor P</option>
+                        <option value=5>Timing trigger monitor N</option>
+                        <option value=7>Energy trigger monitor N</option>
+                        <option value=2>input stage cascode voltage</option>
+                        <option value=1>top_monitor </option>
+                        <option value=4>SiPM_vbias</option>
+                        <option value=6>fb_pbias </option>
+                    </select> 
+                </td>
+
+            </tr>
+            <tr>
+                <th>Digital test out</th>
+                <td style="text-align: center">
+                    <button class="mbutton" onclick="mutrig_dtestout_selected()">Set TestOut</button>
+                    <button class="mbutton" onclick="mutrig_dtestout_selected(null)">Disable TestOut</button>
+                </td>
+                <td>
+                    <select name="TestOutDig" id="inputTestOutDig">
+                        <option value=0>Q and Flag </option>
+                        <option value=1>T and E</option>
+                    </select> 
+                </td>
+            </tr>
+            <tr>
+                <th>Reset blocks</th>
+                <td colspan="1" style="text-align: center">
+                    <button class="mbutton" onclick="reset_mutrig_asics()">ASICs</button>
+                    <button class="mbutton" onclick="reset_mutrig_dpath()">Datapath</button>
+                    <button class="mbutton" onclick="reset_mutrig_lvds()">LVDS</button>
+                    <button class="mbutton" onclick="reset_mutrig_counters()">Counters</button>
+                </td>
+            </tr>
+            <tr>
+                <th>Standard Config</th>
+                <td colspan="1" style="text-align: center">
+                    <button class="mbutton" onclick="mutrig_sop_inject()">Inject</button>
+                    <button class="mbutton" onclick="mutrig_sop_normal()">T&&E</button>
+                    <button class="mbutton" onclick="mutrig_sop_noise()">T||E</button>
+                    <button class="mbutton" onclick="mutrig_sop_prbs()">PRBS</button>
+                    <button class="mbutton" onclick="mutrig_sop_inject(63)">Inject @ CH 63</button>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="container" id="div_sensorSelection">
+        <table class="mtable" id="sensorSelection">
+            <tr><th colspan="3" class="mtableheader">Sensor selection</th></tr>
+            <td>
+                <object type="image/svg+xml" data="Mutrig/MuSR-Scint1.svg" id="svg-object" height=300px aria-label="MuSR Scintillator diagram">
+                    <!-- Fallback content for browsers that don't support <object> or SVG -->
+                    <p>Your browser does not support inline SVG.</p>
+                </object>
+            </td>
+            <td>
+                <div class="chip_settings_container"><!-- class="container" style="justify-content: space-between; width: 100%;">-->
+                    <span>Selected channel: <span id="channel_selection">None</span></span>
+                    <br>
+                    <button class="mbutton" id="unmask-btn" onclick="maskUnmaskChannelAll(true)">Mask all</button>
+                    <button class="mbutton" id="unmask-btn" onclick="maskUnmaskChannelAll(false)">Unmask all</button>
+                    <button class="mbutton" id="config-btn" onclick="mutrig_configure_all()">Configure</button>
+                    <br>
+                    <table class="mtable" name="DACsChannelSettings">
+                        <tr><th colspan="4" class="mtableheader">Channel Settings</th></tr>
+                        <tr>
+                            <th class="style_setting_name">Setting</th>
+                            <th class="style_setting_type">value</th>
+                            <th class="style_setting_type">scale</th>
+                            <th class="style_setting_type">offset</th>
+                        </tr>
+                        <tbody>
+                            <tr>
+                                <td><div>Timing threshold</div></td>
+                                <td><div class="modbvalue" name="tthresh" title="T-threshold setting. Lower values are higher thresholds." ></div></td>
+                                <td><div class="modbvalue" name="tthresh_sc" title="T-Threshold current scaling. 0=1:1 4=1:2 (1:2 means higher maximum threshold)"></div></td>
+                                <td><div class="modbvalue" name="tthresh_offset" title="T-Threshold offset"></div></td>
+                            </tr>
+                            <tr>
+                                <td><div>Energy threshold</div></td>
+                                <td><div class="modbvalue" name="ethresh" ></div></td>
+                                <td><div class="modbvalue" name="ebias" title="EBIAS: Adjust Energy branch discharge current"/></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><label for="mask">Mask Channel</label></td>
+                                <td><input type="checkbox" class="modbcheckbox" name="mask" id="mask" title="Setting to true disables the channel" onClick="maskUnmaskChannel(this.checked)"/></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                            <!--
+                            <tr>
+                                <td><label for="cml">CML</label></td>
+                                <td><div class="modbvalue" name="cml" /></td>
+                                <td><div class="modbvalue" name="cml_sc" /></td>
+                            </tr>
+                            -->
+                            <tr>
+                                <td><label for="INPUTBIAS">Input stage bias</label></td>
+                                <td><div class="modbvalue" name="inputbias" title="Main bias current of the input stage, affects all later stages (i.e. also thresholds, SiPM voltage) and general performance. higher values means higher current."/></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><label for="SIPM">SiPM bias adjust</label></td>
+                                <td><div class="modbvalue" name="sipm" title="Adjust voltage at the input terminals of the chip."/></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><label for="tdctest_n">Disable TDC inject</label></td>
+                                <td><input type="checkbox" class="modbcheckbox" name="tdctest_n" id="tdctest_n"
+                                        title="1: disable TDC test input to this channel. (0 enables TDC input and shorts with the normal hitlogic output. Note that
+                                            DMON and tdc test signals are shared, so only one can be used at a time."
+                                    />
+                                <td></td>
+                                <td></td>                                
+                            </tr>
+                            <tr>
+                                <td><label for="recv_all">Disable E-Validation</label></td>
+                                <td><input type="checkbox" class="modbcheckbox" name="recv_all" id="recv_all"/></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td colspan="4" style="text-align: center;">
+                                    <button class="mbutton" id="mask-btn"   onclick="maskUnmaskChannel(true)">Mask</button>
+                                    <button class="mbutton" id="unmask-btn" onclick="maskUnmaskChannel(false)">Unmask</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </td>
+        </table>
+    </div>
+    <div class="container" id="div_SlowMonitoring">
+        <table class="mtable" id="SlowMonitoring">
+            <tr><th colspan="2" class="mtableheader">Slow Data Monitoring</th></tr>
+            <tr>
+                <th>
+                    <div class="plot-container">
+                        <div class="mplot" id="rates" style="height: 300px;width: 500px;"
+                            data-odb-path="/Equipment/TilesLabor/Variables" data-y="TDCR"
+                            data-x-text="channel" data-y-text="Rate [Hz]"
+                            data-x-min=0 data-x-max=64
+                            data-nx=32 data-y-log=true data-y-min=1 data-y-max=1e7
+                            data-title="Rate Hitmap"
+                        >
+                        </div>
+                    </div>
+                </th>
+                <th>
+                    <div class="mjshistory" data-group="Timing" data-panel="RatesChannels" style="width: 500px; height: 300px;" ></div>
+                </th>
+        </tr>
+        </table>
+    </div>
+
+    <div class="container" id="div_anaPlots">
+        <table class="mtable" id="anaPlotsTable">
+            <tr><th class="mtableheader">Analyzer Plots</th></tr>
+            <tr>
+                <td>
+                    <input type=button value='Refresh' id='refresh' onClick='onRefreshClicked()'/>
+                    Auto refresh<input type=checkbox id='autoRefresh' onClick='onAutoRefreshClicked()'/>
+                    <input type=button value='Clear all' onClick='onClearAll()'/>
+                </td>
+            </tr>
+            <td id="anaPlotsMutrig">
+                <!-- Global plots will be populated here by init_DQM() -->
+            </td>
+        </table>
+    </div>
+<!--
+    <div class="container" id="div_sensorSelection2">
+        <table class="mtable" id="sensorSelection2">
+            <tr><th colspan="3" class="mtableheader">Sensor selection</th></tr>
+            <td>
+                <object type="image/svg+xml" data="Mutrig/MuSR-Scint1.svg" id="svg-object" height=300px aria-label="MuSR Scintillator diagram">
+                    <p>Your browser does not support inline SVG.</p>
+                </object>
+            </td>
+            <td>
+                <div class="chip_settings_containerNew">
+                    <span>Selected channel: <span id="channel_selection">None</span></span>
+                    <br>
+                    <button class="mbutton" id="unmask-btn" onclick="maskUnmaskChannelAll(true)">Mask all</button>
+                    <button class="mbutton" id="unmask-btn" onclick="maskUnmaskChannelAll(false)">Unmask all</button>
+                    <button class="mbutton" id="config-btn" onclick="mutrig_configure_all()">Configure</button>
+                    <label><input type='checkbox' onclick='mutrig_configureImmediateUpdate(this.checked);'>Direct config</label>
+                    <br>
+                    <table class="mtable" name="DACsChannelSettingsNew">
+                        <tr><th colspan="4" class="mtableheader">Channel Settings</th></tr>
+                        <tr>
+                            <th class="style_setting_name">Setting</th>
+                            <th class="style_setting_type">value</th>
+                            <th class="style_setting_type">scale</th>
+                            <th class="style_setting_type">offset</th>
+                        </tr>
+                        <tbody>
+                            <tr>
+                                <td><div>Timing threshold</div></td>
+                                <td><input type="range"    name="tthresh" min="0" max="63" title="Timing threshold setting. For positive pulses, lower values mean higher thresholds"  list="tth_markers"/><div class="modbvalue" name="tthresh" style="width: 3em"/></td>
+                                <td><div class="modbvalue" name="tthresh_sc" title="T-Threshold current scaling. 0=1:1 4=1:2 (1:2 means higher maximum threshold)"></div></td>
+                                <td><input type="range"    name="tthresh_offset" min="0" max="7" title="Timing threshold offset. For positive pulses only. , higher values mean higher thresholds"/><div class="modbvalue" name="tthresh_offset" style="width: 3em" /></td>
+                                <datalist id="tth_markers">
+                                    <option value="15""></option>
+                                    <option value="31""></option>
+                                </datalist>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><div>Energy threshold</div></td>
+                                <td><input type="range" id="i_ethresh" name="ethresh" min="0" max="255" title="Energy threshold setting. For positive pulses, lower values mean higher thresholds"/><div class="modbvalue" name="ethresh" style="width: 3em"/></td>
+                                <td></td>
+                                <td>
+                                    <input type="range" id="i_ebias" name="ebias" min="0" max="7" title="EBIAS: Adjust Energy branch discharge current" list="ebias_markers" /><div class="modbvalue" name="ebias" style="width: 3em"/></td>
+                                    <datalist id="ebias_markers">
+                                        <option value="0""></option>
+                                        <option value="1""></option>
+                                        <option value="2""></option>
+                                        <option value="3""></option>
+                                        <option value="7""></option>
+                                    </td>
+                            </tr>
+                            <tr>
+                                <td><label for="mask">Mask Channel</label></td>
+                                <td><input type="checkbox" name="mask" id="mask" title="Setting to true disables the channel" onClick="maskUnmaskChannel(this.checked)"/></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><label for="INPUTBIAS">Input stage bias</label></td>
+                                <td><div class="modbvalue" name="inputbias" title="Main bias current of the input stage, affects all later stages (i.e. also thresholds, SiPM voltage) and general performance. higher values means higher current."/></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><label for="SIPM">SiPM bias adjust</label></td>
+                                <td><div class="modbvalue" name="sipm" title="Adjust voltage at the input terminals of the chip."/></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td><label for="tdctest_n">Disable TDC inject</label></td>
+                                <td><input type="checkbox" name="tdctest_n" id="tdctest_n"
+                                        title="1: disable TDC test input to this channel. (0 enables TDC input and shorts with the normal hitlogic output. Note that
+                                            DMON and tdc test signals are shared, so only one can be used at a time."
+                                    />
+                                <td></td>
+                                <td></td>                                
+                            </tr>
+                            <tr>
+                                <td><label for="recv_all">Disable E-Validation</label></td>
+                                <td><input type="checkbox" name="recv_all" id="recv_all"/></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td colspan="4" style="text-align: center;">
+                                    <button class="mbutton" id="mask-btn"   onclick="maskUnmaskChannel(true)">Mask</button>
+                                    <button class="mbutton" id="unmask-btn" onclick="maskUnmaskChannel(false)">Unmask</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </td>
+        </table>
+    </div>
+-->
+<!--
+    <div class="wrapper" id="div_tabs">
+        <div class="tabs">
+            <div class="tab">
+                <input type="radio" name="css-tabs" id="tab-dacs" checked class="tab-switch">
+                <label for="tab-dacs" class="tab-label">DACs</label>
+                <div class="tab-content" class="chip_settings_container">
+                    <div class="tab-description">
+                        <table class="mtable" id="DACsGlobalSettings">
+                            <tr><th colspan="2" class="mtableheader">Global Settings</th></tr>
+                            <td id="GlobalSettingsTable"></td>
+                        </table>
+                        <br>
+                        <table class="mtable" id="DACsASICSettings">
+                            <tr><th colspan="2" class="mtableheader">ASIC Settings</th></tr>
+                            <td id="ASICSettingsTable"></td>
+                        </table>
+                        <br>
+                        <table class="mtable" id="DACsChannelSettings">
+                            <tr><th colspan="4" class="mtableheader">Channel Settings</th></tr>
+                        </table>
+                    </div>
+                    <div class="table-container">
+                    </div>
+                </div>
+            </div>
+            <div class="tab">
+                <input type="radio" name="css-tabs" id="tab-masking" class="tab-switch">
+                <label for="tab-masking" class="tab-label">Masking</label>
+                <div class="tab-content">
+                    <table class="mtable" id="Masking">
+                        <tr><th colspan="2" class="mtableheader">Masking</th></tr>
+                        <td id="MaskingTable"></td>
+                    </table>
+                </div>
+            </div>
+            <div class="tab">
+                <input type="radio" name="css-tabs" id="tab-hitmap" class="tab-switch">
+                <label for="tab-hitmap" class="tab-label">HitMap</label>
+                <div class="tab-content">
+                    <table class="mtable" id="HitMap">
+                        <tr><th colspan="2" class="mtableheader">HitMap</th></tr>
+                        <td id="HitMapTable"></td>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+-->
+    <!-- <script src="../pixel_lvds.js" defer></script> -->
+    <script src="Mutrig/Utility.js"></script>
+    <script src="Mutrig/LVSuppliesTable.js"></script>
+    <script src="Mutrig/ChipConfiguration.js"></script>
+    <script src="Mutrig/ChannelSelection.js"></script>
+    <script src="Mutrig/Actions.js"></script>
+    <script src="Mutrig/BoardControl.js"></script>
+    <script src="Mutrig/DQM-PlotManager.js"></script>
+
+    <!-- <script src="Quads/quad_configuration.js" defer></script>
+    
+    <script src="Quads/quad_basics.js" defer></script>
+    <script src="Quads/quad_selection.js" defer></script>
+    <script src="Quads/quad_actions.js" defer></script>
+    <script src="Quads/quad_general_container.js" defer></script>
+    <script src="Quads/quad_hitmap.js" defer></script>
+    <script src="Quads/quad_masking.js" defer></script>
+    <script src="Quads/quad_dacs.js" defer></script>-->
+    <script defer>
+        //init();
+        mhttpd_init('Timing Sytem', 100);
+        mplot_init();
+        mhistory_init();
+        boardcontrol_init();
+
+        init_channelSelection('Mutrig/MuSR-Channelmapping.json');
+        init_LVTable('Mutrig/MuSR-Channelmapping.json');
+        init_HVTable('Mutrig/MuSR-Channelmapping.json');
+        plots = [
+            //{source: "mutrig/ChannelID", title: "Hits per channel", xTitle: "channel" , yTitle: "Entries"},
+            
+            {source: "mutrig/h_tot_32", title: "ToT Muon L", xTitle: "ToT" , yTitle: "Entries", },
+            {source: "mutrig/h_tot_33", title: "ToT Muon R", xTitle: "ToT" , yTitle: "Entries", },
+            {source: "mutrig/h_tot_34", title: "ToT Backward L", xTitle: "ToT" , yTitle: "Entries", },
+            {source: "mutrig/h_tot_35", title: "ToT Backward R", xTitle: "ToT" , yTitle: "Entries", },
+            {source: "mutrig/h_tot_36", title: "ToT Forward L", xTitle: "ToT" , yTitle: "Entries", },
+            {source: "mutrig/h_tot_37", title: "ToT Forward R", xTitle: "ToT" , yTitle: "Entries", },
+            //{source: "mutrig/h_tot_36", title: "ToT channel 36", xTitle: "ToT" , yTitle: "Entries", },
+            
+            {source: "mutrig/TimeStampDelta_m_internal", title: "Muon intra timing", xTitle: "dT [ns]" , yTitle: "Entries", },
+            {source: "mutrig/TimeStampDelta_backward_internal", title: "Backward intra timing", xTitle: "dT [ns]" , yTitle: "Entries", },
+            {source: "mutrig/TimeStampDelta_forward_internal", title: "Forward intra timing", xTitle: "dT [ns]" , yTitle: "Entries", },
+            //{source: "mutrig/TimeStampDelta_det2_internal", title: "Detector 2 intra timing", xTitle: "dT [ns]" , yTitle: "Entries", },
+        ];
+        dqmInit("anaPlotsMutrig", plots);
+    </script>
+
+</body>
+</html>
+

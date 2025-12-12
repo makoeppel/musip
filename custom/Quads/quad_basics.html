@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Encoding -->
+    <meta charset="UTF-8">
+
+    <link rel="stylesheet" href="midas.css">
+    <link rel="stylesheet" href="Quads/quads.css">
+
+    <script src="controls.js"></script>
+    <script src="midas.js"></script>
+    <script src="mhttpd.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="dqm/onlineDQM.js"></script>
+    <script src="mplot.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="Quads/tabs.css">
+
+    <title>Quad module operation</title>
+</head>
+
+<body class="mcss" onload="mhttpd_init('Quads'); mplot_init(); dqmInit()" style="margin-left: 15px; margin-top: 15px;">
+    <!-- header and side navigation will be filled in mhttpd_start -->
+    <div id="mheader"></div>
+    <div id="msidenav"></div>
+
+    <div id="mmain">
+    <div name="modb" data-odb-path="/Equipment/Quads/Variables/PCLS" onchange="update_pcls(this.value)"></div>
+    <div name="modb" data-odb-path="/Equipment/Quads/Variables/PCMS" onchange="update_pcms(this.value)"></div>
+
+    <h2>Power Managment</h2>
+
+    <div class="container">
+        <table class="mtable" id="LVsupply0">
+            <tr><th colspan="8" class="mtableheader">LV SUPPLY 0</th></tr>
+        <tr>
+            <th colspan="2" >Channel</th>
+                <th>State</th>
+                <th>Demand Voltage</th>
+                <th>Voltage</th>
+            <th>Current Limit</th>
+            <th>Current</th>
+                <th>Description</th>
+        </tr>
+            <tr>
+                <th>0</th>
+                <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/LVSUPPLY0/Variables/State[0]" data-color="lightgreen" data-background-color="red"></div></td>
+                <td style="text-align: center"><input type="checkbox" name="CheckboxPixels" class="modbcheckbox" data-odb-path="/Equipment/LVSUPPLY0/Variables/Set State[0]"></input></td>
+                <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/LVSUPPLY0/Variables/Demand Voltage[0]" data-odb-editable="1"></div></td>
+                <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/LVSUPPLY0/Variables/Voltage[0]"></div></td>
+                <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY0/Variables/Current Limit[0]" data-odb-editable="1"></div></td>
+                <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY0/Variables/Current[0]"></div></td>
+                <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY0/Settings/Channel Names[0]" data-odb-editable="1"></div></td>
+            </tr>
+            <tr>
+                <th>1</th>
+                <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/LVSUPPLY0/Variables/State[1]" data-color="lightgreen" data-background-color="red"></div></td>
+                <td style="text-align: center"><input type="checkbox" name="CheckboxPixels" class="modbcheckbox" data-odb-path="/Equipment/LVSUPPLY0/Variables/Set State[1]"></input></td>
+                <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/LVSUPPLY0/Variables/Demand Voltage[1]" data-odb-editable="1"></div></td>
+                <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/LVSUPPLY0/Variables/Voltage[1]"></div></td>
+                <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY0/Variables/Current Limit[1]" data-odb-editable="1"></div></td>
+                <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY0/Variables/Current[1]"></div></td>
+                <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY0/Settings/Channel Names[1]" data-odb-editable="1"></div></td>
+            </tr>
+            <tr>
+                <th>2</th>
+                <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/LVSUPPLY0/Variables/State[2]" data-color="lightgreen" data-background-color="red"></div></td>
+                <td style="text-align: center"><input type="checkbox" name="CheckboxPixels" class="modbcheckbox" data-odb-path="/Equipment/LVSUPPLY0/Variables/Set State[2]"></input></td>
+                <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/LVSUPPLY0/Variables/Demand Voltage[2]" data-odb-editable="1"></div></td>
+                <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/LVSUPPLY0/Variables/Voltage[2]"></div></td>
+                <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY0/Variables/Current Limit[2]" data-odb-editable="1"></div></td>
+                <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY0/Variables/Current[2]"></div></td>
+                <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY0/Settings/Channel Names[2]" data-odb-editable="1"></div></td>
+            </tr>
+            <tr>
+                <th>3</th>
+                <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/LVSUPPLY0/Variables/State[3]" data-color="lightgreen" data-background-color="red"></div></td>
+                <td style="text-align: center"><input type="checkbox" name="CheckboxPixels" class="modbcheckbox" data-odb-path="/Equipment/LVSUPPLY0/Variables/Set State[3]"></input></td>
+                <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/LVSUPPLY0/Variables/Demand Voltage[3]" data-odb-editable="1"></div></td>
+                <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/LVSUPPLY0/Variables/Voltage[3]"></div></td>
+                <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY0/Variables/Current Limit[3]" data-odb-editable="1"></div></td>
+                <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY0/Variables/Current[3]"></div></td>
+                <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY0/Settings/Channel Names[3]" data-odb-editable="1"></div></td>
+            </tr>
+
+        </table>
+
+
+        <table class="mtable" id="LVsupply1">
+            <tr><th colspan="12" class="mtableheader">LV SUPPLY 1</th></tr>
+            <tr>
+                <th colspan="2" >Channel</th>
+                <th>State</th>
+                <th>Demand Voltage</th>
+                <th>Voltage</th>
+                <th>Current Limit</th>
+                <th>Current</th>
+                <th>Description</th>
+                <th colspan="4">Temperatures</th>
+            </tr>
+            <tr>
+                <th>0</th>
+                <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/LVSUPPLY1/Variables/State[0]" data-color="lightgreen" data-background-color="red"></div></td>
+                <td style="text-align: center"><input type="checkbox" name="CheckboxPixels" class="modbcheckbox" data-odb-path="/Equipment/LVSUPPLY1/Variables/Set State[0]"></input></td>
+                <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/LVSUPPLY1/Variables/Demand Voltage[0]" data-odb-editable="1"></div></td>
+                <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/LVSUPPLY1/Variables/Voltage[0]"></div></td>
+                <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY1/Variables/Current Limit[0]" data-odb-editable="1"></div></td>
+                <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY1/Variables/Current[0]"></div></td>
+                <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY1/Settings/Channel Names[0]" data-odb-editable="1"></div></td>
+                <td><div class="modbvalue"
+                data-formula="2.5*(x-140)<0 ? 0 : 2.5*(x-140)" data-odb-path="/Equipment/Quads/Variables/0/SC_VTemp1"></div></td>
+                <td><div class="modbvalue" data-formula="2.5*(x-140)<0 ? 0 : 2.5*(x-140)" data-odb-path="/Equipment/Quads/Variables/1/SC_VTemp1"></div></td>
+                <td><div class="modbvalue" data-formula="2.5*(x-140)<0 ? 0 : 2.5*(x-140)" data-odb-path="/Equipment/Quads/Variables/2/SC_VTemp1"></div></td>
+                <td><div class="modbvalue" data-formula="2.5*(x-140)<0 ? 0 : 2.5*(x-140)" data-odb-path="/Equipment/Quads/Variables/3/SC_VTemp1"></div></td>
+            </tr>
+            <tr>
+                <th>1</th>
+                <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/LVSUPPLY1/Variables/State[1]" data-color="lightgreen" data-background-color="red"></div></td>
+                <td style="text-align: center"><input type="checkbox" name="CheckboxPixels" class="modbcheckbox" data-odb-path="/Equipment/LVSUPPLY1/Variables/Set State[1]"></input></td>
+                <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/LVSUPPLY1/Variables/Demand Voltage[1]" data-odb-editable="1"></div></td>
+                <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/LVSUPPLY1/Variables/Voltage[1]"></div></td>
+                <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY1/Variables/Current Limit[1]" data-odb-editable="1"></div></td>
+                <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY1/Variables/Current[1]"></div></td>
+                <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY1/Settings/Channel Names[1]" data-odb-editable="1"></div></td>
+                <td><div class="modbvalue" data-formula="2.5*(x-140)<0 ? 0 : 2.5*(x-140)" data-odb-path="/Equipment/Quads/Variables/4/SC_VTemp1"></div></td>
+                <td><div class="modbvalue" data-formula="2.5*(x-140)<0 ? 0 : 2.5*(x-140)" data-odb-path="/Equipment/Quads/Variables/5/SC_VTemp1"></div></td>
+                <td><div class="modbvalue" data-formula="2.5*(x-140)<0 ? 0 : 2.5*(x-140)" data-odb-path="/Equipment/Quads/Variables/6/SC_VTemp1"></div></td>
+                <td><div class="modbvalue" data-formula="2.5*(x-140)<0 ? 0 : 2.5*(x-140)" data-odb-path="/Equipment/Quads/Variables/7/SC_VTemp1"></div></td>
+            </tr>
+            <tr>
+                <th>2</th>
+                <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/LVSUPPLY1/Variables/State[2]" data-color="lightgreen" data-background-color="red"></div></td>
+                <td style="text-align: center"><input type="checkbox" name="CheckboxPixels" class="modbcheckbox" data-odb-path="/Equipment/LVSUPPLY1/Variables/Set State[2]"></input></td>
+                <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/LVSUPPLY1/Variables/Demand Voltage[2]" data-odb-editable="1"></div></td>
+                <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/LVSUPPLY1/Variables/Voltage[2]"></div></td>
+                <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY1/Variables/Current Limit[2]" data-odb-editable="1"></div></td>
+                <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY1/Variables/Current[2]"></div></td>
+                <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY1/Settings/Channel Names[2]" data-odb-editable="1"></div></td>
+                <td><div class="modbvalue" data-formula="2.5*(x-140)<0 ? 0 : 2.5*(x-140)" data-odb-path="/Equipment/Quads/Variables/8/SC_VTemp1"></div></td>
+                <td><div class="modbvalue" data-formula="2.5*(x-140)<0 ? 0 : 2.5*(x-140)" data-odb-path="/Equipment/Quads/Variables/9/SC_VTemp1"></div></td>
+                <td><div class="modbvalue" data-formula="2.5*(x-140)<0 ? 0 : 2.5*(x-140)" data-odb-path="/Equipment/Quads/Variables/10/SC_VTemp1"></div></td>
+                <td><div class="modbvalue" data-formula="2.5*(x-140)<0 ? 0 : 2.5*(x-140)" data-odb-path="/Equipment/Quads/Variables/11/SC_VTemp1"></div></td>
+            </tr>
+            <tr>
+                <th>3</th>
+                <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/LVSUPPLY1/Variables/State[3]" data-color="lightgreen" data-background-color="red"></div></td>
+                <td style="text-align: center"><input type="checkbox" name="CheckboxPixels" class="modbcheckbox" data-odb-path="/Equipment/LVSUPPLY1/Variables/Set State[3]"></input></td>
+                <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/LVSUPPLY1/Variables/Demand Voltage[3]" data-odb-editable="1"></div></td>
+                <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/LVSUPPLY1/Variables/Voltage[3]"></div></td>
+                <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY1/Variables/Current Limit[3]" data-odb-editable="1"></div></td>
+                <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY1/Variables/Current[3]"></div></td>
+                <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY1/Settings/Channel Names[3]" data-odb-editable="1"></div></td>
+                <td><div class="modbvalue" data-formula="2.5*(x-140)<0 ? 0 : 2.5*(x-140)" data-odb-path="/Equipment/Quads/Variables/12/SC_VTemp1"></div></td>
+                <td><div class="modbvalue" data-formula="2.5*(x-140)<0 ? 0 : 2.5*(x-140)" data-odb-path="/Equipment/Quads/Variables/13/SC_VTemp1"></div></td>
+                <td><div class="modbvalue" data-formula="2.5*(x-140)<0 ? 0 : 2.5*(x-140)" data-odb-path="/Equipment/Quads/Variables/14/SC_VTemp1"></div></td>
+                <td><div class="modbvalue" data-formula="2.5*(x-140)<0 ? 0 : 2.5*(x-140)" data-odb-path="/Equipment/Quads/Variables/15/SC_VTemp1"></div></td>
+            </tr>
+
+        </table>
+        
+        <!-- <table class="mtable" id="LVsupply2">
+            <tr><th colspan="8" class="mtableheader">LV SUPPLY 2</th></tr>
+            <tr>
+                <th colspan="2" >Channel</th>
+                <th>State</th>
+                <th>Demand Voltage</th>
+                <th>Voltage</th>
+                <th>Current Limit</th>
+                <th>Current</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <th>0</th>
+                <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/LVSUPPLY2/Variables/State[0]" data-color="lightgreen" data-background-color="red"></div></td>
+                <td style="text-align: center"><input type="checkbox" name="CheckboxPixels" class="modbcheckbox" data-odb-path="/Equipment/LVSUPPLY2/Variables/Set State[0]"></input></td>
+                <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/LVSUPPLY2/Variables/Demand Voltage[0]" data-odb-editable="1"></div></td>
+                <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/LVSUPPLY2/Variables/Voltage[0]"></div></td>
+                <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY2/Variables/Current Limit[0]" data-odb-editable="1"></div></td>
+                <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY2/Variables/Current[0]"></div></td>
+                <td id="LVSUPPLY2_descr0" style="text-align: center">Scfi 0</td>
+            </tr>
+            <tr>
+                <th>1</th>
+                <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/LVSUPPLY2/Variables/State[1]" data-color="lightgreen" data-background-color="red"></div></td>
+                <td style="text-align: center"><input type="checkbox" name="CheckboxPixels" class="modbcheckbox" data-odb-path="/Equipment/LVSUPPLY2/Variables/Set State[1]"></input></td>
+                <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/LVSUPPLY2/Variables/Demand Voltage[1]" data-odb-editable="1"></div></td>
+                <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/LVSUPPLY2/Variables/Voltage[1]"></div></td>
+                <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY2/Variables/Current Limit[1]" data-odb-editable="1"></div></td>
+                <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY2/Variables/Current[1]"></div></td>
+                <td id="LVSUPPLY2_descr1" style="text-align: center">Scfi 1</td>
+            </tr>
+            <tr>
+                <th>2</th>
+                <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/LVSUPPLY2/Variables/State[2]" data-color="lightgreen" data-background-color="red"></div></td>
+                <td style="text-align: center"><input type="checkbox" name="CheckboxPixels" class="modbcheckbox" data-odb-path="/Equipment/LVSUPPLY2/Variables/Set State[2]"></input></td>
+                <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/LVSUPPLY2/Variables/Demand Voltage[2]" data-odb-editable="1"></div></td>
+                <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/LVSUPPLY2/Variables/Voltage[2]"></div></td>
+                <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY2/Variables/Current Limit[2]" data-odb-editable="1"></div></td>
+                <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY2/Variables/Current[2]"></div></td>
+                <td id="LVSUPPLY2_descr2" style="text-align: center">Scfi 2</td>
+            </tr>
+            <tr>
+                <th>3</th>
+                <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/LVSUPPLY2/Variables/State[3]" data-color="lightgreen" data-background-color="red"></div></td>
+                <td style="text-align: center"><input type="checkbox" name="CheckboxPixels" class="modbcheckbox" data-odb-path="/Equipment/LVSUPPLY2/Variables/Set State[3]"></input></td>
+                <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/LVSUPPLY2/Variables/Demand Voltage[3]" data-odb-editable="1"></div></td>
+                <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/LVSUPPLY2/Variables/Voltage[3]"></div></td>
+                <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY2/Variables/Current Limit[3]" data-odb-editable="1"></div></td>
+                <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY2/Variables/Current[3]"></div></td>
+                <td id="LVSUPPLY2_descr3" style="text-align: center">Scfi 3</td>
+            </tr>
+
+        </table> -->
+
+        <!-- <table class="mtable" id="HVSUPPLY">
+            <tr><th colspan="8" class="mtableheader">HV SUPPLY</th></tr>
+            <tr>
+                <th colspan="2" >Channel</th>
+                <th>State</th>
+                <th>Demand Voltage</th>
+                <th>Voltage</th>
+                <th>Current Limit</th>
+                <th>Current (uA)</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <th>0</th>
+                <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/HVSUPPLY0/Variables/State[0]" data-color="lightgreen" data-background-color="red"></div></td>
+                <td style="text-align: center"><input type="checkbox" name="CheckboxPixels" class="modbcheckbox" data-odb-path="/Equipment/HVSUPPLY0/Variables/Set State[0]"></input></td>
+                <td><div class="modbvalue" data-odb-path="/Equipment/HVSUPPLY0/Variables/Demand Voltage[0]" data-odb-editable="1"></div></td>
+                <td><div class="modbvalue" data-format="e3" data-odb-path="/Equipment/HVSUPPLY0/Variables/Voltage[0]"></div></td>
+                <td><div class="modbvalue" data-format="e3" data-odb-path="/Equipment/HVSUPPLY0/Variables/Current Limit[0]" data-odb-editable="1" data-formula="x"></div></td>
+                <td><div id="keithley_curr" data-format="e3" class="modbvalue" data-odb-path="/Equipment/HVSUPPLY0/Variables/Current[0]" data-formula="1000000*x"></div></td>
+                <td id="HVSUPPLY0_0" style="text-align: center">Quad 3 (70µm)</td>
+            </tr>
+            <tr>
+                <th>1</th>
+                <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/HVSUPPLY1/Variables/State[0]" data-color="lightgreen" data-background-color="red"></div></td>
+                <td style="text-align: center"><input type="checkbox" name="CheckboxPixels" class="modbcheckbox" data-odb-path="/Equipment/HVSUPPLY1/Variables/Set State[0]"></input></td>
+                <td><div class="modbvalue" data-odb-path="/Equipment/HVSUPPLY1/Variables/Demand Voltage[0]" data-odb-editable="1"></div></td>
+                <td><div class="modbvalue" data-format="e3" data-odb-path="/Equipment/HVSUPPLY1/Variables/Voltage[0]"></div></td>
+                <td><div class="modbvalue" data-format="e3" data-odb-path="/Equipment/HVSUPPLY1/Variables/Current Limit[0]" data-odb-editable="1" data-formula="x"></div></td>
+                <td><div id="keithley_curr" data-format="e3" class="modbvalue" data-odb-path="/Equipment/HVSUPPLY1/Variables/Current[0]" data-formula="1000000*x"></div></td>
+                <td id="HVSUPPLY1_0" style="text-align: center">Quad 1 (50/70µm)</td>
+            </tr>
+            <tr>
+                <th>2</th>
+                <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/HVSUPPLY1/Variables/State[1]" data-color="lightgreen" data-background-color="red"></div></td>
+                <td style="text-align: center"><input type="checkbox" name="CheckboxPixels" class="modbcheckbox" data-odb-path="/Equipment/HVSUPPLY1/Variables/Set State[1]"></input></td>
+                <td><div class="modbvalue" data-odb-path="/Equipment/HVSUPPLY1/Variables/Demand Voltage[1]" data-odb-editable="1"></div></td>
+                <td><div class="modbvalue" data-format="e3" data-odb-path="/Equipment/HVSUPPLY1/Variables/Voltage[1]"></div></td>
+                <td><div class="modbvalue" data-format="e3" data-odb-path="/Equipment/HVSUPPLY1/Variables/Current Limit[1]" data-odb-editable="1" data-formula="x"></div></td>
+                <td><div id="keithley_curr" data-format="e3" class="modbvalue" data-odb-path="/Equipment/HVSUPPLY1/Variables/Current[1]" data-formula="1000000*x"></div></td>
+                <td id="HVSUPPLY1_1" style="text-align: center">not connected</td>
+            </tr>
+            <tr>
+                <th rowspan="2">HV Box</th>
+                <td rowspan="2" style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/LVSUPPLY0/Variables/State[2]" data-color="lightgreen" data-background-color="red"></div></td>
+                <td rowspan="2" style="text-align: center"><input type="checkbox" name="CheckboxPixels" class="modbcheckbox" data-odb-path="/Equipment/LVSUPPLY0/Variables/Set State[2]"></input></td>
+                <td><div class="modbvalue" data-odb-path="/Equipment/Quad HV/Variables/Demand[0]" data-formula="-x" data-odb-editable="1"></div></td>
+                <td><div class="modbvalue" data-format="e3" data-odb-path="/Equipment/Quad HV/Variables/Measured[0]" data-formula="-x"></div></td>
+                <td rowspan="2">none</td>
+                <td><div id="keithley_curr" data-format="e3" class="modbvalue" data-odb-path="/Equipment/Quad HV/Variables/Current[0]" data-formula="x"></div></td>
+                <td id="HVSUPPLY1_1" style="text-align: center">Quad 0 (70µm)</td>
+            </tr>
+            <tr>
+                <td><div class="modbvalue" data-odb-path="/Equipment/Quad HV/Variables/Demand[3]" data-formula="-x" data-odb-editable="1"></div></td>
+                <td><div class="modbvalue" data-format="e3" data-odb-path="/Equipment/Quad HV/Variables/Measured[3]" data-formula="-x"></div></td>
+                <td><div id="keithley_curr" data-format="e3" class="modbvalue" data-odb-path="/Equipment/Quad HV/Variables/Current[3]" data-formula="x"></div></td>
+                <td id="HVSUPPLY1_1" style="text-align: center">Quad 2 (100µm)</td>
+            </tr>
+
+            <tr>
+        </table> -->
+
+        <table class="mtable" id="HV Box">
+            <tr><th colspan="10" class="mtableheader">HV Box</th></tr>
+            <tr>
+                <th colspan="2">Node</th>
+                <td>State</td>
+                <th colspan="2" >Channel</th>
+                <th>Demand Voltage</th>
+                <th>Voltage</th>
+                <th>Current Limit</th>
+                <th>Current (uA)</th>
+                <th>Description</th>
+            </tr>
+            <!-- <tr>
+
+                <th>1</th>
+                <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px    ;" data-odb-path="/Equipment/LVSUPPLY1/Variables/State[3]" data-color="lightgreen" data-background-color="red"></div></td>
+                <td style="text-align: center"><input type="checkbox" name="CheckboxPixels" class="modbcheckbox" data-odb-path="/Equipment/LVSUPPLY1/Variables/Set State[3]"></input></td>
+
+                <th>1</th>
+                <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/Quad HV/Variables/Demand[4]" data-color="lightgreen" data-background-color="red"></div></td>
+                <td><div class="modbvalue" data-odb-path="/Equipment/Quad HV/Variables/Demand[4]" data-formula="-x" data-odb-editable="1"></div></td>
+                <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/Quad HV/Variables/Measured[4]" data-formula="-x"></div></td>
+                <td>none</td>
+                <td><div id="keithley_curr" data-format="f3" class="modbvalue" data-odb-path="/Equipment/Quad HV/Variables/Current[4]" data-formula="x"></div></td>
+                <td id="HVSUPPLY0_0" style="text-align: center">Quad 0 70 µm 80 Ohmcm</td>
+            </tr> -->
+            <tr>
+                <th rowspan="4">1</th>
+                <td rowspan="4" style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/LVSUPPLY1/Variables/State[3]" data-color="lightgreen" data-background-color="red"></div></td>
+                <td rowspan="4" style="text-align: center"><input type="checkbox" name="CheckboxPixels" class="modbcheckbox" data-odb-path="/Equipment/LVSUPPLY1/Variables/Set State[3]"></input></td>
+                <th>0</th>
+                <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/Quad HV/Variables/Demand[0]" data-color="lightgreen" data-background-color="red"></div></td>
+                <td><div class="modbvalue" data-odb-path="/Equipment/Quad HV/Variables/Demand[0]" data-formula="-x" data-odb-editable="1"></div></td>
+                <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/Quad HV/Variables/Measured[0]" data-formula="-x"></div></td>
+                <td rowspan="4">none</td>
+                <td><div id="keithley_curr" data-format="f3" class="modbvalue" data-odb-path="/Equipment/Quad HV/Variables/Current[0]" data-formula="x"></div></td>
+                <td id="HVSUPPLY0_1" style="text-align: center">Quad 1 70 µm 370 Ohmcm</td>
+            </tr>
+            <tr>
+                <th>1</th>
+                <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/Quad HV/Variables/Demand[1]" data-color="lightgreen" data-background-color="red"></div></td>
+                <td><div class="modbvalue" data-odb-path="/Equipment/Quad HV/Variables/Demand[1]" data-formula="-x" data-odb-editable="1"></div></td>
+                <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/Quad HV/Variables/Measured[1]" data-formula="-x"></div></td>
+                <td><div id="keithley_curr" data-format="f3" class="modbvalue" data-odb-path="/Equipment/Quad HV/Variables/Current[1]" data-formula="x"></div></td>
+                <td id="HVSUPPLY1_0" style="text-align: center">Quad 2 70 µm 370 Ohmcm</td>
+            </tr>
+            <tr>
+                <th>2</th>
+                <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/Quad HV/Variables/Demand[2]" data-color="lightgreen" data-background-color="red"></div></td>
+                <td><div class="modbvalue" data-odb-path="/Equipment/Quad HV/Variables/Demand[2]" data-formula="-x" data-odb-editable="1"></div></td>
+                <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/Quad HV/Variables/Measured[2]" data-formula="-x"></div></td>
+                <td><div id="keithley_curr" data-format="f3" class="modbvalue" data-odb-path="/Equipment/Quad HV/Variables/Current[2]" data-formula="x"></div></td>
+                <td id="HVSUPPLY1_0" style="text-align: center">Quad 0 70 µm 370 Ohmcm</td>
+            </tr>
+            <tr>
+                <th>3</th>
+                <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/Quad HV/Variables/Demand[3]" data-color="lightgreen" data-background-color="red"></div></td>
+                <td><div class="modbvalue" data-odb-path="/Equipment/Quad HV/Variables/Demand[3]" data-formula="-x" data-odb-editable="1"></div></td>
+                <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/Quad HV/Variables/Measured[3]" data-formula="-x"></div></td>
+                <td><div id="keithley_curr" data-format="f3" class="modbvalue" data-odb-path="/Equipment/Quad HV/Variables/Current[3]" data-formula="x"></div></td>
+                <td id="HVSUPPLY1_1" style="text-align: center">Quad 3 70 µm 370 Ohmcm</td>
+	        </tr>
+        </table>
+
+    </div>
+
+    <h2>Configuration</h2>
+
+    <div class="container">
+        <table class="mtable" id="sensorSelection">
+            <tr><th colspan="3" class="mtableheader">Sensor selection</th></tr>
+            <td>
+                <canvas width="700px" height="200px" id="SensorSelectionCanvas"></canvas>
+
+                <div class="container" style="justify-content: space-between; width: 100%;">
+                    <span>selected sensors: <span id="sensor_selection">None</span></span>
+                    <!-- align this span to the right side with a constant offset of 20 px-->
+                    <span style="margin-left: auto; margin-right: 30px; width: 90px;">active: <span id="active_selection">None</span></span>
+                    <div>
+                        <button class="mbutton" onclick="selectAll()">Select all</button>
+                        <button class="mbutton" onclick="deselectAll()">Deselect all</button>
+                    </div>
+                </div>
+            </td>
+
+        </table>
+
+
+        <table class="mtable" id="sequencerActionNew">
+            <tr><th colspan="3" class="mtableheader">Actions</th></tr>
+            <tr>
+                <th>Action</th>
+                <th>Load and Execute</th>
+                <th>Settings</th>
+            </tr>
+            <tr>
+                <th>Load DACs</th>
+                <td style="text-align: center">
+                    <!-- <button class="mbutton" onclick="load_all_dacs(false)">Load quads</button>
+                    <button class="mbutton" onclick="load_all_dacs(true)">Load vertex</button>
+                    <button class="mbutton" onclick="load_dacs_selected()">Load</button> -->
+                    <button class="mbutton" onclick="load_all_dacs()">Load All</button>
+                    <button class="mbutton" onclick="load_dacs_selected()">Load Selected</button>
+                </td>
+                <td></td>
+            </tr>
+            <tr>
+                <th>Configure chips</th>
+                <td style="text-align: center"><button class="mbutton" onclick="configure_all()">Configure all</button></button><button class="mbutton" onclick="configure_selected()">Configure</button></td>
+                <td style="text-align: center"><span>Reset PLL?<input type="checkbox" id="checkboxResetPLL"></span>
+                                           <br><span>All Allways Eanable?<input type="checkbox" id="checkboxAllAlwaysEnable"></span>
+                                           <br><span>Config on Change<input type="checkbox" id="checkboxConfOnChange"></span>
+                </td>
+            </tr>
+
+            <tr>
+                <!-- TODO: assign masking functions -->
+                <th>Mask Sensors</th>
+                <td style="text-align: center"><button class="mbutton" onclick="mask_all()">Mask all</button>
+                                               <button class="mbutton" onclick="mask_selected()">Mask</button>
+                </td>
+                <td style="text-align: center"><span>Path:<input class="inline" name="MaskingPath" id="MaskingPath" data-format="i"></span>
+            </tr>
+            <tr>
+                <th>Testing</th>
+                <td style="text-align: center"><button class="mbutton" onclick="testout_scan()">TestOut Scan</button>
+                                               <button class="mbutton" onclick="testout_selected()">Set TestOut</button>
+                </td>
+                <td style="text-align: center">TestOut: <input type="text" id="inputTestOut" name="TestOut" required minlength="1" maxlength="2" size="1" value="0"> </input> </td>
+            </tr>
+            <tr>
+                <th>Reset</th>
+                <td style="text-align: center"><button class="mbutton" onclick="reset_all_asics()">Reset All ASICs</button>
+                </td>
+                <td></td>
+            </tr>
+            <tr>
+                <th>FEB Control</th>
+                <td style="text-align: center"><button class="mbutton" onclick="feb_run_cycle()">FEB Run Cycle</button>
+                </td>
+                <td style="text-align: center"><span>Cycles FEBs: Idle → Running</span></td>
+            </tr>
+            <tr>
+                <th><p>Output</p></th>
+                <td colspan="2"><div id="outputContainer"><span id="outputAction"></span><div></td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="wrapper">
+        <div class="tabs">
+            <div class="tab">
+                <input type="radio" name="css-tabs" id="tab-dacs" checked class="tab-switch">
+                <label for="tab-dacs" class="tab-label">DACs</label>
+                <div class="tab-content">
+                    <div class="tab-description">
+                        <h3>DACs of active Sensor: <span id="active_selection_dacs">Please select a sensor.</span></h3>
+                        <h3>DACs are also applied to: <span id="remaining_selecion_dacs"></span></h3>
+                    </div>
+                    <div class="dac-set-radio-group" id="dac-set-radio-group">
+                        
+                        <!-- automatically populated -->
+                    </div>
+                    <div class="table-container">
+                        <div class="dac_container">
+                            <table class="mtable dac_table" id="biasdacs_table">
+                                <tr><th colspan="3" class="mtableheader">Bias DACs</th></tr>
+                                <tr>
+                                    <th>DAC</th>
+                                    <th>Value [dec]</th>
+                                    <th>Default [dec]</th>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <div class="dac_container">
+                            <table class="mtable dac_table" id="confdacs_table">
+                                <tr><th colspan="3" class="mtableheader">Config DACs</th></tr>
+                                <tr>
+                                    <th>DAC</th>
+                                    <th>Value [dec]</th>
+                                    <th>Default [dec]</th>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="dac_container">
+                            <table class="mtable dac_table" id="vdacs_table">
+                                <tr><th colspan="3" class="mtableheader">VDACs</th></tr>
+                                <tr>
+                                    <th>DAC</th>
+                                    <th>Value [dec]</th>
+                                    <th>Default [dec]</th>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="tab">
+                <input type="radio" name="css-tabs" id="tab-masking" class="tab-switch">
+                <label for="tab-masking" class="tab-label">Masking</label>
+                <div class="tab-content">
+                    <table class="mtable" id="Masking">
+                        <tr><th colspan="2" class="mtableheader">Masking</th></tr>
+                        <tr>
+                            <td colspan="2">
+                                <div style="margin-bottom: 15px;">
+                                    <strong>Mask File Location:</strong><br>
+                                    <div id="maskFolderRadioGroup" style="margin-top: 5px;">
+                                        <!-- Radio buttons will be populated dynamically -->
+                                    </div>
+                                    <div style="margin-top: 10px;">
+                                        <input type="radio" name="maskFolder" id="maskFolder_custom" value="custom">
+                                        <label for="maskFolder_custom">Custom Path:</label>
+                                        <input type="text" id="customMaskPath" value="/home/mu3e/mu3e/debug_online/online/userfiles/maskfiles/" 
+                                               style="margin-left: 5px; width: 400px;" disabled>
+                                        <button id="applyCustomPath" onclick="applyCustomMaskPath()" disabled style="margin-left: 5px;">Apply</button>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td id="MaskingTable"></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div class="tab">
+                <input type="radio" name="css-tabs" id="tab-hitmap" class="tab-switch">
+                <label for="tab-hitmap" class="tab-label">HitMap</label>
+                <div class="tab-content">
+                    <table class="mtable" id="HitMap">
+                        <tr><th colspan="2" class="mtableheader">HitMap</th></tr>
+                        <td id="HitMapTable"></td>
+                    </table>
+                </div>
+            </div>
+            <div class="tab">
+                <input type="radio" name="css-tabs" id="tab-dqm" class="tab-switch">
+                <label for="tab-dqm" class="tab-label">DQM</label>
+                <div class="tab-content">
+                    Run number (0 for current run): <input type=text id='runNumbers' value='0' onchange='onChangeRun()'/>
+                    <input type=button value='Clear all' onClick='onClearAll()'/>
+                    <br/>
+                    <div id="globalPlotsOld"></div>
+                </div>
+            </div>
+            <div class="tab">
+                <input type="radio" name="css-tabs" id="tab-slowcontrol" class="tab-switch">
+                <label for="tab-slowcontrol" class="tab-label">Slow Control</label>
+                <div class="tab-content">
+                    <div id="slowcontrol-controls">
+                        <h3>Selected Sensors: <span id="slow_control_selected_sensor">None</span></h3>
+                        <div class="control-row">
+                            <label>Variable:</label>
+                            <select name="sc_read_options" id="sc_read_options">
+                                <option value="ref_vssa">ref_vssa</option>
+                                <option value="Baseline">Baseline</option>
+                                <option value="blpix">blpix</option>
+                                <option value="thpix">thpix</option>
+                                <option value="blpix_2">blpix_2</option>
+                                <option value="ThLow">ThLow</option>
+                                <option value="ThHigh">ThHigh</option>
+                                <option value="TEST_OUT">TEST_OUT</option>
+                                <option value="vssa">vssa</option>
+                                <option value="thpix_2">thpix_2</option>
+                                <option value="VCAL">VCAL</option>
+                                <option value="VTemp1" selected>VTemp1</option>
+                                <option value="VTemp2">VTemp2</option>
+                            </select>
+                            <button onclick="SCSelectADC(document.getElementById('sc_read_options').value)">Select ADC</button>
+                            <button onclick="resetSC()">Reset ADC</button>
+                            <button onclick="configureSC()">Configure Read</button>
+                            <button onclick="readSC()">Perform Read</button>
+                            <button onclick="configureContinuousSC()">Continuous Readout</button>
+                        </div>
+                    </div>
+                    <table class="mtable" id="slow_control_variables">
+                        <!-- Table will be populated by JavaScript -->
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- <script src="../pixel_lvds.js" defer></script> -->
+    <script src="Quads/quad_configuration.js" defer></script>
+    <script src="Quads/quad_utility.js" defer></script>
+    <script src="Quads/quad_dqm.js" defer></script>
+    <script src="Quads/quad_selection.js" defer></script>
+    <script src="Quads/quad_actions.js" defer></script>
+    <script src="Quads/quad_general_container.js" defer></script>
+    <script src="Quads/quad_masking.js" defer></script>
+    <script src="Quads/quad_dacs.js" defer></script>
+    <script src="Quads/quad_slowcontrol.js" defer></script>
+</body>
+</html>
+

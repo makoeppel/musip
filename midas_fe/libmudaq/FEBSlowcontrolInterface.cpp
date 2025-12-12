@@ -164,6 +164,14 @@ int FEBSlowcontrolInterface::FEB_write(uint32_t febIDx, const uint32_t startaddr
     return FEB_write(febIDx, startaddr, vector<uint32_t>(1, data));
 }
 
+int FEBSlowcontrolInterface::FEB_broadcast(const uint32_t startaddr, const uint32_t data) {
+    return FEB_write(999, startaddr, vector<uint32_t>(1, data), false, true, 1 << PACKET_R_BIT_POSITION);
+}
+
+int FEBSlowcontrolInterface::FEB_broadcast(const uint32_t startaddr, const vector<uint32_t> & data, const bool nonincrementing) {
+    return FEB_write(999, startaddr, data, nonincrementing, true, 1 << PACKET_R_BIT_POSITION);
+}
+
 int FEBSlowcontrolInterface::FEB_ping(uint32_t febIDx) {
     return FEB_write(febIDx, STATUS_REGISTER_R, vector<uint32_t>(1, 0), true, false, 0);
 }

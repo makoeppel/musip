@@ -1,6 +1,6 @@
 import time
 
-odb_path_base = "/Equipment/Quads Config"
+odb_path_base = "/Equipment/Quads"
 
 odb_path_commands = odb_path_base + "/Settings/Readout"
 odb_path_config = odb_path_base + "/Settings/Config"

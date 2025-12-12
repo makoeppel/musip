@@ -435,7 +435,9 @@ int read_stream_thread(void*) {
 }
 
 int frontend_init() {
-    m_settings.connect("/Equipment/Quads Config/Settings");
+
+    // get copy of setting
+    m_settings.connect("/Equipment/Quads/Settings");
 
     // setup max event size
     set_max_event_size(dma_buf_size);

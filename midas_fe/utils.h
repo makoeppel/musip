@@ -190,6 +190,8 @@ int InitFEBs(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) {
         feb_sc.FEB_write(febIDx, MP_CTRL_SPI_ENABLE_REGISTER_W, 0x00000000);
         feb_sc.FEB_write(febIDx, MP_CTRL_DIRECT_SPI_ENABLE_REGISTER_W, 0x00000000);
         feb_sc.FEB_write(febIDx, MP_CTRL_SLOW_DOWN_REGISTER_W, 0x0000001F);
+        uint32_t delay = m_settings["Readout"]["Sorter Delay"][febIDx];
+        feb_sc.FEB_write(febIDx, SORTER_COUNTER_REGISTER_R + SORTER_INDEX_DELAY, delay);
     }
     return FE_SUCCESS;
 }
@@ -421,6 +423,314 @@ int ConfigureTDACs(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) {
     }
 
     cm_msg(MINFO, "ConfigureTDACs", "tdac write completed");
+
+    return FE_SUCCESS;
+}
+
+/**
+ * @brief Configure injection.
+ * Structure of injection
+ * 1.) Set VCal(a VDAC) in a different interface: chips for which VCal is set to none Zero will experience the injection
+ *     This can however also be accomodated in this interface at some point, for now Chip Injection Selection via VCal
+ * 2.) Select the pixel you want to inject:
+ *     DISCLAIMER:
+ *        Due to chip design choices, always two neighbouring pixels will be injected at the same time. ( Condition; int(col)/2=int(col+1)/2 [Integer Division]
+ *        The selection is achieved via a crosshair selection: row and col adresses are set and all combinations of rows and cols will be anabled for injection.
+ *        In this first approach we will only select one pixel at a time, ie. one row, one column.
+ *        This should probably remain like this, due to the limited driving power of the Injection circuit.
+ *      
+ *     row and col are enabled via bits in the TEST register. each column houses 7 bits: --> 128x7bit long register
+ *     [Enable Injection Row<0>,Enable Injection Row<1>,NCNC,AmpOut,Enable Injection Column, HitBusEnable]-->(Shift direction)-->
+ *     The implementation for the characterisation setup can be found here: https://bitbucket.org/mu3e/mupix8_daq/src/master/library/sensors/MuPix11.cpp
+ * 
+ *  3.) Send Injection Command to trigger injection   [ 4 bit Chip Address | 6 bit Inject Command | 10 bit Duration | zeroes/ones/random ]
+ * @param feb_sc Reference to the FEB slow control interface.
+ * @param inj_col Reference to the FEB slow control interface.
+ * @param inj_row MIDAS ODB object containing DAQ and config sections.
+ * @return FE_SUCCESS if all ASICs configured successfully; error code otherwise.
+ */
+int ConfigureInjectASICs(FEBSlowcontrolInterface& feb_sc, const std::vector<uint8_t>& inj_col, const std::vector<uint8_t>& inj_row){
+
+    // Commands vector, same command to all asics
+    vector<uint32_t> commands(2 * N_CHIPS);
+
+    const uint32_t command_wr_test = 0b101100;          // Write Command Test register
+    const uint32_t command_ld_test = 0b001101;          // Load Command Test register
+    const uint32_t command_inject  = 0b001000;          // Command to inject ONCE
+
+    // Generic Command word variable
+    uint64_t ScCommand = 0xf;
+    uint32_t highBits = (ScCommand >> 32);
+    uint32_t lowBits = (ScCommand & 0xffffffff);
+
+    const uint8_t col_register_size = 7; //7 bit
+    const uint8_t col_register_mask = 0x7F; //7 bit
+    vector<uint8_t> TEST_register(128,0);   //all ZEROES
+
+    // From trial and error the bit order seems to get reversed somewhere along the chain. So "Enable Injection Column"
+    // (InjEn in internal Note 0052) is bit 1 and "Enable Injection Row<0>", "Enable Injection Row<1>" (EnInjRow<0>,
+    // EnInjRow<1> in Note 0052) are bits 6 and 5 respectively (counting from zero).
+    for(auto icol:inj_col)
+    {
+        TEST_register.at(icol/2) = TEST_register.at(icol/2) | (0x1<<1);
+    }
+
+    // Convert Adresses to Enable Signals
+    for (auto irow:inj_row)
+    {
+        if((irow/2) < TEST_register.size())
+        {
+            if(irow%2 == 0)
+                TEST_register.at(irow/2) = TEST_register.at(irow/2) | (0x1<<6);
+            else if(irow%2 == 1)
+                TEST_register.at(irow/2) = TEST_register.at(irow/2) | (0x1<<5);
+        }
+    }
+
+    // Convert Test register to payload for Commands
+    uint8_t register_counter = 0;
+    const uint8_t payload_size = 54;
+    const uint32_t total_register_size = 896;           //7 bits * 128 columns;
+    // Create the payload vector the correct size and fill with zeros
+    std::vector<uint64_t> TEST_register_payloads((total_register_size - 1) / payload_size + 1, 0);
+
+    // register length and payload quantisation do not need to align --> zero padding at the beginning might be needed
+    uint32_t zero_padding_size = payload_size - (total_register_size%payload_size);
+
+    // ugly bit gymnastics ahead
+    for (int32_t i = TEST_register.size()-1; i >= 0; --i, ++register_counter) {
+        const unsigned total_bit_position = col_register_size * register_counter + zero_padding_size;
+        const unsigned bit_position_this_payload = total_bit_position % payload_size;
+        const unsigned payload_counter = total_bit_position / payload_size;
+
+        TEST_register_payloads.at(payload_counter) |= (uint64_t(TEST_register.at(i) & col_register_mask) << bit_position_this_payload);
+
+        if((bit_position_this_payload + col_register_size) > payload_size) {
+            // This register stretches in to the next payload, so add the those left over bits now.
+            const unsigned bit_overflow_count = bit_position_this_payload + col_register_size - payload_size;
+            TEST_register_payloads.at(payload_counter + 1) |= (TEST_register.at(i) >> (col_register_size - bit_overflow_count));
+            // Also mask away the extra bits we wrote into the high bits of this payload. Not strictly necessary
+            // (they'll be shifted away when the payload gets sent) but it's cleaner for comparison checks.
+            TEST_register_payloads.at(payload_counter) &= 0x003FFFFFFFFFFFFF; // Only keep the first payload_size bits
+        }
+    }
+
+    // Sending Test register Payload and Load register
+    // Write Register
+    for(auto p: TEST_register_payloads)
+    {
+        ScCommand = (p << 10) | ( (command_wr_test & 0x3F) << 4 );
+        highBits = (ScCommand >> 32);
+        lowBits = (ScCommand & 0xffffffff);
+
+        for (int i=0; i < 2 * N_CHIPS;i+=2)
+        {
+            commands[i] = lowBits;
+            commands[i+1] = highBits;
+        }
+        feb_sc.FEB_broadcast(MP_CTRL_EXT_CMD_START_REGISTER_W, commands);
+    }
+
+    // Load Register
+    ScCommand = (0x300 << 10) | ( (command_ld_test & 0x3F) << 4 );
+    highBits = (ScCommand >> 32);
+    lowBits = (ScCommand & 0xffffffff);
+
+    for (int i=0; i < 2 * N_CHIPS; i+=2)
+    {
+        commands[i] = lowBits;
+        commands[i+1] = highBits;
+    }
+
+    feb_sc.FEB_broadcast(MP_CTRL_EXT_CMD_START_REGISTER_W, commands);
+
+    return FE_SUCCESS;
+}
+
+int InjectASICs(FEBSlowcontrolInterface& feb_sc, uint32_t injection_pulse_duration){
+
+    //Commands vector, same command to all asics
+    std::vector<uint32_t> commands(2 * N_CHIPS);
+
+    const uint32_t command_wr_test = 0b101100;          // Write Command Test register
+    const uint32_t command_ld_test = 0b001101;          // Load Command Test register
+    const uint32_t command_inject  = 0b001000;          // Command to inject ONCE
+
+    /**
+     * INJECT
+     * COMMENT: As implemented right now, this will inject into each VCAL selected chip with unknown delay,
+     *          until detector BROADCAST becomes available.
+     */
+
+    const uint64_t ScCommand = ( (injection_pulse_duration & 0x3FF) << 10) | ( (command_inject & 0x3F) << 4 );
+    const uint32_t highBits = (ScCommand >> 32);
+    const uint32_t lowBits = (ScCommand & 0xffffffff);
+
+    for (int i=0; i < 2 * N_CHIPS; i+=2)
+    {
+        commands[i] = lowBits;
+        commands[i+1] = highBits;
+    }
+
+    feb_sc.FEB_broadcast(MP_CTRL_EXT_CMD_START_REGISTER_W, commands);
+
+    /**
+     * END INJECT
+     */
+
+    return FE_SUCCESS;
+}
+
+int InjectASICsInLoop(FEBSlowcontrolInterface& feb_sc, uint32_t injection_pulse_duration, uint32_t num_repetitions, uint32_t wait_between_pulses){
+    const auto pulseWaitTime = std::chrono::milliseconds(wait_between_pulses);
+
+    for(uint32_t i = 0 ; i < num_repetitions ; i++)
+    {
+        // This method can lock the frontend for quite a long time, depending on the parameters passed. So
+        // Print a status report every now and then.
+        if((i % 10) == 9) cm_msg(MINFO, "InjectASICsInLoop" , "Sending injection trigger %u of %u\n", i + 1, num_repetitions);
+
+        int result = InjectASICs(feb_sc, injection_pulse_duration);
+        if(result != FE_SUCCESS) return result;
+        // Here we sleep because the injection circuit has to recharge (10 ms seems to work)
+        std::this_thread::sleep_for(pulseWaitTime);
+    }
+
+    return FE_SUCCESS;
+}
+
+int FullChipInjection(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings,
+    uint8_t min_columns, uint8_t max_columns,
+    uint8_t min_rows, uint8_t max_rows,
+    uint32_t injection_pulse_duration, uint32_t num_repetitions,
+    uint32_t wait_between_pulses)
+{
+    std::vector<uint8_t> columns(2);
+    std::vector<uint8_t> rows(3);
+
+    constexpr auto waitTimeAfterConfigure = std::chrono::milliseconds(1);
+
+    // --- Remainder (overshoot) handling ---
+    // length of the scanned ranges
+    const uint8_t col_range = max_columns - min_columns;
+    const uint8_t row_range = max_rows - min_rows;
+
+    // Double modulo to stick with uint8
+    uint8_t r_column = ((col_range % 4) + 1) % 4;
+    uint8_t r_row    = ((row_range % 3) + 1) % 3;
+
+    // --- Main regular scan (no overshoot) ---
+    // loop will break if next update will overshoot
+    for (uint8_t c = min_columns; c <= max_columns - 3 && c <= 255 - 3; c += 4)
+    {
+        for (uint8_t r = min_rows; r <= max_rows - 2 && r <= 249 - 2; r += 3)
+        {
+            // ---- Fill columns ----
+            for (uint8_t index = 0; index < columns.size(); ++index)
+                columns[index] = c + 2 * index;
+
+            // ---- Fill rows ----
+            for (uint8_t index = 0; index < rows.size(); ++index)
+                rows[index] = r + index;
+
+            // ---- PRINT BEFORE CONFIGURE ----
+            uint8_t col_start = columns.front();
+            uint8_t col_end   = columns.back();
+            uint8_t row_start = rows.front();
+            uint8_t row_end   = rows.back();
+
+            std::cout << "Configure rows " << static_cast<int>(row_start)
+                      << "–" << static_cast<int>(row_end)
+                      << " and cols " << static_cast<int>(col_start)
+                      << "–" << static_cast<int>(col_end)
+                      << std::endl;
+
+            // ---- Actual injection ----
+            ConfigureInjectASICs(feb_sc, columns, rows);
+            std::this_thread::sleep_for(waitTimeAfterConfigure);
+            InjectASICsInLoop(feb_sc, injection_pulse_duration, num_repetitions, wait_between_pulses);
+            if (r >= 247) break;
+        }
+
+        if (c >= 252) break;
+
+        if (!m_settings["DAQ"]["Commands"]["Full chip Injection"])
+        {
+            return FE_SUCCESS;
+        }
+    }
+
+    // Computes the tail columns
+    std::vector<uint8_t> columns_tail;
+    if (r_column == 1)
+    {
+        columns_tail = { max_columns };
+    }
+
+    if (r_column == 2)
+    {
+        columns_tail = { max_columns - 1};
+    }
+
+    else if (r_column == 2)
+    {
+        columns_tail = { static_cast<uint8_t>(max_columns - 2), max_columns };
+    }
+
+    // Computes the tail rows
+    std::vector<uint8_t> rows_tail;
+    if (r_row == 1)
+    {
+        rows_tail = { max_rows };
+    }
+    else if (r_row == 2)
+    {
+        rows_tail = { static_cast<uint8_t>(max_rows - 1), max_rows };
+    }
+
+    // ---------- 1) Right strip: leftover columns, full row blocks ----------
+    if (r_column != 0)
+    {
+        for (uint8_t r = min_rows; r <= max_rows - 2 && r <= 249 - 2; r += 3)
+        {
+            std::vector<uint8_t> rows_block{r, static_cast<uint8_t>(r + 1), static_cast<uint8_t>(r + 2)};
+
+            ConfigureInjectASICs(feb_sc, columns_tail, rows_block);
+            std::this_thread::sleep_for(waitTimeAfterConfigure);
+            InjectASICsInLoop(feb_sc, injection_pulse_duration, num_repetitions, wait_between_pulses);
+            if (r >= 247) break;
+        }
+    }
+
+    // ---------- 2) Bottom strip: leftover rows, full column blocks ----------
+    if (r_row != 0)
+    {
+        for (uint8_t c = min_columns;  c <= max_columns - 3 && c <= 255 - 3; c += 4)
+        {
+            std::vector<uint8_t> columns_block{c, static_cast<uint8_t>(c + 2)};
+
+            ConfigureInjectASICs(feb_sc, columns_block, rows_tail);
+            std::this_thread::sleep_for(waitTimeAfterConfigure);
+            InjectASICsInLoop(feb_sc, injection_pulse_duration, num_repetitions, wait_between_pulses);
+            if (c >= 252) break;
+        }
+    }
+
+    // ---------- 3) Bottom-right corner: leftover rows AND columns ----------
+    if (r_column != 0 && r_row != 0)
+    {
+        std::cout << "Tail injection (corner): rows "
+                  << static_cast<int>(rows_tail.front()) << "–"
+                  << static_cast<int>(rows_tail.back())
+                  << " and cols "
+                  << static_cast<int>(columns_tail.front()) << "–"
+                  << static_cast<int>(columns_tail.back())
+                  << std::endl;
+
+        ConfigureInjectASICs(feb_sc, columns_tail, rows_tail);
+        std::this_thread::sleep_for(waitTimeAfterConfigure);
+        InjectASICsInLoop(feb_sc, injection_pulse_duration, num_repetitions, wait_between_pulses);
+    }
 
     return FE_SUCCESS;
 }

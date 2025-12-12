@@ -1,0 +1,123 @@
+* {
+    box-sizing: border-box;
+  }
+  .wrapper {
+    width: 100%;
+    margin: 0 auto;
+  }
+  .tabs {
+    position: relative;
+    margin: 3rem 0;
+    border: 0.125rem solid #000;
+    height: 72.75rem;
+  }
+  .tabs::before,
+  .tabs::after {
+    content: "";
+    display: table;
+  }
+  .tabs::after {
+    clear: both;
+  }
+  .tab {
+    float: left;
+  }
+  .tab-switch {
+    display: none;
+  }
+  .tab-label {
+    position: relative;
+    display: block;
+    line-height: 2.75em;
+    height: 3em;
+    padding: 0 1.618em;
+    background: #8cbdff;
+    border-right: 0.125rem solid #333;
+    color: #fff;
+    cursor: pointer;
+    top: 0;
+    transition: all 0.25s;
+    font-size: 120%;
+    font-weight: bold;
+   }
+  .tab-label:hover {
+    top: -0.25rem;
+    transition: top 0.25s;
+  }
+  .tab-content {
+    position: absolute;
+    z-index: 1;
+    top: 2.75em;
+    /*height: 70em;*/
+    left: 0;
+    padding: 1em; /*1.618rem;*/
+    background: #fff;
+    color: #000;
+    border-bottom: 0.125rem solid #bdc3c7;
+    opacity: 0;
+    transition: all 0.35s;
+  }
+  .qc-column{
+    top: 0em;
+    float: left;
+    padding: 10px;
+    display: none;
+  }
+  .qc-column-main{
+    top: 0em;
+    float: left;
+    padding: 10px;
+}
+  .tab-switch:checked + .tab-label {
+    background: #6bb28c;
+    color: #000;
+    border-bottom: 0;
+    border-right: 0.125rem solid greenyellow;
+    transition: all 0.35s;
+    z-index: 1;
+    top: -0.0625rem;
+  }
+  .tab-switch:checked + label + .tab-content {
+    z-index: 2;
+    opacity: 1;
+    transition: all 0.35s;
+  }
+  .tab-bottom {
+    display: block;
+  }
+  .side-by-side {
+    display: inline ;
+  }
+  .top-to-bottom {
+    display: block;
+  }
+  .btn-group {
+    display: inline-table;
+  }
+  .btn-group button {
+    background-color: #8cbdff; /* Green background */
+    border: 1px solid blue; /* Green border */
+    color: #fff; /* White text */
+    padding: 10px 24px; /* Some padding */
+    margin: 0.2rem;
+    cursor: pointer; /* Pointer/hand icon */
+    display: block; /* Make the buttons appear below each other */
+    font-size: 120%;
+    font-weight: bold;
+   }
+  .btn-group input {
+    cursor: pointer; /* Pointer/hand icon */
+    display: block; /* Make the buttons appear below each other */
+  }
+  .btn-group textarea {
+    cursor: pointer; /* Pointer/hand icon */
+    display: block; /* Make the buttons appear below each other */
+  }
+  .btn-group button:not(:last-child) {
+    border-bottom: none; /* Prevent double borders */
+  }
+  /* Add a background color on hover */
+  .btn-group button:hover {
+    background-color: #6bb28c;
+    color: #000;
+  }

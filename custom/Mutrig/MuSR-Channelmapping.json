@@ -1,0 +1,17 @@
+{
+  "channelmap": {
+    "detectors:US.1": 34,
+    "detectors:US.2": 35,
+    "detectors:M.1": 32,
+    "detectors:M.2": 33,
+    "detectors:DS.1": 36,
+    "detectors:DS.2": 37
+  },
+  "LV" : [
+    {"device": "LVSUPPLY1", "indices": [2,3]}
+  ],
+  "HV" : [
+    {"device": "SCSHV20", "indices": [1,2,3,4,5,6]}
+  ]
+
+}

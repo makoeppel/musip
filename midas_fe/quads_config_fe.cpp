@@ -51,7 +51,7 @@
 #include "utils.h"
 
 // MIDAS settings
-const char* frontend_name = "Quads Config";
+const char* frontend_name = "Quads";
 const char* frontend_file_name = __FILE__;
 BOOL equipment_common_overwrite = TRUE;
 
@@ -124,6 +124,27 @@ int write_command_by_name(const char* name, uint32_t payload = 0, uint16_t addre
 
     std::cout << "Unknown command " << name << std::endl;
     return -1;
+}
+
+void init_banks() {
+
+    midas::odb link_settings("/Equipment/Quads/Settings", true);
+
+    // setup PCLS bank
+    std::string namename = std::string("Names PCLS");
+    std::vector<std::string> names;
+    for(uint32_t i = 0; i < N_FEBS; i++){
+        names.push_back("FEB" + std::to_string(i));
+        names.push_back("FEB" + std::to_string(i) + " N LVDS Links");
+        for(uint32_t j=0; j < MAX_LVDS_LINKS_PER_FEB; j++){
+            names.push_back("F" + std::to_string(i) + "L" + std::to_string(j) + " Status");
+            names.push_back("F" + std::to_string(i) + "L" + std::to_string(j) + " Disparity Errors");
+            names.push_back("F" + std::to_string(i) + "L" + std::to_string(j) + " 8b/10b Errors");
+            names.push_back("F" + std::to_string(i) + "L" + std::to_string(j) + " Num Hits LVDS");
+        }
+    }
+    link_settings[namename] = names;
+
 }
 
 int begin_of_run() {
@@ -228,13 +249,51 @@ void sc_settings_changed(midas::odb o) {
         ConfigureTDACs(*feb_sc, m_settings);
         o = false;
     }
+
+    if (name == "Configure injection" && o) {
+        const std::vector<uint8_t> columns = m_settings["DAQ"]["Commands"]["Injection columns"];
+        const std::vector<uint8_t> rows = m_settings["DAQ"]["Commands"]["Injection rows"];
+        if (ConfigureInjectASICs(*feb_sc, columns, rows) != FE_SUCCESS)
+            cm_msg(MERROR, "on_settings_changed", "injection configuration failed!");
+        o = false;
+    }
+
+    if (name == "Trigger injection" && o) {
+        const uint32_t injection_pulse_duration = m_settings["DAQ"]["Commands"]["Injection pulse duration"];
+        if (InjectASICs(*feb_sc, injection_pulse_duration) != FE_SUCCESS)
+            cm_msg(MERROR, "on_settings_changed", "injection trigger failed!");
+        o = false;
+    }
+
+    if (name == "Trigger injection loop" && o) {
+        const uint32_t injection_pulse_duration = m_settings["DAQ"]["Commands"]["Injection pulse duration"];
+        const uint32_t num_repetitions = m_settings["DAQ"]["Commands"]["Number of pulses"];
+        const uint32_t wait_between_pulses = m_settings["DAQ"]["Commands"]["Wait time between pulses (ms)"];
+        if (InjectASICsInLoop(*feb_sc, injection_pulse_duration, num_repetitions, wait_between_pulses) != FE_SUCCESS)
+            cm_msg(MERROR, "on_settings_changed", "injection trigger loop failed!");
+        o = false;
+    }
+
+    if (name == "Full chip Injection" && o) {
+        const uint8_t min_columns = m_settings["DAQ"]["Commands"]["Injection min column"];
+        const uint8_t max_columns = m_settings["DAQ"]["Commands"]["Injection max column"];
+        const uint8_t min_rows =    m_settings["DAQ"]["Commands"]["Injection min rows"];
+        const uint8_t max_rows =    m_settings["DAQ"]["Commands"]["Injection max rows"];
+        const uint32_t injection_pulse_duration = m_settings["DAQ"]["Commands"]["Injection pulse duration"];
+        const uint32_t num_repetitions = m_settings["DAQ"]["Commands"]["Number of pulses"];
+        const uint32_t wait_between_pulses = m_settings["DAQ"]["Commands"]["Wait time between pulses (ms)"];
+        if (FullChipInjection(*feb_sc, m_settings, min_columns, max_columns, min_rows, max_rows, injection_pulse_duration, num_repetitions, wait_between_pulses) != FE_SUCCESS)
+            cm_msg(MERROR, "on_settings_changed" , "injection configuration failed!");
+        o = false;
+    }
+
 }
 
 int frontend_init() {
-    // create ODB and setup watch functions
-    settings.connect_and_fix_structure("/Equipment/Quads Config/Settings");
-    settings.watch(sc_settings_changed);
-    m_settings.connect("/Equipment/Quads Config/Settings");
+
+    // create ODB copy for settings
+    settings.connect_and_fix_structure("/Equipment/Quads/Settings/");
+    m_settings.connect("/Equipment/Quads/Settings");
 
     // end and start of run
     install_begin_of_run(begin_of_run);
@@ -271,6 +330,12 @@ int frontend_init() {
 
     InitFEBs(*feb_sc, m_settings);
 
+    // init banks
+    init_banks();
+
+    // create watch
+    settings["DAQ/Commands"].watch(sc_settings_changed);
+
     return SUCCESS;
 }
 
@@ -278,23 +343,22 @@ int read_sc_event(char* pevent, int off) {
     // TODO: move this to the quad_loop
     // fill lvds bank
     lvds_banks.clear();
-    uint32_t nlinks = 36;
     uint32_t offset = 1;
     for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
         bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
         lvds_banks.push_back(febIDx);
-        lvds_banks.push_back(nlinks);
+        lvds_banks.push_back(MAX_LVDS_LINKS_PER_FEB);
         if (FEBActive) {
-            std::vector<uint32_t> status(offset + (nlinks * 4));
+            std::vector<uint32_t> status(offset + (MAX_LVDS_LINKS_PER_FEB * 4));
             feb_sc->FEB_read(febIDx, LVDS_STATUS_START_REGISTER_W, status, false);
-            for (uint32_t i = 0; i < nlinks; i++) {
+            for (uint32_t i = 0; i < MAX_LVDS_LINKS_PER_FEB; i++) {
                 lvds_banks.push_back(status[offset + i * 4]);
                 lvds_banks.push_back(status[offset + i * 4 + 1]);
                 lvds_banks.push_back(status[offset + i * 4 + 2]);
                 lvds_banks.push_back(status[offset + i * 4 + 3]);
             }
         } else {
-            for (uint32_t i = 0; i < nlinks; i++) {
+            for (uint32_t i = 0; i < MAX_LVDS_LINKS_PER_FEB; i++) {
                 lvds_banks.push_back(0);
                 lvds_banks.push_back(0);
                 lvds_banks.push_back(0);
@@ -308,7 +372,7 @@ int read_sc_event(char* pevent, int off) {
     for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
         bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
         matrix_banks.push_back(febIDx);
-        matrix_banks.push_back(nlinks);
+        matrix_banks.push_back(MAX_LVDS_LINKS_PER_FEB);
         if (FEBActive) {
             std::vector<uint32_t> data(1);
             feb_sc->FEB_read(febIDx, MP_IS_A_0_REGISTER_R, data);
@@ -339,9 +403,9 @@ int read_sc_event(char* pevent, int off) {
         bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
         if (FEBActive) {
             vector<uint32_t> adcdata(N_CHIPS * 4 * 3);
-            std::cout << "adcdata " << adcdata.size() << " febIDx " << febIDx << std::endl;
-            for (auto data : adcdata) printf("0x%08x ", data);
-            std::cout << std::endl;
+            //std::cout << "adcdata " << adcdata.size() << " febIDx " << febIDx << std::endl;
+            //for (auto data : adcdata) printf("0x%08x ", data);
+            //std::cout << std::endl;
             feb_sc->FEB_read(febIDx, MP_READBACK_MEMS_START_REGISTER_R, adcdata);
             for (uint32_t c = 0; c < N_CHIPS * 3; c++ ) {
                 adc_banks.push_back((c/3 >> 8) & 0xFF);
@@ -380,7 +444,7 @@ int read_sc_event(char* pevent, int off) {
             }
         }
     }
-    std::cout << "adc_banks " << adc_banks.size() << std::endl;
+    //std::cout << "adc_banks " << adc_banks.size() << std::endl;
 
     // create bank, pdata
     bk_init32a(pevent);
@@ -406,7 +470,7 @@ int read_sc_event(char* pevent, int off) {
 }
 
 EQUIPMENT equipment[] = {{
-                             "Quads Config",                    /* equipment name */
+                             "Quads",                    /* equipment name */
                              {1, 0,                             /* event ID, trigger mask */
                               "SYSTEM",                         /* event buffer */
                               EQ_PERIODIC,                      /* equipment type */

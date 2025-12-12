@@ -31,6 +31,8 @@ class FEBSlowcontrolInterface {
                           const bool nonincrementing = false, const bool broadcast = false,
                           const uint32_t MSTR_bar = 0);
     virtual int FEB_write(uint32_t febIDx, const uint32_t startaddr, const uint32_t data);
+    virtual int FEB_broadcast(const uint32_t startaddr, const uint32_t data);
+    virtual int FEB_broadcast(const uint32_t startaddr, const vector<uint32_t> & data, const bool nonincrementing = false);
     virtual int FEB_ping(uint32_t febIDx);
 
     // expects data vector with read-length size

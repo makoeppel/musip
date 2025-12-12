@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html class="mcss">
+  <head>
+    <title>LEM Editor</title>
+  </head>
+  <body>
+    <table id="seqTable" style="width:100%;border: 0px none;">       
+      <tr style="background-color: #f2f2f2;">
+        <td colspan="4">
+          <span class="dropdown">
+            <button class="dropmenu" id="file-menu">File</button>
+            <div class="dropdown-content">
+              <div onclick="addETab(document.getElementById('addETab'));"><span class="label">New</span><span class="shortcut">Alt+N</span></div>
+              <div onclick="seqOpen();"><span class="label">Open</span><span class="shortcut">Alt+O</span></div>
+	      <div class="noteditor" onclick="seqSave();"><span class="label">Save</span><span class="shortcut">Ctrl+S</span></div>
+ 	      <div class="noteditor" onclick="seqSave('');"><span class="label">Save As...</span><span class="shortcut">Alt+S</span></div>
+            </div>
+          </span>
+          <span class="dropdown">
+            <button class="dropmenu" id="edit-menu">Edit</button>
+            <div class="dropdown-content">
+              <div class="undoMenu" onclick="editMenu('Undo');"><span class="label">Undo</span><span class="shortcut">Ctrl+Z</span></div>
+              <div class="redoMenu" onclick="editMenu('Redo');"><span class="label">Redo</span><span class="shortcut">Ctrl+R</span></div>
+            </div>
+          </span>
+          <span class="dropdown">
+            <button class="dropmenu" id="commands-menu">Commands</button>
+            <div class="dropdown-content">
+              <div class="seqbtn Stopped" onclick="setLARstate(2);"><span class="label">Start</span></div>
+              <div class="seqbtn Stopped Running Paused StopAfter noteditor" onclick="setAsNext();"><span class="label">Set As Next</span></div>
+              <div class="seqbtn Running Paused StopAfter" onclick="setLARstate(0);"><span class="label">Stop</span></div>
+              <div class="seqbtn Running StopAfter" onclick="setLARstate(1);"><span class="label">Pause</span></div>
+              <div class="seqbtn Paused" onclick="setLARstate(3);"><span class="label">Resume</span></div>
+            </div>
+          </span>
+          <span class="dropdown">
+            <button class="dropmenu">Options</button>
+            <div class="dropdown-content">
+              <div>
+                <span class="label"><input type="checkbox" id="scrollToCurr" onchange="scrollToCurr(this);">
+                  <label for="scrollToCurr">Follow current line&nbsp;</label></span>
+              </div>
+              <div>
+                  <span class="label"><input type="checkbox" checked id="showLARsnip" onchange="showLARsnip();">
+                    <label for="showLARsnip">Show LAR Snippets&nbsp;</label></span>
+              </div>
+              <div>
+                <span class="label"><input type="checkbox" checked id="showNextFile" onchange="showFNTable('nextFNContainer');">
+                  <label for="showNextFile">Show next filename&nbsp;</label></span>
+              </div>
+              <!--<div>
+                  <span class="label"><input type="checkbox" checked id="showProgressBars" onchange="showProgress(this);">
+                    <label for="showProgressBars">Show progress bars&nbsp;</label></span>
+              </div>-->
+              <div>
+                <span class="label"><input type="checkbox" id="inNewTab" onchange="toggleCheck(this);" onload="if (localStorage.getItem(this.id)) this.checked">
+                  <label for="inNewTab">Open in new tabs&nbsp;</label></span>
+              </div>
+              <div>
+                <span class="label"><input type="checkbox" id="darkMode" onchange="lightToDark(this);"/>
+                  <label for="darkMode">Dark mode&nbsp;</label></span>
+              </div>
+            </div>
+          </span>
+          <span class="dropdown">
+            <button class="dropmenu">Help</button>
+            <div class="dropdown-content">
+              <a target="_blank" href="https://lmu.web.psi.ch/docu/nemu/lemQt/lemAutoRun/html/index.html#userScript">Syntax Help</a>
+              <div onclick="dlgHelp();"><span class="label">Editor Help</span></div>
+            </div>
+          </span>
+          <!--Monitor state to update buttons, message etc.-->
+          <span class="modb" data-odb-path="/AutoRun/Run State" onchange="seqState(updateBtns);"></span>
+          <span class="modb" data-odb-path="/AutoRun/Status" onchange="//mslMessage(this.value);"></span>
+          <span class="modb" data-odb-path="/AutoRun/LiveData/AutoRun" onchange="load_msl();"></span>
+          <span class="modb" data-odb-path="/AutoRun/LiveData/CurrentlineNo" onchange="hlLine(this.value);"></span>
+          <span class="modb" data-odb-path="/AutoRun/Auto Run Sequence" onload="load_msl();" onchange="load_msl();"></span>
+          <span class="modb" data-odb-path="/AutoRun/Next" onload="showFNTable('nextFNContainer');" onchange="showFNTable('nextFNContainer');"></span>
+          <span class="modb" data-odb-path="/AutoRun/ErrorInLine" onchange="hlLine(this.value,'var(--mred)');"></span>
+          <span class="modb" data-odb-path="/AutoRun/ErrorMsg" onchange="if (this.value) {dlgMessage('AutoRun Errors',this.value.join('<br>'),false,true);}"></span>
+        </td>
+      </tr>
+      <tr style="background-color: #f2f2f2;">
+        <td>
+          <div id="iconsRow">
+            <img src="/icons/file-plus.svg" title="New File Alt+N" onclick="addETab(document.getElementById('addETab'));">
+            <img src="/icons/folder-open.svg" title="Open File Alt+O" onclick="seqOpen();">
+            <img src="/icons/save.svg" title="Save File Ctrl+S" class="noteditor" onclick="seqSave();">
+            <img src="/icons/list-add.svg" title="Set As Next" class="noteditor" onclick="setAsNext();">
+            <img src="/icons/rotate-ccw.svg" title="Undo Ctrl+Z" class="undoMenu" onclick="editMenu('Undo');">
+            <img src="/icons/rotate-cw.svg" title="Redo Ctrl+R" class="redoMenu" onclick="editMenu('Redo');">
+            <img src="/icons/validate-syntax.svg" title="Validate Syntax" class="seqbtn Stopped Running Paused StopAfter" onclick="checkEditorContent(this,lemCommands);" id="vldBtn">
+            <img src="/icons/play.svg" title="Start" class="seqbtn Stopped" onclick="setLARstate(2);">
+            <img src="/icons/square.svg" title="Stop" class="seqbtn Running Paused StopAfter" onclick="setLARstate(0);">
+            <img src="/icons/pause.svg" title="Pause" class="seqbtn Running StopAfter" onclick="setLARstate(1);">
+            <img src="/icons/resume.svg" title="Resume" class="seqbtn Paused" onclick="setLARstate(3);">
+          </div>
+        </td>
+      </tr>
+      <!--<tr style="display: none;background: var(--mred);text-align: center;" id="seqError">
+          <td colspan="4">-->
+            <!--  </td>
+                  </tr>-->
+      <tr>
+        <td style="vertical-align: top; background-color: #f0f0f0; height:100%" id="mslControl" colspan="4">
+          <div id="etabContainer">
+            <span class="msl_msg"></span>
+            <span class="msl_err"></span>
+            <span class="msl_fatal"></span>
+            <div class="etab">
+              <button class="seqstate etablinks edt_active" id="etab1-btn" title="" onclick="openETab(this);">
+                <span class="editbtn" title="Edit sequence" onclick="askToEdit(true,event);">&#9998;</span>
+                <span class="modbvalue" data-odb-path="/AutoRun/Auto Run Sequence"></span>
+              </button>
+              <button class="etablinks" id="addETab" onclick="addETab(this);">&#43;</button>
+            </div>
+            <div id="etab1" style="width: 100%; display:flex;" class="etabcontent">
+              <pre id="lineNumbers1" class="edt_linenum"></pre>
+              <pre id="editorTab1" class="edt_area" spellcheck="false" ondblclick="askToEdit();" contenteditable="false"></pre>
+              <span id="infoColumn" class="info_column">
+                <span style="display: none;" id="nextFNContainer"></span>
+              </span>
+            </div>
+            <div id="lastETab"></div>
+          </div>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

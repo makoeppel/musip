@@ -94,14 +94,14 @@ async function sendStateToBackend() {
         }
     }
 
-    await setODBValue("/Equipment/Quads Config/Settings/DAQ/Links/ASICMask", ASICMask);
-    await setODBValue("/Equipment/Quads Config/Settings/DAQ/Links/LVDSLinkMask", LVDSLinkMask);
-    await setODBValue("/Equipment/Quads Config/Settings/DAQ/Links/LVDSLinkInvert", LVDSLinkInvert);
+    await setODBValue("/Equipment/Quads/Settings/DAQ/Links/ASICMask", ASICMask);
+    await setODBValue("/Equipment/Quads/Settings/DAQ/Links/LVDSLinkMask", LVDSLinkMask);
+    await setODBValue("/Equipment/Quads/Settings/DAQ/Links/LVDSLinkInvert", LVDSLinkInvert);
 }
 
 async function configure() {
     await sendStateToBackend();
-    await setODBValue("/Equipment/Quads Config/Settings/Readout/MupixConfig", 1);
+    await setODBValue("/Equipment/Quads/Settings/Readout/MupixConfig", 1);
 }
 
 function renderGrid(gridId, data, febID, gridID) {
@@ -313,9 +313,9 @@ async function init() {
         cells.push(cur_feb);
     }
 
-    let ASICMask = await getODBValue(["/Equipment/Quads Config/Settings/DAQ/Links/ASICMask"]);
-    let LVDSLinkMask = await getODBValue(["/Equipment/Quads Config/Settings/DAQ/Links/LVDSLinkMask"]);
-    let LVDSLinkInvert = await getODBValue(["/Equipment/Quads Config/Settings/DAQ/Links/LVDSLinkInvert"]);
+    let ASICMask = await getODBValue(["/Equipment/Quads/Settings/DAQ/Links/ASICMask"]);
+    let LVDSLinkMask = await getODBValue(["/Equipment/Quads/Settings/DAQ/Links/LVDSLinkMask"]);
+    let LVDSLinkInvert = await getODBValue(["/Equipment/Quads/Settings/DAQ/Links/LVDSLinkInvert"]);
 
     for (let feb = 0; feb < nFEBs; feb++) {
         const mask = parseInt(ASICMask[0][feb]);
@@ -343,7 +343,7 @@ async function init() {
     }
     updateSelectedDisplay();
 
-    mjsonrpc_db_get_values(["/Equipment/Quads Config/Variables/PCLS"]).then(function(rpc) {
+    mjsonrpc_db_get_values(["/Equipment/Quads/Variables/PCLS"]).then(function(rpc) {
         if (rpc.result.data[0]) {
             update_pcls(rpc.result.data[0]);
         }
@@ -351,7 +351,7 @@ async function init() {
         mjsonrpc_error_alert(error);
     });
 
-    mjsonrpc_db_get_values(["/Equipment/Quads Config/Variables/PCMS"]).then(function(rpc) {
+    mjsonrpc_db_get_values(["/Equipment/Quads/Variables/PCMS"]).then(function(rpc) {
         if(rpc.result.data[0]){
             update_pcms(rpc.result.data[0]);
         }
