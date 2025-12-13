@@ -416,6 +416,47 @@
                 <td style="text-align: center"><span>Cycles FEBs: Idle → Running</span></td>
             </tr>
             <tr>
+                <th>Injection</th>
+                <td style="text-align: center"><button class="mbutton" onclick="full_chip_injection()">Full Chip Injection</button>
+                </td>
+                <td style="text-align:center">
+                <div style="
+                    display: grid;
+                    grid-template-columns: auto auto auto auto;
+                    gap: 8px;
+                    align-items: center;
+                ">
+                    <div>
+                    <div><b>Min col</b></div>
+                    <div class="modbvalue"
+                        data-odb-path="/Equipment/Quads/Settings/DAQ/Commands/Injection min column"
+                        data-odb-editable="1"></div>
+                    </div>
+
+                    <div>
+                    <div><b>Max col</b></div>
+                    <div class="modbvalue"
+                        data-odb-path="/Equipment/Quads/Settings/DAQ/Commands/Injection max column"
+                        data-odb-editable="1"></div>
+                    </div>
+
+                    <div>
+                    <div><b>Min row</b></div>
+                    <div class="modbvalue"
+                        data-odb-path="/Equipment/Quads/Settings/DAQ/Commands/Injection min rows"
+                        data-odb-editable="1"></div>
+                    </div>
+
+                    <div>
+                    <div><b>Max row</b></div>
+                    <div class="modbvalue"
+                        data-odb-path="/Equipment/Quads/Settings/DAQ/Commands/Injection max rows"
+                        data-odb-editable="1"></div>
+                    </div>
+                </div>
+                </td>
+            </tr>
+            <tr>
                 <th><p>Output</p></th>
                 <td colspan="2"><div id="outputContainer"><span id="outputAction"></span><div></td>
             </tr>

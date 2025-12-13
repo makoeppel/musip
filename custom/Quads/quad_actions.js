@@ -397,11 +397,40 @@ async function testout_scan() {
     clearOutputText();
 }
 
-// FEB Run Cycle //
+/**
+ * Execute full chip injection
+ *
+ * @author Assistant
+ * @returns {Promise<boolean>} Success status
+ */
+async function full_chip_injection() {
+    try {
+        // Phase 1: Set FEBs to idle
+        setOutputText("Start injection");
 
+        // Use executeSensorCommand with id=-1 but modified to not check for id
+        let status1 = await executeCommand(`/Equipment/Quads/Settings/DAQ/Commands/Full chip Injection`, -1, "FEB Full chip Injection command failed");
+
+        if (!status1) {
+            setOutputText("Injection takes a lot of time, check ODB & histograms");
+            return false;
+        }
+
+        // Success
+        setOutputText("Injection successfully");
+        setTimeout(() => clearOutputText(), 2000); // Clear after 2 seconds
+        return true;
+    } catch (error) {
+        console.error("Error during Start injection:", error);
+        setOutputText("Error during Start injection: " + error.message);
+        return false;
+    }
+}
+
+// FEB Run Cycle //
 /**
  * Execute a FEB run cycle: set FEBs to idle, wait for completion, then set back to running
- * 
+ *
  * @author Assistant
  * @returns {Promise<boolean>} Success status
  */
@@ -462,10 +491,12 @@ async function executeCommand(odbPath, time = 1, errorMessageText = "FEB command
     
     // Wait for command to complete (similar logic to executeSensorCommand)
     let status2 = true;
+    let n_loop = 50;
+    if (time == -1) n_loop = 10000000;
     time = time * 1000;
     let waitTime = Math.round(time / 50);
-    
-    for (let i = 0; i < 50; i++) {
+
+    for (let i = 0; i < n_loop; i++) {
         await sleep(waitTime);
         status2 = await getODBValue(odbPath, false);
         if (!status2) {
@@ -473,7 +504,7 @@ async function executeCommand(odbPath, time = 1, errorMessageText = "FEB command
             break;
         }
     }
-    
+
     if (status2) {
         console.log(errorMessageText);
         return false;

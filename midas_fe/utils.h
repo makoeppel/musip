@@ -318,22 +318,6 @@ int read_tdac_file(vector<uint32_t>& vec, std::string path) {
  * @return FE_SUCCESS if all ASICs configured successfully; error code otherwise.
  */
 int ConfigureTDACs(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) {
-    // define variables for TDAC writing
-    std::vector<std::vector<uint8_t>> pages_remaining;
-    std::vector<std::vector<std::vector<uint32_t>>> tdac_pages;
-    std::vector<uint8_t> pages_remaining_this_chip;
-    uint32_t pages_remaining_this_feb;
-    uint32_t N_DCOLS_PER_PAGE = 8;
-    uint32_t PAGESIZE2 = 128*N_DCOLS_PER_PAGE;
-    uint8_t N_PAGES_PER_CHIP= 128/N_DCOLS_PER_PAGE;
-    uint8_t current_page = 0;
-    uint32_t N_free_pages = 0;
-    bool allDone = false;
-    uint16_t internal_febID = 0;
-    uint16_t pos = 0;
-    std::map<uint16_t, uint32_t> nextchips;
-    std::map<int, int> n_times_per_chip;
-
     // reset ASICs before writing
     resetASICs(feb_sc, m_settings);
 
@@ -346,78 +330,31 @@ int ConfigureTDACs(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) {
         for (uint32_t asicMaskIDx = febIDx * N_CHIPS; asicMaskIDx < (febIDx + 1) * N_CHIPS;
              asicMaskIDx++) {
             if (!((ASICMask >> (asicMaskIDx % N_CHIPS)) & 0x1)) continue;
-            pages_remaining_this_chip.push_back(N_PAGES_PER_CHIP);
+            cm_msg(MINFO, "WriteTDACs()",
+                   "/Settings/Config/ -> globalASIC-%i -> localASIC-%i on FEB-%i", asicMaskIDx,
+                   asicMaskIDx % N_CHIPS, febIDx);
 
             // read TDAC file
             // TODO: we only read the first TDAC file, this is hardcoded change me
-            std::string path = m_settings["Config"]["TDACS"]["F0"];
+            std::string path = m_settings["Config"]["TDACS"]["TDACFILE"][asicMaskIDx];
             std::vector<uint32_t> tdac_chip(64*256);
-            read_tdac_file(tdac_chip, path);
-            cm_msg(MINFO, "ConfigureTDACs()",
-                    "TDAC: %s -> globalASIC-%i -> localASIC-%i on FEB-%i",
-                    path.c_str(), asicMaskIDx, asicMaskIDx % N_CHIPS, febIDx);
-            tdac_page_this_feb.push_back(tdac_chip);
-            n_times_per_chip[asicMaskIDx] = 0;
-        }
-        tdac_pages.push_back(tdac_page_this_feb);
-        pages_remaining.push_back(pages_remaining_this_chip);
-        pages_remaining_this_chip.clear();
-        nextchips[internal_febID] = 0;
-        internal_febID++;
-    }
-    cm_msg(MINFO, "ConfigureTDACs()" , "tdac load completed, start writing tdacs");
+            read_tdac_file(tdac_chip, "/home/mu3e/musip/tests/data/" + path);
 
-    // write tdac to chips
-    while (! allDone) {
-        allDone = true;
-        internal_febID = 0;
-        cm_yield(1);
-
-        for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
-            uint16_t ASICMask = m_settings["DAQ"]["Links"]["ASICMask"][febIDx];
-            bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
-            if (!FEBActive) continue;
-            pages_remaining_this_feb = 0;
-            for (uint32_t asicMaskIDx = febIDx * N_CHIPS; asicMaskIDx < (febIDx + 1) * N_CHIPS;
-             asicMaskIDx++) {
-                if (!((ASICMask >> (asicMaskIDx % N_CHIPS)) & 0x1)) continue;
-
-                // get number of free tdac pages for this feb
-                feb_sc.FEB_read(febIDx, MP_CTRL_N_FREE_PAGES_REGISTER_R, N_free_pages);
-
-                uint32_t n_counter = 0;
-                for (auto& n : pages_remaining.at(internal_febID)) {
-                    pages_remaining_this_feb += n;
-                    ++n_counter;
-                }
-                if(pages_remaining_this_feb > 0 || N_free_pages < 16)
-                    allDone = false;
-
-                // while the feb has space left ..
-                while(N_free_pages > 0 && pages_remaining_this_feb > 0){
-                    // Write one page for every chip
-                    for (uint32_t chip = nextchips[internal_febID]; chip < pages_remaining.at(internal_febID).size(); chip++){
-                        if (pages_remaining.at(internal_febID).at(chip) != 0){
-                            if(N_free_pages > 0){
-                                current_page = N_PAGES_PER_CHIP-pages_remaining.at(internal_febID)[chip];
-                                pos = asicMaskIDx % N_CHIPS;
-                                std::vector<uint32_t> tdac_page(PAGESIZE2);
-                                tdac_page = std::vector<uint32_t>(tdac_pages.at(internal_febID).at(chip).begin() + current_page*PAGESIZE2, tdac_pages.at(internal_febID).at(chip).begin() + (current_page+1)*PAGESIZE2);
-                                feb_sc.FEB_write(febIDx, MP_CTRL_TDAC_START_REGISTER_W + pos, tdac_page, true, false);
-                                n_times_per_chip[asicMaskIDx] += 1;
-                                pages_remaining.at(internal_febID)[chip] = pages_remaining.at(internal_febID)[chip] - 1;
-                                pages_remaining_this_feb--;
-                                N_free_pages--;
-                            }
-                            nextchips[internal_febID] = chip + 1;
-                            if(nextchips[internal_febID] >= pages_remaining.at(internal_febID).size())
-                                nextchips[internal_febID] = 0;
-                        } else {
-                            break;
-                        }
-                    }
-                }
-                internal_febID++;
+            // write TDAC
+            uint32_t N_DCOLS_PER_PAGE = 8;
+            uint32_t PAGESIZE2 = 128 * N_DCOLS_PER_PAGE;
+            uint8_t N_PAGES_PER_CHIP = 128 / N_DCOLS_PER_PAGE;
+            uint8_t pages_remaining = N_PAGES_PER_CHIP;
+            while (pages_remaining > 0) {
+                std::vector<uint32_t> free_pages = { 0 };
+                feb_sc.FEB_read(febIDx, MP_CTRL_N_FREE_PAGES_REGISTER_R, free_pages);
+                //printf("free_pages: %d %d\n", free_pages[0], N_PAGES_PER_CHIP-pages_remaining);
+                if (free_pages[0] == 0) continue;
+                std::vector<uint32_t> tdac_page(PAGESIZE2);
+                uint8_t current_page = N_PAGES_PER_CHIP-pages_remaining;
+                tdac_page = std::vector<uint32_t>(tdac_chip.begin() + current_page * PAGESIZE2, tdac_chip.begin() + (current_page + 1) * PAGESIZE2);
+                feb_sc.FEB_write(febIDx, MP_CTRL_TDAC_START_REGISTER_W + (asicMaskIDx % N_CHIPS), tdac_page, true, false);
+                pages_remaining--;
             }
         }
     }
