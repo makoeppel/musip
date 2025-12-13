@@ -183,10 +183,10 @@ int InitFEBs(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) {
             febIDx, MP_LVDS_LINK_MASK2_REGISTER_W,
             (uint32_t)(((uint64_t)m_settings["DAQ"]["Links"]["LVDSLinkMask"][febIDx]) >> 32));
         feb_sc.FEB_write(febIDx, MP_LVDS_INVERT_0_REGISTER_W,
-                         (uint32_t)m_settings["DAQ"]["Links"]["LVDSLinkMask"][febIDx]);
+                         (uint32_t)m_settings["DAQ"]["Links"]["LVDSLinkInvert"][febIDx]);
         feb_sc.FEB_write(
             febIDx, MP_LVDS_INVERT_1_REGISTER_W,
-            (uint32_t)(((uint64_t)m_settings["DAQ"]["Links"]["LVDSLinkMask"][febIDx]) >> 32));
+            (uint32_t)(((uint64_t)m_settings["DAQ"]["Links"]["LVDSLinkInvert"][febIDx]) >> 32));
         feb_sc.FEB_write(febIDx, MP_CTRL_SPI_ENABLE_REGISTER_W, 0x00000000);
         feb_sc.FEB_write(febIDx, MP_CTRL_DIRECT_SPI_ENABLE_REGISTER_W, 0x00000000);
         feb_sc.FEB_write(febIDx, MP_CTRL_SLOW_DOWN_REGISTER_W, 0x0000001F);
@@ -452,7 +452,7 @@ int ConfigureTDACs(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) {
 int ConfigureInjectASICs(FEBSlowcontrolInterface& feb_sc, const std::vector<uint8_t>& inj_col, const std::vector<uint8_t>& inj_row){
 
     // Commands vector, same command to all asics
-    vector<uint32_t> commands(2 * N_CHIPS);
+    vector<uint32_t> commands(2 * N_FEBS_QUAD * N_CHIPS_MAX);
 
     const uint32_t command_wr_test = 0b101100;          // Write Command Test register
     const uint32_t command_ld_test = 0b001101;          // Load Command Test register
@@ -523,7 +523,7 @@ int ConfigureInjectASICs(FEBSlowcontrolInterface& feb_sc, const std::vector<uint
         highBits = (ScCommand >> 32);
         lowBits = (ScCommand & 0xffffffff);
 
-        for (int i=0; i < 2 * N_CHIPS;i+=2)
+        for (int i=0; i < 2 * N_FEBS_QUAD * N_CHIPS_MAX;i+=2)
         {
             commands[i] = lowBits;
             commands[i+1] = highBits;
@@ -536,7 +536,7 @@ int ConfigureInjectASICs(FEBSlowcontrolInterface& feb_sc, const std::vector<uint
     highBits = (ScCommand >> 32);
     lowBits = (ScCommand & 0xffffffff);
 
-    for (int i=0; i < 2 * N_CHIPS; i+=2)
+    for (int i=0; i < 2 * N_FEBS_QUAD * N_CHIPS_MAX; i+=2)
     {
         commands[i] = lowBits;
         commands[i+1] = highBits;
@@ -550,7 +550,7 @@ int ConfigureInjectASICs(FEBSlowcontrolInterface& feb_sc, const std::vector<uint
 int InjectASICs(FEBSlowcontrolInterface& feb_sc, uint32_t injection_pulse_duration){
 
     //Commands vector, same command to all asics
-    std::vector<uint32_t> commands(2 * N_CHIPS);
+    std::vector<uint32_t> commands(2 * N_FEBS_QUAD * N_CHIPS_MAX);
 
     const uint32_t command_wr_test = 0b101100;          // Write Command Test register
     const uint32_t command_ld_test = 0b001101;          // Load Command Test register
@@ -566,7 +566,7 @@ int InjectASICs(FEBSlowcontrolInterface& feb_sc, uint32_t injection_pulse_durati
     const uint32_t highBits = (ScCommand >> 32);
     const uint32_t lowBits = (ScCommand & 0xffffffff);
 
-    for (int i=0; i < 2 * N_CHIPS; i+=2)
+    for (int i=0; i < 2 * N_FEBS_QUAD * N_CHIPS_MAX; i+=2)
     {
         commands[i] = lowBits;
         commands[i+1] = highBits;
@@ -588,7 +588,7 @@ int InjectASICsInLoop(FEBSlowcontrolInterface& feb_sc, uint32_t injection_pulse_
     {
         // This method can lock the frontend for quite a long time, depending on the parameters passed. So
         // Print a status report every now and then.
-        if((i % 10) == 9) cm_msg(MINFO, "InjectASICsInLoop" , "Sending injection trigger %u of %u\n", i + 1, num_repetitions);
+        //if((i % 10) == 9) cm_msg(MINFO, "InjectASICsInLoop" , "Sending injection trigger %u of %u\n", i + 1, num_repetitions);
 
         int result = InjectASICs(feb_sc, injection_pulse_duration);
         if(result != FE_SUCCESS) return result;
@@ -638,12 +638,6 @@ int FullChipInjection(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings,
             uint8_t col_end   = columns.back();
             uint8_t row_start = rows.front();
             uint8_t row_end   = rows.back();
-
-            std::cout << "Configure rows " << static_cast<int>(row_start)
-                      << "–" << static_cast<int>(row_end)
-                      << " and cols " << static_cast<int>(col_start)
-                      << "–" << static_cast<int>(col_end)
-                      << std::endl;
 
             // ---- Actual injection ----
             ConfigureInjectASICs(feb_sc, columns, rows);
@@ -719,14 +713,6 @@ int FullChipInjection(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings,
     // ---------- 3) Bottom-right corner: leftover rows AND columns ----------
     if (r_column != 0 && r_row != 0)
     {
-        std::cout << "Tail injection (corner): rows "
-                  << static_cast<int>(rows_tail.front()) << "–"
-                  << static_cast<int>(rows_tail.back())
-                  << " and cols "
-                  << static_cast<int>(columns_tail.front()) << "–"
-                  << static_cast<int>(columns_tail.back())
-                  << std::endl;
-
         ConfigureInjectASICs(feb_sc, columns_tail, rows_tail);
         std::this_thread::sleep_for(waitTimeAfterConfigure);
         InjectASICsInLoop(feb_sc, injection_pulse_duration, num_repetitions, wait_between_pulses);
@@ -748,8 +734,8 @@ void sendCommand(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings, uint64_
     uint32_t highBits = (command >> 32);
     uint32_t lowBits = (command & 0xffffffff);
 
-    vector<uint32_t> commands(2 * N_CHIPS);
-    for (int i = 0; i < 2 * N_CHIPS; i += 2) {
+    vector<uint32_t> commands(2 * N_FEBS_QUAD * N_CHIPS_MAX);
+    for (int i = 0; i < 2 * N_FEBS_QUAD * N_CHIPS_MAX; i += 2) {
         commands[i] = lowBits;
         commands[i+1] = highBits;
     }

@@ -35,8 +35,14 @@ constexpr uint32_t MAX_LVDS_LINKS_PER_FEB = 36;
 /* Maximum number of total FEBs */
 constexpr uint32_t N_FEBS = 4;
 
-/* Maximum number of chips FEBs */
+/* Maximum number of quad FEBs */
+constexpr uint32_t N_FEBS_QUAD = 4;
+
+/* Maximum number of quad chips FEBs */
 constexpr uint32_t N_CHIPS = 8;
+
+/* Maximum number of chips FEBs */
+constexpr uint32_t N_CHIPS_MAX = 12;
 
 /* DMA constants */
 constexpr size_t dma_buf_size = MUDAQ_DMABUF_DATA_LEN;
