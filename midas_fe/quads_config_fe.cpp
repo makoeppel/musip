@@ -145,6 +145,21 @@ void init_banks() {
     }
     link_settings[namename] = names;
 
+    namename = std::string("Names PVSC");
+    names.clear();
+    for (uint32_t i = 0; i < N_FEBS; i++) {
+        for (uint32_t j = 0; j < N_CHIPS; j++){
+            std::string index = std::to_string(i*N_CHIPS + j);
+            names.push_back(index + " ID upper");
+            names.push_back(index + " ID lower");
+            for(uint32_t k=0; k < nadcvals; k++){
+                std::string s = index + " " + adcnames[k];
+                names.push_back(s);
+            }
+        }
+    }
+    link_settings[namename] = names;
+
 }
 
 int begin_of_run() {
@@ -333,6 +348,9 @@ int frontend_init() {
     // init banks
     init_banks();
 
+    // start ADC readout
+    adcContinuousReadout(*feb_sc, m_settings);
+
     // create watch
     settings["DAQ/Commands"].watch(sc_settings_changed);
 
@@ -403,11 +421,8 @@ int read_sc_event(char* pevent, int off) {
         bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
         if (FEBActive) {
             vector<uint32_t> adcdata(N_CHIPS * 4 * 3);
-            //std::cout << "adcdata " << adcdata.size() << " febIDx " << febIDx << std::endl;
-            //for (auto data : adcdata) printf("0x%08x ", data);
-            //std::cout << std::endl;
             feb_sc->FEB_read(febIDx, MP_READBACK_MEMS_START_REGISTER_R, adcdata);
-            for (uint32_t c = 0; c < N_CHIPS * 3; c++ ) {
+            for (uint32_t c = 0; c < N_CHIPS*3; c+=3 ) {
                 adc_banks.push_back((c/3 >> 8) & 0xFF);
                 adc_banks.push_back((c/3) & 0xFF);
                 adc_banks.push_back((adcdata[0 + 4*c] & 0xFF));
@@ -425,7 +440,7 @@ int read_sc_event(char* pevent, int off) {
                 adc_banks.push_back((adcdata[3 + 4*c] & 0xFF));
             }
         } else {
-            for (uint32_t c = 0; c < N_CHIPS * 3; c++ ) {
+            for (uint32_t c = 0; c < N_CHIPS*3; c+=3 ) {
                 adc_banks.push_back((c/3 >> 8) & 0xFF);
                 adc_banks.push_back((c/3) & 0xFF);
                 adc_banks.push_back(0);
@@ -444,7 +459,6 @@ int read_sc_event(char* pevent, int off) {
             }
         }
     }
-    //std::cout << "adc_banks " << adc_banks.size() << std::endl;
 
     // create bank, pdata
     bk_init32a(pevent);
