@@ -10,6 +10,8 @@
 #include <TH1D.h>
 #include <numeric>
 
+#include "json.h"
+using json = nlohmann::json;
 
 AnaQuadHistos::AnaQuadHistos(const boost::property_tree::ptree& config, TARunInfo* runinfo)
     : TARunObject(runinfo)
@@ -96,6 +98,9 @@ void AnaQuadHistos::BeginRun(TARunInfo* runinfo) {
             MD::AxisTitleY("Combined Row")
         ));
     }
+
+    // clear vectors
+    vec_tot_noisy_pixels.clear();
 }
 
 std::tuple<uint32_t, uint32_t> AnaQuadHistos::get_quad_global_col_row(pixelhit hit) {
@@ -193,7 +198,7 @@ std::vector<uint8_t> AnaQuadHistos::create_mask_file(const TH2F* hitmap, uint32_
     int tot_noisy_pixels = 0;
     for (int binx = 1; binx <= Ncol; binx++) {
         for (int biny = 1; biny <= Nrow; biny++) {
-            if (hitmap->GetBinContent(binx, biny) > noiseLimit) {
+            if (hitmap->GetBinContent(binx, biny) > noiseThreshold) { //noiseLimit) {
                 vec.push_back(0x00);
                 tot_noisy_pixels++;
                 maskmap[chipID]->Fill(binx-1, biny-1);
@@ -212,6 +217,7 @@ std::vector<uint8_t> AnaQuadHistos::create_mask_file(const TH2F* hitmap, uint32_
         vec.push_back(0xda);
         vec.push_back(0x00); // for now we don't use this
     }
+    vec_tot_noisy_pixels.push_back(tot_noisy_pixels);
 
     return vec;
 }
@@ -221,11 +227,11 @@ void AnaQuadHistos::EndRun(TARunInfo* runinfo) {
     printf("AnaQuadHistos::EndRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
 
     // write mask file
+    std::string path = "/home/mu3e/musip/output/maskfiles_analyzer";
     for ( int index = 0; index < 16; index++ ) {
         mask_files[index] = create_mask_file(hitmaps[index]->asRootObject("myHistogram", "My histogram title").get(), index, 0.5);
 
-        std::string path = "/home/mu3e/mu3e/debug_online/online/userfiles/maskfiles/mask_analyser";
-        std::string data = "/mask_" + std::to_string(index) + ".bin";
+        std::string data = "/mask_" + std::to_string(index) + "_run_" + std::to_string(runinfo->fRunNo) + ".bin";
 
         // write new file
         std::ofstream out_file;
@@ -233,6 +239,14 @@ void AnaQuadHistos::EndRun(TARunInfo* runinfo) {
         out_file.write((char*) mask_files[index].data(), mask_files[index].size() * sizeof(uint8_t));
         out_file.close();
     }
+
+    // write json for masking data
+    json j;
+    for (size_t i = 0; i < vec_tot_noisy_pixels.size(); ++i)
+        j[std::to_string(i)] = vec_tot_noisy_pixels[i];
+    std::ofstream file(path + "/mask_meta_run_" + std::to_string(runinfo->fRunNo) + ".json");
+    file << j.dump(4);
+    file.close();
 
 }
 

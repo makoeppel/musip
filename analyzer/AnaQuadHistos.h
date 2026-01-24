@@ -40,6 +40,7 @@ protected:
     std::vector<musip::dqm::Histogram1DD*> hitToA;
     std::vector<musip::dqm::Histogram1DD*> hitTime;
     std::vector<std::vector<uint8_t>> mask_files;
+    std::vector<uint32_t> vec_tot_noisy_pixels;
 
 };
 

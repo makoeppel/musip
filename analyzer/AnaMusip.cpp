@@ -16,7 +16,7 @@ using boost::adaptors::map_values;
 
 AnaMusip::AnaMusip(const boost::property_tree::ptree& config, TARunInfo* runinfo, AnalyzerEquipment* eq)
     : TARunObject(runinfo) {
-    fModuleName = "Musip";
+    fModuleName = "AnaMusip";
 
     if(!enabled_) return;
 

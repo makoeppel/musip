@@ -34,7 +34,7 @@ class Configuration {
     static boost::property_tree::ptree config_;
 
     Configuration()
-        : odbPath_("/Equipment/MinAna/Settings/") {
+        : odbPath_("/Equipment/AnaMusip/Settings/") {
 
         if(TMFE::Instance()->fDB == 0) {
             // This will only happen if we are running offline. And if we are running offline

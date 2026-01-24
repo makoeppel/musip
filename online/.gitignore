@@ -1,0 +1,4 @@
+*.SHM
+midas.log
+.SHM_HOST.TXT
+.SHM_TYPE.TXT

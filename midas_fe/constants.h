@@ -74,14 +74,17 @@ struct mevent_t {
         uint32_t debug0;
         uint32_t debug1;
         uint16_t subheader_overflow, __zero0;
-        uint16_t shead_cnt;
-        uint8_t header_cnt, __zero1;
+        uint16_t shead_cnt; uint8_t header_cnt, __zero1;
         uint32_t __AFFEAFFE[1];
     };
 
-    dsin_t dsin{};
-    std::vector<uint64_t> hits;
-    std::string hits_name = "----";
+    dsin_t dsin {};
+    std::vector<uint64_t> hits_pixel;
+    std::vector<uint64_t> hits_fibre;
+    std::vector<uint64_t> hits_tile;
+    std::string hits_name_pixel = "----";
+    std::string hits_name_fibre = "----";
+    std::string hits_name_tile = "----";
 };
 
 struct resetcommand {

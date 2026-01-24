@@ -84,14 +84,16 @@ TAFlowEvent* AnaFillHits::Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* f
         // Check if we have one of these banks with an index in it like PSxx where xx is 00->99
         // in ASCII. So we check if the third and fourth characters are in the ASCII range 48 to 57.
         const bool isIndexedName = (bank.name[2] >= 48 && bank.name[2] <= 57) && (bank.name[3] >= 48 && bank.name[3] <= 57);
-        const std::string_view firstTwoChars(bank.name.data(), 2);
+        std::string firstTwoChars = bank.name.substr(0, 2);
+        // TODO: here we sometimes have a value which is not DS or PS
+        // std::cout << firstTwoChars << '\n';
 
         const char* rawData = event->GetBankData(&bank);
 
         // First check for DSIN slow control banks. Old name was DSIN, new name is DS00-DS99.
         // We just want to pull out the timestamp.
         uint32_t sr_num = 0;
-        if(bank.name == "DSIN" || (isIndexedName && firstTwoChars == "DS")) {
+        if(firstTwoChars == "DS") {
             const febdata* febData = reinterpret_cast<const febdata*>(rawData);
             sr_num = h.serial_number;
             timestampFromDSIN = (uint64_t(febData->ts_high) << 16) | febData->ts_low;
@@ -101,7 +103,7 @@ TAFlowEvent* AnaFillHits::Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* f
         }
         // Old pixel bank name is PHIT, or DHPS for debug hits from the switching board.
         // New name is PS00-PS99.
-        else if(bank.name == "PHIT" || bank.name == "DHPS" || (isIndexedName && firstTwoChars == "PS")) {
+        else if(firstTwoChars == "PS") {
             const pixelhit* dataStart = reinterpret_cast<const pixelhit*>(rawData);
             const pixelhit* dataEnd = reinterpret_cast<const pixelhit*>(rawData + bank.data_size);
 
@@ -114,7 +116,7 @@ TAFlowEvent* AnaFillHits::Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* f
         }
         // Mutrig bank names are DHTD (for switching board debug hits).
         // New name is TD00-TD99
-        else if(bank.name == "DHTD" || (isIndexedName && firstTwoChars == "TD")) {
+        else if(firstTwoChars == "TD") {
             const mutrighit* dataStart = reinterpret_cast<const mutrighit*>(rawData);
             const mutrighit* dataEnd = reinterpret_cast<const mutrighit*>(rawData + bank.data_size);
             // Add all of these hits to the end

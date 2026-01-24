@@ -338,7 +338,7 @@ int ConfigureTDACs(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) {
             // TODO: we only read the first TDAC file, this is hardcoded change me
             std::string path = m_settings["Config"]["TDACS"]["TDACFILE"][asicMaskIDx];
             std::vector<uint32_t> tdac_chip(64*256);
-            read_tdac_file(tdac_chip, "/home/mu3e/musip/tests/data/" + path);
+            read_tdac_file(tdac_chip, "/home/mu3e/musip/output/maskfiles/" + path);
 
             // write TDAC
             uint32_t N_DCOLS_PER_PAGE = 8;
@@ -690,7 +690,6 @@ void sendCommand(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings, uint64_
 
 
 void adcContinuousReadout(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings){
-    std::cout << "send adc\n";
     sendCommand(feb_sc, m_settings, calculateADCCommand(ADC_Command::Reset, 0x3f0, ADC_Mode::All));
     sendCommand(feb_sc, m_settings, calculateADCCommand(ADC_Command::Configure, 0x3f0, ADC_Mode::All));
     sendCommand(feb_sc, m_settings, calculateADCCommand(ADC_Command::Measure, 0x3f0, ADC_Mode::All));

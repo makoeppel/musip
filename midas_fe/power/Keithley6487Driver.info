@@ -1,0 +1,40 @@
+*IDN? ' identification.
+
+// Power source: voltage
+*RST ' Return 6487 to GPIB defaults.
+SOUR:VOLT:RANG 10 ' Select 10V source range.
+SOUR:VOLT 5 ' Set voltage source output to 5.
+SOUR:VOLT:ILIM 2.5e-3 ' Set current limit to 2.5mA.
+SOUR:VOLT:STAT ON ' Put voltage source in operate.
+
+// Current measurements (p212)
+*RST Return 6487 to RST defaults.
+FUNC 'CURR' Select current function.
+SYST:ZCH ON Enable zero check.
+CURR:RANG 2e-9 Select the 2 nA range.
+INIT Trigger reading to be used as zero correction.
+SYST:ZCOR:STAT OFF Turn zero correct off.
+SYST:ZCOR:ACQ Use last reading taken as zero correct value.
+SYST:ZCOR ON Perform zero correction.
+CURR:RANG:AUTO ON Enable auto range.
+SYST:ZCH OFF Disable zero check.
+READ? Trigger and return one reading.
+
+// Ohms measurements
+*RST ' Return 6487 to GPIB defaults.
+FORM:ELEM READ,UNIT ' Measurement, units elements only.
+SYST:ZCH ON ' Enable zero check.
+RANG 2e-9 ' Select the 2nA range.
+INIT ' Trigger reading to be used as zero'
+correction.
+SYST:ZCOR:ACQ ' Use last reading taken as zero ' correct
+value.
+SYST:ZCOR ON ' Perform zero correction.
+RANG:AUTO ON ' Enable auto current range.
+SOUR:VOLT:RANG 10 ' Select 10V source range.
+SOUR:VOLT 10 ' Set voltage source output to 10V.
+SOUR:VOLT:ILIM 2.5e-3 ' Set current limit to 2.5mA.
+SENS:OHMS ON ' Enable ohms function.
+SOUR:VOLT:STAT ON ' Put voltage source in operate.
+SYST:ZCH OFF ' Disable zero check.
+READ? ' Trigger and return one reading.

@@ -1,6 +1,8 @@
 #
 
 add_subdirectory(libmudaq)
+add_subdirectory(power)
+add_subdirectory(hv_control)
 
 if(APPLE)
     message(WARNING "[online] we dont build kerneldriver")
