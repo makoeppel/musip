@@ -1,0 +1,32 @@
+/************************************************
+* Register map header file 
+* Automatically generated from ../../common/firmware/registers/scifi_registers.vhd
+* On 2024-09-20T09:09:37.894171
+************************************************/
+
+#ifndef SCIFI_REGISTERS__H 
+#define SCIFI_REGISTERS__H 
+
+
+#define SCIFI_CNT_CTRL_REGISTER_W		0x4040
+#define SCIFI_CNT_VALUE_REGISTER_R		0x4041
+#define SCIFI_CNT_ADDR_REGISTER_W		0x4042
+#define SCIFI_CNT_MISO_TRANSITION_REGISTER_R		0x4043
+#define SCIFI_MON_STATUS_REGISTER_R		0x4044
+#define SCIFI_MON_RX_DPA_LOCK_REGISTER_R		0x4045
+#define SCIFI_MON_RX_READY_REGISTER_R		0x4046
+#define SCIFI_CTRL_DUMMY_REGISTER_W		0x4047
+#define SCIFI_CTRL_DP_REGISTER_W		0x4048
+#define SCIFI_CTRL_RESET_REGISTER_W		0x4049
+#define SCIFI_CTRL_RESETDELAY_REGISTER_W		0x404a
+#define SCIFI_CTRL_LAPSE_COUNTER_REGISTER_W		0x404b
+#define SCIFI_MON_TEMPERATURE_REGISTER_W		0x404c
+#define SCIFI_CC_DIFF_REGISTER_R		0x404d
+#define SCIFI_LINK_DATA_REGISTER_W		0x404e
+#define SCIFI_CH_RATE_SELECT_REGISTER_W		0x404f
+#define SCIFI_CH_RATE_SELECT_REGISTER_R		0x4050
+#define SCIFI_CH_RATE_REGISTER_R		0x4051
+#define IS_MUTRIG3_REGISTER_W		0x4090
+
+
+#endif  //#ifndef SCIFI_REGISTERS__H 
