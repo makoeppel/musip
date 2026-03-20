@@ -33,16 +33,20 @@ end entity;
 
 architecture arch of swb_sc_secondary is
 
+    constant FIFO_POP_LATENCY_CONST : natural := 8;
+
     signal link_data : work.mu3e.link32_array_t(NLINKS-1 downto 0);
     signal rdempty, wrfull, ren : std_logic_vector(NLINKS-1 downto 0);
 
     signal mem_data_o : std_logic_vector(31 downto 0);
     signal mem_addr_o : std_logic_vector(15 downto 0);
     signal mem_wren_o : std_logic;
-    signal cur_link : work.mu3e.link32_t;
     signal current_link : integer range 0 to NLINKS - 1;
+    signal captured_link : work.mu3e.link32_t;
+    signal packet_active : std_logic;
+    signal pop_wait_cnt : natural range 0 to FIFO_POP_LATENCY_CONST;
 
-    type state_type is (init, waiting, startup, starting);
+    type state_type is (init, waiting, rearm_wait, rearm_pop, capture_head, capture_body, write_word, drop_word, pop_word, wait_word);
     signal state : state_type;
 
 begin
@@ -84,7 +88,9 @@ begin
         ren <= (others => '0');
         mem_wren_o <= '0';
         current_link <= 0;
-        cur_link <= work.mu3e.LINK32_IDLE;
+        captured_link <= work.mu3e.LINK32_IDLE;
+        packet_active <= '0';
+        pop_wait_cnt <= 0;
         if ( skip_init = '0' ) then
             state <= init;
         else
@@ -97,57 +103,113 @@ begin
         ren <= (others => '0');
         mem_wren_o <= '0';
         mem_wren_o <= '0';
-        cur_link <= link_data(current_link);
 
-        if ( ren(current_link) /= '1' ) then
-            case state is
-            when init =>
-                o_state(3 downto 0) <= x"1";
-                mem_addr_o <= mem_addr_o + '1';
-                mem_data_o <= (others => '0');
-                mem_wren_o <= '1';
-                if ( mem_addr_o = x"FFFE" ) then
-                    o_mem_addr_finished <= (others => '1');
+        case state is
+        when init =>
+            o_state(3 downto 0) <= x"1";
+            mem_addr_o <= mem_addr_o + '1';
+            mem_data_o <= (others => '0');
+            mem_wren_o <= '1';
+            if ( mem_addr_o = x"FFFE" ) then
+                o_mem_addr_finished <= (others => '1');
+                state <= waiting;
+            end if;
+            --
+        when waiting =>
+            o_state(3 downto 0) <= x"2";
+            -- LOOP link mux take the last one for prio
+            link_mux:
+            FOR i in 0 to NLINKS - 1 LOOP
+                if ( i_link_enable(i) = '1' and rdempty(i) = '0' and link_data(i).sop = '1' ) then
+                    state <= capture_head;
+                    current_link <= i;
+                end if;
+            END LOOP;
+
+        when rearm_wait =>
+            o_state(3 downto 0) <= x"9";
+            if ( rdempty(current_link) = '1' ) then
+                state <= waiting;
+            elsif ( link_data(current_link).sop = '1' ) then
+                state <= capture_head;
+            elsif ( link_data(current_link).eop = '1' ) then
+                ren(current_link) <= '1';
+                pop_wait_cnt <= FIFO_POP_LATENCY_CONST;
+                state <= rearm_pop;
+            end if;
+
+        when rearm_pop =>
+            o_state(3 downto 0) <= x"A";
+            if ( pop_wait_cnt = 0 ) then
+                state <= rearm_wait;
+            else
+                pop_wait_cnt <= pop_wait_cnt - 1;
+            end if;
+
+        when capture_head =>
+            o_state(3 downto 0) <= x"3";
+            if ( rdempty(current_link) = '0' ) then
+                captured_link <= link_data(current_link);
+                if ( link_data(current_link).sop = '1' ) then
+                    packet_active <= '1';
+                    state <= write_word;
+                else
+                    packet_active <= '0';
+                    state <= drop_word;
+                end if;
+            else
+                state <= waiting;
+            end if;
+
+        when capture_body =>
+            o_state(3 downto 0) <= x"4";
+            if ( rdempty(current_link) = '0' ) then
+                captured_link <= link_data(current_link);
+                state <= write_word;
+            else
+                state <= capture_body;
+            end if;
+
+        when write_word =>
+            o_state(3 downto 0) <= x"5";
+            mem_addr_o <= mem_addr_o + '1';
+            mem_data_o <= captured_link.data;
+            mem_wren_o <= '1';
+            state <= pop_word;
+
+        when drop_word =>
+            o_state(3 downto 0) <= x"6";
+            state <= pop_word;
+
+        when pop_word =>
+            o_state(3 downto 0) <= x"7";
+            ren(current_link) <= '1';
+            pop_wait_cnt <= FIFO_POP_LATENCY_CONST;
+            state <= wait_word;
+
+        when wait_word =>
+            o_state(3 downto 0) <= x"8";
+            if ( pop_wait_cnt = 0 ) then
+                if ( packet_active = '1' and captured_link.eop = '1' ) then
+                    packet_active <= '0';
+                    o_mem_addr_finished <= mem_addr_o;
+                    state <= rearm_wait;
+                elsif ( packet_active = '1' ) then
+                    state <= capture_body;
+                else
                     state <= waiting;
                 end if;
-                --
-            when waiting =>
-                o_state(3 downto 0) <= x"2";
-                --LOOP link mux take the last one for prio
-                link_mux:
-                FOR i in 0 to NLINKS - 1 LOOP
-                    if ( i_link_enable(i) = '1' and link_data(i).sop = '1' and rdempty(i) = '0' ) then
-                        state <= startup;
-                        current_link <= i;
-                    end if;
-                END LOOP;
-
-            when startup =>
-                ren(current_link) <= '1';
-                state <= starting;
-
-            when starting =>
-                o_state(3 downto 0) <= x"3";
-                if ( rdempty(current_link) = '0' ) then
-                    ren(current_link) <= '1';
-                    if ( link_data(current_link).eop = '1' ) then
-                        o_mem_addr_finished <= mem_addr_o + '1';
-                        state <= waiting;
-                    end if;
-                end if;
-                --
-            when others =>
-                o_state(3 downto 0) <= x"E";
-                mem_data_o <= (others => '0');
-                mem_wren_o <= '0';
-                state <= waiting;
-                --
-            end case;
-        else
-            mem_addr_o <= mem_addr_o + '1';
-            mem_data_o <= cur_link.data;
-            mem_wren_o <= '1';
-        end if;
+            else
+                pop_wait_cnt <= pop_wait_cnt - 1;
+            end if;
+            --
+        when others =>
+            o_state(3 downto 0) <= x"E";
+            mem_data_o <= (others => '0');
+            mem_wren_o <= '0';
+            state <= waiting;
+            --
+        end case;
 
     end if;
     end process;

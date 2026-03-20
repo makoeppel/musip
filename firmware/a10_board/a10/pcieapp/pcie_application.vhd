@@ -374,7 +374,8 @@ begin
         g_ADDR0_WIDTH => writememaddr'length,
         g_DATA0_WIDTH => writememdata'length,
         g_ADDR1_WIDTH => writememreadaddr'length,
-        g_DATA1_WIDTH => writememreaddata'length--,
+        g_DATA1_WIDTH => writememreaddata'length,
+        g_RDATA1_REG  => 1--,
     )
     port map (
         i_addr0     => writememaddr,

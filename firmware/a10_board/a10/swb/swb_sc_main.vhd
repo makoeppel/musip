@@ -54,18 +54,18 @@ architecture arch of swb_sc_main is
     signal wren_mask_wr : std_logic_vector(63 downto 0);
     signal mem_data     : work.mu3e.link32_array_t(NLINKS-1 downto 0);
     signal mem_addr     : std_logic_vector(15 downto 0);
-    signal mem_addr_minus_3 : std_logic_vector(15 downto 0);
+    signal tx_word_idx  : std_logic_vector(15 downto 0);
 
     type state_type is (
-        set_fpga_id1, set_fpga_id2, header, read_data,
-        idle
+        request_header, check_header, set_fpga_id1, set_fpga_id2, emit_header, request_word, latch_word, emit_word, idle
     );
     signal state : state_type;
 
     signal length_we_reg : std_logic;
     signal length        : std_logic_vector(15 downto 0);
-    signal index         : integer range 0 to 47 := 0;
-    signal mem_data_reg  : std_logic_vector(31 downto 0);
+    signal header_word   : std_logic_vector(31 downto 0);
+    signal body_word     : std_logic_vector(31 downto 0);
+    signal body_last     : std_logic;
 
 begin
 
@@ -80,64 +80,110 @@ begin
         fifo_wdata      <= (others => '0');
         o_done          <= '0';
         length          <= (others => '0');
-        index           <= 0;
         wren_mask_wr    <= (others => '0');
-        mem_addr_minus_3<= (others => '0');
+        tx_word_idx     <= (others => '0');
+        mem_addr        <= (others => '0');
+        header_word     <= (others => '0');
+        body_word       <= (others => '0');
+        body_last       <= '0';
+        length_we_reg   <= '0';
     elsif rising_edge(i_clk) then
         fifo_we <= '0';
         fifo_wdata <= (others => '0');
         length_we_reg <= i_length_we;
-        mem_data_reg  <= i_mem_data;
-
-        if(state /= idle) then
-            mem_addr <= mem_addr + '1';
-            mem_addr_minus_3 <= mem_addr - 2;
-        else
-            mem_addr <= (others => '0');
-        end if;
 
         case state is
         when idle =>
             o_state <= x"0000001";
             o_done          <= '1';
-            if ( length_we_reg = '0' and i_length_we = '1' and mem_data_reg(7 downto 0) = x"BC") then
-                state           <= set_fpga_id1;
+            mem_addr         <= (others => '0');
+            if ( length_we_reg = '0' and i_length_we = '1' ) then
+                state           <= request_header;
                 o_done          <= '0';
                 length          <= i_length;
-                if (or_reduce(mem_data_reg(19 downto 15))='0') then -- no injection, set fpga ID
-                    wren_mask_wr(to_integer(unsigned(mem_data_reg(13 downto 8)))) <= '1';
-                end if;
-                if (mem_data_reg(13 downto 8)="111111") then -- broadcast
-                    wren_mask_wr(35 downto 0) <= (others => '1');
-                    wren_mask_wr(51 downto 48)<= (others => '0');
-                else
-                    wren_mask_wr(51 downto 48) <= mem_data_reg(18 downto 15); -- incjections
-                end if;
+                tx_word_idx     <= (others => '0');
+                wren_mask_wr    <= (others => '0');
             end if;
-        when set_fpga_id1 =>
-            o_state     <= x"0000002";
-            state       <= set_fpga_id2;
-            fifo_wdata  <= "0000" & "0001" & wren_mask_wr(31 downto 0);
-            fifo_we     <= '1';
-        when set_fpga_id2 =>
-            state       <= header;
-            fifo_wdata  <= "0000" & "0010" & wren_mask_wr(63 downto 32);
-            fifo_we     <= '1';
-        when header =>
-            state       <= read_data;
-            o_state     <= x"0000003";
-            fifo_wdata  <= "0001" & "0000" & mem_data_reg;
-            fifo_we     <= '1';
-        when read_data =>
-            fifo_wdata  <= "0000" & "0000" & mem_data_reg;
-            fifo_we     <= '1';
-            if(mem_addr_minus_3 = length) then
-                fifo_wdata <= "0001" & "0000" & mem_data_reg;
-                state <= idle;
+        when request_header =>
+            o_state         <= x"0000002";
+            mem_addr        <= (others => '0');
+            state           <= check_header;
+        when check_header =>
+            o_state         <= x"0000003";
+            mem_addr        <= x"0001";
+            header_word     <= i_mem_data;
+            if ( i_mem_data(7 downto 0) = x"BC" ) then
+                state       <= set_fpga_id1;
+                tx_word_idx <= x"0001";
+                if (or_reduce(i_mem_data(19 downto 16)) = '0') then -- no injection, set fpga ID
+                    wren_mask_wr(to_integer(unsigned(i_mem_data(13 downto 8)))) <= '1';
+                end if;
+                if (i_mem_data(13 downto 8) = "111111") then -- broadcast
+                    wren_mask_wr(35 downto 0)  <= (others => '1');
+                    wren_mask_wr(51 downto 48) <= (others => '0');
+                else
+                    wren_mask_wr(51 downto 48) <= i_mem_data(19 downto 16); -- injections
+                end if;
+            else
+                state       <= idle;
                 wren_mask_wr <= (others => '0');
             end if;
+        when set_fpga_id1 =>
+            o_state         <= x"0000004";
+            mem_addr        <= x"0001";
+            if ( fifo_full = '0' ) then
+                state       <= set_fpga_id2;
+                fifo_wdata  <= "0000" & "0001" & wren_mask_wr(31 downto 0);
+                fifo_we     <= '1';
+            end if;
+        when set_fpga_id2 =>
+            o_state         <= x"0000005";
+            mem_addr        <= x"0001";
+            if ( fifo_full = '0' ) then
+                state       <= emit_header;
+                fifo_wdata  <= "0000" & "0010" & wren_mask_wr(63 downto 32);
+                fifo_we     <= '1';
+            end if;
+        when emit_header =>
+            o_state         <= x"0000006";
+            mem_addr        <= x"0001";
+            if ( fifo_full = '0' ) then
+                state       <= latch_word;
+                fifo_wdata  <= "0001" & "0000" & header_word;
+                fifo_we     <= '1';
+            end if;
+        when request_word =>
+            o_state         <= x"0000007";
+            state           <= latch_word;
+        when latch_word =>
+            o_state         <= x"0000008";
+            body_word       <= i_mem_data;
+            if (tx_word_idx = length + 1) then
+                body_last   <= '1';
+                mem_addr    <= (others => '0');
+            else
+                body_last   <= '0';
+                mem_addr    <= tx_word_idx + 1;
+            end if;
+            state           <= emit_word;
+        when emit_word =>
+            o_state         <= x"0000009";
+            if ( fifo_full = '0' ) then
+                fifo_we     <= '1';
+                if ( body_last = '1' ) then
+                    fifo_wdata  <= "0001" & "0000" & body_word;
+                    mem_addr    <= (others => '0');
+                    state       <= idle;
+                    wren_mask_wr <= (others => '0');
+                else
+                    fifo_wdata  <= "0000" & "0000" & body_word;
+                    tx_word_idx <= tx_word_idx + 1;
+                    state       <= request_word;
+                end if;
+            end if;
         when others =>
-            state <= idle;
+            mem_addr        <= (others => '0');
+            state           <= idle;
         end case;
 
     end if;
