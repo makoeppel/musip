@@ -8,6 +8,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use ieee.std_logic_unsigned.all;
 
 use work.util_slv.all;
 use work.mudaq.all;
@@ -45,7 +46,7 @@ architecture arch of musip_mux_4_1 is
 
     -- width must match chip_lookup.o_globalChipID
     -- if chip_lookup uses a different width, change this declaration accordingly
-    signal globalChipID         : slv6_array_t(g_LINK_N-1 downto 0);
+    signal globalChipID         : slv14_array_t(g_LINK_N-1 downto 0);
 
     -- per-link decode state
     signal data_type            : slv6_array_t(g_LINK_N-1 downto 0);
@@ -56,11 +57,11 @@ architecture arch of musip_mux_4_1 is
     signal ts_low               : slv16_array_t(g_LINK_N-1 downto 0);
     signal last_subheader_time  : slv8_array_t(g_LINK_N-1 downto 0);
 
-    signal next_64bit_word      : slv64_array_l_t(g_LINK_N-1 downto 0);
+    signal next_64bit_word      : slv64_array_t(g_LINK_N-1 downto 0);
     signal next_64bit_word_valid: std_logic_vector(g_LINK_N-1 downto 0);
 
     -- 4x64 -> 256 packing
-    signal rx_256               : slv256_array_l_t(g_LINK_N-1 downto 0);
+    signal rx_256               : slv256_array_t(g_LINK_N-1 downto 0);
     signal rx_valid             : std_logic_vector(g_LINK_N-1 downto 0);
     signal index_256            : int_0_3_array_t(g_LINK_N-1 downto 0);
 

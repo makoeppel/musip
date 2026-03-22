@@ -24,8 +24,11 @@ for arg in "$@" ; do
         TB=${TB%%.*}
     fi
     [[ "$arg" == *.vhd ]] || continue
-    arg=$(realpath -s --relative-to=.cache -- "$arg")
-    [[ " ${SRC[*]} " == *" $arg "* ]] || SRC+=("$arg")
+    arg=$(python3 -c 'import os,sys; print(os.path.relpath(os.path.realpath(sys.argv[1]), ".cache"))' "$arg")
+
+    if [[ ! " ${SRC[@]-} " =~ [[:space:]]$arg[[:space:]] ]]; then
+        SRC+=("$arg")
+    fi
 done
 
 # directories to be searched for library files

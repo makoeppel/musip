@@ -10,6 +10,8 @@ use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
 use ieee.numeric_std.all;
 
+use work.util_slv.all;
+
 entity mux_4_1_256 is
 generic (
     g_LINK_N    : positive := 4

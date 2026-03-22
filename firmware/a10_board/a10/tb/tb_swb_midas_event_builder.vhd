@@ -109,7 +109,7 @@ begin
         i_rmask_n       => (others => '1'),
 
         i_lookup_ctrl   => (others => '1'),
-        i_sync_enable   => '1'',
+        i_sync_enable   => '1',
 
         o_q             => fifo_data,
         i_ren           => rx_ren,
