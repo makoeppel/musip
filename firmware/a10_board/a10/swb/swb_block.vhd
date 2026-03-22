@@ -79,20 +79,14 @@ architecture arch of swb_block is
     --! feb links
     signal feb_rx : work.mu3e.link32_array_t(g_NLINKS_FEB_TOTL-1 downto 0) := (others => work.mu3e.LINK32_IDLE);
 
-    --! debug path
-    signal farm_data_debug : work.mu3e.link64_array_t(g_NLINKS_FARM_TOTL-1 downto 0)  := (others => work.mu3e.LINK64_IDLE);
-    signal data_debug : work.mu3e.link64_t;
-    signal rempty_debug, builder_rack : std_logic := '1';
-    signal farm_rack_debug, farm_empty_debug : std_logic_vector(g_NLINKS_FARM_TOTL-1 downto 0);
-
     --! demerged FEB links
-    signal rx_data         : work.mu3e.link32_array_t(g_NLINKS_FEB_TOTL-1 downto 0)   := (others => work.mu3e.LINK32_IDLE);
-    signal rx_sc           : work.mu3e.link32_array_t(g_NLINKS_FEB_TOTL-1 downto 0)   := (others => work.mu3e.LINK32_IDLE);
-    signal rx_rc           : work.mu3e.link32_array_t(g_NLINKS_FEB_TOTL-1 downto 0)   := (others => work.mu3e.LINK32_IDLE);
+    signal rx_data, rx_data_sim, gen_link : work.mu3e.link32_array_t(g_NLINKS_FEB_TOTL-1 downto 0)   := (others => work.mu3e.LINK32_IDLE);
+    signal rx_sc : work.mu3e.link32_array_t(g_NLINKS_FEB_TOTL-1 downto 0)   := (others => work.mu3e.LINK32_IDLE);
+    signal rx_rc : work.mu3e.link32_array_t(g_NLINKS_FEB_TOTL-1 downto 0)   := (others => work.mu3e.LINK32_IDLE);
 
     --! counters
-    signal counter_swb : slv32_array_t(96 * 4 - 1 downto 0) := (others => (others => '0'));
-    signal counter_link_to_fifo : slv32_array_t(8*13*2-1 downto 0);
+    signal rate_mux : slv32_array_t(3*4-1 downto 0) := (others => (others => '0'));
+    signal counter_mux : slv64_array_t(3*4-1 downto 0) := (others => (others => '0'));
 
     --! histograms
     signal histo_selected_link : integer range 0 to g_NLINKS_FEB_TOTL-1;
@@ -100,6 +94,10 @@ architecture arch of swb_block is
     signal histo_rx_selected   : work.mu3e.link32_t;
 
     signal data_path_reset_n : std_logic;
+
+    --! dma
+    signal hits_256 : std_logic_vector(255 downto 0);
+    signal hits_256_valid : std_logic;
 
 begin
 
@@ -262,184 +260,86 @@ begin
     end if;
     end process;
 
-    --! SWB data path generic for dev board only
+    --! MuSiP data path
     --! ------------------------------------------------------------------------
     --! ------------------------------------------------------------------------
     --! ------------------------------------------------------------------------
-    generate_generic_path :
-    if ( g_NLINKS_DATA_GENERIC > 0 ) generate
-    e_swb_data_path_generic : entity work.swb_data_path
+    e_data_gen_link : entity work.data_generator_a10
     generic map (
-        g_ADDR_WIDTH => 12,
-        g_NLINKS_DATA => g_NLINKS_DATA_GENERIC,
-        g_LINK_SWB => "0000",
-        g_gen_time_merger => true--,
+        DATA_TYPE => MUPIX_HEADER_ID,
+        go_to_sh => 3,
+        test_error => false,
+        go_to_trailer => 4--,
     )
     port map (
-        -- link inputs
-        i_rx                => rx_data(g_NLINKS_DATA_GENERIC-1 downto 0),
-        i_rmask_n           => mask_n(g_NLINKS_DATA_GENERIC-1 downto 0),
+        i_enable            => i_writeregs(SWB_READOUT_STATE_REGISTER_W)(USE_BIT_GEN_LINK),
+        i_seed              => (others => '1'),
+        o_data              => gen_link,
+        i_slow_down         => i_writeregs(DATAGENERATOR_DIVIDER_REGISTER_W),
+        o_state             => open,
 
-        i_writeregs         => i_writeregs,
-
-        i_lookup_ctrl       => i_writeregs(SWB_LOOKUP_CTRL_REGISTER_W),
-
-        o_counter           => counter_swb(96*1-1 downto 0),
-        o_link_to_fifo_cnt  => counter_link_to_fifo(8*13*1-1 downto 0),
-
-        o_farm_data         => o_farm_tx(0),
-
-        i_rack_debug        => farm_rack_debug(0),
-        o_data_debug        => farm_data_debug(0),
-        o_rempty_debug      => farm_empty_debug(0),
-
-        i_data_type         => i_writeregs(SWB_DATA_TYPE_REGISTER_W)(5 downto 0),
-
-        i_resets_n          => i_resets_n,
-
-        i_reset_n           => data_path_reset_n,
+        i_reset_n           => i_resets_n(RESET_BIT_DATAGEN),
         i_clk               => i_clk--,
     );
-    end generate;
 
-    --! SWB data path Pixel
-    --! ------------------------------------------------------------------------
-    --! ------------------------------------------------------------------------
-    --! ------------------------------------------------------------------------
-   generate_us_path : if ( g_NLINKS_DATA_PIXEL_US > 0 ) generate
-   e_swb_data_path_pixel_us : entity work.swb_data_path
-   generic map (
-        g_ADDR_WIDTH => 12,
-        g_NLINKS_DATA => g_NLINKS_DATA_PIXEL_US,
-        g_LINK_SWB => "0000",
-        g_gen_time_merger => true--,
-   )
-   port map (
-        -- link inputs
-        i_rx                => rx_data(g_NLINKS_DATA_PIXEL_US-1 downto 0),
-        i_rmask_n           => mask_n(g_NLINKS_DATA_PIXEL_US-1 downto 0),
+    gen_link_data : FOR i in 0 to 3 GENERATE
 
-        i_writeregs         => i_writeregs,
+        process(i_clk, i_reset_n)
+        begin
+        if ( i_reset_n /= '1' ) then
+            rx_data_sim(i) <= work.mu3e.LINK32_ZERO;
+        elsif rising_edge(i_clk) then
+            if ( i_writeregs(SWB_READOUT_STATE_REGISTER_W)(USE_BIT_GEN_LINK) = '1' ) then
+                rx_data_sim(i) <= work.mu3e.to_link(gen_link.data, gen_link.datak);
+            else
+                rx_data_sim(i) <= work.mu3e.to_link(rx_data(i).data, rx_data(i).datak);
+            end if;
+        end if;
+        end process;
 
-        i_lookup_ctrl       => i_writeregs(SWB_LOOKUP_CTRL_REGISTER_W),
+    END GENERATE;
 
-        o_counter           => counter_swb(96*1-1 downto 0),
-        o_link_to_fifo_cnt  => counter_link_to_fifo(8*13*1-1 downto 0),
-
-        o_farm_data         => o_farm_tx(0),
-
-        i_rack_debug        => farm_rack_debug(0),
-        o_data_debug        => farm_data_debug(0),
-        o_rempty_debug      => farm_empty_debug(0),
-
-        i_data_type         => i_writeregs(SWB_DATA_TYPE_REGISTER_W)(11 downto 6),
-
-        i_resets_n          => i_resets_n,
-
-        i_reset_n           => data_path_reset_n,
-        i_clk               => i_clk--,
-   );
-   end generate;
-
-   generate_ds_path : if ( g_NLINKS_DATA_PIXEL_DS > 0 ) generate
-   e_swb_data_path_pixel_ds : entity work.swb_data_path
-   generic map (
-        g_ADDR_WIDTH => 12,
-        g_NLINKS_DATA => g_NLINKS_DATA_PIXEL_DS,
-        g_LINK_SWB => "0001",
-        g_gen_time_merger => true--,
-   )
-   port map (
-        -- link inputs
-        i_rx                => rx_data(g_NLINKS_DATA_PIXEL_US+g_NLINKS_DATA_PIXEL_DS-1 downto g_NLINKS_DATA_PIXEL_US),
-        i_rmask_n           => mask_n(g_NLINKS_DATA_PIXEL_US+g_NLINKS_DATA_PIXEL_DS-1 downto g_NLINKS_DATA_PIXEL_US),
-
-        i_writeregs         => i_writeregs,
-
-        i_lookup_ctrl       => i_writeregs(SWB_LOOKUP_DS_CTRL_REGISTER_W),
-
-        o_counter           => counter_swb(96*2-1 downto 96*1),
-        o_link_to_fifo_cnt  => counter_link_to_fifo(8*13*2-1 downto 8*13*1),
-
-        o_farm_data         => o_farm_tx(1),
-
-        i_rack_debug        => farm_rack_debug(1),
-        o_data_debug        => farm_data_debug(1),
-        o_rempty_debug      => farm_empty_debug(1),
-
-        i_data_type         => i_writeregs(SWB_DATA_TYPE_REGISTER_W)(17 downto 12),
-
-        i_resets_n          => i_resets_n,
-
-        i_reset_n           => data_path_reset_n,
-        i_clk               => i_clk--,
-   );
-   end generate;
-
-    --! stream merger used for the debug readout on the SWB
-    --! ------------------------------------------------------------------------
-    --! ------------------------------------------------------------------------
-    --! ------------------------------------------------------------------------
-    e_stream_debug_all : entity work.swb_stream_merger
+    e_swb_data_path_generic : entity work.musip_mux_4_1
     generic map (
-        g_ADDR_WIDTH => 11,
-        N => g_NLINKS_FARM_TOTL--,
-    )
-    port map (
-        -- debug data in
-        i_rdata     => farm_data_debug,
-        i_rempty    => farm_empty_debug,
-        i_rmask_n   => (others => '1'),
-        o_rack      => farm_rack_debug,
+        g_LINK_N => 4
+    );
+    port (
+        i_rx            => rx_data_sim(3 downto 0),
+        i_rmask_n       => mask_n(3 downto 0),
 
-        -- debug data out
-        o_wdata     => data_debug,
-        o_rempty    => rempty_debug,
-        i_ren       => builder_rack,
+        i_lookup_ctrl   => i_writeregs(SWB_LOOKUP_CTRL_REGISTER_W),
 
-        -- data for debug readout
-        o_wdata_debug   => open,
-        o_rempty_debug  => open,
-        i_ren_debug     => '0',
+        o_subh_cnt      => counter_mux(3 downto 0),
+        o_hit_cnt       => counter_mux(7 downto 3),
+        o_package_cnt   => counter_mux(11 downto 8),
 
-        o_counters  => open,
+        o_data          => hits_256,
+        o_valid         => hits_256_valid,
 
-        i_en        => '1',
-        i_reset_n   => i_resets_n(RESET_BIT_SWB_STREAM_MERGER),
-        i_clk       => i_clk--,
+        i_reset_n      => data_path_reset_n,
+        i_clk           => i_clk--,
     );
 
-
-    --! event builder used for the debug readout on the SWB
+    --! event builder
     --! ------------------------------------------------------------------------
     --! ------------------------------------------------------------------------
     --! ------------------------------------------------------------------------
-    e_event_builder : entity work.swb_midas_event_builder
+    e_event_builder : entity work.musip_event_builder
     port map (
-        i_rx                => data_debug,
-        i_rempty            => rempty_debug,
+        i_rx                => hits_256,
+        i_valid             => hits_256_valid,
 
         i_get_n_words       => i_writeregs(GET_N_DMA_WORDS_REGISTER_W),
         i_dmamemhalffull    => i_dmamemhalffull,
         i_wen               => i_writeregs(DMA_REGISTER_W)(DMA_BIT_ENABLE),
-        i_use_sop_type      => i_writeregs(SWB_READOUT_STATE_REGISTER_W)(USE_BIT_ALL),
-        i_event_id          => i_writeregs(FARM_EVENT_ID_REGISTER_W),
-        i_get_serial_number => i_writeregs(FARM_SERIAL_NUMBER_W),
-        i_flush_request     => i_writeregs(DMA_REGISTER_W)(FLUSH_BIT_ENABLE),
-        i_flush_test(FLUSH_TEST_RANGE) => i_writeregs(DMA_REGISTER_W)(FLUSH_TEST_RANGE),
 
         o_data              => o_dma_data,
         o_wen               => o_dma_wren,
-        o_ren               => builder_rack,
         o_endofevent        => o_endofevent,
-        o_dma_cnt_words     => o_readregs(DMA_CNT_WORDS_REGISTER_R),
-        o_serial_num        => o_readregs(SERIAL_NUM_REGISTER_R),
         o_done              => o_readregs(EVENT_BUILD_STATUS_REGISTER_R)(EVENT_BUILD_DONE),
 
-        o_counters(0)       => o_readregs(EVENT_BUILD_IDLE_NOT_HEADER_R),
-        o_counters(1)       => o_readregs(EVENT_BUILD_SKIP_EVENT_DMA_R),
-        o_counters(2)       => o_readregs(EVENT_BUILD_CNT_EVENT_DMA_R),
-        o_counters(3)       => o_readregs(EVENT_BUILD_TAG_FIFO_FULL_R),
+        o_hit_cnt           => o_readregs(EVENT_BUILD_IDLE_NOT_HEADER_R),
+        o_hit_drop_cnt      => o_readregs(EVENT_BUILD_SKIP_EVENT_DMA_R),
 
         i_reset_n           => data_path_reset_n,
         i_clk               => i_clk--,
