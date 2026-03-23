@@ -339,10 +339,13 @@ begin
         o_endofevent        => o_endofevent,
         o_done              => o_readregs(EVENT_BUILD_STATUS_REGISTER_R)(EVENT_BUILD_DONE),
 
+        -- TODO: change name of registers
         o_hit_cnt(31 downto 0)      => o_readregs(EVENT_BUILD_IDLE_NOT_HEADER_R),
         o_hit_cnt(63 downto 32)      => o_readregs(EVENT_BUILD_CNT_EVENT_DMA_R),
         o_hit_drop_cnt(31 downto 0) => o_readregs(EVENT_BUILD_SKIP_EVENT_DMA_R),
-        o_hit_drop_cnt(63 downto 32) => o_readregs(EVENT_BUILD_TAG_FIFO_FULL_R),
+        --o_hit_drop_cnt(63 downto 32) => o_readregs(EVENT_BUILD_TAG_FIFO_FULL_R),
+        o_almost_full_cnt(31 downto 0) => o_readregs(BUFFER_STATUS_REGISTER_R),
+        o_almost_full_cnt(63 downto 32) => o_readregs(EVENT_BUILD_TAG_FIFO_FULL_R),
 
         i_reset_n           => data_path_reset_n,
         i_clk               => i_clk--,

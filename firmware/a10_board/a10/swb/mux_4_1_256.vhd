@@ -72,17 +72,18 @@ begin
         if ( position < N ) then
             data_out <= data_in_buffer(position);
             o_valid <= '1';
+            --data_out(63 downto 0) <= (others => '0'); -- NOTE: this is for debugging
             if ( position = 0 ) then
-                data_out(3 downto 0) <= "0001"; -- NOTE: this is for debugging
+                --data_out(3 downto 0) <= "0001"; -- NOTE: this is for debugging
                 data_taken <= "0001";
             elsif ( position = 1 ) then
-                data_out(3 downto 0) <= "0010"; -- NOTE: this is for debugging
+                --data_out(3 downto 0) <= "0010"; -- NOTE: this is for debugging
                 data_taken <= "0010";
             elsif ( position = 2 ) then
-                data_out(3 downto 0) <= "0100"; -- NOTE: this is for debugging
+                --data_out(3 downto 0) <= "0100"; -- NOTE: this is for debugging
                 data_taken <= "0100";
             elsif ( position = 3 ) then
-                data_out(3 downto 0) <= "1000"; -- NOTE: this is for debugging
+                --data_out(3 downto 0) <= "1000"; -- NOTE: this is for debugging
                 data_taken <= "1000";
             end if;
         end if;

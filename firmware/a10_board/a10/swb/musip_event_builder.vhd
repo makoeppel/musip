@@ -24,6 +24,7 @@ port (
 
     o_hit_cnt           : out std_logic_vector(63 downto 0);
     o_hit_drop_cnt      : out std_logic_vector(63 downto 0);
+    o_almost_full_cnt   : out std_logic_vector(63 downto 0);
 
     i_reset_n           : in  std_logic;
     i_clk               : in  std_logic--;
@@ -50,15 +51,15 @@ architecture arch of musip_event_builder is
     signal fifo_full    : std_logic := '0';
     signal fifo_empty   : std_logic := '1';
     signal fifo_en      : std_logic := '0';
-
-    signal tag_wrusedw  : std_logic_vector(11 downto 0);  -- matches g_ADDR_WIDTH=12
+    signal wrusedw  : std_logic_vector(13 downto 0);  -- matches g_ADDR_WIDTH=12
 
 
     ------------------------------------------------------------------------
     -- Counters
     ------------------------------------------------------------------------
-    signal hit_cnt       : std_logic_vector(63 downto 0) := (others => '0');
-    signal hit_drop_cnt  : std_logic_vector(63 downto 0) := (others => '0');
+    signal hit_cnt : std_logic_vector(63 downto 0) := (others => '0');
+    signal hit_drop_cnt : std_logic_vector(63 downto 0) := (others => '0');
+    signal almost_full_cnt : std_logic_vector(63 downto 0) := (others => '0');
 
     signal word_counter  : std_logic_vector(31 downto 0) := (others => '0');
 
@@ -73,22 +74,22 @@ begin
     --! counter
     o_hit_cnt <= hit_cnt;
     o_hit_drop_cnt <= hit_drop_cnt;
+    o_almost_full_cnt <= almost_full_cnt;
 
     e_fifo_event : entity work.ip_scfifo_v2
     generic map (
-        g_ADDR_WIDTH => 12,
+        g_ADDR_WIDTH => 14,
         g_DATA_WIDTH => 256--,
     )
     port map (
         i_we        => i_valid,
         i_wdata     => i_rx,
         o_wfull     => fifo_full,
+        o_usedw     => wrusedw,
 
-        i_rack      => fifo_en or fifo_full,
+        i_rack      => fifo_en or wrusedw(13),
         o_rdata     => o_data,
         o_rempty    => fifo_empty,
-
-        o_usedw     => tag_wrusedw,
 
         i_reset_n   => i_reset_n,
         i_clk       => i_clk--,
@@ -109,8 +110,13 @@ begin
         hit_cnt <= (others => '0');
         hit_drop_cnt <= (others => '0');
         word_counter <= (others => '0');
+        almost_full_cnt <= (others => '0');
         --
     elsif rising_edge(i_clk) then
+
+        if ( wrusedw(13) = '1' ) then
+            almost_full_cnt <= std_logic_vector(unsigned(almost_full_cnt) + 1);
+        end if;
 
         if ( i_wen = '0' ) then
             done <= '0';
