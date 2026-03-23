@@ -9,6 +9,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
 use ieee.numeric_std.all;
+use ieee.std_logic_unsigned.all;
 
 use work.util_slv.all;
 
@@ -21,7 +22,6 @@ port (
     i_valid     : in    std_logic_vector(N - 1 downto 0);
 
     o_data      : out   std_logic_vector(255 downto 0);
-    o_sel_link  : out   std_logic_vector(1 downto 0);
     o_valid     : out   std_logic;
 
     i_reset_n   : in    std_logic;
@@ -42,6 +42,7 @@ begin
 
     process(i_clk, i_reset_n) is
         variable position : integer range 0 to N;
+        variable valid_not_taken : std_logic_vector(N - 1 downto 0);
     begin
     if ( i_reset_n = '0' ) then
         data_valid_buffer <= (others => '0');
@@ -58,13 +59,32 @@ begin
             end if;
         end loop;
 
-        position := work.util.count_leading_zeroes((data_valid_buffer and (not data_taken)));
-        if ( position /= N ) then
+        valid_not_taken := (data_valid_buffer and (not data_taken));
+        position := N;
+        for i in 0 to N - 1 loop
+            if ( valid_not_taken(i) /= '0' ) then
+                position := i;
+                exit;
+            end if;
+        end loop;
+
+        --position := work.util.count_leading_zeroes((data_valid_buffer and (not data_taken)));
+        if ( position < N ) then
             data_out <= data_in_buffer(position);
-            -- NOTE: this is for debugging
-            data_out(3 downto 0) <= (position => '1', others => '0');
             o_valid <= '1';
-            data_taken <= (position => '1', others => '0');
+            if ( position = 0 ) then
+                data_out(3 downto 0) <= "0001"; -- NOTE: this is for debugging
+                data_taken <= "0001";
+            elsif ( position = 1 ) then
+                data_out(3 downto 0) <= "0010"; -- NOTE: this is for debugging
+                data_taken <= "0010";
+            elsif ( position = 2 ) then
+                data_out(3 downto 0) <= "0100"; -- NOTE: this is for debugging
+                data_taken <= "0100";
+            elsif ( position = 3 ) then
+                data_out(3 downto 0) <= "1000"; -- NOTE: this is for debugging
+                data_taken <= "1000";
+            end if;
         end if;
     end if;
     end process;
