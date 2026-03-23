@@ -221,7 +221,6 @@ begin
         i_valid     => rx_valid,
 
         o_data      => o_data,
-        o_sel_link  => open,
         o_valid     => o_valid,
 
         i_reset_n   => i_reset_n,
