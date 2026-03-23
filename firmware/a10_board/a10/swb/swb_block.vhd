@@ -80,9 +80,10 @@ architecture arch of swb_block is
     signal feb_rx : work.mu3e.link32_array_t(g_NLINKS_FEB_TOTL-1 downto 0) := (others => work.mu3e.LINK32_IDLE);
 
     --! demerged FEB links
-    signal rx_data, rx_data_sim, gen_link : work.mu3e.link32_array_t(g_NLINKS_FEB_TOTL-1 downto 0)   := (others => work.mu3e.LINK32_IDLE);
+    signal rx_data, rx_data_sim : work.mu3e.link32_array_t(g_NLINKS_FEB_TOTL-1 downto 0)   := (others => work.mu3e.LINK32_IDLE);
     signal rx_sc : work.mu3e.link32_array_t(g_NLINKS_FEB_TOTL-1 downto 0)   := (others => work.mu3e.LINK32_IDLE);
     signal rx_rc : work.mu3e.link32_array_t(g_NLINKS_FEB_TOTL-1 downto 0)   := (others => work.mu3e.LINK32_IDLE);
+    signal gen_link : work.mu3e.link32_t;
 
     --! counters
     signal rate_mux : slv32_array_t(3*4-1 downto 0) := (others => (others => '0'));
@@ -115,8 +116,8 @@ begin
     --! ------------------------------------------------------------------------
     --! ------------------------------------------------------------------------
     --! ------------------------------------------------------------------------
-    o_readregs(SWB_COUNTER_REGISTER_R) <= counter_swb(to_integer(unsigned(i_writeregs(SWB_COUNTER_REGISTER_W))));
-    o_readregs(SWB_LINK_COUNTER_REGISTER_R) <= counter_link_to_fifo(to_integer(unsigned(i_writeregs(SWB_COUNTER_REGISTER_W))));
+    o_readregs(SWB_COUNTER_REGISTER_R) <= counter_mux(to_integer(unsigned(i_writeregs(SWB_COUNTER_REGISTER_W))))(31 downto 0);
+    o_readregs(SWB_LINK_COUNTER_REGISTER_R) <= rate_mux(to_integer(unsigned(i_writeregs(SWB_COUNTER_REGISTER_W))));
 
 
     --! demerge data
@@ -299,18 +300,18 @@ begin
 
     END GENERATE;
 
-    e_swb_data_path_generic : entity work.musip_mux_4_1
+    e_musip_mux_4_1 : entity work.musip_mux_4_1
     generic map (
         g_LINK_N => 4
-    );
-    port (
+    )
+    port map (
         i_rx            => rx_data_sim(3 downto 0),
         i_rmask_n       => mask_n(3 downto 0),
 
         i_lookup_ctrl   => i_writeregs(SWB_LOOKUP_CTRL_REGISTER_W),
 
         o_subh_cnt      => counter_mux(3 downto 0),
-        o_hit_cnt       => counter_mux(7 downto 3),
+        o_hit_cnt       => counter_mux(7 downto 4),
         o_package_cnt   => counter_mux(11 downto 8),
 
         o_data          => hits_256,
@@ -338,8 +339,10 @@ begin
         o_endofevent        => o_endofevent,
         o_done              => o_readregs(EVENT_BUILD_STATUS_REGISTER_R)(EVENT_BUILD_DONE),
 
-        o_hit_cnt           => o_readregs(EVENT_BUILD_IDLE_NOT_HEADER_R),
-        o_hit_drop_cnt      => o_readregs(EVENT_BUILD_SKIP_EVENT_DMA_R),
+        o_hit_cnt(31 downto 0)      => o_readregs(EVENT_BUILD_IDLE_NOT_HEADER_R),
+        o_hit_cnt(63 downto 32)      => o_readregs(EVENT_BUILD_CNT_EVENT_DMA_R),
+        o_hit_drop_cnt(31 downto 0) => o_readregs(EVENT_BUILD_SKIP_EVENT_DMA_R),
+        o_hit_drop_cnt(63 downto 32) => o_readregs(EVENT_BUILD_TAG_FIFO_FULL_R),
 
         i_reset_n           => data_path_reset_n,
         i_clk               => i_clk--,

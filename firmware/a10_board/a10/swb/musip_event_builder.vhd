@@ -6,9 +6,10 @@
 library ieee;
 use ieee.numeric_std.all;
 use ieee.std_logic_1164.all;
+use ieee.std_logic_unsigned.all;
 
 
-entity swb_midas_event_builder is
+entity musip_event_builder is
 port (
     i_rx                : in  std_logic_vector(255 downto 0);
     i_valid             : in  std_logic;
@@ -29,7 +30,7 @@ port (
 );
 end entity;
 
-architecture arch of swb_midas_event_builder is
+architecture arch of musip_event_builder is
 
     ------------------------------------------------------------------------
     -- State machine
@@ -56,8 +57,8 @@ architecture arch of swb_midas_event_builder is
     ------------------------------------------------------------------------
     -- Counters
     ------------------------------------------------------------------------
-    signal hit_cnt       : std_logic_vector(64 downto 0) := (others => '0');
-    signal hit_drop_cnt  : std_logic_vector(64 downto 0) := (others => '0');
+    signal hit_cnt       : std_logic_vector(63 downto 0) := (others => '0');
+    signal hit_drop_cnt  : std_logic_vector(63 downto 0) := (others => '0');
 
     signal word_counter  : std_logic_vector(31 downto 0) := (others => '0');
 
