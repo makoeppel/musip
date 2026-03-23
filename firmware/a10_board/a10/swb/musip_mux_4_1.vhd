@@ -214,7 +214,7 @@ begin
     -- MUX 4 to 1
     mux_4_1_256 : entity work.mux_4_1_256
     generic map (
-        g_LINK_N => g_LINK_N--,
+        N => g_LINK_N--,
     )
     port map (
         i_data      => rx_256,
