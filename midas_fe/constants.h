@@ -48,7 +48,10 @@ constexpr uint32_t N_CHIPS_MAX = 12;
 /* DMA constants */
 constexpr size_t dma_buf_size = MUDAQ_DMABUF_DATA_LEN;
 constexpr uint32_t dma_buf_nwords = dma_buf_size / sizeof(uint32_t);
-constexpr uint32_t max_requested_words = dma_buf_nwords / 2;
+ // NOTE: this is a default value which fits the requiered conditions of the DMA engine
+ // we request 256bit words with this number and overall they have to be dividable by 4 KibiByte
+ // 0x80000 = 524288 -> 524288 x 256 = 134217728 -> 16384 KibiByte
+constexpr uint32_t max_requested_words = 0x80000;
 
 /* Link constants */
 constexpr uint32_t MAX_SLOWCONTROL_MESSAGE_SIZE = 100 - 4;

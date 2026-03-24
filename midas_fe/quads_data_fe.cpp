@@ -46,6 +46,7 @@
 #include "mfe.h"
 #include "msystem.h"
 #include "odbxx.h"
+#include <chrono>
 
 #include "DummyFEBSlowcontrolInterface.h"
 #include "FEBSlowcontrolInterface.h"
@@ -124,6 +125,9 @@ int begin_of_run() {
     // setup readout state register
     readout_state_regs = 0;
 
+    // get copy of setting
+    m_settings.connect("/Equipment/Quads/Settings");
+
 #ifdef NO_A10_BOARD
 
 #else
@@ -139,17 +143,17 @@ int begin_of_run() {
 #ifdef NO_A10_BOARD
 
 #else
-    if (m_settings["Readout"]["Datagen Enable"]) {
+    if ((bool) m_settings["Readout"]["Datagen Enable"]) {
         // setup data generator
         cm_msg(MINFO, "quad_fe", "Use datagenerator with divider register %i",
-               (int)m_settings["Readout"]["Datagen Divider"]);
+               (int) m_settings["Readout"]["Datagen Divider"]);
         mu.write_register(DATAGENERATOR_DIVIDER_REGISTER_W,
-                          m_settings["Readout"]["Datagen Divider"]);
+                          (int) m_settings["Readout"]["Datagen Divider"]);
         readout_state_regs = SET_USE_BIT_GEN_LINK(readout_state_regs);
     }
 #endif
 
-    if (m_settings["Readout"]["use_merger"]) {
+    if ((bool) m_settings["Readout"]["use_merger"]) {
         // readout merger
         cm_msg(MINFO, "quad_fe", "Use Time Merger");
         readout_state_regs = SET_USE_BIT_MERGER(readout_state_regs);
@@ -159,8 +163,8 @@ int begin_of_run() {
         readout_state_regs = SET_USE_BIT_STREAM(readout_state_regs);
     }
     readout_state_regs = SET_USE_BIT_GENERIC(readout_state_regs);
-    use_software_dummy = m_settings["Readout"]["Software dummy"];
-    n_mevents = m_settings["Readout"]["n_mevents"];
+    use_software_dummy = (bool) m_settings["Readout"]["Software dummy"];
+    n_mevents = (int) m_settings["Readout"]["n_mevents"];
 
 #ifdef NO_A10_BOARD
 
@@ -168,15 +172,15 @@ int begin_of_run() {
     // write readout register
     mu.write_register(SWB_READOUT_STATE_REGISTER_W, readout_state_regs);
 
-    // request to read dma_buffer_size / 2 (count in blocks of 256 bits)
+    // request to read blocks of 256 bits
     mu.write_register(GET_N_DMA_WORDS_REGISTER_W,
-                      m_settings["Readout"]["max_requested_words"] / (256 / 32));
+                      (int) m_settings["Readout"]["max_requested_words"]);
 
     // set event id for this frontend
     mu.write_register(FARM_EVENT_ID_REGISTER_W, eventID_data);
 
     // link masks
-    mu.write_register(SWB_GENERIC_MASK_REGISTER_W, m_settings["Readout"]["mask_n_generic"]);
+    mu.write_register(SWB_GENERIC_MASK_REGISTER_W, (int) m_settings["Readout"]["mask_n_generic"]);
 
     // release reset
     mu.write_register_wait(RESET_REGISTER_W, 0x0, 100);
@@ -205,204 +209,114 @@ int frontend_exit_user() {
     return SUCCESS;
 }
 
-int create_midas_events(uint32_t * dmaBuffer, uint32_t dmaBufSize, int rbh, uint32_t idx) {
-    // check if the buffer is valid
-    //if (!dmaBuffer) return -1;
+int create_midas_events(uint32_t* dmaBuffer, uint32_t dmaBufSize, int rbh)
+{
+    // dmaBufSize is passed as maxidx, so the valid number of uint32_t words is dmaBufSize + 1
+    const uint32_t n_u32 = dmaBufSize + 1;
 
-    // unpack event data
-    EVENT_HEADER* eh = reinterpret_cast<EVENT_HEADER*>(dmaBuffer + idx);
-    BANK_HEADER* bh = reinterpret_cast<BANK_HEADER*>(eh + 1);
+    if (dmaBuffer == nullptr || n_u32 < 2)
+        return SUCCESS;
 
-    if ( dmaBuffer[idx + 4] + 8 != eh->data_size ) return -1;
-    //if ( dmaBuffer[idx + 6] != 0x53504844 ) return -1;
+    // Need pairs of uint32_t to form one uint64_t
+    const uint32_t n_u32_even = n_u32 & ~1U;
+    const uint32_t n_u64 = n_u32_even / 2;
 
-    mevent_t mevent;
-    int n_dsin_bank = 0;
-    int n_hits_bank = 0;
+    if (n_u64 == 0)
+        return SUCCESS;
 
-    // loop over the banks, we define a global idx for start/end of the data and an local offset
-    uint32_t bank_offset = idx + 6;
-    while (bank_offset - idx < bh->data_size / 4) {
+    static constexpr uint64_t kTimestampMask = (1ULL << 39) - 1ULL; // bits 0..38
+    static constexpr uint64_t kFrameTicks    = 2000ULL;             // 16 us / 8 ns
 
-        if (bank_offset >= dmaBufSize) return -1;
+    struct HitWord {
+        uint64_t word;
+        uint64_t ts;
+        uint64_t frame;
+    };
 
-        BANK32A* b32a = reinterpret_cast<BANK32A*>(dmaBuffer + bank_offset);
+    std::vector<HitWord> hits;
+    hits.reserve(n_u64);
 
-        // if ((bank_offset % alignof(BANK32A)) != 0) return -1;
-        // if (bank_offset + sizeof(BANK32A) > dmaBufSize) return -1;
-        //if (b32a->data_size % 4 != 0) return -1;
+    // Rebuild 64-bit words from DMA buffer
+    // Assumption: dmaBuffer[0]=low32, dmaBuffer[1]=high32
+    for (uint32_t i = 0; i < n_u32_even; i += 2) {
+        uint64_t word = static_cast<uint64_t>(dmaBuffer[i]) |
+                        (static_cast<uint64_t>(dmaBuffer[i + 1]) << 32);
 
-        uint32_t bank_data_start = bank_offset + 4;
-        uint32_t bank_data_end = bank_offset + b32a->data_size / 4 + 3;
+        uint64_t ts = word & kTimestampMask;
+        uint64_t frame = ts / kFrameTicks;
 
-        // check end value if its bigger then the RAM
-        // which holds one MIDAS Event on the FPGA
-        // 2^addr x 64bit / 8 = 16384 bytes
-        if ( (bank_data_end-bank_data_start) > 16384 ) {
-            cm_msg(MERROR, "ro_swb_fe", "Event size %i bytes is bigger then max RAM size 16384 bytes on FPGA!\n", bank_data_end-bank_data_start);
+        hits.push_back({word, ts, frame});
+    }
+
+    // Sort by timestamp
+    std::sort(hits.begin(), hits.end(),
+              [](const HitWord& a, const HitWord& b) {
+                  return a.ts < b.ts;
+              });
+
+    // Reserve ONE MIDAS event
+    void* p = nullptr;
+    int status = rb_get_wp(rbh, &p, 10);
+    if (status == DB_TIMEOUT)
+        return DB_TIMEOUT;
+    if (status != DB_SUCCESS) {
+        cm_msg(MERROR, "create_midas_events", "rb_get_wp failed with status %d", status);
+        return status;
+    }
+
+    char* event = reinterpret_cast<char*>(p);
+
+    auto eventHeader = reinterpret_cast<EVENT_HEADER*>(event);
+    bm_compose_event_threadsafe(eventHeader, eventID_data, 0, 0, &equipment[0].serial_number);
+
+    auto bankHeader = reinterpret_cast<BANK_HEADER*>(eventHeader + 1);
+    bk_init32a(bankHeader);
+
+    // Walk frame-by-frame and create one bank per 16us frame
+    size_t i = 0;
+    uint32_t bank_idx = 0;
+
+    while (i < hits.size()) {
+        const uint64_t frame_id = hits[i].frame;
+
+        size_t j = i + 1;
+        while (j < hits.size() && hits[j].frame == frame_id)
+            ++j;
+
+        const size_t frame_nhits = j - i;
+
+        // Need unique 4-char bank name
+        // Supports up to 1000 banks in one event: H000..H999
+        if (bank_idx > 999) {
+            cm_msg(MERROR, "create_midas_events",
+                   "Too many 16us frames in one event (%u). Max supported with H000..H999 is 1000.",
+                   bank_idx);
             break;
         }
 
-        //if (bank_data_end >= dmaBufSize) break;
-        //printf("name:%s 0x%08X:0x%08X ", b32a->name, dmaBuffer[bank_data_start], dmaBuffer[bank_data_end]);
+        char bank_name[5];
+        std::snprintf(bank_name, sizeof(bank_name), "H%03u", bank_idx);
 
-        // read DSIN and *HIT banks
-        // and store them in `mevents`
-        std::string bank_name = "----";
-        memcpy(bank_name.data(), b32a->name, 4);
-        if(bank_name == "DSIN") {
-            n_dsin_bank += 1;
-            memcpy(&mevent.dsin, b32a + 1, std::min<size_t>(sizeof(mevent.dsin), b32a->data_size));
-        }
-        else if(bank_name == "PHIT" || bank_name == "DHPS") {
-            n_hits_bank += 1;
-            mevent.hits_name_pixel = bank_name;
-            if(b32a->data_size % sizeof(uint64_t) != 0) {
-               cm_msg(MERROR, "ro_swb_fe", "invalid b32a->data_size = %d\n", int(b32a->data_size));
-            }
-            size_t n = b32a->data_size / sizeof(mevent.hits_pixel[0]);
-            mevent.hits_pixel.resize(n);
-            memcpy(mevent.hits_pixel.data(), b32a + 1, n * sizeof(mevent.hits_pixel[0]));
-        }
-        else if(bank_name == "FHIT" || bank_name == "DHFS") {
-            n_hits_bank += 1;
-            mevent.hits_name_fibre = bank_name;
-            if(b32a->data_size % sizeof(uint64_t) != 0) {
-               cm_msg(MERROR, "ro_swb_fe", "invalid b32a->data_size = %d\n", int(b32a->data_size));
-            }
-            size_t n = b32a->data_size / sizeof(mevent.hits_fibre[0]);
-            mevent.hits_fibre.resize(n);
-            memcpy(mevent.hits_fibre.data(), b32a + 1, n * sizeof(mevent.hits_fibre[0]));
-        }
-        else if(bank_name == "THIT" || bank_name == "DHTD") {
-            n_hits_bank += 1;
-            mevent.hits_name_tile = bank_name;
-            if(b32a->data_size % sizeof(uint64_t) != 0) {
-               cm_msg(MERROR, "ro_swb_fe", "invalid b32a->data_size = %d\n", int(b32a->data_size));
-            }
-            size_t n = b32a->data_size / sizeof(mevent.hits_tile[0]);
-            mevent.hits_tile.resize(n);
-            memcpy(mevent.hits_tile.data(), b32a + 1, n * sizeof(mevent.hits_tile[0]));
-        }
-        else {
-            cm_msg(MERROR, "ro_swb_fe", "unexpected bank '%s'\n", bank_name.c_str());
+        uint32_t* data = nullptr;
+        bk_create(bankHeader, bank_name, TID_UINT32, reinterpret_cast<void**>(&data));
+
+        // Store 64-bit words as two uint32_t words: low32, high32
+        for (size_t k = 0; k < frame_nhits; ++k) {
+            const uint64_t w = hits[i + k].word;
+            data[2 * k]     = static_cast<uint32_t>(w & 0xFFFFFFFFULL);
+            data[2 * k + 1] = static_cast<uint32_t>((w >> 32) & 0xFFFFFFFFULL);
         }
 
-        bank_offset += b32a->data_size / 4 + 4;
+        bk_close(bankHeader, data + 2 * frame_nhits);
+
+        ++bank_idx;
+        i = j;
     }
 
-    if(n_dsin_bank == 0) {
-        cm_msg(MERROR, "ro_swb_fe", "no dsin bank in dmabuf event\n");
-    }
-    else if(n_dsin_bank > 1) {
-        cm_msg(MERROR, "ro_swb_fe", "%d dsin banks in dmabuf event\n", n_dsin_bank);
-    }
-    if(n_hits_bank == 0) {
-        cm_msg(MERROR, "ro_swb_fe", "no hits bank in dmabuf event\n");
-    }
-    else if(n_hits_bank > 1) {
-        cm_msg(MERROR, "ro_swb_fe", "%d hits banks in dmabuf event\n", n_dsin_bank);
-    }
-
-    uint64_t ts = (uint64_t(mevent.dsin.ts_high) << 16) | mevent.dsin.ts_low;
-    if(n_dsin_bank > 0 && ts == 0) {
-        cm_msg(MERROR, "ro_swb_fe", "dsin.ts is zero\n");
-        printf("dsin.ts is zero\n");
-        for(int i = 0; i < sizeof(mevent.dsin)/4; i++) {
-            printf("%08X ", reinterpret_cast<uint32_t*>(&mevent.dsin)[i]);
-        } printf("\n");
-    }
-
-    mevents[ts].push_back(mevent);
-    if(mevents[ts].size() > 10) {
-        cm_msg(MERROR, "ro_swb_fe", "mevents[ts].size() = %d > 10\n", int(mevents[ts].size()));
-    }
-
-    // wait until enough `ts` entries for 100 DSIN/HITS bank pairs
-    if(mevents.size() < 101) {
-        return eh->data_size/4+4;
-    }
-
-    // create MIDAS event
-    void* event = nullptr;
-    int status = 0;
-    do {
-        if(!is_readout_thread_enabled()) return -1;
-        if(!readout_enabled()) {
-            cm_msg(MERROR, "create_midas_events()", "we are not running");
-            return -1;
-        }
-        status = rb_get_wp(rbh, &event, 0);
-        if(status == DB_TIMEOUT) { ss_sleep(10); }
-        else if(status != DB_SUCCESS) return -1;
-    } while(status == DB_TIMEOUT);
-    if(!event) {
-        cm_msg(MERROR, "ro_swb_fe", "unexpected nullptr from rb_get_wp\n");
-        return -1;
-    }
-    auto eventHeader = reinterpret_cast<EVENT_HEADER*>(event);
-    bm_compose_event_threadsafe(eventHeader, eventID_data, 0, 0, &equipment[0].serial_number);
-    auto bankHeader = reinterpret_cast<BANK_HEADER*>(eventHeader + 1);
-    bk_init32a(bankHeader); // create MIDAS bank
-
-    // consume `mevents`
-    // NOTE: last entry may not be finished -> keep it
-    for(int i = 0; mevents.size() > 1 && i < 100; i++) {
-        mevent_t::dsin_t dsin = mevents.begin()->second.front().dsin;
-        // check dsin
-        for(auto& mevent : mevents.begin()->second) {
-            if(mevent.dsin.package_counter != dsin.package_counter) {
-                cm_msg(MERROR, "ro_swb_fe", "mismatch in dsin.package_counter\n");
-            }
-        }
-
-        { // - write DSIN bank
-            char* data = nullptr;
-            std::ostringstream oss;
-            oss << "DS" << std::setw(2) << std::setfill('0') << i;
-            std::string bank_name = oss.str();
-            bk_create(bankHeader, bank_name.c_str(), TID_UINT32, reinterpret_cast<void**>(&data));
-            memcpy(data, &dsin, sizeof(dsin));
-            data += sizeof(dsin);
-            bk_close(bankHeader, data);
-        }
-        { // - write *HIT bank
-            char* data = nullptr;
-            std::ostringstream oss;
-            oss << "DS" << std::setw(2) << std::setfill('0') << i;
-            for (int j = 0; j < 3; j++) {
-                std::string bank_name = "----";
-                bool bank_created = false;
-                for(auto& mevent : mevents.begin()->second) {
-                    if (j == 0) bank_name = mevent.hits_name_pixel.substr(2, 2) + oss.str();
-                    if (j == 1) bank_name = mevent.hits_name_fibre.substr(2, 2) + oss.str();
-                    if (j == 2) bank_name = mevent.hits_name_tile.substr(2, 2) + oss.str();
-                    if (strcmp(bank_name.substr(0, 2).c_str(), "--") == 0) continue;
-                    if (!bank_created) {
-                        bk_create(bankHeader, bank_name.c_str(), TID_UINT32, reinterpret_cast<void**>(&data));
-                        bank_created = true;
-                    }
-                    size_t bytes = 0;
-                    if (j == 0) bytes = mevent.hits_pixel.size() * sizeof(mevent.hits_pixel[0]);
-                    if (j == 1) bytes = mevent.hits_fibre.size() * sizeof(mevent.hits_fibre[0]);
-                    if (j == 2) bytes = mevent.hits_tile.size() * sizeof(mevent.hits_tile[0]);
-                    if (j == 0) memcpy(data, mevent.hits_pixel.data(), bytes);
-                    if (j == 1) memcpy(data, mevent.hits_fibre.data(), bytes);
-                    if (j == 2) memcpy(data, mevent.hits_tile.data(), bytes);
-                    data += bytes;
-                }
-                if (bank_created) bk_close(bankHeader, data);
-            }
-        }
-        mevents.erase(mevents.begin());
-    }
-
-    //printf("size: %i \n", bk_size(pbh));
     eventHeader->data_size = bk_size(bankHeader);
-    //if (!readout_enabled()) printf("we are not running and create an event\n");
-    rb_increment_wp(rbh, sizeof(EVENT_HEADER) + eventHeader->data_size); // in byte length
+    rb_increment_wp(rbh, sizeof(EVENT_HEADER) + eventHeader->data_size);
 
-    return eh->data_size/4+4;
+    return SUCCESS;
 }
 
 int read_stream_thread(void*) {
@@ -430,6 +344,9 @@ int read_stream_thread(void*) {
 
     // actuall readout loop
     while (is_readout_thread_enabled()) {
+
+        std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+
         // don't readout events if we are not running
         if (!readout_enabled()) {
             // we start from zero again
@@ -439,49 +356,6 @@ int read_stream_thread(void*) {
             ss_sleep(10);  // don't eat all CPU
             continue;
         }
-
-        // get midas buffer
-        uint32_t* pdata;
-        // obtain buffer space with 10 ms timeout
-        status = rb_get_wp(rbh, reinterpret_cast<void**>(&pdata), 10);
-
-        // just try again if buffer has no space
-        if (status == DB_TIMEOUT) {
-            // printf("WARNING: DB_TIMEOUT\n");
-            ss_sleep(10);  // don't eat all CPU
-            continue;
-        }
-
-        // stop if there is an error in the ODB
-        if (status != DB_SUCCESS) {
-            printf("ERROR: rb_get_wp -> rb_status != DB_SUCCESS\n");
-            break;
-        }
-
-        if (use_software_dummy) {
-            // emulate the FPGA event in software
-            serial_number =
-                create_dummy_event(dma_buf_dummy.get(), eventSize, nEvents, serial_number);
-
-            // memcpy(pdata, dma_buf_dummy.get(), dmaBufSize_dummy);
-            // rb_increment_wp(rbh, dmaBufSize_dummy);
-
-            // create MIDAS events
-            uint32_t idx = 0;
-            int off = 0;
-            while (idx < dmaBufSize_dummy) {
-                off = create_midas_events(dma_buf_dummy.get(), dmaBufSize_dummy, rbh, idx);
-                if (off == -1)
-                    break;
-                idx += off;
-            }
-        }
-
-        // request to read dma_buffer_size / 2 (count in blocks of 256 bits)
-        mu.write_register(GET_N_DMA_WORDS_REGISTER_W, max_requested_words / (256/32));
-
-        // set the serial number
-        mu.write_register(FARM_SERIAL_NUMBER_W, serial_number);
 
         // start dma
         if (!timeout)
@@ -501,12 +375,43 @@ int read_stream_thread(void*) {
         // disable dma
         mu.disable();
 
-        // get the last serial number from the FPGA
-        serial_number = mu.read_register_ro(SERIAL_NUM_REGISTER_R);
-
         // get written words from FPGA in bytes
         uint32_t size_dma_buf = mu.last_endofevent_addr() * 256 / 8;
         uint32_t maxidx = mu.last_endofevent_addr()*8-1;
+        uint32_t last_written = mu.last_written_addr();
+
+        std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+        std::cout << "Time difference (DMA) = " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << "[µs]" << std::endl;
+
+        begin = std::chrono::steady_clock::now();
+        // printf("0x%08x 0x%08x 0x%08x 0x%08x 0x%08x 0x%08x\n", mu.last_written_addr(), mu.last_endofevent_addr(), maxidx, size_dma_buf, (int) m_settings["Readout"]["max_requested_words"], mu.read_register_rw(GET_N_DMA_WORDS_REGISTER_W));
+
+        // std::cout << std::endl;
+        // for(int i=0; i < 20; i++)
+        //     std::cout << std::hex << i << " 0x" <<  dma_buf[i] << " ";
+        // std::cout << std::endl;
+        // printf("last_written\n");
+        // for(int i=0; i < 20; i++)
+        //     std::cout << std::hex << last_written+i << " 0x" <<  dma_buf[last_written+i] << " ";
+        // std::cout << std::endl;
+        // // for(int i=0; i < 20; i++)
+        // //     std::cout << std::hex << last_written-i << " 0x" <<  dma_buf[last_written-i] << " ";
+        // // std::cout << std::endl;
+        // printf("maxidx\n");
+        // for(int i=0; i < 20; i++)
+        //     std::cout << std::hex << 0x3fbfff+i << " 0x" <<  dma_buf[0x3fbfff+i] << " ";
+        // std::cout << std::endl;
+        // // for(int i=0; i < 100; i++)
+        // //     std::cout << std::hex << maxidx+i << " 0x" <<  dma_buf[maxidx+i] << " ";
+        // // std::cout << std::endl;
+        // std::cout << std::endl;
+
+        // for(int i=0; i < 10; i++)
+        //     std::cout << std::hex << " 0x" <<  dma_buf[i] << " ";
+        // std::cout << std::endl;
+        // std::cout << std::endl;
+
+        // while ( true ) {};
 
         if(size_dma_buf > MUDAQ_DMABUF_DATA_LEN) {
             cm_msg(MERROR, "ro_swb_fe", "Read invalid DMA buffer size %i!\n", size_dma_buf);
@@ -519,16 +424,16 @@ int read_stream_thread(void*) {
         }
 
         // create MIDAS events
-        uint32_t idx = 0;
-        int off = 0;
-        while(idx < maxidx) {
-            if(!readout_enabled()) break;
-            off = create_midas_events(dma_buf_local, maxidx, rbh, idx);
-            if(off == -1) break;
-            idx += off;
-        }
+        create_midas_events(dma_buf_local, last_written, rbh);
+
+        end = std::chrono::steady_clock::now();
+        std::cout << "Time difference (EVENT) = " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << "[µs]" << std::endl;
+
+        printf("0x%08x\n", mu.read_register_ro(EVENT_BUILD_IDLE_NOT_HEADER_R));
+        printf("0x%08x\n", mu.read_register_ro(BUFFER_STATUS_REGISTER_R));
 
     }
+
     return SUCCESS;
 }
 

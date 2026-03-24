@@ -37,7 +37,7 @@ midas::odb settings = {
       {"Datagen Enable", false},
       {"mask_n_generic", 0x0},
       {"use_merger", false},
-      {"max_requested_words", max_requested_words},
+      {"max_requested_words", 0x80000},
       {"n_mevents", 10}}},
     {"DAQ",
      {

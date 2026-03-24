@@ -39,10 +39,12 @@ architecture arch of musip_event_builder is
     type event_builder_state_t is (
         waiting,
         write_hits,
-        write_last_hit
+        write_last_hit,
+        write_4kb_padding
     );
 
     signal event_builder_state : event_builder_state_t := waiting;
+    signal cnt_4kb : std_logic_vector(31 downto 0);
 
 
     ------------------------------------------------------------------------
@@ -51,6 +53,7 @@ architecture arch of musip_event_builder is
     signal fifo_full    : std_logic := '0';
     signal fifo_empty   : std_logic := '1';
     signal fifo_en      : std_logic := '0';
+    signal fifo_data    : std_logic_vector(255 downto 0);
     signal wrusedw  : std_logic_vector(13 downto 0);  -- matches g_ADDR_WIDTH=12
 
 
@@ -88,7 +91,7 @@ begin
         o_usedw     => wrusedw,
 
         i_rack      => fifo_en or wrusedw(13),
-        o_rdata     => o_data,
+        o_rdata     => fifo_data,
         o_rempty    => fifo_empty,
 
         i_reset_n   => i_reset_n,
@@ -97,7 +100,8 @@ begin
 
     --! data out
     fifo_en <= '1' when (fifo_empty = '0' and i_dmamemhalffull = '0') and (event_builder_state = write_hits or event_builder_state = write_last_hit) else '0';
-    o_wen <= fifo_en;
+    o_wen <= '1' when event_builder_state = write_4kb_padding and i_dmamemhalffull = '0' else fifo_en;
+    o_data <= fifo_data when event_builder_state = write_hits or event_builder_state = write_last_hit else (others => '1');
     o_endofevent <= '1' when (fifo_empty = '0' and i_dmamemhalffull = '0') and event_builder_state = write_last_hit else '0';
     o_done <= done;
 
@@ -106,6 +110,7 @@ begin
     begin
     if ( i_reset_n = '0' ) then
         done <= '0';
+        cnt_4kb <= (others => '0');
         event_builder_state <= waiting;
         hit_cnt <= (others => '0');
         hit_drop_cnt <= (others => '0');
@@ -147,9 +152,19 @@ begin
             when write_last_hit =>
                 if ( fifo_empty = '0' and i_dmamemhalffull = '0' ) then
                     word_counter <= (others => '0');
-                    event_builder_state <= waiting;
+                    cnt_4kb <= (others => '0');
+                    event_builder_state <= write_4kb_padding;
                     hit_cnt <= std_logic_vector(unsigned(hit_cnt) + 1);
-                    done <= '1';
+                end if;
+
+            when write_4kb_padding =>
+                if ( i_dmamemhalffull = '0' ) then
+                    if ( cnt_4kb = "01111111" ) then
+                        done <= '1';
+                        event_builder_state <= waiting;
+                    else
+                        cnt_4kb <= cnt_4kb + '1';
+                    end if;
                 end if;
 
             when others =>
