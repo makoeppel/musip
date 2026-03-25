@@ -68,13 +68,6 @@ port (
     dmamem_endofevent       : in    std_logic;
     dmamemhalffull          : out   std_logic;
 
-    -- second dma memory
-    dma2_data               : in    std_logic_vector(g_DMA_DATA_WIDTH-1 downto 0);
-    dma2memclk              : in    std_logic;
-    dma2mem_wren            : in    std_logic;
-    dma2mem_endofevent      : in    std_logic;
-    dma2memhalffull         : out   std_logic;
-
     -- test ports
     testout                 : out   std_logic_vector(127 downto 0);
     testin                  : in    std_logic_vector(127 downto 0);
@@ -90,7 +83,7 @@ architecture RTL of pcie_application is
 
     signal wreg_reset_n, rreg_reset_n : std_logic;
     signal wmem_reset_n, rmem_reset_n : std_logic;
-    signal dma1_reset_n, dma2_reset_n : std_logic;
+    signal dma1_reset_n : std_logic;
     signal comp_reset_n : std_logic;
 
     -- from register read part
@@ -146,39 +139,23 @@ architecture RTL of pcie_application is
     signal dma_request              : std_logic;
     signal dma_granted              : std_logic;
     signal dma_done                 : std_logic;
-    signal dma2_request             : std_logic;
-    signal dma2_granted             : std_logic;
-    signal dma2_done                : std_logic;
 
     signal dma_tx_ready             : std_logic;
     signal dma_tx                   : work.util.avst256_t;
 
-    signal dma2_tx_ready            : std_logic;
-    signal dma2_tx                  : work.util.avst256_t;
-
     signal dma_control_address      : std_logic_vector(63 downto 0);
-    signal dma2_control_address     : std_logic_vector(63 downto 0);
     signal dma_data_address         : std_logic_vector(63 downto 0);
     signal dma_data_address_out     : std_logic_vector(63 downto 0);
-    signal dma2_data_address_out    : std_logic_vector(63 downto 0);
     signal dma_data_mem_addr        : std_logic_vector(11 downto 0);
     signal dma_data_pages           : std_logic_vector(19 downto 0);
     signal dma_data_pages_out       : std_logic_vector(19 downto 0);
-    signal dma2_data_pages_out      : std_logic_vector(19 downto 0);
     signal dma_data_n_addrs         : std_logic_vector(11 downto 0);
-    signal dma2_data_n_addrs        : std_logic_vector(11 downto 0);
     signal dma_write_config         : std_logic;
-    signal dma2_write_config        : std_logic;
 
     signal app1_msi_req             : std_logic;
     signal app1_msi_tc              : std_logic_vector(2 downto 0);
     signal app1_msi_num             : std_logic_vector(4 downto 0);
     signal app1_msi_ack             : std_logic;
-
-    signal app2_msi_req             : std_logic;
-    signal app2_msi_tc              : std_logic_vector(2 downto 0);
-    signal app2_msi_num             : std_logic_vector(4 downto 0);
-    signal app2_msi_ack             : std_logic;
 
     signal testout_completer        : std_logic_vector(127 downto 0);
     signal testout_dma              : std_logic_vector(71 downto 0);
@@ -194,7 +171,6 @@ begin
         o_q(2) => wmem_reset_n,
         o_q(3) => rmem_reset_n,
         o_q(4) => dma1_reset_n,
-        o_q(5) => dma2_reset_n,
         o_q(6) => comp_reset_n,
         i_d => (others => '1'),
         i_reset_n => i_reset_n,
@@ -351,13 +327,6 @@ begin
         dma_tx_ready        => dma_tx_ready,
         i_dma_tx            => dma_tx,
 
-        -- to and from second dma engine
-        dma2_request        => dma2_request,
-        dma2_granted        => dma2_granted,
-        dma2_done           => dma2_done,
-        dma2_tx_ready       => dma2_tx_ready,
-        i_dma2_tx           => dma2_tx,
-
         -- test port
         testout             => testout_completer,
 
@@ -462,71 +431,16 @@ begin
         i_clk                       => i_clk--,
     );
 
-    e_dma2 : entity work.dma_engine
-    generic map (
-        g_WADDR_WIDTH => g_DMA_WADDR_WIDTH,
-        g_RADDR_WIDTH => g_DMA_RADDR_WIDTH,
-        g_DATA_WIDTH => g_DMA_DATA_WIDTH,
-        IRQNUM                      => "00001",
-        ENABLE_BIT                  => DMA2_BIT_ENABLE,
-        NOW_BIT                     => DMA2_BIT_NOW,
-        ENABLE_INTERRUPT_BIT        => DMA2_BIT_ENABLE_INTERRUPTS
-    )
-    port map (
-        -- Stuff for DMA writing
-        dataclk                     => dma2memclk,
-        datain                      => dma2_data,
-        datawren                    => dma2mem_wren,
-        endofevent                  => dma2mem_endofevent,
-        memhalffull                 => dma2memhalffull,
-
-        -- Bus and device number
-        cfg_busdev                  => completer_id,
-
-        -- Comunication with completer
-        dma_request                 => dma2_request,
-        dma_granted                 => dma2_granted,
-        dma_done                    => dma2_done,
-        tx_ready                    => i_tx_st_ready0,
-        o_tx                        => dma2_tx,
-
-        -- Interrupt stuff
-        app_msi_req                 => app2_msi_req,
-        app_msi_tc                  => app2_msi_tc,
-        app_msi_num                 => app2_msi_num,
-        app_msi_ack                 => app2_msi_ack,
-
-        -- Configuration register
-        dma_control_address         => dma2_control_address,
-        dma_data_address            => dma_data_address,
-        dma_data_address_out        => dma2_data_address_out,
-        dma_data_mem_addr           => dma_data_mem_addr,
-        dma_addrmem_data_written    => regwritten_s(DMA_DATA_ADDR_LOW_REGISTER_W),
-        dma_data_pages              => dma_data_pages,
-        dma_data_pages_out          => dma2_data_pages_out,
-        dma_data_n_addrs            => dma2_data_n_addrs,
-
-        dma_register                => writeregs_s(DMA_REGISTER_W),
-        dma_register_written        => regwritten_s(DMA_REGISTER_W),
-        dma_status_register         => readregs_int(DMA2_STATUS_REGISTER_R),
-        test_out                    => open,
-
-        i_reset_n                   => dma2_reset_n,
-        i_clk                       => i_clk--,
-    );
-
     process(i_clk, i_reset_n)
     begin
     if ( i_reset_n = '0' ) then
         testout <= (others => '0');
         dma_write_config <= '0';
-        dma2_write_config <= '0';
 
         app_msi_req <= '0';
         app_msi_tc <= (others => '0');
         app_msi_num <= (others => '0');
         app1_msi_ack <= '0';
-        app2_msi_ack <= '0';
 
     elsif rising_edge(i_clk) then
 
@@ -536,15 +450,9 @@ begin
             app_msi_tc <= app1_msi_tc;
             app_msi_num <= app1_msi_num;
             app1_msi_ack <= app_msi_ack;
-        elsif(app2_msi_req = '1' and app2_msi_ack = '0') then
-            app_msi_req <= '1';
-            app_msi_tc <= app2_msi_tc;
-            app_msi_num <= app2_msi_num;
-            app2_msi_ack <= app_msi_ack;
         else
             app_msi_req <= '0';
             app1_msi_ack <= '0';
-            app2_msi_ack <= '0';
         end if;
 
         if ( rmem_header2 /= 0 ) then
@@ -552,29 +460,18 @@ begin
         end if;
 
         dma_control_address <= writeregs_s(DMA_CTRL_ADDR_HI_REGISTER_W) & writeregs_s(DMA_CTRL_ADDR_LOW_REGISTER_W);
-        dma2_control_address <= writeregs_s(DMA2_CTRL_ADDR_HI_REGISTER_W) & writeregs_s(DMA2_CTRL_ADDR_LOW_REGISTER_W);
         dma_data_address <= writeregs_s(DMA_DATA_ADDR_HI_REGISTER_W) & writeregs_s(DMA_DATA_ADDR_LOW_REGISTER_W);
         dma_data_n_addrs <= writeregs_s(DMA_NUM_ADDRESSES_REGISTER_W)(DMA_NUM_ADDRESSES_RANGE);
-        dma2_data_n_addrs <= writeregs_s(DMA_NUM_ADDRESSES_REGISTER_W)(DMA2_NUM_ADDRESSES_RANGE);
         dma_data_mem_addr <= writeregs_s(DMA_RAM_LOCATION_NUM_PAGES_REGISTER_W)(DMA_RAM_LOCATION_RANGE);
         dma_data_pages <= writeregs_s(DMA_RAM_LOCATION_NUM_PAGES_REGISTER_W)(DMA_NUM_PAGES_RANGE);
         readregs_int(DMA_DATA_ADDR_HI_REGISTER_R) <= dma_data_address_out(63 downto 32);
         readregs_int(DMA_DATA_ADDR_LOW_REGISTER_R) <= dma_data_address_out(31 downto 0);
-        readregs_int(DMA2_DATA_ADDR_HI_REGISTER_R) <= dma2_data_address_out(63 downto 32);
-        readregs_int(DMA2_DATA_ADDR_LOW_REGISTER_R) <= dma2_data_address_out(31 downto 0);
         readregs_int(DMA_NUM_PAGES_REGISTER_R)(DMA_NUM_PAGES_RANGE) <= dma_data_pages_out;
-        readregs_int(DMA2_NUM_PAGES_REGISTER_R)(DMA_NUM_PAGES_RANGE) <= dma2_data_pages_out;
 
         if(regwritten_s(DMA_DATA_ADDR_LOW_REGISTER_W)='1' and writeregs_s(DMA_REGISTER_W)(DMA_BIT_ADDR_WRITE_ENABLE) = '1') then
             dma_write_config <= '1';
         else
             dma_write_config <= '0';
-        end if;
-
-        if(regwritten_s(DMA_DATA_ADDR_LOW_REGISTER_W)='1' and writeregs_s(DMA_REGISTER_W)(DMA2_BIT_ADDR_WRITE_ENABLE) = '1') then
-            dma2_write_config <= '1';
-        else
-            dma2_write_config <= '0';
         end if;
 
         testout(127 downto 124) <= testout_completer(127 downto 124);

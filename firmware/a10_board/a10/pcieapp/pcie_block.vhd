@@ -65,13 +65,6 @@ port (
     dmamem_endofevent   : in    std_logic := '0';
     dmamemhalffull      : out   std_logic;
 
-    -- second dma memory
-    dma2_data           : in    std_logic_vector(g_DMA_DATA_WIDTH-1 downto 0) := (others => '0');
-    dma2memclk          : in    std_logic;
-    dma2mem_wren        : in    std_logic := '0';
-    dma2mem_endofevent  : in    std_logic := '0';
-    dma2memhalffull     : out   std_logic;
-
     -- test ports
     testout             : out   std_logic_vector(127 downto 0);
     inaddr32_r          : out   std_logic_vector(31 downto 0);
@@ -141,9 +134,9 @@ architecture RTL of pcie_block is
     signal serdes_pll_locked    : std_logic;
 
     -- DMA
-    signal dma_data_reg, dma2_data_reg : std_logic_vector(g_DMA_DATA_WIDTH-1 downto 0) := (others => '0');
-    signal dmamem_wren_reg, dma2mem_wren_reg : std_logic := '0';
-    signal dmamem_endofevent_reg, dma2mem_endofevent_reg : std_logic := '0';
+    signal dma_data_reg : std_logic_vector(g_DMA_DATA_WIDTH-1 downto 0) := (others => '0');
+    signal dmamem_wren_reg : std_logic := '0';
+    signal dmamem_endofevent_reg : std_logic := '0';
 
     signal testbus              : std_logic_vector(127 downto 0);
 
@@ -387,18 +380,10 @@ begin
         dma_data_reg            <= (others => '0');
         dmamem_wren_reg         <= '0';
         dmamem_endofevent_reg   <= '0';
-
-        dma2_data_reg           <= (others => '0');
-        dma2mem_wren_reg        <= '0';
-        dma2mem_endofevent_reg  <= '0';
     elsif rising_edge(dmamemclk) then
         dma_data_reg            <= dma_data;
         dmamem_wren_reg         <= dmamem_wren;
         dmamem_endofevent_reg   <= dmamem_endofevent;
-
-        dma2_data_reg           <= dma2_data;
-        dma2mem_wren_reg        <= dma2mem_wren;
-        dma2mem_endofevent_reg  <= dma2mem_endofevent;
     end if;
     end process;
 
@@ -454,13 +439,6 @@ begin
         dmamem_wren         => dmamem_wren_reg,
         dmamem_endofevent   => dmamem_endofevent_reg,
         dmamemhalffull      => dmamemhalffull,
-
-        -- 2nd dma memory
-        dma2_data           => dma2_data_reg,
-        dma2memclk          => dma2memclk,
-        dma2mem_wren        => dma2mem_wren_reg,
-        dma2mem_endofevent  => dma2mem_endofevent_reg,
-        dma2memhalffull     => dma2memhalffull,
 
         -- test ports
         testout             => testout,

@@ -24,7 +24,8 @@ port (
 
     o_hit_cnt           : out std_logic_vector(63 downto 0);
     o_hit_drop_cnt      : out std_logic_vector(63 downto 0);
-    o_almost_full_cnt   : out std_logic_vector(63 downto 0);
+    o_full_cnt          : out std_logic_vector(63 downto 0);
+    o_hit_rate          : out std_logic_vector(31 downto 0);
 
     i_reset_n           : in  std_logic;
     i_clk               : in  std_logic--;
@@ -55,14 +56,14 @@ architecture arch of musip_event_builder is
     signal fifo_en      : std_logic := '0';
     signal fifo_data    : std_logic_vector(255 downto 0);
     signal wrusedw  : std_logic_vector(13 downto 0);  -- matches g_ADDR_WIDTH=12
-
+    signal drop_hit : std_logic;
 
     ------------------------------------------------------------------------
     -- Counters
     ------------------------------------------------------------------------
     signal hit_cnt : std_logic_vector(63 downto 0) := (others => '0');
     signal hit_drop_cnt : std_logic_vector(63 downto 0) := (others => '0');
-    signal almost_full_cnt : std_logic_vector(63 downto 0) := (others => '0');
+    signal full_cnt : std_logic_vector(63 downto 0) := (others => '0');
 
     signal word_counter  : std_logic_vector(31 downto 0) := (others => '0');
 
@@ -77,7 +78,7 @@ begin
     --! counter
     o_hit_cnt <= hit_cnt;
     o_hit_drop_cnt <= hit_drop_cnt;
-    o_almost_full_cnt <= almost_full_cnt;
+    o_full_cnt <= full_cnt;
 
     e_fifo_event : entity work.ip_scfifo_v2
     generic map (
@@ -100,10 +101,18 @@ begin
 
     --! data out
     fifo_en <= '1' when (fifo_empty = '0' and i_dmamemhalffull = '0') and (event_builder_state = write_hits or event_builder_state = write_last_hit) else '0';
+    drop_hit <= '1' when fifo_en = '0' and wrusedw(13) = '1' else '0';
     o_wen <= '1' when event_builder_state = write_4kb_padding and i_dmamemhalffull = '0' else fifo_en;
     o_data <= fifo_data when event_builder_state = write_hits or event_builder_state = write_last_hit else (others => '1');
     o_endofevent <= '1' when (fifo_empty = '0' and i_dmamemhalffull = '0') and event_builder_state = write_last_hit else '0';
     o_done <= done;
+
+    e_hit_rate : entity work.word_rate
+    generic map ( g_CLK_MHZ => 250.0 )
+    port map (
+        i_valid => fifo_en, o_rate => o_hit_rate,
+        i_reset_n => i_reset_n, i_clk => i_clk--,
+    );
 
     -- dma end of events, count events and write control
     process(i_clk, i_reset_n)
@@ -115,12 +124,12 @@ begin
         hit_cnt <= (others => '0');
         hit_drop_cnt <= (others => '0');
         word_counter <= (others => '0');
-        almost_full_cnt <= (others => '0');
+        full_cnt <= (others => '0');
         --
     elsif rising_edge(i_clk) then
 
-        if ( wrusedw(13) = '1' ) then
-            almost_full_cnt <= std_logic_vector(unsigned(almost_full_cnt) + 1);
+        if ( drop_hit = '1' ) then
+            hit_drop_cnt <= std_logic_vector(unsigned(hit_drop_cnt) + 1);
         end if;
 
         if ( i_wen = '0' ) then
@@ -129,7 +138,7 @@ begin
         end if;
 
         if ( fifo_full = '1' ) then
-            hit_drop_cnt <= std_logic_vector(unsigned(hit_drop_cnt) + 1);
+            full_cnt <= std_logic_vector(unsigned(full_cnt) + 1);
         end if;
 
         case event_builder_state is

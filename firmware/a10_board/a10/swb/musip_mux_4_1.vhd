@@ -28,6 +28,12 @@ port (
     o_subh_cnt        : out slv64_array_t(g_LINK_N-1 downto 0) := (others => (others => '0'));
     o_hit_cnt         : out slv64_array_t(g_LINK_N-1 downto 0) := (others => (others => '0'));
     o_package_cnt     : out slv64_array_t(g_LINK_N-1 downto 0) := (others => (others => '0'));
+    o_word_cnt        : out std_logic_vector(63 downto 0);
+
+    o_subh_rate       : out slv32_array_t(g_LINK_N-1 downto 0);
+    o_hit_rate        : out slv32_array_t(g_LINK_N-1 downto 0);
+    o_package_rate    : out slv32_array_t(g_LINK_N-1 downto 0);
+    o_word_rate       : out std_logic_vector(31 downto 0);
 
     o_data            : out std_logic_vector(255 downto 0);
     o_valid           : out std_logic;
@@ -184,6 +190,27 @@ begin
         end if;
         end process;
 
+        e_hit_rate : entity work.word_rate
+        generic map ( g_CLK_MHZ => 250.0 )
+        port map (
+            i_valid => next_64bit_word_valid(i), o_rate => o_hit_rate(i),
+            i_reset_n => i_reset_n, i_clk => i_clk--,
+        );
+
+        e_sbhdr_rate : entity work.word_rate
+        generic map ( g_CLK_MHZ => 250.0 )
+        port map (
+            i_valid => i_rx(i).sbhdr, o_rate => o_subh_rate(i),
+            i_reset_n => i_reset_n, i_clk => i_clk--,
+        );
+
+        e_package_rate : entity work.word_rate
+        generic map ( g_CLK_MHZ => 250.0 )
+        port map (
+            i_valid => i_rx(i).eop, o_rate => o_package_rate(i),
+            i_reset_n => i_reset_n, i_clk => i_clk--,
+        );
+
         -- group words in 256bit
         process(i_clk, i_reset_n)
         begin
@@ -222,6 +249,8 @@ begin
 
         o_data      => o_data,
         o_valid     => o_valid,
+        o_word_cnt  => o_word_cnt,
+        o_word_rate => o_word_rate,
 
         i_reset_n   => i_reset_n,
         i_clk       => i_clk--,

@@ -78,6 +78,45 @@ std::map<uint64_t, std::list<mevent_t>> mevents;
 midas::odb m_settings;
 bool saw_readout_enabled = false;
 
+static void print_swb_counters(mudaq::DmaMudaqDevice &mu)
+{
+    // counter / rate
+    // 0-3: input link subheader cnt / rate
+    // 4-7: input link hit cnt / rate
+    // 8-11: input link package cnt / rate
+    // 12: mux word cnt / rate
+    printf("Input subheader (cnt / rate (Hz))\n");
+    for (int i = 0; i <= 3; ++i) {
+        mu.write_register(SWB_COUNTER_REGISTER_W, i);
+        uint32_t cnt  = mu.read_register_ro(SWB_COUNTER_REGISTER_R);
+        uint32_t rate = mu.read_register_ro(SWB_LINK_COUNTER_REGISTER_R);
+        printf("Link:%i %i / %i\n", i, cnt, rate);
+    }
+    printf("Input hit (cnt / rate (Hz))\n");
+    for (int i = 4; i <= 7; ++i) {
+        mu.write_register(SWB_COUNTER_REGISTER_W, i);
+        uint32_t cnt  = mu.read_register_ro(SWB_COUNTER_REGISTER_R);
+        uint32_t rate = mu.read_register_ro(SWB_LINK_COUNTER_REGISTER_R);
+        printf("Link:%i %i / %i\n", i, cnt, rate);
+    }
+    printf("Input package (cnt / rate (Hz))\n");
+    for (int i = 8; i <= 11; ++i) {
+        mu.write_register(SWB_COUNTER_REGISTER_W, i);
+        uint32_t cnt  = mu.read_register_ro(SWB_COUNTER_REGISTER_R);
+        uint32_t rate = mu.read_register_ro(SWB_LINK_COUNTER_REGISTER_R);
+        printf("Link:%i %i / %i\n", i, cnt, rate);
+    }
+    mu.write_register(SWB_COUNTER_REGISTER_W, 12);
+    uint32_t cnt  = mu.read_register_ro(SWB_COUNTER_REGISTER_R);
+    uint32_t rate = mu.read_register_ro(SWB_LINK_COUNTER_REGISTER_R);
+    printf("MUX out (cnt / rate (Hz)):%i / %i\n", cnt, rate);
+
+    printf("DMA hit cnt out: %i \n", mu.read_register_ro(EVENT_BUILD_IDLE_NOT_HEADER_R) * 4); // hit cnt to DMA
+    printf("DMA hit rate out: %i \n", mu.read_register_ro(EVENT_BUILD_TAG_FIFO_FULL_R)); // fifo rate to DMA
+    printf("DMA skip hit cnt: %i \n", mu.read_register_ro(EVENT_BUILD_SKIP_EVENT_DMA_R) * 4); // hit drop DMA busy
+    printf("DMA FIFO full: %i \n", mu.read_register_ro(BUFFER_STATUS_REGISTER_R)); // fifo full cnt
+}
+
 int init_mudaq(mudaq::MudaqDevice& mu) {
 #ifdef NO_A10_BOARD
 #else
@@ -377,14 +416,17 @@ int read_stream_thread(void*) {
 
         // get written words from FPGA in bytes
         uint32_t size_dma_buf = mu.last_endofevent_addr() * 256 / 8;
-        uint32_t maxidx = mu.last_endofevent_addr()*8-1;
+        uint32_t maxidx = (mu.last_endofevent_addr()+1)*8-1;
         uint32_t last_written = mu.last_written_addr();
 
         std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
         std::cout << "Time difference (DMA) = " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << "[µs]" << std::endl;
 
         begin = std::chrono::steady_clock::now();
-        // printf("0x%08x 0x%08x 0x%08x 0x%08x 0x%08x 0x%08x\n", mu.last_written_addr(), mu.last_endofevent_addr(), maxidx, size_dma_buf, (int) m_settings["Readout"]["max_requested_words"], mu.read_register_rw(GET_N_DMA_WORDS_REGISTER_W));
+
+        print_swb_counters(mu);
+        uint32_t maxwords = (uint32_t) m_settings["Readout"]["max_requested_words"];
+        printf("0x%08x 0x%08x 0x%08x 0x%08x 0x%08x 0x%08x\n", mu.last_written_addr(), mu.last_endofevent_addr(), maxidx, size_dma_buf, maxwords, maxwords*8);
 
         // std::cout << std::endl;
         // for(int i=0; i < 20; i++)
@@ -393,17 +435,35 @@ int read_stream_thread(void*) {
         // printf("last_written\n");
         // for(int i=0; i < 20; i++)
         //     std::cout << std::hex << last_written+i << " 0x" <<  dma_buf[last_written+i] << " ";
-        // std::cout << std::endl;
-        // // for(int i=0; i < 20; i++)
-        // //     std::cout << std::hex << last_written-i << " 0x" <<  dma_buf[last_written-i] << " ";
-        // // std::cout << std::endl;
+        std::cout << std::endl;
+        for(int i=-20; i < 20; i++)
+            std::cout << std::hex << maxwords*8+i << " 0x" <<  dma_buf[maxwords*8+i] << std::endl;
         // printf("maxidx\n");
         // for(int i=0; i < 20; i++)
         //     std::cout << std::hex << 0x3fbfff+i << " 0x" <<  dma_buf[0x3fbfff+i] << " ";
         // std::cout << std::endl;
-        // // for(int i=0; i < 100; i++)
-        // //     std::cout << std::hex << maxidx+i << " 0x" <<  dma_buf[maxidx+i] << " ";
-        // // std::cout << std::endl;
+        // int not_null = 0;
+        // for(int i=maxwords*8; i >= 0; i--) {
+        //     if (dma_buf[i] != 0) {
+        //         std::cout << std::hex << i << " 0x" <<  dma_buf[i] << std::endl;
+        //         not_null = i;
+        //         break;
+        //     }
+        // }
+        // for(int i=-20; i < 20; i++)
+        //     std::cout << std::hex << not_null+i << " 0x" <<  dma_buf[not_null+i] << std::endl;
+        // int not_one = 0;
+        // for(int i=not_null; i >= 0; i--) {
+        //     if (dma_buf[i] != 0xFFFFFFFF) {
+        //         std::cout << std::hex << i << " 0x" <<  dma_buf[i] << std::endl;
+        //         not_one = i;
+        //         break;
+        //     }
+        // }
+        // for(int i=-20; i < 20; i++)
+        //     std::cout << std::hex << not_one+i << " 0x" <<  dma_buf[not_one+i] << std::endl;
+
+
         // std::cout << std::endl;
 
         // for(int i=0; i < 10; i++)
@@ -424,7 +484,7 @@ int read_stream_thread(void*) {
         }
 
         // create MIDAS events
-        create_midas_events(dma_buf_local, last_written, rbh);
+        create_midas_events(dma_buf_local, maxidx, rbh);
 
         end = std::chrono::steady_clock::now();
         std::cout << "Time difference (EVENT) = " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << "[µs]" << std::endl;

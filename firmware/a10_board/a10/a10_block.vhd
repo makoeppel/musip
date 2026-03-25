@@ -697,8 +697,6 @@ begin
             dmamemhalffull          => pcie0_dma0_hfull,
             dmamemclk               => pcie0_clk,
 
-            dma2memclk              => pcie0_clk,
-
             i_areset_n              => '1',
             o_clk                   => pcie0_clk--,
         );

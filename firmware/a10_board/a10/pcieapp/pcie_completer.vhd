@@ -66,11 +66,11 @@ port (
     i_dma_tx            : in    work.util.avst256_t;
 
     -- to and from second dma engine
-    dma2_request        : in    std_logic;
+    dma2_request        : in    std_logic := '0';
     dma2_granted        : out   std_logic;
-    dma2_done           : in    std_logic;
+    dma2_done           : in    std_logic := '0';
     dma2_tx_ready       : out   std_logic;
-    i_dma2_tx           : in    work.util.avst256_t;
+    i_dma2_tx           : in    work.util.avst256_t := work.util.c_AVST256_ZERO;
 
     -- test ports
     testout             : out   std_logic_vector(127 downto 0);

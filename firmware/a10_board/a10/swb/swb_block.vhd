@@ -86,8 +86,8 @@ architecture arch of swb_block is
     signal gen_link : work.mu3e.link32_t;
 
     --! counters
-    signal rate_mux : slv32_array_t(3*4-1 downto 0) := (others => (others => '0'));
-    signal counter_mux : slv64_array_t(3*4-1 downto 0) := (others => (others => '0'));
+    signal rate_mux : slv32_array_t(3*4 downto 0) := (others => (others => '0'));
+    signal counter_mux : slv64_array_t(3*4 downto 0) := (others => (others => '0'));
 
     --! histograms
     signal histo_selected_link : integer range 0 to g_NLINKS_FEB_TOTL-1;
@@ -267,17 +267,12 @@ begin
     --! ------------------------------------------------------------------------
     e_data_gen_link : entity work.data_generator_a10
     generic map (
-        DATA_TYPE => MUPIX_HEADER_ID,
-        go_to_sh => 3,
-        test_error => false,
-        go_to_trailer => 4--,
+        DATA_TYPE => MUPIX_HEADER_ID--,
     )
     port map (
         i_enable            => i_writeregs(SWB_READOUT_STATE_REGISTER_W)(USE_BIT_GEN_LINK),
-        i_seed              => (others => '1'),
         o_data              => gen_link,
-        i_slow_down         => i_writeregs(DATAGENERATOR_DIVIDER_REGISTER_W),
-        o_state             => open,
+        i_n_hits            => i_writeregs(DATAGENERATOR_DIVIDER_REGISTER_W),
 
         i_reset_n           => i_resets_n(RESET_BIT_DATAGEN),
         i_clk               => i_clk--,
@@ -313,6 +308,12 @@ begin
         o_subh_cnt      => counter_mux(3 downto 0),
         o_hit_cnt       => counter_mux(7 downto 4),
         o_package_cnt   => counter_mux(11 downto 8),
+        o_word_cnt      => counter_mux(12),
+
+        o_subh_rate     => rate_mux(3 downto 0),
+        o_hit_rate      => rate_mux(7 downto 4),
+        o_package_rate  => rate_mux(11 downto 8),
+        o_word_rate     => rate_mux(12),
 
         o_data          => hits_256,
         o_valid         => hits_256_valid,
@@ -340,12 +341,13 @@ begin
         o_done              => o_readregs(EVENT_BUILD_STATUS_REGISTER_R)(EVENT_BUILD_DONE),
 
         -- TODO: change name of registers
-        o_hit_cnt(31 downto 0)      => o_readregs(EVENT_BUILD_IDLE_NOT_HEADER_R),
-        o_hit_cnt(63 downto 32)      => o_readregs(EVENT_BUILD_CNT_EVENT_DMA_R),
+        o_hit_cnt(31 downto 0) => o_readregs(EVENT_BUILD_IDLE_NOT_HEADER_R),
+        o_hit_cnt(63 downto 32) => o_readregs(EVENT_BUILD_CNT_EVENT_DMA_R),
         o_hit_drop_cnt(31 downto 0) => o_readregs(EVENT_BUILD_SKIP_EVENT_DMA_R),
         --o_hit_drop_cnt(63 downto 32) => o_readregs(EVENT_BUILD_TAG_FIFO_FULL_R),
-        o_almost_full_cnt(31 downto 0) => o_readregs(BUFFER_STATUS_REGISTER_R),
-        o_almost_full_cnt(63 downto 32) => o_readregs(EVENT_BUILD_TAG_FIFO_FULL_R),
+        o_full_cnt(31 downto 0) => o_readregs(BUFFER_STATUS_REGISTER_R),
+        --o_full_cnt(63 downto 32) => o_readregs(EVENT_BUILD_TAG_FIFO_FULL_R),
+        o_hit_rate => o_readregs(EVENT_BUILD_TAG_FIFO_FULL_R),
 
         i_reset_n           => data_path_reset_n,
         i_clk               => i_clk--,
