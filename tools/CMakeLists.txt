@@ -54,3 +54,11 @@ endif()
 #
 add_executable(writetdacs src/writetdacs.cpp src/TDACFile.cpp)
 target_include_directories(writetdacs PUBLIC include)
+
+
+add_executable(dmatest firmware/dmatest.cpp)
+target_link_libraries(dmatest libmudaq)
+
+install(TARGETS
+    dmatest
+)

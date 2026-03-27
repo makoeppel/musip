@@ -119,16 +119,14 @@ begin
 
                         next_hit_count_v := unsigned(hit_counter) + 1;
                         hit_counter <= std_logic_vector(next_hit_count_v);
+                    end if;
 
-                        if ( next_hit_count_v >= unsigned(n_hits_latched) ) then
-                            data_header_state <= trailer;
-                        elsif ( next_package = '1' ) then
-                            data_header_state <= send_last_hits;
-                        elsif ( next_subheader = '1' ) then
-                            data_header_state <= sbhdr;
-                        end if;
-                    else
+                    if ( next_hit_count_v >= unsigned(n_hits_latched) ) then
                         data_header_state <= trailer;
+                    elsif ( next_package = '1' ) then
+                        data_header_state <= send_last_hits;
+                    elsif ( next_subheader = '1' ) then
+                        data_header_state <= sbhdr;
                     end if;
 
                 when send_last_hits =>
