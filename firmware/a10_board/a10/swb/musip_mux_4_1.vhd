@@ -112,6 +112,9 @@ begin
             we_write_this_package(i) <= '0';
             ts_high(i) <= (others => '0');
             ts_low(i) <= (others => '0');
+            s_hit_cnt(i) <= (others => '0');
+            s_subh_cnt(i) <= (others => '0');
+            s_package_cnt(i) <= (others => '0');
             last_subheader_time(i) <= (others => '0');
             next_64bit_word(i) <= (others => '0');
             next_64bit_word_valid(i) <= '0';
