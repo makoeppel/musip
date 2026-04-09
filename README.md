@@ -1,7 +1,7 @@
 [![Build Documentation](https://github.com/makoeppel/musip/actions/workflows/docs.yml/badge.svg?branch=main)](https://github.com/makoeppel/musip/actions/workflows/docs.yml)
 [![Build and Test Software](https://github.com/makoeppel/musip/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/makoeppel/musip/actions/workflows/tests.yml)
 [![GHDL testbenches](https://github.com/makoeppel/musip/actions/workflows/ghdl.yml/badge.svg)](https://github.com/makoeppel/musip/actions/workflows/ghdl.yml)
-[![Readthedocs](https://app.readthedocs.org/projects/musip/badge/?version=latest)](https://app.readthedocs.org/projects/musip/badge/?version=latest)
+[![Readthedocs](https://app.readthedocs.org/projects/musip/badge/?version=latest)](https://musip.readthedocs.io/)
 
 # musip-midas
 
