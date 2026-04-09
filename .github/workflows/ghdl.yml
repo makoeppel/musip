@@ -1,0 +1,27 @@
+name: GHDL testbenches
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  sim:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup GHDL
+        uses: ghdl/setup-ghdl@v1
+
+      - name: Show tool versions
+        run: |
+          ghdl --version
+          bash --version
+
+      - name: Run testbench
+        run: |
+          cd firmware/a10_board/a10/tb
+          ./tb_musip_mux_4_1.sh
