@@ -1,3 +1,4 @@
 build/
 install/
 quartus-build*/
+__pycache__/
