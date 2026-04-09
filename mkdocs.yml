@@ -37,4 +37,4 @@ nav:
     - Pixel Tuning: pixel_tuning.md
 
 theme:
-  name: material
+  name: readthedocs
