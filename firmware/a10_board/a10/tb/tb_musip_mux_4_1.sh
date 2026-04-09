@@ -7,6 +7,7 @@ SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)"
 cd "$SCRIPT_DIR" || exit 1
 
 export STOPTIME=10000000ns
+export WAVE_FORMAT=none
 
 entity=$(basename "$0" .sh)
 
