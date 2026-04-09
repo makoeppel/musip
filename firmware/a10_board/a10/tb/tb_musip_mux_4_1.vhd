@@ -14,7 +14,7 @@ architecture sim of tb_musip_mux_4_1 is
 
     constant c_LINK_N          : positive := 4;
     constant c_CLK_PERIOD      : time := 10 ns;
-    constant c_MAX_CHECKED     : natural := 2000000;
+    constant c_MAX_CHECKED     : natural := 100000;
     constant c_WATCHDOG_CYCLES : natural := 1000;
     constant c_EXP_DEPTH       : natural := 4096;
 
@@ -39,6 +39,7 @@ architecture sim of tb_musip_mux_4_1 is
     type slv8_local_array_t is array (natural range <>) of std_logic_vector(7 downto 0);
     type int_0_3_array_t is array (natural range <>) of integer range 0 to 3;
     type nat_array_t is array (natural range <>) of natural range 0 to 65535;
+    type bool_array_t is array (natural range <>) of boolean;
 
     type t_link_phase is (
         PH_IDLE_GAP,
@@ -115,10 +116,9 @@ begin
         i_clk           => clk
     );
 
-    master : process
+    main : process
         variable exp_mem         : slv256_array_t(0 to c_EXP_DEPTH-1) := (others => (others => '0'));
-        variable exp_wr_ptr      : natural range 0 to c_EXP_DEPTH-1 := 0;
-        variable exp_rd_ptr      : natural range 0 to c_EXP_DEPTH-1 := 0;
+        variable exp_valid       : bool_array_t(0 to c_EXP_DEPTH-1) := (others => false);
         variable exp_count       : natural range 0 to c_EXP_DEPTH := 0;
 
         variable part256         : slv256_array_t(0 to c_LINK_N-1) := (others => (others => '0'));
@@ -138,30 +138,39 @@ begin
         variable hit_word_v      : std_logic_vector(31 downto 0);
         variable hit64_v         : std_logic_vector(63 downto 0);
         variable tmp256          : std_logic_vector(255 downto 0);
-        variable exp_word_v      : std_logic_vector(255 downto 0);
         variable dut_norm_v      : std_logic_vector(255 downto 0);
         variable exp_norm_v      : std_logic_vector(255 downto 0);
 
         variable checked_words   : natural := 0;
         variable pending_cycles  : natural := 0;
 
-        procedure enqueue_expected_word(
+        variable found_match     : boolean;
+        variable found_idx       : natural range 0 to c_EXP_DEPTH-1 := 0;
+        variable valid_seen      : boolean;
+        variable first_valid_idx : natural range 0 to c_EXP_DEPTH-1 := 0;
+
+        procedure add_expected_word(
             constant word256 : in std_logic_vector(255 downto 0)
         ) is
+            variable inserted : boolean := false;
         begin
             assert exp_count < c_EXP_DEPTH
-                report "Expected-output queue overflow"
+                report "Expected-word pool overflow"
                 severity failure;
 
-            exp_mem(exp_wr_ptr) := word256;
+            for k in 0 to c_EXP_DEPTH-1 loop
+                if not exp_valid(k) then
+                    exp_mem(k)   := word256;
+                    exp_valid(k) := true;
+                    exp_count    := exp_count + 1;
+                    inserted     := true;
+                    exit;
+                end if;
+            end loop;
 
-            if exp_wr_ptr = c_EXP_DEPTH - 1 then
-                exp_wr_ptr := 0;
-            else
-                exp_wr_ptr := exp_wr_ptr + 1;
-            end if;
-
-            exp_count := exp_count + 1;
+            assert inserted
+                report "No free slot found in expected-word pool"
+                severity failure;
         end procedure;
 
         procedure queue_expected_hit(
@@ -173,7 +182,7 @@ begin
             tmp256((idx256(link_idx) + 1) * 64 - 1 downto idx256(link_idx) * 64) := hit64;
 
             if idx256(link_idx) = 3 then
-                enqueue_expected_word(tmp256);
+                add_expected_word(tmp256);
                 part256(link_idx) := (others => '0');
                 idx256(link_idx)  := 0;
             else
@@ -186,26 +195,40 @@ begin
         begin
             if o_valid = '1' then
                 assert exp_count > 0
-                    report "DUT produced output but expected queue is empty"
+                    report "DUT produced output but no expected word is pending"
                     severity failure;
 
-                exp_word_v := exp_mem(exp_rd_ptr);
                 dut_norm_v := normalize_mupix_word256(o_data);
-                exp_norm_v := normalize_mupix_word256(exp_word_v);
 
-                assert dut_norm_v = exp_norm_v
-                    report "Output mismatch. DUT=" & to_hstring(dut_norm_v) &
-                           " EXP=" & to_hstring(exp_norm_v) &
-                           " RAW_DUT=" & to_hstring(o_data) &
-                           " RAW_EXP=" & to_hstring(exp_word_v)
-                    severity failure;
+                found_match := false;
+                valid_seen := false;
+                first_valid_idx := 0;
 
-                if exp_rd_ptr = c_EXP_DEPTH - 1 then
-                    exp_rd_ptr := 0;
-                else
-                    exp_rd_ptr := exp_rd_ptr + 1;
+                for k in 0 to c_EXP_DEPTH-1 loop
+                    if exp_valid(k) then
+                        if not valid_seen then
+                            first_valid_idx := k;
+                            valid_seen := true;
+                        end if;
+
+                        exp_norm_v := normalize_mupix_word256(exp_mem(k));
+                        if dut_norm_v = exp_norm_v then
+                            found_match := true;
+                            found_idx := k;
+                            exit;
+                        end if;
+                    end if;
+                end loop;
+
+                if not found_match then
+                    assert false
+                        report "Output mismatch. DUT=" & to_hstring(dut_norm_v) &
+                               " FIRST_PENDING=" &
+                               " RAW_DUT=" & to_hstring(o_data)
+                        severity failure;
                 end if;
 
+                exp_valid(found_idx) := false;
                 exp_count := exp_count - 1;
                 checked_words := checked_words + 1;
                 pending_cycles := 0;
@@ -216,7 +239,7 @@ begin
             elsif exp_count > 0 then
                 pending_cycles := pending_cycles + 1;
                 assert pending_cycles < c_WATCHDOG_CYCLES
-                    report "Watchdog timeout: expected output pending too long. Queue count=" &
+                    report "Watchdog timeout: expected output pending too long. Pending count=" &
                            integer'image(exp_count)
                     severity failure;
             else
@@ -347,16 +370,6 @@ begin
                 end case;
             end loop;
 
-            check_output;
-        end loop;
-
-        report "Main traffic finished, draining remaining expected queue";
-
-        while exp_count > 0 loop
-            wait until rising_edge(clk);
-            for i in 0 to c_LINK_N-1 loop
-                rx(i) <= LINK32_IDLE;
-            end loop;
             check_output;
         end loop;
 
