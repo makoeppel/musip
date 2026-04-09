@@ -1,3 +1,7 @@
+[![Build Documentation](https://github.com/makoeppel/musip/actions/workflows/docs.yml/badge.svg?branch=main)](https://github.com/makoeppel/musip/actions/workflows/docs.yml)
+[![Build and Test Software](https://github.com/makoeppel/musip/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/makoeppel/musip/actions/workflows/tests.yml)
+[![Readthedocs](https://app.readthedocs.org/projects/musip/badge/?version=latest)](https://app.readthedocs.org/projects/musip/badge/?version=latest)
+
 # musip-midas
 
 This is a MIDAS-based frontend for the Mupix11 based quad moduels.
