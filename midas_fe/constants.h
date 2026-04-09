@@ -23,9 +23,9 @@
 
 #pragma once
 
+#include <array>
 #include <map>
 #include <string>
-#include <array>
 #include <vector>
 
 #include "registers.h"
@@ -48,9 +48,9 @@ constexpr uint32_t N_CHIPS_MAX = 12;
 /* DMA constants */
 constexpr size_t dma_buf_size = MUDAQ_DMABUF_DATA_LEN;
 constexpr uint32_t dma_buf_nwords = dma_buf_size / sizeof(uint32_t);
- // NOTE: this is a default value which fits the requiered conditions of the DMA engine
- // we request 256bit words with this number and overall they have to be dividable by 4 KibiByte
- // 0x80000 = 524288 -> 524288 x 256 = 134217728 -> 16384 KibiByte
+// NOTE: this is a default value which fits the requiered conditions of the DMA engine
+// we request 256bit words with this number and overall they have to be dividable by 4 KibiByte
+// 0x80000 = 524288 -> 524288 x 256 = 134217728 -> 16384 KibiByte
 constexpr uint32_t max_requested_words = 0x80000;
 
 /* Link constants */
@@ -62,11 +62,27 @@ constexpr uint32_t length_32bits = 12;
 constexpr uint32_t length = length_32bits * 4;
 
 /* Configuration for ADC */
-enum class ADC_Mode : uint8_t {Single = 0b0100, Sequence = 0b0010, All = 0b0001};
-enum class ADC_Command : uint8_t {Reset = 0b1000, Configure = 0b0100, Measure = 0b0010};
-enum class ADC_Mux_Address : uint8_t {ref_vssa = 0, Baseline = 1, blpix = 2, thpix = 3, blpix_2 = 4, ThLow = 5, ThHigh = 6, TEST_OUT = 7, vssa = 8, thpix_2 = 9, VCAL = 10, VTemp1 = 11, VTemp2 = 12};
+enum class ADC_Mode : uint8_t { Single = 0b0100, Sequence = 0b0010, All = 0b0001 };
+enum class ADC_Command : uint8_t { Reset = 0b1000, Configure = 0b0100, Measure = 0b0010 };
+enum class ADC_Mux_Address : uint8_t {
+    ref_vssa = 0,
+    Baseline = 1,
+    blpix = 2,
+    thpix = 3,
+    blpix_2 = 4,
+    ThLow = 5,
+    ThHigh = 6,
+    TEST_OUT = 7,
+    vssa = 8,
+    thpix_2 = 9,
+    VCAL = 10,
+    VTemp1 = 11,
+    VTemp2 = 12
+};
 constexpr uint32_t nadcvals = 13;
-const std::array<const std::string, 13> adcnames = {"Ref_VSSA", "Baseline", "blpix", "thpix","blpix_2", "ThLow","ThHigh","TestOut", "VSSA", "thpix_2", "VCAL", "VTemp1", "VTemp2"};
+const std::array<const std::string, 13> adcnames = {
+    "Ref_VSSA", "Baseline", "blpix",   "thpix", "blpix_2", "ThLow", "ThHigh",
+    "TestOut",  "VSSA",     "thpix_2", "VCAL",  "VTemp1",  "VTemp2"};
 
 // readout event structure
 struct mevent_t {
@@ -77,11 +93,12 @@ struct mevent_t {
         uint32_t debug0;
         uint32_t debug1;
         uint16_t subheader_overflow, __zero0;
-        uint16_t shead_cnt; uint8_t header_cnt, __zero1;
+        uint16_t shead_cnt;
+        uint8_t header_cnt, __zero1;
         uint32_t __AFFEAFFE[1];
     };
 
-    dsin_t dsin {};
+    dsin_t dsin{};
     std::vector<uint64_t> hits_pixel;
     std::vector<uint64_t> hits_fibre;
     std::vector<uint64_t> hits_tile;

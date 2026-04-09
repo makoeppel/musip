@@ -63,7 +63,8 @@
  *
  * - Intern: private variables
  *     - Detailed Messages: If flag is enabled, much more info is sent to the MIDAS message queue
- *     - Read Raw Data:     If flag is enabled, all sensor readings are recorded - needed for calibration
+ *     - Read Raw Data:     If flag is enabled, all sensor readings are recorded - needed for
+ * calibration
  *     - ODB Offset:        ODB offset for the 'set point' within the output variables.
  *                          Needed by the forced update routine.
  *     - ODB Output Path:   ODB output variable path. Needed by the forced update routine.

@@ -73,8 +73,7 @@ midas::odb settings = {
            {"DataGenSync", false},
            {"DataGenFullSteam", false},
            {"DataGenRate", 0},
-           {"Reset FEB Counters", false}
-         }},
+           {"Reset FEB Counters", false}}},
          {"Links",
           {{"LVDSLinkMask", filled_array<uint64_t, N_FEBS>(0xFFFFFF)},
            {"LVDSLinkInvert", filled_array<uint64_t, N_FEBS>(35434004481)},
@@ -254,6 +253,4 @@ midas::odb settings = {
         {"Baseline", 8},
         {"VDAC1", 8},
         {"ref_Vss", 8}}},
-      {"TDACS",
-       {{"TDACFILE", filled_array<std::string, N_CHIPS * N_FEBS>("tdacfile.bin")}}
-      }}}};
+      {"TDACS", {{"TDACFILE", filled_array<std::string, N_CHIPS * N_FEBS>("tdacfile.bin")}}}}}};

@@ -11,8 +11,7 @@
 #include "PowerDriver.h"
 
 class HMP4040Driver : public PowerDriver {
-
-public:
+   public:
     HMP4040Driver();
     HMP4040Driver(std::string n, EQUIPMENT_INFO* inf);
     ~HMP4040Driver();
@@ -24,17 +23,15 @@ public:
     std::string GenerateCommand(COMMAND_TYPE cmdt, float val) override;
     std::string GenerateCommand(COMMAND_TYPE cmdt, int ch, float val) override;
 
-    std::string getDriverName() override {
-        return "HMP4040";
-    }
+    std::string getDriverName() override { return "HMP4040"; }
 
-private:
+   private:
     std::string idCode;
     std::string ip;
     void InitODBArray();
     bool AskPermissionToTurnOn(int) override;
 
-    //watch
+    // watch
     void ReadESRChanged() override;
 };
 

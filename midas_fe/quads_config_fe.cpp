@@ -127,18 +127,18 @@ int write_command_by_name(const char* name, uint32_t payload = 0, uint16_t addre
 }
 
 void init_banks() {
-
     midas::odb link_settings("/Equipment/Quads/Settings", true);
 
     // setup PCLS bank
     std::string namename = std::string("Names PCLS");
     std::vector<std::string> names;
-    for(uint32_t i = 0; i < N_FEBS; i++){
+    for (uint32_t i = 0; i < N_FEBS; i++) {
         names.push_back("FEB" + std::to_string(i));
         names.push_back("FEB" + std::to_string(i) + " N LVDS Links");
-        for(uint32_t j=0; j < MAX_LVDS_LINKS_PER_FEB; j++){
+        for (uint32_t j = 0; j < MAX_LVDS_LINKS_PER_FEB; j++) {
             names.push_back("F" + std::to_string(i) + "L" + std::to_string(j) + " Status");
-            names.push_back("F" + std::to_string(i) + "L" + std::to_string(j) + " Disparity Errors");
+            names.push_back("F" + std::to_string(i) + "L" + std::to_string(j) +
+                            " Disparity Errors");
             names.push_back("F" + std::to_string(i) + "L" + std::to_string(j) + " 8b/10b Errors");
             names.push_back("F" + std::to_string(i) + "L" + std::to_string(j) + " Num Hits LVDS");
         }
@@ -148,18 +148,17 @@ void init_banks() {
     namename = std::string("Names PVSC");
     names.clear();
     for (uint32_t i = 0; i < N_FEBS; i++) {
-        for (uint32_t j = 0; j < N_CHIPS; j++){
-            std::string index = std::to_string(i*N_CHIPS + j);
+        for (uint32_t j = 0; j < N_CHIPS; j++) {
+            std::string index = std::to_string(i * N_CHIPS + j);
             names.push_back(index + " ID upper");
             names.push_back(index + " ID lower");
-            for(uint32_t k=0; k < nadcvals; k++){
+            for (uint32_t k = 0; k < nadcvals; k++) {
                 std::string s = index + " " + adcnames[k];
                 names.push_back(s);
             }
         }
     }
     link_settings[namename] = names;
-
 }
 
 int begin_of_run() {
@@ -274,17 +273,21 @@ void sc_settings_changed(midas::odb o) {
     }
 
     if (name == "Trigger injection" && o) {
-        const uint32_t injection_pulse_duration = m_settings["DAQ"]["Commands"]["Injection pulse duration"];
+        const uint32_t injection_pulse_duration =
+            m_settings["DAQ"]["Commands"]["Injection pulse duration"];
         if (InjectASICs(*feb_sc, injection_pulse_duration) != FE_SUCCESS)
             cm_msg(MERROR, "on_settings_changed", "injection trigger failed!");
         o = false;
     }
 
     if (name == "Trigger injection loop" && o) {
-        const uint32_t injection_pulse_duration = m_settings["DAQ"]["Commands"]["Injection pulse duration"];
+        const uint32_t injection_pulse_duration =
+            m_settings["DAQ"]["Commands"]["Injection pulse duration"];
         const uint32_t num_repetitions = m_settings["DAQ"]["Commands"]["Number of pulses"];
-        const uint32_t wait_between_pulses = m_settings["DAQ"]["Commands"]["Wait time between pulses (ms)"];
-        if (InjectASICsInLoop(*feb_sc, injection_pulse_duration, num_repetitions, wait_between_pulses) != FE_SUCCESS)
+        const uint32_t wait_between_pulses =
+            m_settings["DAQ"]["Commands"]["Wait time between pulses (ms)"];
+        if (InjectASICsInLoop(*feb_sc, injection_pulse_duration, num_repetitions,
+                              wait_between_pulses) != FE_SUCCESS)
             cm_msg(MERROR, "on_settings_changed", "injection trigger loop failed!");
         o = false;
     }
@@ -292,20 +295,22 @@ void sc_settings_changed(midas::odb o) {
     if (name == "Full chip Injection" && o) {
         const uint8_t min_columns = m_settings["DAQ"]["Commands"]["Injection min column"];
         const uint8_t max_columns = m_settings["DAQ"]["Commands"]["Injection max column"];
-        const uint8_t min_rows =    m_settings["DAQ"]["Commands"]["Injection min rows"];
-        const uint8_t max_rows =    m_settings["DAQ"]["Commands"]["Injection max rows"];
-        const uint32_t injection_pulse_duration = m_settings["DAQ"]["Commands"]["Injection pulse duration"];
+        const uint8_t min_rows = m_settings["DAQ"]["Commands"]["Injection min rows"];
+        const uint8_t max_rows = m_settings["DAQ"]["Commands"]["Injection max rows"];
+        const uint32_t injection_pulse_duration =
+            m_settings["DAQ"]["Commands"]["Injection pulse duration"];
         const uint32_t num_repetitions = m_settings["DAQ"]["Commands"]["Number of pulses"];
-        const uint32_t wait_between_pulses = m_settings["DAQ"]["Commands"]["Wait time between pulses (ms)"];
-        if (FullChipInjection(*feb_sc, m_settings, min_columns, max_columns, min_rows, max_rows, injection_pulse_duration, num_repetitions, wait_between_pulses) != FE_SUCCESS)
-            cm_msg(MERROR, "on_settings_changed" , "injection configuration failed!");
+        const uint32_t wait_between_pulses =
+            m_settings["DAQ"]["Commands"]["Wait time between pulses (ms)"];
+        if (FullChipInjection(*feb_sc, m_settings, min_columns, max_columns, min_rows, max_rows,
+                              injection_pulse_duration, num_repetitions,
+                              wait_between_pulses) != FE_SUCCESS)
+            cm_msg(MERROR, "on_settings_changed", "injection configuration failed!");
         o = false;
     }
-
 }
 
 int frontend_init() {
-
     // create ODB copy for settings
     settings.connect_and_fix_structure("/Equipment/Quads/Settings/");
     m_settings.connect("/Equipment/Quads/Settings");
@@ -422,27 +427,27 @@ int read_sc_event(char* pevent, int off) {
         if (FEBActive) {
             vector<uint32_t> adcdata(N_CHIPS * 4 * 3);
             feb_sc->FEB_read(febIDx, MP_READBACK_MEMS_START_REGISTER_R, adcdata);
-            for (uint32_t c = 0; c < N_CHIPS*3; c+=3 ) {
-                adc_banks.push_back((c/3 >> 8) & 0xFF);
-                adc_banks.push_back((c/3) & 0xFF);
-                adc_banks.push_back((adcdata[0 + 4*c] & 0xFF));
-                adc_banks.push_back(((adcdata[0 + 4*c] >> 8) & 0xFF));
-                adc_banks.push_back(((adcdata[0 + 4*c] >>16) & 0xFF));
-                adc_banks.push_back(((adcdata[0 + 4*c] >>24) & 0xFF));
-                adc_banks.push_back((adcdata[1 + 4*c] & 0xFF));
-                adc_banks.push_back(((adcdata[1 + 4*c] >> 8) & 0xFF));
-                adc_banks.push_back(((adcdata[1 + 4*c] >>16) & 0xFF));
-                adc_banks.push_back(((adcdata[1 + 4*c] >>24) & 0xFF));
-                adc_banks.push_back((adcdata[2 + 4*c] & 0xFF));
-                adc_banks.push_back(((adcdata[2 + 4*c] >> 8) & 0xFF));
-                adc_banks.push_back(((adcdata[2 + 4*c] >>16) & 0xFF));
-                adc_banks.push_back(((adcdata[2 + 4*c] >>24) & 0xFF));
-                adc_banks.push_back((adcdata[3 + 4*c] & 0xFF));
+            for (uint32_t c = 0; c < N_CHIPS * 3; c += 3) {
+                adc_banks.push_back((c / 3 >> 8) & 0xFF);
+                adc_banks.push_back((c / 3) & 0xFF);
+                adc_banks.push_back((adcdata[0 + 4 * c] & 0xFF));
+                adc_banks.push_back(((adcdata[0 + 4 * c] >> 8) & 0xFF));
+                adc_banks.push_back(((adcdata[0 + 4 * c] >> 16) & 0xFF));
+                adc_banks.push_back(((adcdata[0 + 4 * c] >> 24) & 0xFF));
+                adc_banks.push_back((adcdata[1 + 4 * c] & 0xFF));
+                adc_banks.push_back(((adcdata[1 + 4 * c] >> 8) & 0xFF));
+                adc_banks.push_back(((adcdata[1 + 4 * c] >> 16) & 0xFF));
+                adc_banks.push_back(((adcdata[1 + 4 * c] >> 24) & 0xFF));
+                adc_banks.push_back((adcdata[2 + 4 * c] & 0xFF));
+                adc_banks.push_back(((adcdata[2 + 4 * c] >> 8) & 0xFF));
+                adc_banks.push_back(((adcdata[2 + 4 * c] >> 16) & 0xFF));
+                adc_banks.push_back(((adcdata[2 + 4 * c] >> 24) & 0xFF));
+                adc_banks.push_back((adcdata[3 + 4 * c] & 0xFF));
             }
         } else {
-            for (uint32_t c = 0; c < N_CHIPS*3; c+=3 ) {
-                adc_banks.push_back((c/3 >> 8) & 0xFF);
-                adc_banks.push_back((c/3) & 0xFF);
+            for (uint32_t c = 0; c < N_CHIPS * 3; c += 3) {
+                adc_banks.push_back((c / 3 >> 8) & 0xFF);
+                adc_banks.push_back((c / 3) & 0xFF);
                 adc_banks.push_back(0);
                 adc_banks.push_back(0);
                 adc_banks.push_back(0);
@@ -484,7 +489,7 @@ int read_sc_event(char* pevent, int off) {
 }
 
 EQUIPMENT equipment[] = {{
-                             "Quads",                    /* equipment name */
+                             "Quads",                           /* equipment name */
                              {1, 0,                             /* event ID, trigger mask */
                               "SYSTEM",                         /* event buffer */
                               EQ_PERIODIC,                      /* equipment type */

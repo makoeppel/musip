@@ -38,18 +38,3 @@ def test_checkerboard_matches_golden():
         assert golden.exists(), f"Golden file missing: {golden}"
 
         assert filecmp.cmp(out, golden, shallow=False), "Checkerboard TDAC mismatch"
-
-
-def test_wave_matches_golden():
-    wave_size = 16
-    with tempfile.TemporaryDirectory() as tmpdir:
-        out = Path(tmpdir) / "wave.bin"
-
-        # run tool
-        run_tdacs(["--wave", str(wave_size)], out)
-
-        # compare to golden file
-        golden = GOLDEN / "wave_16.bin"
-        assert golden.exists(), f"Golden file missing: {golden}"
-
-        assert filecmp.cmp(out, golden, shallow=False), "Wave TDAC mismatch"

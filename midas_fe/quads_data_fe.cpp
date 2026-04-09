@@ -32,27 +32,26 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
-#include <sstream>
 #include <iomanip>
-#include <string>
-
 #include <iostream>
 #include <list>
+#include <sstream>
+#include <string>
 
 // clang-format off
 #include "midas.h"
 // clang-format on
-#include "mcstd.h"
-#include "mfe.h"
-#include "msystem.h"
-#include "odbxx.h"
 #include <chrono>
 
 #include "DummyFEBSlowcontrolInterface.h"
 #include "FEBSlowcontrolInterface.h"
+#include "mcstd.h"
+#include "mfe.h"
 #include "missing_hardware.h"
+#include "msystem.h"
 #include "mudaq_device.h"
 #include "odb_setup.h"
+#include "odbxx.h"
 #include "utils.h"
 
 // MIDAS settings
@@ -78,8 +77,7 @@ std::map<uint64_t, std::list<mevent_t>> mevents;
 midas::odb m_settings;
 bool saw_readout_enabled = false;
 
-static void print_swb_counters(mudaq::DmaMudaqDevice &mu)
-{
+static void print_swb_counters(mudaq::DmaMudaqDevice& mu) {
     // counter / rate
     // 0-3: input link subheader cnt / rate
     // 4-7: input link hit cnt / rate
@@ -88,33 +86,36 @@ static void print_swb_counters(mudaq::DmaMudaqDevice &mu)
     printf("Input subheader (cnt / rate (Hz))\n");
     for (int i = 0; i <= 3; ++i) {
         mu.write_register(SWB_COUNTER_REGISTER_W, i);
-        uint32_t cnt  = mu.read_register_ro(SWB_COUNTER_REGISTER_R);
+        uint32_t cnt = mu.read_register_ro(SWB_COUNTER_REGISTER_R);
         uint32_t rate = mu.read_register_ro(SWB_LINK_COUNTER_REGISTER_R);
         printf("Link:%i %i / %i\n", i, cnt, rate);
     }
     printf("Input hit (cnt / rate (Hz))\n");
     for (int i = 4; i <= 7; ++i) {
         mu.write_register(SWB_COUNTER_REGISTER_W, i);
-        uint32_t cnt  = mu.read_register_ro(SWB_COUNTER_REGISTER_R);
+        uint32_t cnt = mu.read_register_ro(SWB_COUNTER_REGISTER_R);
         uint32_t rate = mu.read_register_ro(SWB_LINK_COUNTER_REGISTER_R);
         printf("Link:%i %i / %i\n", i, cnt, rate);
     }
     printf("Input package (cnt / rate (Hz))\n");
     for (int i = 8; i <= 11; ++i) {
         mu.write_register(SWB_COUNTER_REGISTER_W, i);
-        uint32_t cnt  = mu.read_register_ro(SWB_COUNTER_REGISTER_R);
+        uint32_t cnt = mu.read_register_ro(SWB_COUNTER_REGISTER_R);
         uint32_t rate = mu.read_register_ro(SWB_LINK_COUNTER_REGISTER_R);
         printf("Link:%i %i / %i\n", i, cnt, rate);
     }
     mu.write_register(SWB_COUNTER_REGISTER_W, 12);
-    uint32_t cnt  = mu.read_register_ro(SWB_COUNTER_REGISTER_R);
+    uint32_t cnt = mu.read_register_ro(SWB_COUNTER_REGISTER_R);
     uint32_t rate = mu.read_register_ro(SWB_LINK_COUNTER_REGISTER_R);
     printf("MUX out (cnt / rate (Hz)):%i / %i\n", cnt, rate);
 
-    printf("DMA hit cnt out: %i \n", mu.read_register_ro(EVENT_BUILD_IDLE_NOT_HEADER_R) * 4); // hit cnt to DMA
-    printf("DMA hit rate out: %i \n", mu.read_register_ro(EVENT_BUILD_TAG_FIFO_FULL_R)); // fifo rate to DMA
-    printf("DMA skip hit cnt: %i \n", mu.read_register_ro(EVENT_BUILD_SKIP_EVENT_DMA_R) * 4); // hit drop DMA busy
-    printf("DMA FIFO full: %i \n", mu.read_register_ro(BUFFER_STATUS_REGISTER_R)); // fifo full cnt
+    printf("DMA hit cnt out: %i \n",
+           mu.read_register_ro(EVENT_BUILD_IDLE_NOT_HEADER_R) * 4);  // hit cnt to DMA
+    printf("DMA hit rate out: %i \n",
+           mu.read_register_ro(EVENT_BUILD_TAG_FIFO_FULL_R));  // fifo rate to DMA
+    printf("DMA skip hit cnt: %i \n",
+           mu.read_register_ro(EVENT_BUILD_SKIP_EVENT_DMA_R) * 4);  // hit drop DMA busy
+    printf("DMA FIFO full: %i \n", mu.read_register_ro(BUFFER_STATUS_REGISTER_R));  // fifo full cnt
 }
 
 int init_mudaq(mudaq::MudaqDevice& mu) {
@@ -160,7 +161,6 @@ int init_mudaq(mudaq::MudaqDevice& mu) {
 }
 
 int begin_of_run() {
-
     // setup readout state register
     readout_state_regs = 0;
 
@@ -182,17 +182,17 @@ int begin_of_run() {
 #ifdef NO_A10_BOARD
 
 #else
-    if ((bool) m_settings["Readout"]["Datagen Enable"]) {
+    if ((bool)m_settings["Readout"]["Datagen Enable"]) {
         // setup data generator
         cm_msg(MINFO, "quad_fe", "Use datagenerator with divider register %i",
-               (int) m_settings["Readout"]["Datagen Divider"]);
+               (int)m_settings["Readout"]["Datagen Divider"]);
         mu.write_register(DATAGENERATOR_DIVIDER_REGISTER_W,
-                          (int) m_settings["Readout"]["Datagen Divider"]);
+                          (int)m_settings["Readout"]["Datagen Divider"]);
         readout_state_regs = SET_USE_BIT_GEN_LINK(readout_state_regs);
     }
 #endif
 
-    if ((bool) m_settings["Readout"]["use_merger"]) {
+    if ((bool)m_settings["Readout"]["use_merger"]) {
         // readout merger
         cm_msg(MINFO, "quad_fe", "Use Time Merger");
         readout_state_regs = SET_USE_BIT_MERGER(readout_state_regs);
@@ -202,8 +202,8 @@ int begin_of_run() {
         readout_state_regs = SET_USE_BIT_STREAM(readout_state_regs);
     }
     readout_state_regs = SET_USE_BIT_GENERIC(readout_state_regs);
-    use_software_dummy = (bool) m_settings["Readout"]["Software dummy"];
-    n_mevents = (int) m_settings["Readout"]["n_mevents"];
+    use_software_dummy = (bool)m_settings["Readout"]["Software dummy"];
+    n_mevents = (int)m_settings["Readout"]["n_mevents"];
 
 #ifdef NO_A10_BOARD
 
@@ -213,13 +213,13 @@ int begin_of_run() {
 
     // request to read blocks of 256 bits
     mu.write_register(GET_N_DMA_WORDS_REGISTER_W,
-                      (int) m_settings["Readout"]["max_requested_words"]);
+                      (int)m_settings["Readout"]["max_requested_words"]);
 
     // set event id for this frontend
     mu.write_register(FARM_EVENT_ID_REGISTER_W, eventID_data);
 
     // link masks
-    mu.write_register(SWB_GENERIC_MASK_REGISTER_W, (int) m_settings["Readout"]["mask_n_generic"]);
+    mu.write_register(SWB_GENERIC_MASK_REGISTER_W, (int)m_settings["Readout"]["mask_n_generic"]);
 
     // release reset
     mu.write_register_wait(RESET_REGISTER_W, 0x0, 100);
@@ -248,8 +248,7 @@ int frontend_exit_user() {
     return SUCCESS;
 }
 
-int create_midas_events(uint32_t* dmaBuffer, uint32_t dmaBufSize, int rbh)
-{
+int create_midas_events(uint32_t* dmaBuffer, uint32_t dmaBufSize, int rbh) {
     // dmaBufSize is passed as maxidx, so the valid number of uint32_t words is dmaBufSize + 1
     const uint32_t n_u32 = dmaBufSize + 1;
 
@@ -263,8 +262,8 @@ int create_midas_events(uint32_t* dmaBuffer, uint32_t dmaBufSize, int rbh)
     if (n_u64 == 0)
         return SUCCESS;
 
-    static constexpr uint64_t kTimestampMask = (1ULL << 39) - 1ULL; // bits 0..38
-    static constexpr uint64_t kFrameTicks    = 2000ULL;             // 16 us / 8 ns
+    static constexpr uint64_t kTimestampMask = (1ULL << 39) - 1ULL;  // bits 0..38
+    static constexpr uint64_t kFrameTicks = 2000ULL;                 // 16 us / 8 ns
 
     struct HitWord {
         uint64_t word;
@@ -278,8 +277,8 @@ int create_midas_events(uint32_t* dmaBuffer, uint32_t dmaBufSize, int rbh)
     // Rebuild 64-bit words from DMA buffer
     // Assumption: dmaBuffer[0]=low32, dmaBuffer[1]=high32
     for (uint32_t i = 0; i < n_u32_even; i += 2) {
-        uint64_t word = static_cast<uint64_t>(dmaBuffer[i]) |
-                        (static_cast<uint64_t>(dmaBuffer[i + 1]) << 32);
+        uint64_t word =
+            static_cast<uint64_t>(dmaBuffer[i]) | (static_cast<uint64_t>(dmaBuffer[i + 1]) << 32);
 
         uint64_t ts = word & kTimestampMask;
         uint64_t frame = ts / kFrameTicks;
@@ -289,9 +288,7 @@ int create_midas_events(uint32_t* dmaBuffer, uint32_t dmaBufSize, int rbh)
 
     // Sort by timestamp
     std::sort(hits.begin(), hits.end(),
-              [](const HitWord& a, const HitWord& b) {
-                  return a.ts < b.ts;
-              });
+              [](const HitWord& a, const HitWord& b) { return a.ts < b.ts; });
 
     // Reserve ONE MIDAS event
     void* p = nullptr;
@@ -319,8 +316,7 @@ int create_midas_events(uint32_t* dmaBuffer, uint32_t dmaBufSize, int rbh)
         const uint64_t frame_id = hits[i].frame;
 
         size_t j = i + 1;
-        while (j < hits.size() && hits[j].frame == frame_id)
-            ++j;
+        while (j < hits.size() && hits[j].frame == frame_id) ++j;
 
         const size_t frame_nhits = j - i;
 
@@ -342,7 +338,7 @@ int create_midas_events(uint32_t* dmaBuffer, uint32_t dmaBufSize, int rbh)
         // Store 64-bit words as two uint32_t words: low32, high32
         for (size_t k = 0; k < frame_nhits; ++k) {
             const uint64_t w = hits[i + k].word;
-            data[2 * k]     = static_cast<uint32_t>(w & 0xFFFFFFFFULL);
+            data[2 * k] = static_cast<uint32_t>(w & 0xFFFFFFFFULL);
             data[2 * k + 1] = static_cast<uint32_t>((w >> 32) & 0xFFFFFFFFULL);
         }
 
@@ -383,7 +379,6 @@ int read_stream_thread(void*) {
 
     // actuall readout loop
     while (is_readout_thread_enabled()) {
-
         std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 
         // don't readout events if we are not running
@@ -402,31 +397,39 @@ int read_stream_thread(void*) {
         // wait for requested data
         cnt_loop = 0;
         timeout = false;
-        while ( (mu.read_register_ro(EVENT_BUILD_STATUS_REGISTER_R) & 1) == 0 ) {
-            if ( use_timeout && cnt_loop++ >= readout_timeout ) {timeout = true; break;}
-            if ( !readout_enabled() ) break; // TODO: we break here hard later the firmware should stop at run end
+        while ((mu.read_register_ro(EVENT_BUILD_STATUS_REGISTER_R) & 1) == 0) {
+            if (use_timeout && cnt_loop++ >= readout_timeout) {
+                timeout = true;
+                break;
+            }
+            if (!readout_enabled())
+                break;  // TODO: we break here hard later the firmware should stop at run end
             ss_sleep(10);
         }
 
         // dont read from the buffer if the status is not done
-        if (timeout) continue;
+        if (timeout)
+            continue;
 
         // disable dma
         mu.disable();
 
         // get written words from FPGA in bytes
         uint32_t size_dma_buf = mu.last_endofevent_addr() * 256 / 8;
-        uint32_t maxidx = (mu.last_endofevent_addr()+1)*8-1;
+        uint32_t maxidx = (mu.last_endofevent_addr() + 1) * 8 - 1;
         uint32_t last_written = mu.last_written_addr();
 
         std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-        std::cout << "Time difference (DMA) = " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << "[µs]" << std::endl;
+        std::cout << "Time difference (DMA) = "
+                  << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count()
+                  << "[µs]" << std::endl;
 
         begin = std::chrono::steady_clock::now();
 
         print_swb_counters(mu);
-        uint32_t maxwords = (uint32_t) m_settings["Readout"]["max_requested_words"];
-        printf("0x%08x 0x%08x 0x%08x 0x%08x 0x%08x 0x%08x\n", mu.last_written_addr(), mu.last_endofevent_addr(), maxidx, size_dma_buf, maxwords, maxwords*8);
+        uint32_t maxwords = (uint32_t)m_settings["Readout"]["max_requested_words"];
+        printf("0x%08x 0x%08x 0x%08x 0x%08x 0x%08x 0x%08x\n", mu.last_written_addr(),
+               mu.last_endofevent_addr(), maxidx, size_dma_buf, maxwords, maxwords * 8);
 
         // std::cout << std::endl;
         // for(int i=0; i < 20; i++)
@@ -436,8 +439,9 @@ int read_stream_thread(void*) {
         // for(int i=0; i < 20; i++)
         //     std::cout << std::hex << last_written+i << " 0x" <<  dma_buf[last_written+i] << " ";
         std::cout << std::endl;
-        for(int i=-20; i < 20; i++)
-            std::cout << std::hex << maxwords*8+i << " 0x" <<  dma_buf[maxwords*8+i] << std::endl;
+        for (int i = -20; i < 20; i++)
+            std::cout << std::hex << maxwords * 8 + i << " 0x" << dma_buf[maxwords * 8 + i]
+                      << std::endl;
         // printf("maxidx\n");
         // for(int i=0; i < 20; i++)
         //     std::cout << std::hex << 0x3fbfff+i << " 0x" <<  dma_buf[0x3fbfff+i] << " ";
@@ -463,7 +467,6 @@ int read_stream_thread(void*) {
         // for(int i=-20; i < 20; i++)
         //     std::cout << std::hex << not_one+i << " 0x" <<  dma_buf[not_one+i] << std::endl;
 
-
         // std::cout << std::endl;
 
         // for(int i=0; i < 10; i++)
@@ -473,13 +476,13 @@ int read_stream_thread(void*) {
 
         // while ( true ) {};
 
-        if(size_dma_buf > MUDAQ_DMABUF_DATA_LEN) {
+        if (size_dma_buf > MUDAQ_DMABUF_DATA_LEN) {
             cm_msg(MERROR, "ro_swb_fe", "Read invalid DMA buffer size %i!\n", size_dma_buf);
             continue;
         }
         // [AK] NOTE: use direct copy as memcpy does not arantee
         //            non-optimization for volatile
-        for(uint32_t i = 0; i < size_dma_buf/4; i++) {
+        for (uint32_t i = 0; i < size_dma_buf / 4; i++) {
             dma_buf_local[i] = dma_buf[i];
         }
 
@@ -487,18 +490,18 @@ int read_stream_thread(void*) {
         create_midas_events(dma_buf_local, maxidx, rbh);
 
         end = std::chrono::steady_clock::now();
-        std::cout << "Time difference (EVENT) = " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << "[µs]" << std::endl;
+        std::cout << "Time difference (EVENT) = "
+                  << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count()
+                  << "[µs]" << std::endl;
 
         printf("0x%08x\n", mu.read_register_ro(EVENT_BUILD_IDLE_NOT_HEADER_R));
         printf("0x%08x\n", mu.read_register_ro(BUFFER_STATUS_REGISTER_R));
-
     }
 
     return SUCCESS;
 }
 
 int frontend_init() {
-
     // get copy of setting
     m_settings.connect("/Equipment/Quads/Settings");
 
@@ -538,7 +541,7 @@ int frontend_init() {
     cm_set_transition_sequence(TR_STOP, 700);
 
     // set write cache to 10MB
-    //set_cache_size("SYSTEM", 10000000);
+    // set_cache_size("SYSTEM", 10000000);
 
     return SUCCESS;
 }

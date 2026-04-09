@@ -15,10 +15,10 @@ Recommended time delay between commands: 5mSec minimum. Some commands might requ
 longer time. In such cases, refer to NOTE following command description.
 */
 
-//void my_settings_changed(midas::odb);
+// void my_settings_changed(midas::odb);
 
 class GenesysDriver : public PowerDriver {
-public:
+   public:
     GenesysDriver(std::string n, EQUIPMENT_INFO* inf);
     ~GenesysDriver();
 
@@ -26,12 +26,10 @@ public:
     INT Init() override;
     INT ReadAll() override;
 
-    std::string getDriverName() override {
-        return "Genesys";
-    }
+    std::string getDriverName() override { return "Genesys"; }
 
-private:
-    //utility/communications functions
+   private:
+    // utility/communications functions
     bool SetActiveChannel(int);
     void SetBlink(int, bool, INT&);
     void SetInterlock(int, bool, INT&);
@@ -45,7 +43,7 @@ private:
 
     int reply_time_out;
 
-    //local copy of hardware settings
+    // local copy of hardware settings
 
     std::vector<std::string> idCode;
     std::vector<bool> interlock_enabled;
