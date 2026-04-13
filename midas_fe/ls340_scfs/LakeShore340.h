@@ -78,7 +78,7 @@
  *  - ls340_settings:  keeps configuration settings, etc.
  *     - intern:           private variables
  *        - ets_in_use:    flag showing if the ets rs232 terminal server is used (1=yes/0=no)
- *        - reconnection_timeout: timeout in (sec) after which a reconnection attempt is made 
+ *        - reconnection_timeout: timeout in (sec) after which a reconnection attempt is made
  *        - odb_offset:    odb offset for the 'set point' within the output variables.
  *                         Needed by the forced update routine.
  *        - odb_output:    odb output variable path. Needed by the forced update routine.

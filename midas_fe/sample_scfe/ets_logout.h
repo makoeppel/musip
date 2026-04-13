@@ -11,6 +11,6 @@
 #ifndef _ETS_LOGOUT_
 #define _ETS_LOGOUT_
 
-int ets_logout(void *info, int wait, int detailed_msg);
+int ets_logout(void* info, int wait, int detailed_msg);
 
-#endif // _ETS_LOGOUT_
+#endif  // _ETS_LOGOUT_

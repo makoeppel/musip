@@ -8,17 +8,16 @@
 #ifndef POWERDRIVER_H
 #define POWERDRIVER_H
 
-#include "BaseClient.h"
-#include "SerialClient.h"
-#include "TCPClient.h"
-
-#include "midas.h"
-#include "odbxx.h"
-
 #include <atomic>
 #include <iostream>
 #include <mutex>
 #include <thread>
+
+#include "BaseClient.h"
+#include "SerialClient.h"
+#include "TCPClient.h"
+#include "midas.h"
+#include "odbxx.h"
 
 enum COMMAND_TYPE {
     SetVoltage,
@@ -37,7 +36,6 @@ enum COMMAND_TYPE {
     SetState,
     SelectChannelAndSetVoltage,
     SelectChannelAndSetCurrent,
-
 
     ReadESR,
     OPC,
@@ -60,32 +58,22 @@ enum COMMAND_TYPE {
     CurrHighCapacitanceOn,
     VoltHighCapacitanceOn
 
-    //TODO Complete with full list of action commands
+    // TODO Complete with full list of action commands
 };
 
 class PowerDriver {
-public:
+   public:
     virtual ~PowerDriver();
 
-    std::vector<bool> GetState() const {
-        return state;
-    }
-    std::vector<float> GetVoltage() const {
-        return voltage;
-    }
-    std::vector<float> GetCurrent() const {
-        return current;
-    }
+    std::vector<bool> GetState() const { return state; }
+    std::vector<float> GetVoltage() const { return voltage; }
+    std::vector<float> GetCurrent() const { return current; }
     virtual std::string ReadIDCode(int, INT&);
     std::vector<std::string> ReadErrorQueue(int, INT&);
-    std::string GetName() {
-        return name;
-    }
+    std::string GetName() { return name; }
 
     INT Connect();
-    INT GetReadStatus() {
-        return readstatus;
-    }
+    INT GetReadStatus() { return readstatus; }
 
     void ReadLoop();
     void StartReading() {
@@ -93,22 +81,12 @@ public:
         readonlythisindex = -1;
     }
     void Print();
-    void SetInitialized() {
-        initialized = true;
-    }
-    void UnsetInitialized() {
-        initialized = false;
-    }
-    void AddReadFault() {
-        n_read_faults = n_read_faults + 1;
-    }
-    void ResetNReadFaults() {
-        n_read_faults = 0;
-    }
+    void SetInitialized() { initialized = true; }
+    void UnsetInitialized() { initialized = false; }
+    void AddReadFault() { n_read_faults = n_read_faults + 1; }
+    void ResetNReadFaults() { n_read_faults = 0; }
 
-    bool Initialized() const {
-        return initialized;
-    }
+    bool Initialized() const { return initialized; }
     bool Enabled();
     bool ReadState(int, INT&);
 
@@ -117,33 +95,23 @@ public:
 
     int ReadESR(int, INT&);
     bool ClearBuffer();
-    int GetNReadFaults() {
-        return n_read_faults;
-    }
+    int GetNReadFaults() { return n_read_faults; }
 
     WORD ReadQCGE(int, INT&);
-    EQUIPMENT_INFO GetInfo() {
-        return *info;
-    } //by value, so you cant modify the original
+    EQUIPMENT_INFO GetInfo() { return *info; }  // by value, so you cant modify the original
 
     virtual INT ConnectODB();
-    virtual INT Init() {
-        return FE_ERR_DRIVER;
-    };
-    virtual INT ReadAll() {
-        return FE_ERR_DRIVER;
-    }
+    virtual INT Init() { return FE_ERR_DRIVER; };
+    virtual INT ReadAll() { return FE_ERR_DRIVER; }
     virtual void ReadESRChanged() {};
     virtual bool AskPermissionToTurnOn(int) {
         std::cout << "Ask permissions in derived class!" << std::endl;
         return false;
     };
 
-    virtual std::string getDriverName() {
-        return "PowerDriver";
-    }
+    virtual std::string getDriverName() { return "PowerDriver"; }
 
-protected:
+   protected:
     PowerDriver();
     PowerDriver(std::string, EQUIPMENT_INFO*);
 
@@ -158,8 +126,7 @@ protected:
 
     float relevantchange;
 
-
-    //local copies of hardware state
+    // local copies of hardware state
     std::vector<bool> state;
     std::vector<float> voltage;
     std::vector<float> temperature;
@@ -180,37 +147,37 @@ protected:
     std::atomic<INT> readstatus;
     std::atomic<int> readonlythisindex;
 
-    //read
-    float Read(std::string,INT&);
-    float ReadSetVoltage(int,INT&);
-    float ReadSetCurrent(int,INT&);
-    float ReadCurrentLimit(int,INT&);
-    float ReadOVPLevel(int,INT&);
-    std::string ReadSourceMode(int,INT&);
-    //set
+    // read
+    float Read(std::string, INT&);
+    float ReadSetVoltage(int, INT&);
+    float ReadSetCurrent(int, INT&);
+    float ReadCurrentLimit(int, INT&);
+    float ReadOVPLevel(int, INT&);
+    std::string ReadSourceMode(int, INT&);
+    // set
     bool SelectChannel(int);
     bool OPC();
-    bool Set(std::string,INT&);
-    void SetCurrentLimit(int,float,INT&);
+    bool Set(std::string, INT&);
+    void SetCurrentLimit(int, float, INT&);
 
-    //watch
+    // watch
     void CurrentLimitChanged();
     void SetStateChanged();
-    void SetState(int,bool,INT&);
-    void SetVoltage(int,float,INT&);
-    void SetCurrent(int,float,INT&);
+    void SetState(int, bool, INT&);
+    void SetVoltage(int, float, INT&);
+    void SetCurrent(int, float, INT&);
     void DemandVoltageChanged();
     void DemandCurrentChanged();
 
     void DemandOVPLevelChanged();
     void SourceModeChanged();
-    void SetOVPLevel(int,float,INT&);
-    void SourceCurrent(int,INT&);
-    void SourceVoltage(int,INT&);
+    void SetOVPLevel(int, float, INT&);
+    void SourceCurrent(int, INT&);
+    void SourceVoltage(int, INT&);
     virtual std::string GenerateCommand(COMMAND_TYPE, float);
     virtual std::string GenerateCommand(COMMAND_TYPE, int, float);
 
-private:
+   private:
     bool initialized = false;
     int min_reply_length;
 };

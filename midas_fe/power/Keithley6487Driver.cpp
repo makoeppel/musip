@@ -1,15 +1,16 @@
 //
 
 #include "Keithley6487Driver.h"
+
 #include <thread>
 
 Keithley6487Driver::Keithley6487Driver() {}
 
 Keithley6487Driver::~Keithley6487Driver() {}
 
-Keithley6487Driver::Keithley6487Driver(std::string n, EQUIPMENT_INFO* inf)
- : PowerDriver(n, inf) {
-    std::cout << " Keithley6487 driver with " << instrumentID.size() << " channels instantiated." << std::endl;
+Keithley6487Driver::Keithley6487Driver(std::string n, EQUIPMENT_INFO* inf) : PowerDriver(n, inf) {
+    std::cout << " Keithley6487 driver with " << instrumentID.size() << " channels instantiated."
+              << std::endl;
 }
 
 INT Keithley6487Driver::ConnectODB() {
@@ -18,12 +19,14 @@ INT Keithley6487Driver::ConnectODB() {
 
     settings["port"](5025);
     settings["reply timout"](300);
-    settings["min reply"](2); // minimum reply , 2 chars , not 3 (not fully figured out why)
+    settings["min reply"](2);  // minimum reply , 2 chars , not 3 (not fully figured out why)
     settings["ESR"](0);
     settings["Max Voltage"](200);
 
     // Placeholder?
-    if (false) { return FE_ERR_ODB; }
+    if (false) {
+        return FE_ERR_ODB;
+    }
     return FE_SUCCESS;
 }
 
@@ -33,7 +36,8 @@ void Keithley6487Driver::InitODBArray() {
     settings_array.connect("/Equipment/" + name + "/Settings");
 }
 
-bool Keithley6487Driver::AskPermissionToTurnOn(int /*channel*/) {//extra check whether it is safe to tunr on supply;
+bool Keithley6487Driver::AskPermissionToTurnOn(
+    int /*channel*/) {  // extra check whether it is safe to tunr on supply;
     return true;
 }
 
@@ -47,7 +51,8 @@ INT Keithley6487Driver::Init() {
         if (client->Write("*RST\n")) {
             cm_msg(MINFO, "Init KEITHLEY 6487 supply ... ", "init global reset of %s", usb.c_str());
         } else {
-            cm_msg(MERROR, "Init KEITHLEY 6487 supply ... ", "could not global reset %s", usb.c_str());
+            cm_msg(MERROR, "Init KEITHLEY 6487 supply ... ", "could not global reset %s",
+                   usb.c_str());
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(client->GetWaitTime()));
     }
@@ -87,9 +92,10 @@ INT Keithley6487Driver::Init() {
         std::this_thread::sleep_for(std::chrono::milliseconds(client->GetWaitTime()));
     }
 
-    for (auto& s: ReadErrorQueue(-1, err)) {
+    for (auto& s : ReadErrorQueue(-1, err)) {
         if (s.find("No error") == std::string::npos) {
-            cm_msg(MERROR, "Init KEITHLEY 6487 supply ... ", " Error from KEITHLEY 6487 supply, namely: %s", s.c_str());
+            cm_msg(MERROR, "Init KEITHLEY 6487 supply ... ",
+                   " Error from KEITHLEY 6487 supply, namely: %s", s.c_str());
         }
     }
 
@@ -102,19 +108,21 @@ INT Keithley6487Driver::Init() {
     current.resize(nChannels);
     currentlimit.resize(nChannels);
     state.resize(nChannels);
-    OVPlevel.resize(nChannels);    
+    OVPlevel.resize(nChannels);
 
     // client->FlushQueu();
     // Read channels
     for (int i(0); i < nChannels; i++) {
         state[i] = ReadState(i, err);
-        if (err != FE_SUCCESS) { return err; }
+        if (err != FE_SUCCESS) {
+            return err;
+        }
     }
 
     // Push to odb
     variables["State"] = state;
     variables["Set State"] = state;
-    
+
     for (int i(0); i < nChannels; i++) {
         voltage[i] = ReadVoltage(i, err);
         demandvoltage[i] = ReadSetVoltage(i, err);
@@ -132,7 +140,9 @@ INT Keithley6487Driver::Init() {
         OVPlevel[i] = ReadOVPLevel(i, err);
         // OVPlevel[i] = 10;
 
-        if (err != FE_SUCCESS) { return err; }
+        if (err != FE_SUCCESS) {
+            return err;
+        }
     }
 
     settings["Identification Code"] = idCode;
@@ -147,15 +157,18 @@ INT Keithley6487Driver::Init() {
     variables["Demand OVP Level"] = OVPlevel;
 
     // Watch functions
-    variables["Set State"].watch([&](midas::odb &arg [[maybe_unused]]) { this->SetStateChanged(); });
-    variables["Current Limit"].watch([&](midas::odb &arg [[maybe_unused]]) { this->CurrentLimitChanged(); });
-    variables["Demand Voltage"].watch([&](midas::odb &arg [[maybe_unused]]) { this->DemandVoltageChanged(); });
-    variables["Demand OVP Level"].watch([&](midas::odb &arg [[maybe_unused]]) { this->DemandOVPLevelChanged(); });
-    settings["Read ESR"].watch([&](midas::odb &arg [[maybe_unused]]) { this->ReadESRChanged(); });
+    variables["Set State"].watch(
+        [&](midas::odb& arg [[maybe_unused]]) { this->SetStateChanged(); });
+    variables["Current Limit"].watch(
+        [&](midas::odb& arg [[maybe_unused]]) { this->CurrentLimitChanged(); });
+    variables["Demand Voltage"].watch(
+        [&](midas::odb& arg [[maybe_unused]]) { this->DemandVoltageChanged(); });
+    variables["Demand OVP Level"].watch(
+        [&](midas::odb& arg [[maybe_unused]]) { this->DemandOVPLevelChanged(); });
+    settings["Read ESR"].watch([&](midas::odb& arg [[maybe_unused]]) { this->ReadESRChanged(); });
 
     return FE_SUCCESS;
 }
-
 
 INT Keithley6487Driver::ReadAll() {
     INT err;
@@ -164,7 +177,9 @@ INT Keithley6487Driver::ReadAll() {
 
     // Update local book keeping
     for (int i(0); i < nChannels; i++) {
-        if (readonlythisindex >= 0 && i != readonlythisindex) { continue; }
+        if (readonlythisindex >= 0 && i != readonlythisindex) {
+            continue;
+        }
 
         bool bvalue = ReadState(i, err);
         err_accumulated = err;
@@ -202,12 +217,12 @@ INT Keithley6487Driver::ReadAll() {
         }
     }
 
-    //for (auto& s: ReadErrorQueue(-1, err)) {
-    //    cm_msg(MINFO, "Read KEITHLEY 6487 supply ... ", "Error queue: %s", s.c_str());
-    //    if (s.find("No error") == std::string::npos) {
-    //        cm_msg(MERROR, "power_fe", " Error from KEITHLEY 6487 supply : %s", s.c_str());
-    //    }
-    //} // Something is off here
+    // for (auto& s: ReadErrorQueue(-1, err)) {
+    //     cm_msg(MINFO, "Read KEITHLEY 6487 supply ... ", "Error queue: %s", s.c_str());
+    //     if (s.find("No error") == std::string::npos) {
+    //         cm_msg(MERROR, "power_fe", " Error from KEITHLEY 6487 supply : %s", s.c_str());
+    //     }
+    // } // Something is off here
 
     ClearBuffer();
     return FE_SUCCESS;
@@ -230,10 +245,10 @@ std::string Keithley6487Driver::GenerateCommand(COMMAND_TYPE cmdt, float val) {
         return "*ESR?\n";
     } else if (cmdt == COMMAND_TYPE::Reset) {
         return "*RST\n";
-    } else if (cmdt == COMMAND_TYPE::SelectChannel){
-        return ""; // Only one channel
+    } else if (cmdt == COMMAND_TYPE::SelectChannel) {
+        return "";  // Only one channel
     } else if (cmdt == COMMAND_TYPE::SetCurrent) {
-        return ""; // Does not set the current
+        return "";  // Does not set the current
     } else if (cmdt == COMMAND_TYPE::ReadCurrent) {
         // return ":READ?\n";
         return "MEAS:CURR?\n";
@@ -242,7 +257,7 @@ std::string Keithley6487Driver::GenerateCommand(COMMAND_TYPE cmdt, float val) {
     } else if (cmdt == COMMAND_TYPE::SetCurrentLimit) {
         return "SOUR:VOLT:ILIM " + std::to_string(val) + "\n";
     } else if (cmdt == COMMAND_TYPE::ReadVoltage) {
-        return "SOUR:VOLT?\n"; // Copy of the ReadSetVoltage!!!
+        return "SOUR:VOLT?\n";  // Copy of the ReadSetVoltage!!!
     } else if (cmdt == COMMAND_TYPE::ReadSetVoltage) {
         return "SOUR:VOLT?\n";
     } else if (cmdt == COMMAND_TYPE::ReadCurrentLimit) {
@@ -251,7 +266,7 @@ std::string Keithley6487Driver::GenerateCommand(COMMAND_TYPE cmdt, float val) {
         return "SOUR:VOLT " + std::to_string(val) + "\n";
     } else if (cmdt == COMMAND_TYPE::Beep) {
         cm_msg(MINFO, "KEITHLEY 6487 supply ... ", "BEEEEEEP BEEEEP mfs");
-        return "\n"; // No other possibility to perform a beep :)
+        return "\n";  // No other possibility to perform a beep :)
     } else if (cmdt == COMMAND_TYPE::SetState) {
         int ch = (int)val;
         if (ch == 1) {
@@ -259,7 +274,8 @@ std::string Keithley6487Driver::GenerateCommand(COMMAND_TYPE cmdt, float val) {
         } else if (ch == 0) {
             return "SOUR:VOLT:STAT OFF\n";
         } else {
-            cm_msg(MERROR, "KEITHLEY 6487 supply ... ", "SetState can be only 1 or 0, and not %d", ch);
+            cm_msg(MERROR, "KEITHLEY 6487 supply ... ", "SetState can be only 1 or 0, and not %d",
+                   ch);
             return "\n";
         }
     } else if (cmdt == COMMAND_TYPE::ReadErrorQueue) {
@@ -279,7 +295,8 @@ std::string Keithley6487Driver::GenerateCommand(COMMAND_TYPE cmdt, int, float va
     if (cmdt == COMMAND_TYPE::SelectChannelAndSetVoltage) {
         return "SOUR:VOLT " + std::to_string(val) + "\n";
     } else {
-        cm_msg(MERROR, "KEITHLEY 6487 supply ... ", "GenerateCommand function is usable only with SelectChannelAndSetVoltage!");
+        cm_msg(MERROR, "KEITHLEY 6487 supply ... ",
+               "GenerateCommand function is usable only with SelectChannelAndSetVoltage!");
         return "";
     }
 }

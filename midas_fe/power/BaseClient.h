@@ -4,21 +4,16 @@
 #include <boost/asio.hpp>
 
 class BaseClient {
-
-public:
+   public:
     BaseClient(int to);
     virtual ~BaseClient();
     virtual bool Connect();
     virtual bool Write(std::string str);
     virtual bool ReadReply(std::string* str, size_t = 3);
-    virtual int GetWaitTime() {
-        return default_wait;
-    }
-    virtual void SetDefaultWaitTime(int value) {
-        default_wait = value;
-    }
+    virtual int GetWaitTime() { return default_wait; }
+    virtual void SetDefaultWaitTime(int value) { default_wait = value; }
 
-protected:
+   protected:
     int default_wait;
     std::string read_stop;
 

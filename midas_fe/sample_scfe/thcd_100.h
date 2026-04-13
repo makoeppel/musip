@@ -16,7 +16,7 @@
 INT thcd_100_in(INT cmd, ...);
 
 /*!
- * <p>THCD-100 Hastings flow monitor device driver (DD) output part. It is handling the communication
- * between the THCD-100 and midas.
+ * <p>THCD-100 Hastings flow monitor device driver (DD) output part. It is handling the
+ * communication between the THCD-100 and midas.
  */
 INT thcd_100_out(INT cmd, ...);

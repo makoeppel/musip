@@ -12,9 +12,9 @@
 /*---- device driver declaration -----------------------------------*/
 
 /*!
- * <p>Device driver for the voltage supply (typically up to 150V max.300V) 
- * for the APD's. It has up to 20 channels and is operated via 
- * MSCB bus master (Node 0 scshv20) attached to the network 
+ * <p>Device driver for the voltage supply (typically up to 150V max.300V)
+ * for the APD's. It has up to 20 channels and is operated via
+ * MSCB bus master (Node 0 scshv20) attached to the network
  * -> MSCB<name> is the name of Node 0
  * -> specifying the slot number of the scshv20 as Node address
  * -> scshv20 channel numbers and names are 00-19

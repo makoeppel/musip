@@ -1,15 +1,16 @@
 //
 
 #include "Keithley2450Driver.h"
+
 #include <thread>
 
 Keithley2450Driver::Keithley2450Driver() {}
 
 Keithley2450Driver::~Keithley2450Driver() {}
 
-Keithley2450Driver::Keithley2450Driver(std::string n, EQUIPMENT_INFO* inf)
- : PowerDriver(n, inf) {
-    std::cout << " Keithley2450 driver with " << instrumentID.size() << " channels instantiated." << std::endl;
+Keithley2450Driver::Keithley2450Driver(std::string n, EQUIPMENT_INFO* inf) : PowerDriver(n, inf) {
+    std::cout << " Keithley2450 driver with " << instrumentID.size() << " channels instantiated."
+              << std::endl;
 }
 
 INT Keithley2450Driver::ConnectODB() {
@@ -27,16 +28,16 @@ INT Keithley2450Driver::ConnectODB() {
     // based on a diode calibration measurement in zurich
     settings["Temp cal slope"](-0.00188);
 
-    if (false) { return FE_ERR_ODB; }
+    if (false) {
+        return FE_ERR_ODB;
+    }
     return FE_SUCCESS;
 }
-
 
 void Keithley2450Driver::InitODBArray() {
     midas::odb settings_array = {{"Channel Names", std::array<std::string, 4>()}};
     settings_array.connect("/Equipment/" + name + "/Settings");
 }
-
 
 INT Keithley2450Driver::Init() {
     INT err;
@@ -87,7 +88,9 @@ INT Keithley2450Driver::Init() {
     // Read channels
     for (int i(0); i < nChannels; i++) {
         state[i] = ReadState(i, err);
-        if (err != FE_SUCCESS) { return err; }
+        if (err != FE_SUCCESS) {
+            return err;
+        }
     }
 
     // Push to odb
@@ -114,10 +117,11 @@ INT Keithley2450Driver::Init() {
         // Hardcoded limit of 20V
         OVPlevel[i] = 20;
         SourceMode[i] = ReadSourceMode(i, err);
-        temperature[i]= (voltage[i]- interception) / slope;
+        temperature[i] = (voltage[i] - interception) / slope;
 
-
-        if (err != FE_SUCCESS) { return err; }
+        if (err != FE_SUCCESS) {
+            return err;
+        }
     }
 
     settings["Identification Code"] = idCode;
@@ -136,58 +140,62 @@ INT Keithley2450Driver::Init() {
     variables["Temperature"] = temperature;
 
     // Watch functions
-    variables["Set State"].watch([&](midas::odb &arg [[maybe_unused]]) { this->SetStateChanged(); });
-    variables["Demand Voltage"].watch([&](midas::odb &arg [[maybe_unused]]) { this->DemandVoltageChanged(); });
-    variables["Demand Current"].watch([&](midas::odb &arg [[maybe_unused]]) { this->DemandCurrentChanged(); });
-    variables["Current Limit"].watch([&](midas::odb &arg [[maybe_unused]]) { this->CurrentLimitChanged(); });
-    variables["Demand OVP Level"].watch([&](midas::odb &arg [[maybe_unused]]) { this->DemandOVPLevelChanged(); });
-    settings["Source Mode"].watch([&](midas::odb &arg [[maybe_unused]]) { this->SourceModeChanged(); });
-    settings["Read ESR"].watch([&](midas::odb &arg [[maybe_unused]]) { this->ReadESRChanged(); });
+    variables["Set State"].watch(
+        [&](midas::odb& arg [[maybe_unused]]) { this->SetStateChanged(); });
+    variables["Demand Voltage"].watch(
+        [&](midas::odb& arg [[maybe_unused]]) { this->DemandVoltageChanged(); });
+    variables["Demand Current"].watch(
+        [&](midas::odb& arg [[maybe_unused]]) { this->DemandCurrentChanged(); });
+    variables["Current Limit"].watch(
+        [&](midas::odb& arg [[maybe_unused]]) { this->CurrentLimitChanged(); });
+    variables["Demand OVP Level"].watch(
+        [&](midas::odb& arg [[maybe_unused]]) { this->DemandOVPLevelChanged(); });
+    settings["Source Mode"].watch(
+        [&](midas::odb& arg [[maybe_unused]]) { this->SourceModeChanged(); });
+    settings["Read ESR"].watch([&](midas::odb& arg [[maybe_unused]]) { this->ReadESRChanged(); });
 
     return FE_SUCCESS;
 }
-
 
 INT Keithley2450Driver::ReadAll() {
     INT err;
     INT err_accumulated;
     int nChannels = instrumentID.size();
-    //update local book keeping
+    // update local book keeping
     for (int i(0); i < nChannels; i++) {
-        if( readonlythisindex >= 0 && i != readonlythisindex) continue;
+        if (readonlythisindex >= 0 && i != readonlythisindex)
+            continue;
 
-        bool bvalue = ReadState(i,err);
+        bool bvalue = ReadState(i, err);
         err_accumulated = err;
-        if(state[i]!=bvalue) //only update odb if there is a change
+        if (state[i] != bvalue)  // only update odb if there is a change
         {
-            state[i]=bvalue;
-            variables["State"][i]=bvalue;
+            state[i] = bvalue;
+            variables["State"][i] = bvalue;
         }
 
-        float fvalue = ReadVoltage(i,err);
+        float fvalue = ReadVoltage(i, err);
         err_accumulated = err_accumulated | err;
-        if( fabs(voltage[i]-fvalue) > fabs(relevantchange*voltage[i]) )
-        {
-            voltage[i]=fvalue;
-            variables["Voltage"][i]=fvalue;
+        if (fabs(voltage[i] - fvalue) > fabs(relevantchange * voltage[i])) {
+            voltage[i] = fvalue;
+            variables["Voltage"][i] = fvalue;
             float tvalue = (fvalue - 0.6643) / -0.00188;
-            temperature[i]= tvalue;
+            temperature[i] = tvalue;
             variables["Temperature"][i] = tvalue;
         }
 
-        fvalue = ReadCurrent(i,err);
+        fvalue = ReadCurrent(i, err);
         err_accumulated = err_accumulated | err;
-        if( fabs(current[i]-fvalue) > fabs(relevantchange*current[i]) )
-        {
-            current[i]=fvalue;
-            variables["Current"][i]=fvalue;
+        if (fabs(current[i] - fvalue) > fabs(relevantchange * current[i])) {
+            current[i] = fvalue;
+            variables["Current"][i] = fvalue;
         }
         sleep(1);
-        fvalue = ReadCurrentLimit(i,err);
+        fvalue = ReadCurrentLimit(i, err);
         err_accumulated = err_accumulated | err;
 
-        //remove the success bit if there is any
-        if(err_accumulated!=FE_SUCCESS)
+        // remove the success bit if there is any
+        if (err_accumulated != FE_SUCCESS)
             return err_accumulated & 0xFFFE;
     }
 
@@ -205,9 +213,7 @@ void Keithley2450Driver::ReadESRChanged() {
 
 // FIXME: this function will be removed in the next cleanup
 // extra check whether it is safe to turn on supply
-bool Keithley2450Driver::AskPermissionToTurnOn(int ) {
-    return true;
-}
+bool Keithley2450Driver::AskPermissionToTurnOn(int) { return true; }
 
 // TODO: see if we can set HIMPedance mode: p12-38
 // :OUTP:<function>:SMODe <state>
@@ -238,8 +244,8 @@ std::string Keithley2450Driver::GenerateCommand(COMMAND_TYPE cmdt, float val) {
             return ":SOUR:VOLT:ILIM?\n";
         } else if (cmdt == COMMAND_TYPE::SetCurrentAsRead) {
             return ":SENS:FUNC \"CURR\"\n";
-        } else if (cmdt == COMMAND_TYPE::ReadSetCurrent){
-            return ":SOUR:CURR?\n"; // Have been added recently
+        } else if (cmdt == COMMAND_TYPE::ReadSetCurrent) {
+            return ":SOUR:CURR?\n";  // Have been added recently
         } else if (cmdt == COMMAND_TYPE::ReadCurrent) {
             // return ":READ?\n";
             return ":MEAS:CURR?\n";
@@ -255,7 +261,7 @@ std::string Keithley2450Driver::GenerateCommand(COMMAND_TYPE cmdt, float val) {
             return ":SOUR:CURR:VLIM " + std::to_string(val) + "\n";
         } else if (cmdt == COMMAND_TYPE::ReadVoltageLimit) {
             return ":SOUR:CURR:VLIM?\n";
-        } else if (cmdt == COMMAND_TYPE::ReadOVPLevel){
+        } else if (cmdt == COMMAND_TYPE::ReadOVPLevel) {
             return ":SOUR:VOLT:PROT?\n";
         } else if (cmdt == COMMAND_TYPE::SetVoltageAsRead) {
             return ":SENS:FUNC \"VOLT\"\n";
@@ -279,25 +285,27 @@ std::string Keithley2450Driver::GenerateCommand(COMMAND_TYPE cmdt, float val) {
             } else if (ch == 0) {
                 return ":OUTP:STAT OFF\n";
             } else {
-                cm_msg(MERROR, "Init KEITH supply ... ", "SetState can be only 1 or 0, and not %d", ch);
+                cm_msg(MERROR, "Init KEITH supply ... ", "SetState can be only 1 or 0, and not %d",
+                       ch);
                 return "\n";
             }
         } else if (cmdt == COMMAND_TYPE::ReadState) {
             return ":OUTP:STAT?\n";
         } else if (cmdt == COMMAND_TYPE::Beep) {
             return ":SYST:BEEP 4400,0.5\n";
-        } else if (cmdt == COMMAND_TYPE::ReadErrorQueue){
+        } else if (cmdt == COMMAND_TYPE::ReadErrorQueue) {
             return ":SYST:ERR:NEXT?\n";
         } else if (cmdt == COMMAND_TYPE::ClearBuffer) {
             return ":TRAC:CLEAR\n";
         }
-    // TOKNOW: It is far from complete!
-    } else if (command_type == "TSP"){
+        // TOKNOW: It is far from complete!
+    } else if (command_type == "TSP") {
         if (cmdt == COMMAND_TYPE::SetCurrent) {
-            return "smu.source.ilimit.level="+std::to_string(val)+"\n";
-        } else if (cmdt == COMMAND_TYPE::ReadCurrent){
+            return "smu.source.ilimit.level=" + std::to_string(val) + "\n";
+        } else if (cmdt == COMMAND_TYPE::ReadCurrent) {
             return "print(smu.measure.read())";
-            // return "smu.measure.read(defbuffer1);printbuffer(defbuffer1.n, defbuffer1.n, defbuffer1)\n";
+            // return "smu.measure.read(defbuffer1);printbuffer(defbuffer1.n, defbuffer1.n,
+            // defbuffer1)\n";
         } else if (cmdt == COMMAND_TYPE::SetCurrentAsRead) {
             // return "smu.source.func = smu.FUNC_CURRENT";
             return "smu.source.func = smu.FUNC_DC_CURRENT";
@@ -305,37 +313,35 @@ std::string Keithley2450Driver::GenerateCommand(COMMAND_TYPE cmdt, float val) {
             return "smu.source.func = smu.FUNC_DC_VOLTAGE";
         } else if (cmdt == COMMAND_TYPE::ReadState) {
             return "print(smu.source.output)\n";
-        } else if (cmdt == COMMAND_TYPE::ReadVoltage){
+        } else if (cmdt == COMMAND_TYPE::ReadVoltage) {
             return "print(smu.measure.read())";
             // return "print(smu.source.level)\n";
-        } else if (cmdt == COMMAND_TYPE::ReadSetVoltage){
+        } else if (cmdt == COMMAND_TYPE::ReadSetVoltage) {
             return "print(smu.source.level)\n";
-        } else if (cmdt == COMMAND_TYPE::ReadCurrentLimit){
+        } else if (cmdt == COMMAND_TYPE::ReadCurrentLimit) {
             return "print(smu.source.ilimit.level)\n";
-        } else if (cmdt == COMMAND_TYPE::SetVoltage){
-            return "smu.source.level="+std::to_string(val)+"\n";
-        } else if (cmdt == COMMAND_TYPE::Beep){
+        } else if (cmdt == COMMAND_TYPE::SetVoltage) {
+            return "smu.source.level=" + std::to_string(val) + "\n";
+        } else if (cmdt == COMMAND_TYPE::Beep) {
             return "beeper.beep(0.5, 4400);\n";
-        } else if (cmdt == COMMAND_TYPE::SetCurrentLimit){
-            return "smu.source.ilimit.level="+std::to_string(val)+"\n";
-        } else if (cmdt == COMMAND_TYPE::SetState){
+        } else if (cmdt == COMMAND_TYPE::SetCurrentLimit) {
+            return "smu.source.ilimit.level=" + std::to_string(val) + "\n";
+        } else if (cmdt == COMMAND_TYPE::SetState) {
             int ch = (int)val;
             if (ch == 1) {
                 return "smu.source.output=smu.ON\n";
-            }
-            else if (ch == 0) {
+            } else if (ch == 0) {
                 return "smu.source.output=smu.OFF\n";
-            }
-            else {
-                std::cout << "Error: set state can be onlz 1 or 0\n";//TODO: message in midas
+            } else {
+                std::cout << "Error: set state can be onlz 1 or 0\n";  // TODO: message in midas
                 return "\n";
             }
-        } else if (cmdt == COMMAND_TYPE::ReadErrorQueue){
+        } else if (cmdt == COMMAND_TYPE::ReadErrorQueue) {
             return "print(errorqueue.next())\n";
-        } else if (cmdt == COMMAND_TYPE::ReadOVPLevel){
+        } else if (cmdt == COMMAND_TYPE::ReadOVPLevel) {
             return "print(smu.source.protect.level)\n";
         } else if (cmdt == COMMAND_TYPE::SetOVPLevel) {
-            return "smu.source.protect.level=smu.PROTECT_"+std::to_string((int)(val))+"V\n";
+            return "smu.source.protect.level=smu.PROTECT_" + std::to_string((int)(val)) + "V\n";
         }
     }
     return "";
@@ -343,24 +349,20 @@ std::string Keithley2450Driver::GenerateCommand(COMMAND_TYPE cmdt, float val) {
 
 std::string Keithley2450Driver::GenerateCommand(COMMAND_TYPE cmdt, int, float val) {
     std::string command_type = settings["Command Type"];
-    if(command_type == "SCPI") {
-        if(cmdt == COMMAND_TYPE::SelectChannelAndSetVoltage) {
+    if (command_type == "SCPI") {
+        if (cmdt == COMMAND_TYPE::SelectChannelAndSetVoltage) {
             return ":SOUR:VOLT " + std::to_string(val) + "\n";
-        }
-        else if(cmdt == COMMAND_TYPE::SelectChannelAndSetCurrent) {
+        } else if (cmdt == COMMAND_TYPE::SelectChannelAndSetCurrent) {
             return ":SOUR:CURR " + std::to_string(val) + "\n";
         }
-    }
-    else if(command_type == "TSP") {
-        if(cmdt == COMMAND_TYPE::SelectChannelAndSetVoltage) {
+    } else if (command_type == "TSP") {
+        if (cmdt == COMMAND_TYPE::SelectChannelAndSetVoltage) {
             return "smu.source.level=" + std::to_string(val) + "\n";
-        }
-        else if(cmdt == COMMAND_TYPE::SelectChannelAndSetCurrent) {
+        } else if (cmdt == COMMAND_TYPE::SelectChannelAndSetCurrent) {
             return "";
             // return "smu.source.level=" + std::to_string(val) + "\n";
         }
-    }
-    else {
+    } else {
         std::cout << "This function is usable only with SelectChannelAndSetVoltage(Current)!\n";
         return "";
     }

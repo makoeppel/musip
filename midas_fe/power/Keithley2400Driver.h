@@ -11,8 +11,7 @@
 #include "PowerDriver.h"
 
 class Keithley2400Driver : public PowerDriver {
-
-public:
+   public:
     Keithley2400Driver();
     Keithley2400Driver(std::string n, EQUIPMENT_INFO* inf);
     ~Keithley2400Driver();
@@ -25,17 +24,15 @@ public:
     std::string ReadIDCode(int, INT&) override;
     std::string GenerateCommand(COMMAND_TYPE cmdt, int ch, float val) override;
 
-    std::string getDriverName() override {
-        return "Keithley2400";
-    }
+    std::string getDriverName() override { return "Keithley2400"; }
 
-private:
+   private:
     void InitODBArray();
     bool AskPermissionToTurnOn(int) override;
     std::string idCode;
     std::string usb;
 
-    //watch
+    // watch
     void ReadESRChanged() override;
 };
 
