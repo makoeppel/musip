@@ -103,7 +103,7 @@ begin
     writeregs(SWB_READOUT_STATE_REGISTER_W)(USE_BIT_TEST_DATA)          <= '0';
     writeregs(SWB_READOUT_STATE_REGISTER_W)(USE_BIT_TEST_ERROR)         <= '0';
     writeregs(SWB_READOUT_STATE_REGISTER_W)(USE_BIT_STREAM)             <= '1';
-    writeregs(SWB_READOUT_STATE_REGISTER_W)(USE_BIT_MERGER)             <= '0';
+    writeregs(SWB_READOUT_STATE_REGISTER_W)(USE_BIT_MERGER)             <= '1';
     writeregs(SWB_READOUT_STATE_REGISTER_W)(USE_BIT_SUBHDR_SUPPRESS)    <= '0';
     writeregs(SWB_READOUT_STATE_REGISTER_W)(USE_BIT_HEAD_SUPPRESS)      <= '0';
 
@@ -114,7 +114,7 @@ begin
     writeregs(SWB_LINK_MASK_PIXEL_REGISTER_W)(4 downto 0)   <= '1' & x"F";--x"00000048";
     writeregs(SWB_LINK_MASK_PIXEL_REGISTER_W)(9 downto 5)   <= '1' & x"F";--x"00000048";
     writeregs(SWB_LINK_MASK_SCIFI_REGISTER_W)(1 downto 0)   <= "01";
-    writeregs(SWB_GENERIC_MASK_REGISTER_W)(7 downto 0)      <= x"FF";
+    writeregs(SWB_GENERIC_MASK_REGISTER_W)(7 downto 0)      <= x"01";
     writeregs(FARM_LINK_MASK_REGISTER_W)(3 downto 0)      <= x"F";
 
     writeregs(FEB_ENABLE_REGISTER_W)                        <= x"0000001F";--x"00000048";
@@ -175,52 +175,5 @@ begin
     dma_data_array(5) <= dma_data(5*32 + 31 downto 5*32);
     dma_data_array(6) <= dma_data(6*32 + 31 downto 6*32);
     dma_data_array(7) <= dma_data(7*32 + 31 downto 7*32);
-
-    --! test DMA
-    --! ------------------------------------------------------------------------
-    --! ------------------------------------------------------------------------
-    --! ------------------------------------------------------------------------
-    e_pcie0_block : entity work.pcie_block
-    generic map (
-        g_DMA_WADDR_WIDTH => 11,
-        g_DMA_RADDR_WIDTH => 11,
-        g_DMA_DATA_WIDTH => 256,
-        g_PCIE_X => 8--,
-    )
-    port map (
-        pcie_rx_p               => (others => '1'),
-        pcie_tx_p               => open,
-        i_pcie_perst_n          => reset_n,
-        i_pcie_refclk           => clk,
-
-        readregs                => readreg,
-        writeregs               => open,
-        regwritten              => open,
-
-        i_clk_B                 => clk,
-        o_writeregs_B           => open,
-        o_regwritten_B          => open,
-
-        writememreadaddr        => (others => '0'),
-        writememreaddata        => open,
-        writememclk             => clk,
-
-        readmem_addr            => (others => '0'),
-        readmem_data            => (others => '0'),
-        readmem_wren            => '0',
-        readmemclk              => clk,
-        readmem_endofevent      => '0',
-
-        dma_data                => dma_data,
-        dmamem_wren             => dma_wren,
-        dmamem_endofevent       => endofevent,
-        dmamemhalffull          => dmamemhalffull,
-        dmamemclk               => clk,
-
-        dma2memclk              => clk,
-
-        i_areset_n              => '1',
-        o_clk                   => open--,
-    );
 
 end architecture;

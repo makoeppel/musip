@@ -652,7 +652,7 @@ architecture rtl of opq_monolithic_4lane_merge_opq_0 is
     -- state
     type page_allocator_state_t is (IDLE, FETCH_TICKET, WRITE_HEAD, WRITE_TAIL, ALLOC_PAGE, WRITE_PAGE, RESET);
     signal page_allocator_state             : page_allocator_state_t;
-    subtype alloc_page_flow_t is integer range 0 to N_LANE-1;
+    subtype alloc_page_flow_t is integer range 0 to N_LANE;
     subtype write_meta_flow_t is integer range 0 to 5;
 
     -- register

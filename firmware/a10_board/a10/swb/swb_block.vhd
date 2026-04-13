@@ -92,6 +92,7 @@ architecture arch of swb_block is
     --! counters
     signal rate_mux : slv32_array_t(3*4 downto 0) := (others => (others => '0'));
     signal counter_mux : slv64_array_t(3*4+1 downto 0) := (others => (others => '0'));
+    signal hit_drop_cnt, full_cnt : std_logic_vector(63 downto 0);
 
     --! histograms
     signal histo_selected_link : integer range 0 to g_NLINKS_FEB_TOTL-1;
@@ -403,14 +404,15 @@ begin
         -- TODO: change name of registers
         o_hit_cnt(31 downto 0) => o_readregs(EVENT_BUILD_IDLE_NOT_HEADER_R),
         o_hit_cnt(63 downto 32) => o_readregs(EVENT_BUILD_CNT_EVENT_DMA_R),
-        o_hit_drop_cnt(31 downto 0) => o_readregs(EVENT_BUILD_SKIP_EVENT_DMA_R),
-        --o_hit_drop_cnt(63 downto 32) => o_readregs(EVENT_BUILD_TAG_FIFO_FULL_R),
-        o_full_cnt(31 downto 0) => o_readregs(BUFFER_STATUS_REGISTER_R),
-        --o_full_cnt(63 downto 32) => o_readregs(EVENT_BUILD_TAG_FIFO_FULL_R),
+        o_hit_drop_cnt => hit_drop_cnt,
+        o_full_cnt => full_cnt,
         o_hit_rate => o_readregs(EVENT_BUILD_TAG_FIFO_FULL_R),
 
         i_reset_n           => data_path_reset_n,
         i_clk               => i_clk--,
     );
+
+    o_readregs(EVENT_BUILD_SKIP_EVENT_DMA_R) <= hit_drop_cnt(31 downto 0);
+    o_readregs(BUFFER_STATUS_REGISTER_R) <= full_cnt(31 downto 0);
 
 end architecture;
