@@ -80,14 +80,18 @@ architecture arch of swb_block is
     signal feb_rx : work.mu3e.link32_array_t(g_NLINKS_FEB_TOTL-1 downto 0) := (others => work.mu3e.LINK32_IDLE);
 
     --! demerged FEB links
-    signal rx_data, rx_data_sim : work.mu3e.link32_array_t(g_NLINKS_FEB_TOTL-1 downto 0)   := (others => work.mu3e.LINK32_IDLE);
+    signal rx_data, rx_data_sim, rx_data_sim_merged : work.mu3e.link32_array_t(g_NLINKS_FEB_TOTL-1 downto 0)   := (others => work.mu3e.LINK32_IDLE);
     signal rx_sc : work.mu3e.link32_array_t(g_NLINKS_FEB_TOTL-1 downto 0)   := (others => work.mu3e.LINK32_IDLE);
     signal rx_rc : work.mu3e.link32_array_t(g_NLINKS_FEB_TOTL-1 downto 0)   := (others => work.mu3e.LINK32_IDLE);
     signal gen_link : work.mu3e.link32_t;
 
+    --! merger
+    signal aso_egress_data : std_logic_vector(35 downto 0);
+    signal aso_egress_valid : std_logic;
+
     --! counters
     signal rate_mux : slv32_array_t(3*4 downto 0) := (others => (others => '0'));
-    signal counter_mux : slv64_array_t(3*4 downto 0) := (others => (others => '0'));
+    signal counter_mux : slv64_array_t(3*4+1 downto 0) := (others => (others => '0'));
 
     --! histograms
     signal histo_selected_link : integer range 0 to g_NLINKS_FEB_TOTL-1;
@@ -272,6 +276,7 @@ begin
     port map (
         i_enable            => i_writeregs(SWB_READOUT_STATE_REGISTER_W)(USE_BIT_GEN_LINK),
         o_data              => gen_link,
+        o_cnt_hits          => counter_mux(13),
         i_n_hits            => i_writeregs(DATAGENERATOR_DIVIDER_REGISTER_W),
 
         i_reset_n           => i_resets_n(RESET_BIT_DATAGEN),
@@ -283,7 +288,7 @@ begin
         process(i_clk, i_reset_n)
         begin
         if ( i_reset_n /= '1' ) then
-            rx_data_sim(i) <= work.mu3e.LINK32_ZERO;
+            rx_data_sim(i) <= work.mu3e.LINK32_IDLE;
         elsif rising_edge(i_clk) then
             if ( i_writeregs(SWB_READOUT_STATE_REGISTER_W)(USE_BIT_GEN_LINK) = '1' ) then
                 rx_data_sim(i) <= work.mu3e.to_link(gen_link.data, gen_link.datak);
@@ -295,12 +300,67 @@ begin
 
     END GENERATE;
 
+    e_opq_monolithic_4lane_merge_opq_0 : entity work.opq_monolithic_4lane_merge_opq_0
+    generic map (
+        N_LANE => 4--,
+    )
+    port map (
+        aso_egress_startofpacket => open,
+        aso_egress_endofpacket => open,
+        aso_egress_valid => aso_egress_valid,
+        aso_egress_ready => '1',
+        aso_egress_error => open,
+        aso_egress_data => aso_egress_data,
+        d_clk => i_clk,
+        d_reset => not data_path_reset_n,
+        asi_ingress_0_channel => "00",
+        asi_ingress_0_startofpacket(0) => rx_data_sim(0).sop,
+        asi_ingress_0_endofpacket(0) => rx_data_sim(0).eop,
+        asi_ingress_0_data => rx_data_sim(0).datak & rx_data_sim(0).data,
+        asi_ingress_0_valid(0) => not rx_data_sim(0).idle,
+        asi_ingress_0_error => "000",
+        asi_ingress_1_channel => "01",
+        asi_ingress_1_startofpacket(0) => rx_data_sim(1).sop,
+        asi_ingress_1_endofpacket(0) => rx_data_sim(1).eop,
+        asi_ingress_1_data => rx_data_sim(1).datak & rx_data_sim(1).data,
+        asi_ingress_1_valid(0) => not rx_data_sim(1).idle,
+        asi_ingress_1_error => "000",
+        asi_ingress_2_channel => "10",
+        asi_ingress_2_startofpacket(0) => rx_data_sim(2).sop,
+        asi_ingress_2_endofpacket(0) => rx_data_sim(2).eop,
+        asi_ingress_2_data => rx_data_sim(2).datak & rx_data_sim(2).data,
+        asi_ingress_2_valid(0) => not rx_data_sim(2).idle,
+        asi_ingress_2_error => "000",
+        asi_ingress_3_channel => "11",
+        asi_ingress_3_startofpacket(0) => rx_data_sim(3).sop,
+        asi_ingress_3_endofpacket(0) => rx_data_sim(3).eop,
+        asi_ingress_3_data => rx_data_sim(3).datak & rx_data_sim(3).data,
+        asi_ingress_3_valid(0) => not rx_data_sim(3).idle,
+        asi_ingress_3_error => "000"--,
+    );
+
+    process(i_clk, i_reset_n)
+    begin
+    if ( i_reset_n /= '1' ) then
+        rx_data_sim_merged <= (others => work.mu3e.LINK32_IDLE);
+    elsif rising_edge(i_clk) then
+        rx_data_sim_merged <= rx_data_sim;
+        if ( i_writeregs(SWB_READOUT_STATE_REGISTER_W)(USE_BIT_MERGER) = '1' ) then
+            if ( aso_egress_valid = '1' ) then
+                rx_data_sim_merged(0) <= work.mu3e.to_link(aso_egress_data(31 downto 0), aso_egress_data(35 downto 32));
+            else
+                rx_data_sim_merged(0) <= work.mu3e.LINK32_IDLE;
+            end if;
+        end if;
+    end if;
+    end process;
+
     e_musip_mux_4_1 : entity work.musip_mux_4_1
     generic map (
         g_LINK_N => 4
     )
     port map (
-        i_rx            => rx_data_sim(3 downto 0),
+        i_rx            => rx_data_sim_merged(3 downto 0),
         i_rmask_n       => mask_n(3 downto 0),
 
         i_lookup_ctrl   => i_writeregs(SWB_LOOKUP_CTRL_REGISTER_W),

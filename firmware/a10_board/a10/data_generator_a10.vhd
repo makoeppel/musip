@@ -2,6 +2,7 @@ library ieee;
 use ieee.numeric_std.all;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_misc.all;
+use ieee.std_logic_unsigned.all;
 
 use work.mudaq.all;
 use work.mu3e.all;
@@ -14,6 +15,8 @@ port (
     i_enable    : in  std_logic;
     o_data      : out work.mu3e.link32_t;
     i_n_hits    : in  std_logic_vector(31 downto 0);
+
+    o_cnt_hits  : out std_logic_vector(63 downto 0);
 
     i_reset_n   : in  std_logic;
     i_clk       : in  std_logic
@@ -29,8 +32,11 @@ architecture rtl of data_generator_a10 is
     signal data_header_state : data_header_states;
 
     signal nEvent, hit_counter, n_hits_latched : std_logic_vector(31 downto 0);
+    signal cnt_hits : std_logic_vector(63 downto 0);
 
 begin
+
+    o_cnt_hits <= cnt_hits;
 
     process(i_clk, i_reset_n)
         variable next_hit_count_v : unsigned(31 downto 0);
@@ -39,6 +45,7 @@ begin
         o_data            <= work.mu3e.LINK32_IDLE;
         hit_counter       <= (others => '0');
         n_hits_latched    <= (others => '0');
+        cnt_hits          <= (others => '0');
         data_header_state <= sop;
         nEvent            <= (others => '0');
         global_time       <= (others => '0');
@@ -116,6 +123,8 @@ begin
                         o_data.data  <= (others => '0');
                         o_data.data(31 downto 28) <= global_time(3 downto 0);
                         o_data.datak <= "0000";
+
+                        cnt_hits <= cnt_hits + '1';
 
                         next_hit_count_v := unsigned(hit_counter) + 1;
                         hit_counter <= std_logic_vector(next_hit_count_v);
