@@ -1,8 +1,10 @@
 --
 
 library ieee;
-use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use ieee.std_logic_1164.all;
+use ieee.std_logic_misc.all;
+use ieee.std_logic_unsigned.all;
 
 use work.util_slv.all;
 
@@ -31,15 +33,15 @@ end entity;
 
 architecture rtl of subtime_merger is
 
-  signal cur_hittime : work.slv4_array_t(g_LINK_N-1 downto 0);
-  signal cur_subhdr : work.slv7_array_t(g_LINK_N-1 downto 0);
+  signal cur_hittime : slv4_array_t(g_LINK_N-1 downto 0);
+  signal cur_subhdr : slv7_array_t(g_LINK_N-1 downto 0);
 
   -- fifo(subtime, hittime, lane)
   type word_fifo_array_t is array(0 to 2**g_N_SUBTIME_BITS-1, 0 to g_N_HITTIME-1, 0 to g_LINK_N-1) of std_logic_vector(g_DATA_WIDTH-1 downto 0);
   type sl_fifo_array_t is array(0 to 2**g_N_SUBTIME_BITS-1, 0 to g_N_HITTIME-1, 0 to g_LINK_N-1) of std_logic;
   type out_array_t is array (0 to g_LINK_N-1) of std_logic_vector(g_DATA_WIDTH-1 downto 0);
   type subheader_time_array_t is array (0 to 2**g_N_SUBTIME_BITS-1) of std_logic_vector(g_LINK_N-1 downto 0);
-  type subheader_array_t is array (0 to g_N_SUBTIME_BITS-1) of std_logic_vector(g_LINK_N-1 downto 0);
+  type subheader_array_t is array (0 to g_LINK_N-1) of std_logic_vector(g_N_SUBTIME_BITS-1 downto 0);
 
   -- FIFO signals
   signal fifo_din, fifo_dout : word_fifo_array_t;
@@ -49,11 +51,14 @@ architecture rtl of subtime_merger is
   signal subtime_changed : subheader_time_array_t := (others => (others => '0'));
   signal advance_window_next : std_logic := '0';
   signal cur_subtime_reading_window : unsigned(g_N_SUBTIME_BITS-1 downto 0) := (others => '0');
-  signal last_subtime_window, subtime_window : subheader_array_t;
+  signal last_subtime_window : subheader_array_t;
 
   -- output
   signal out_data_arr_r, out_data_arr_next : out_array_t := (others => (others => '0'));
   signal out_valid_r, out_valid_next : std_logic := '0';
+
+  signal word_cnt : std_logic_vector(63 downto 0);
+  signal fifo_full_cnt : std_logic_vector(31 downto 0);
 
 begin
 
@@ -78,8 +83,8 @@ begin
 
     for i in 0 to g_LINK_N-1 loop
       if i_valid(i) = '1' then
-        fifo_wr_en(to_integer(cur_subhdr(i)(2 downto 0)), to_integer(cur_hittime(i)), i) <= '1';
-        fifo_din(to_integer(cur_subhdr(i)(2 downto 0)), to_integer(cur_hittime(i)), i) <= i_data(i);
+        fifo_wr_en(to_integer(unsigned(cur_subhdr(i)(g_N_SUBTIME_BITS-1 downto 0))), to_integer(unsigned(cur_hittime(i))), i) <= '1';
+        fifo_din(to_integer(unsigned(cur_subhdr(i)(g_N_SUBTIME_BITS-1 downto 0))), to_integer(unsigned(cur_hittime(i))), i) <= i_data(i);
       end if;
     end loop;
   end process;
@@ -89,7 +94,7 @@ begin
   -- This is combinational so rd_en is high BEFORE the edge.
   ----------------------------------------------------------------------------
   p_read_comb : process(all)
-    variable cur_win_v         : integer range 0 to g_N_SUBTIME;
+    variable cur_win_v         : integer range 0 to 2**g_N_SUBTIME_BITS;
     variable idx_v             : integer range 0 to g_LINK_N;
     variable found_any_v       : boolean;
     variable any_left_after_v  : boolean;
@@ -102,7 +107,7 @@ begin
     out_valid_next    <= '0';
     advance_window_next <= '0';
 
-    cur_win_v    := to_integer(cur_subtime_reading_window);
+    cur_win_v    := to_integer(unsigned(cur_subtime_reading_window));
     idx_v        := 0;
     found_any_v  := false;
 
@@ -185,17 +190,17 @@ begin
       -- track if all inputs have moved to a new subheader
       for i in 0 to g_LINK_N-1 loop
         if i_valid(i) = '1' then
-          if (last_subtime_window(i) /= cur_subhdr(i)(2 downto 0)) then
+          if (last_subtime_window(i) /= cur_subhdr(i)(g_N_SUBTIME_BITS-1 downto 0)) then
             -- mark OLD window complete for this lane
-            subtime_changed(to_integer(last_subtime_window(i)))(i) <= '1';
+            subtime_changed(to_integer(unsigned(last_subtime_window(i))))(i) <= '1';
           end if;
-          last_subtime_window(i) <= cur_subhdr(i)(2 downto 0);
+          last_subtime_window(i) <= cur_subhdr(i)(g_N_SUBTIME_BITS-1 downto 0);
         end if;
       end loop;
 
-      if (and_reduce(subtime_changed(to_integer(cur_subtime_reading_window))) = '1' and advance_window_next = '1') then
+      if (and_reduce(subtime_changed(to_integer(unsigned(cur_subtime_reading_window)))) = '1' and advance_window_next = '1') then
         -- current window finished
-        subtime_changed(to_integer(cur_subtime_reading_window)) <= (others => '0');
+        subtime_changed(to_integer(unsigned(cur_subtime_reading_window))) <= (others => '0');
 
         if cur_subtime_reading_window = 7 then
           cur_subtime_reading_window <= (others => '0');
@@ -223,7 +228,7 @@ begin
   --   dout shows front word whenever empty='0'
   --   rd_en pops on rising edge
   ----------------------------------------------------------------------------
-  gen_fifo_sub : for s in 0 to g_N_SUBTIME-1 generate
+  gen_fifo_sub : for s in 0 to 2**g_N_SUBTIME_BITS-1 generate
     gen_fifo_hit : for h in 0 to g_N_HITTIME-1 generate
       gen_fifo_lane : for l in 0 to g_LINK_N-1 generate
         u_fifo : entity work.ip_dcfifo_v2

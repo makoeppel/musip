@@ -217,22 +217,22 @@ begin
         e_subtime_merger : entity work.subtime_merger
         generic map (
             g_LINK_N => 4,
-            g_N_HITTIME => 16;
-            g_N_SUBTIME_BITS => 3;
+            g_N_HITTIME => 16,
+            g_N_SUBTIME_BITS => 3,
             g_DATA_WIDTH => 64--,
         )
         port map (
-            i_data          => next_64bit_word;
-            i_valid         => next_64bit_word_valid;
+            i_data          => next_64bit_word,
+            i_valid         => next_64bit_word_valid,
 
-            out_data        => o_data;
-            out_data_valid  => o_valid;
+            out_data        => o_data,
+            out_data_valid  => o_valid,
 
             o_word_cnt      => o_word_cnt,
             o_fifo_full_cnt => open,
 
-            i_reset_n       => i_reset_n;
-            i_clk           => i_clk--;
+            i_reset_n       => i_reset_n,
+            i_clk           => i_clk--,
         );
 
         -- group words in 256bit
