@@ -214,6 +214,27 @@ begin
             i_reset_n => i_reset_n, i_clk => i_clk--,
         );
 
+        e_subtime_merger : entity work.subtime_merger
+        generic map (
+            g_LINK_N => 4,
+            g_N_HITTIME => 16;
+            g_N_SUBTIME_BITS => 3;
+            g_DATA_WIDTH => 64--,
+        )
+        port map (
+            i_data          => next_64bit_word;
+            i_valid         => next_64bit_word_valid;
+
+            out_data        => o_data;
+            out_data_valid  => o_valid;
+
+            o_word_cnt      => o_word_cnt,
+            o_fifo_full_cnt => open,
+
+            i_reset_n       => i_reset_n;
+            i_clk           => i_clk--;
+        );
+
         -- group words in 256bit
         process(i_clk, i_reset_n)
         begin
@@ -241,22 +262,22 @@ begin
 
     end generate;
 
-    -- MUX 4 to 1
-    mux_4_1_256 : entity work.mux_4_1_256
-    generic map (
-        N => g_LINK_N--,
-    )
-    port map (
-        i_data      => rx_256,
-        i_valid     => rx_valid,
+    -- -- MUX 4 to 1
+    -- mux_4_1_256 : entity work.mux_4_1_256
+    -- generic map (
+    --     N => g_LINK_N--,
+    -- )
+    -- port map (
+    --     i_data      => rx_256,
+    --     i_valid     => rx_valid,
 
-        o_data      => o_data,
-        o_valid     => o_valid,
-        o_word_cnt  => o_word_cnt,
-        o_word_rate => o_word_rate,
+    --     o_data      => o_data,
+    --     o_valid     => o_valid,
+    --     o_word_cnt  => o_word_cnt,
+    --     o_word_rate => o_word_rate,
 
-        i_reset_n   => i_reset_n,
-        i_clk       => i_clk--,
-    );
+    --     i_reset_n   => i_reset_n,
+    --     i_clk       => i_clk--,
+    -- );
 
 end architecture;
