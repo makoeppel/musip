@@ -609,7 +609,7 @@ int FullChipInjection(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings, ui
     }
 
     if (r_column == 2) {
-        columns_tail = {max_columns - 1};
+        columns_tail = {static_cast<unsigned char>(max_columns - 1)};
     }
 
     else if (r_column == 2) {

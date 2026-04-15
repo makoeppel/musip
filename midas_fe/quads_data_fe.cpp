@@ -1,5 +1,5 @@
 /**
- * @file quads_data_fe.cpp
+ * @file readout_fe.cpp
  * @brief MIDAS frontend for MUPIX data readout and DMA handling.
  *
  * This frontend handles the real-time data acquisition for MUPIX devices,
@@ -55,7 +55,7 @@
 #include "utils.h"
 
 // MIDAS settings
-const char* frontend_name = "Quads Data";
+const char* frontend_name = "Readout";
 const char* frontend_file_name = __FILE__;
 BOOL equipment_common_overwrite = TRUE;
 
@@ -184,7 +184,7 @@ int begin_of_run() {
 #else
     if ((bool)m_settings["Readout"]["Datagen Enable"]) {
         // setup data generator
-        cm_msg(MINFO, "quad_fe", "Use datagenerator with divider register %i",
+        cm_msg(MINFO, "readout_fe", "Use datagenerator with divider register %i",
                (int)m_settings["Readout"]["Datagen Divider"]);
         mu.write_register(DATAGENERATOR_DIVIDER_REGISTER_W,
                           (int)m_settings["Readout"]["Datagen Divider"]);
@@ -194,11 +194,11 @@ int begin_of_run() {
 
     if ((bool)m_settings["Readout"]["use_merger"]) {
         // readout merger
-        cm_msg(MINFO, "quad_fe", "Use Time Merger");
+        cm_msg(MINFO, "readout_fe", "Use Time Merger");
         readout_state_regs = SET_USE_BIT_MERGER(readout_state_regs);
     } else {
         // readout stream
-        cm_msg(MINFO, "quad_fe", "Use Stream Merger");
+        cm_msg(MINFO, "readout_fe", "Use Stream Merger");
         readout_state_regs = SET_USE_BIT_STREAM(readout_state_regs);
     }
     readout_state_regs = SET_USE_BIT_GENERIC(readout_state_regs);
@@ -547,7 +547,7 @@ int frontend_init() {
 }
 
 EQUIPMENT equipment[] = {{
-                             "Quads Data",     /* equipment name */
+                             "Readout",     /* equipment name */
                              {eventID_data, 0, /* event ID, trigger mask */
                               "SYSTEM",        /* event buffer */
                               EQ_USER,         /* equipment type */
