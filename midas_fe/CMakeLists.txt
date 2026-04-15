@@ -16,9 +16,9 @@ endif()
 
 
 add_executable(quads_config_fe quads_config_fe.cpp)
-add_executable(quads_data_fe quads_data_fe.cpp)
+add_executable(readout_fe readout_fe.cpp)
 
 target_link_libraries(quads_config_fe libmudaq midas::mfed)
-target_link_libraries(quads_data_fe libmudaq midas::mfed)
+target_link_libraries(readout_fe libmudaq midas::mfed)
 
-install(TARGETS quads_config_fe quads_data_fe DESTINATION bin)
+install(TARGETS quads_config_fe readout_fe DESTINATION bin)
