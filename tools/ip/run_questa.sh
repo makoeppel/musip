@@ -15,12 +15,12 @@ if [ ! -x "$vsim_bin" ]; then
     exit 2
 fi
 
-vsim_version=$("$vsim_bin" -version 2>/dev/null | head -n 1 || true)
+vsim_version=$("$vsim_bin" -version 2>&1 | head -n 1 || true)
 
 # The ETH server exposes standard Questa features such as msimhdlmix and
 # mtiverification. Intel FPGA Edition binaries always boot as intelqsim* and
 # cannot consume those floating features.
-if printf '%s\n' "$vsim_version" | grep -q "Intel FPGA Edition"; then
+if printf '%s\n%s\n' "$vsim_bin" "$vsim_version" | grep -Eq 'questa_fse|questa_fe|Intel FPGA Edition|Intel Starter FPGA Edition'; then
     cat >&2 <<'EOF'
 run_questa.sh: the selected vsim binary is an Intel FPGA Edition build.
 It requests the intelqsim/intelqsimstarter product at runtime, while the ETH
@@ -29,8 +29,8 @@ mtiverification.
 
 Point QUESTA_HOME at a full Mentor/Questa installation to run the UVM harness.
 The compile flow can still use the Intel binaries, but runtime cannot.
-Use make ip-tlm-basic as the current simulatorless fallback while waiting for
-the proper runtime binary.
+Use make ip-tlm-basic to build/reference vectors, and make ip-plain-basic once
+a standard mixed-language Mentor runtime is available.
 EOF
     exit 2
 fi
