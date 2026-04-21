@@ -4,16 +4,34 @@ ROOT := $(abspath ../../../..)
 BUILD_DIR := $(CURDIR)/work
 REPORT_DIR := $(CURDIR)/report
 REPLAY_DIR ?= $(abspath $(ROOT)/tb_int/cases/basic/ref/out)
+SMOKE_REPLAY_DIR ?= $(abspath $(ROOT)/tb_int/cases/basic/ref/out_smoke)
+QUESTA_PREFER_FE ?= 0
+ifeq ($(QUESTA_PREFER_FE),1)
+ifneq ($(wildcard /data1/intelFPGA_pro/23.1/questa_fe),)
+QUESTA_HOME ?= /data1/intelFPGA_pro/23.1/questa_fe
+else
 QUESTA_HOME ?= /data1/intelFPGA_pro/23.1/questa_fse
-VLIB := $(QUESTA_HOME)/bin/vlib
-VCOM := $(QUESTA_HOME)/bin/vcom
-VLOG := $(QUESTA_HOME)/bin/vlog
-VSIM := $(QUESTA_HOME)/bin/vsim
-QUESTA_RUNNER := $(ROOT)/tools/ip/run_questa.sh
-ETH_LIC_SERVER ?= 8161@129.132.148.195
+endif
+else
+ifneq ($(wildcard /data1/intelFPGA_pro/23.1/questa_fse),)
+QUESTA_HOME ?= /data1/intelFPGA_pro/23.1/questa_fse
+else
+QUESTA_HOME ?= /data1/intelFPGA_pro/23.1/questa_fe
+endif
+endif
+QUESTA_LICENSE ?= $(firstword $(wildcard $(QUESTA_HOME)/LR-*_License.dat))
+ETH_MENTOR_SERVER ?= 8161@lic-mentor.ethz.ch
+TB_LICENSE_CHAIN := $(ETH_MENTOR_SERVER)
+ifneq ($(wildcard $(QUESTA_LICENSE)),)
+TB_LICENSE_CHAIN := $(QUESTA_LICENSE)
+endif
+VLIB := $(firstword $(wildcard $(QUESTA_HOME)/bin/vlib $(QUESTA_HOME)/linux_x86_64/vlib))
+VCOM := $(firstword $(wildcard $(QUESTA_HOME)/bin/vcom $(QUESTA_HOME)/linux_x86_64/vcom))
+VLOG := $(firstword $(wildcard $(QUESTA_HOME)/bin/vlog $(QUESTA_HOME)/linux_x86_64/vlog))
+VSIM := $(firstword $(wildcard $(QUESTA_HOME)/bin/vsim $(QUESTA_HOME)/linux_x86_64/vsim))
 
-export MGLS_LICENSE_FILE ?= $(ETH_LIC_SERVER)
-export LM_LICENSE_FILE ?= $(MGLS_LICENSE_FILE)
+export MGLS_LICENSE_FILE := $(TB_LICENSE_CHAIN)
+export LM_LICENSE_FILE := $(MGLS_LICENSE_FILE)
 
 VHDL_SOURCES = \
 	$(ROOT)/firmware/util/util_pkg.vhd \
@@ -55,8 +73,9 @@ VERILOG_DUT_SOURCES = \
 	$(ROOT)/firmware/a10_board/a10/merger/tile_fifo.v
 
 SIM_ARGS ?=
+VSIM_FLAGS := -c -L altera_mf -t ps -voptargs=+acc
 
-.PHONY: compile run clean
+.PHONY: compile run run-smoke clean
 
 compile: $(BUILD_DIR)/.compile-stamp
 
@@ -71,7 +90,12 @@ $(BUILD_DIR)/.compile-stamp: $(VHDL_SOURCES) $(VERILOG_DUT_SOURCES)
 run: compile
 	mkdir -p $(REPORT_DIR)
 	cd $(BUILD_DIR) && set -o pipefail; \
-	$(QUESTA_RUNNER) $(VSIM) -c -L altera_mf -t ps -gG_REPLAY_DIR=$(REPLAY_DIR) tb_swb_block_plain_replay -do "run -all; quit -f" $(SIM_ARGS) | tee "$(REPORT_DIR)/run_plain_basic.log"
+	$(VSIM) $(VSIM_FLAGS) -gG_REPLAY_DIR=$(REPLAY_DIR) tb_swb_block_plain_replay -do "run -all; quit -f" $(SIM_ARGS) | tee "$(REPORT_DIR)/run_plain_basic.log"
+
+run-smoke: compile
+	mkdir -p $(REPORT_DIR)
+	cd $(BUILD_DIR) && set -o pipefail; \
+	$(VSIM) $(VSIM_FLAGS) -gG_REPLAY_DIR=$(SMOKE_REPLAY_DIR) tb_swb_block_plain_replay -do "run -all; quit -f" $(SIM_ARGS) | tee "$(REPORT_DIR)/run_plain_basic_smoke.log"
 
 clean:
 	rm -rf $(BUILD_DIR) $(REPORT_DIR)

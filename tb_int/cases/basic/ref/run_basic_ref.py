@@ -69,6 +69,7 @@ class CasePlan:
     expected_word_count: int = 0
     total_hits: int = 0
     lane_saturation: list[float] = field(default_factory=lambda: [0.0] * SWB_N_LANES)
+    profile: str = "poisson"
 
 
 def poisson_trunc(rng: random.Random, lam: float, max_hits: int) -> int:
@@ -197,6 +198,7 @@ def build_basic_case(frame_count: int, lane_saturation: list[float], seed: int) 
     rng = random.Random(seed)
     plan = CasePlan()
     plan.lane_saturation = lane_saturation[:]
+    plan.profile = "poisson"
 
     for frame_idx in range(frame_count):
         ts_high_word = (0x1200_0000 + frame_idx) & 0xFFFF_FFFF
@@ -248,6 +250,40 @@ def build_basic_case(frame_count: int, lane_saturation: list[float], seed: int) 
     plan.expected_word_count = len(expected_words)
     plan.total_hits = total_hits
 
+    return plan
+
+
+def build_smoke_case() -> CasePlan:
+    """Build the smallest deterministic case that still preserves SWB framing."""
+    plan = CasePlan()
+    plan.profile = "smoke"
+    plan.lane_saturation = [0.0] * SWB_N_LANES
+
+    ts_high_word = 0x1200_0000
+    ts_low_word = 0xA000
+
+    for lane_id in range(SWB_N_LANES):
+        frame = FrameItem(
+            lane_id=lane_id,
+            frame_id=0,
+            ts_high_word=ts_high_word,
+            ts_low_word=ts_low_word,
+            pkg_cnt=lane_id & 0xFFFF,
+            feb_id=lane_id & 0xFFFF,
+        )
+        hit_subheader_idx = lane_id
+        for shd_idx in range(SWB_N_SUBHEADERS):
+            shd = SubheaderDesc(shd_ts=shd_idx & 0xFF)
+            if shd_idx == hit_subheader_idx:
+                add_hit_to_subheader(frame, shd, lane_id, frame.frame_id, shd_idx)
+                add_hit_to_subheader(frame, shd, lane_id, frame.frame_id, shd_idx)
+            frame.subheaders.append(shd)
+        plan.frames_by_lane[lane_id].append(frame)
+
+    expected_words, total_hits = pack_expected_words_from_frames(plan.frames_by_lane)
+    plan.expected_dma_words = expected_words
+    plan.expected_word_count = len(expected_words)
+    plan.total_hits = total_hits
     return plan
 
 
@@ -451,6 +487,12 @@ def parse_plusargs(argv: list[str]) -> tuple[list[str], dict[str, str]]:
 
 def build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Run the simulatorless MuSiP SWB basic reference case.")
+    parser.add_argument(
+        "--profile",
+        choices=("poisson", "smoke"),
+        default="poisson",
+        help="Traffic profile: poisson is the default sweep, smoke is the minimal directed seam case.",
+    )
     parser.add_argument("--frames", type=int, default=2, help="Number of frames per lane.")
     parser.add_argument("--seed", type=int, default=1, help="Deterministic RNG seed for Poisson traffic.")
     parser.add_argument(
@@ -474,6 +516,8 @@ def main(argv: list[str]) -> int:
         args.frames = int(plusargs["SWB_FRAMES"])
     if "SWB_SEED" in plusargs:
         args.seed = int(plusargs["SWB_SEED"])
+    if "SWB_PROFILE" in plusargs:
+        args.profile = plusargs["SWB_PROFILE"]
     if "SWB_OUT_DIR" in plusargs:
         args.out_dir = Path(plusargs["SWB_OUT_DIR"])
     for lane_id in range(SWB_N_LANES):
@@ -484,7 +528,16 @@ def main(argv: list[str]) -> int:
     out_dir = args.out_dir.resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    plan = build_basic_case(frame_count=args.frames, lane_saturation=list(args.sat), seed=args.seed)
+    if args.profile not in {"poisson", "smoke"}:
+        raise SystemExit(f"Unsupported profile {args.profile!r}; use 'poisson' or 'smoke'")
+
+    if args.profile == "smoke":
+        plan = build_smoke_case()
+        args.frames = 1
+        args.seed = 0
+        args.sat = [0.0] * SWB_N_LANES
+    else:
+        plan = build_basic_case(frame_count=args.frames, lane_saturation=list(args.sat), seed=args.seed)
     lane_streams = serialize_plan(plan)
     opq_egress_stream: list[dict[str, int | str]] = []
     opq_egress_frames = build_opq_egress_frames(plan.frames_by_lane)
@@ -592,6 +645,7 @@ def main(argv: list[str]) -> int:
         handle.write("\n")
 
     summary = {
+        "profile": plan.profile,
         "frames_per_lane": args.frames,
         "seed": args.seed,
         "lane_saturation": list(args.sat),
@@ -622,7 +676,7 @@ def main(argv: list[str]) -> int:
 
     print(
         "basic/ref: "
-        f"frames={args.frames} seed={args.seed} "
+        f"profile={plan.profile} frames={args.frames} seed={args.seed} "
         f"sat={','.join(f'{value:0.2f}' for value in args.sat)} "
         f"total_hits={plan.total_hits} expected_words={plan.expected_word_count} "
         f"sha256={digest[:16]}"

@@ -1,0 +1,14 @@
+[options]
+mode prove
+depth 24
+
+[engines]
+smtbmc bitwuzla
+
+[script]
+read_verilog -formal -sv swb_opq_boundary_formal_top.sv
+prep -top swb_opq_boundary_formal_top
+clk2fflogic
+
+[files]
+../swb_opq_boundary_formal_top.sv

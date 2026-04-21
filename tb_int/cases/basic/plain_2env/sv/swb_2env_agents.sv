@@ -6,6 +6,49 @@ class swb_opq_ingress_sequencer extends uvm_sequencer #(swb_frame_item);
   endfunction
 endclass
 
+class swb_opq_ingress_monitor extends uvm_component;
+  virtual feb_ingress_if vif;
+  uvm_analysis_port #(swb_opq_beat) ap;
+  int unsigned lane_id;
+  int unsigned beat_count;
+
+  `uvm_component_utils(swb_opq_ingress_monitor)
+
+  function new(string name, uvm_component parent);
+    super.new(name, parent);
+    ap = new("ap", this);
+    lane_id = 0;
+    beat_count = 0;
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+    if (!uvm_config_db#(virtual feb_ingress_if)::get(this, "", "vif", vif)) begin
+      `uvm_fatal("NOVIF", $sformatf("No feb_ingress_if for %s", get_full_name()))
+    end
+    void'(uvm_config_db#(int unsigned)::get(this, "", "lane_id", lane_id));
+  endfunction
+
+  task run_phase(uvm_phase phase);
+    swb_opq_beat item;
+  begin
+    forever begin
+      @(posedge vif.clk);
+      if (vif.valid === 1'b1) begin
+        item = swb_opq_beat::type_id::create($sformatf("lane%0d_ingress_beat", lane_id));
+        item.lane_id = lane_id;
+        item.beat_idx = beat_count;
+        item.data = vif.data;
+        item.datak = vif.datak;
+        item.stream_name = $sformatf("lane%0d_ingress", lane_id);
+        beat_count++;
+        ap.write(item);
+      end
+    end
+  end
+  endtask
+endclass
+
 class swb_opq_ingress_driver extends uvm_driver #(swb_frame_item);
   virtual feb_ingress_if vif;
   int unsigned lane_id;
@@ -76,6 +119,7 @@ endclass
 class swb_opq_ingress_agent extends uvm_agent;
   swb_opq_ingress_sequencer sequencer;
   swb_opq_ingress_driver    driver;
+  swb_opq_ingress_monitor   monitor;
   int unsigned              lane_id;
 
   `uvm_component_utils(swb_opq_ingress_agent)
@@ -90,7 +134,9 @@ class swb_opq_ingress_agent extends uvm_agent;
     void'(uvm_config_db#(int unsigned)::get(this, "", "lane_id", lane_id));
     sequencer = swb_opq_ingress_sequencer::type_id::create("sequencer", this);
     driver    = swb_opq_ingress_driver::type_id::create("driver", this);
+    monitor   = swb_opq_ingress_monitor::type_id::create("monitor", this);
     uvm_config_db#(int unsigned)::set(this, "driver", "lane_id", lane_id);
+    uvm_config_db#(int unsigned)::set(this, "monitor", "lane_id", lane_id);
   endfunction
 
   function void connect_phase(uvm_phase phase);
@@ -134,6 +180,46 @@ class swb_opq_egress_driver extends uvm_component;
         vif.valid <= valid_i[0];
         vif.data  <= data_i[31:0];
         vif.datak <= datak_i[3:0];
+      end
+    end
+  end
+  endtask
+endclass
+
+class swb_opq_egress_monitor extends uvm_component;
+  virtual opq_egress_if vif;
+  uvm_analysis_port #(swb_opq_beat) ap;
+  int unsigned beat_count;
+
+  `uvm_component_utils(swb_opq_egress_monitor)
+
+  function new(string name, uvm_component parent);
+    super.new(name, parent);
+    ap = new("ap", this);
+    beat_count = 0;
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+    if (!uvm_config_db#(virtual opq_egress_if)::get(this, "", "vif", vif)) begin
+      `uvm_fatal("NOVIF", $sformatf("No opq_egress_if for %s", get_full_name()))
+    end
+  endfunction
+
+  task run_phase(uvm_phase phase);
+    swb_opq_beat item;
+  begin
+    forever begin
+      @(posedge vif.clk);
+      if (vif.valid === 1'b1) begin
+        item = swb_opq_beat::type_id::create("opq_egress_beat");
+        item.lane_id = 0;
+        item.beat_idx = beat_count;
+        item.data = vif.data;
+        item.datak = vif.datak;
+        item.stream_name = "opq_egress";
+        beat_count++;
+        ap.write(item);
       end
     end
   end

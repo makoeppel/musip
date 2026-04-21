@@ -4,18 +4,37 @@ ROOT := $(abspath ../../../..)
 BUILD_DIR := $(CURDIR)/work
 REPORT_DIR := $(CURDIR)/report
 REPLAY_DIR ?= $(abspath $(ROOT)/tb_int/cases/basic/ref/out)
+SMOKE_REPLAY_DIR ?= $(abspath $(ROOT)/tb_int/cases/basic/ref/out_smoke)
+QUESTA_PREFER_FE ?= 0
+ifeq ($(QUESTA_PREFER_FE),1)
+ifneq ($(wildcard /data1/intelFPGA_pro/23.1/questa_fe),)
 QUESTA_HOME ?= /data1/intelFPGA_pro/23.1/questa_fe
+else
+QUESTA_HOME ?= /data1/intelFPGA_pro/23.1/questa_fse
+endif
+else
+ifneq ($(wildcard /data1/intelFPGA_pro/23.1/questa_fse),)
+QUESTA_HOME ?= /data1/intelFPGA_pro/23.1/questa_fse
+else
+QUESTA_HOME ?= /data1/intelFPGA_pro/23.1/questa_fe
+endif
+endif
+QUESTA_FLAVOR := $(notdir $(QUESTA_HOME))
+QUESTA_LICENSE ?= $(firstword $(wildcard $(QUESTA_HOME)/LR-*_License.dat))
+ETH_MENTOR_SERVER ?= 8161@lic-mentor.ethz.ch
+TB_LICENSE_CHAIN := $(ETH_MENTOR_SERVER)
+ifneq ($(wildcard $(QUESTA_LICENSE)),)
+TB_LICENSE_CHAIN := $(QUESTA_LICENSE)
+endif
 UVM_HOME ?= $(QUESTA_HOME)/verilog_src/uvm-1.2
-VLIB := $(QUESTA_HOME)/bin/vlib
-VCOM := $(QUESTA_HOME)/bin/vcom
-VLOG := $(QUESTA_HOME)/bin/vlog
-VSIM := $(QUESTA_HOME)/bin/vsim
-QUESTA_RUNNER := $(ROOT)/tools/ip/run_questa.sh
-ETH_LIC_SERVER ?= 8161@129.132.148.195
+VLIB := $(firstword $(wildcard $(QUESTA_HOME)/bin/vlib $(QUESTA_HOME)/linux_x86_64/vlib))
+VCOM := $(firstword $(wildcard $(QUESTA_HOME)/bin/vcom $(QUESTA_HOME)/linux_x86_64/vcom))
+VLOG := $(firstword $(wildcard $(QUESTA_HOME)/bin/vlog $(QUESTA_HOME)/linux_x86_64/vlog))
+VSIM := $(firstword $(wildcard $(QUESTA_HOME)/bin/vsim $(QUESTA_HOME)/linux_x86_64/vsim))
 SV_LIB := $(abspath $(BUILD_DIR))/libswb_opq_2env_dpi
 
-export MGLS_LICENSE_FILE ?= $(ETH_LIC_SERVER)
-export LM_LICENSE_FILE ?= $(MGLS_LICENSE_FILE)
+export MGLS_LICENSE_FILE := $(TB_LICENSE_CHAIN)
+export LM_LICENSE_FILE := $(MGLS_LICENSE_FILE)
 
 VHDL_SOURCES = \
 	$(ROOT)/firmware/util/util_pkg.vhd \
@@ -39,6 +58,7 @@ SV_SOURCES = \
 	$(CURDIR)/sv/interfaces.sv \
 	$(UVM_HOME)/src/uvm_pkg.sv \
 	$(CURDIR)/sv/swb_2env_pkg.sv \
+	$(CURDIR)/sv/swb_opq_boundary_contract_sva.sv \
 	$(CURDIR)/sv/tb_top_2env.sv
 
 SV_INCLUDE_SOURCES = \
@@ -46,6 +66,7 @@ SV_INCLUDE_SOURCES = \
 	$(ROOT)/tb_int/cases/basic/uvm/sv/swb_sequences.sv \
 	$(ROOT)/tb_int/cases/basic/uvm/sv/swb_scoreboard.sv \
 	$(CURDIR)/sv/swb_2env_agents.sv \
+	$(CURDIR)/sv/swb_2env_boundary_scoreboard.sv \
 	$(CURDIR)/sv/swb_2env_env.sv \
 	$(CURDIR)/sv/swb_2env_test.sv
 
@@ -54,8 +75,9 @@ C_SOURCES = \
 
 UVM_DEFINES ?= +define+UVM_NO_DPI
 SIM_ARGS ?=
+VSIM_FLAGS := -c -L altera_mf -nodpiexports -voptargs=+acc
 
-.PHONY: compile run clean
+.PHONY: compile run run-smoke clean
 
 compile: $(BUILD_DIR)/.compile-stamp
 
@@ -71,7 +93,12 @@ $(BUILD_DIR)/.compile-stamp: $(VHDL_SOURCES) $(SV_SOURCES) $(SV_INCLUDE_SOURCES)
 run: compile
 	mkdir -p $(REPORT_DIR)
 	cd $(BUILD_DIR) && set -o pipefail; \
-	$(QUESTA_RUNNER) $(VSIM) -c -L altera_mf -sv_lib $(SV_LIB) tb_top_2env +SWB_REPLAY_DIR=$(REPLAY_DIR) -do "run -all; quit -f" $(SIM_ARGS) | tee "$(REPORT_DIR)/run_plain_basic_2env.log"
+	$(VSIM) $(VSIM_FLAGS) -sv_lib $(SV_LIB) tb_top_2env +SWB_REPLAY_DIR=$(REPLAY_DIR) -do "run -all; quit -f" $(SIM_ARGS) | tee "$(REPORT_DIR)/run_plain_basic_2env.log"
+
+run-smoke: compile
+	mkdir -p $(REPORT_DIR)
+	cd $(BUILD_DIR) && set -o pipefail; \
+	$(VSIM) $(VSIM_FLAGS) -sv_lib $(SV_LIB) tb_top_2env +SWB_REPLAY_DIR=$(SMOKE_REPLAY_DIR) -do "run -all; quit -f" $(SIM_ARGS) | tee "$(REPORT_DIR)/run_plain_basic_2env_smoke.log"
 
 clean:
 	rm -rf $(BUILD_DIR) $(REPORT_DIR)

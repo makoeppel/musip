@@ -11,27 +11,33 @@ This is the `quartus_system`-style workaround path:
 
 Use this when:
 
-1. you have a standard Mentor/Questa mixed-language runtime,
+1. you have the local `questa_fse` Starter runtime on this host,
 2. you do not have the verification/UVM feature set yet,
 3. you want to replay the exact fallback case in RTL.
 
 Recommended order:
 
-1. Run `make ip-tlm-basic`
-2. Run `make ip-compile-plain`
-3. Once a standard Mentor runtime exists, run `make ip-plain-basic`
-4. If you want the split OPQ-seam workaround instead, run `make ip-plain-basic-2env`
+1. Run `make ip-tlm-basic-smoke`
+2. Run `make ip-plain-basic-smoke`
+3. Run `make ip-tlm-basic`
+4. Run `make ip-plain-basic`
+5. If you want the split OPQ-seam workaround instead, run `make ip-plain-basic-2env`
+
+The local `run` target defaults to the full replay bundle. The local `run-smoke`
+target defaults to `../ref/out_smoke`.
 
 Primary local targets:
 
 - `make compile`
 - `make run`
+- `make run-smoke`
 - `make clean`
 
 Helpful overrides:
 
 - `make run REPLAY_DIR=/absolute/path/to/tb_int/cases/basic/ref/out`
-- `make run QUESTA_HOME=/path/to/full/questa`
+- `make run-smoke SMOKE_REPLAY_DIR=/absolute/path/to/tb_int/cases/basic/ref/out_smoke`
+- `make run QUESTA_HOME=/path/to/questa_fse`
 
 What it checks:
 

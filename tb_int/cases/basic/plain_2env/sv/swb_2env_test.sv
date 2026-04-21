@@ -27,9 +27,18 @@ class swb_basic_2env_test extends uvm_test;
     swb_case_builder::load_replay_case(plan, replay_dir);
     frame_count = (plan.frames_by_lane[0].size() != 0) ? plan.frames_by_lane[0].size() : 0;
     uvm_config_db#(swb_case_plan)::set(this, "*", "case_plan", plan);
+    uvm_config_db#(string)::set(this, "*", "replay_dir", replay_dir);
 
     opq_env      = swb_opq_env::type_id::create("opq_env", this);
     datapath_env = swb_datapath_env::type_id::create("datapath_env", this);
+  endfunction
+
+  function void connect_phase(uvm_phase phase);
+    super.connect_phase(phase);
+    opq_env.ingress_agents[0].monitor.ap.connect(datapath_env.boundary_scoreboard.ingress_imp0);
+    opq_env.ingress_agents[1].monitor.ap.connect(datapath_env.boundary_scoreboard.ingress_imp1);
+    opq_env.ingress_agents[2].monitor.ap.connect(datapath_env.boundary_scoreboard.ingress_imp2);
+    opq_env.ingress_agents[3].monitor.ap.connect(datapath_env.boundary_scoreboard.ingress_imp3);
   endfunction
 
   task run_phase(uvm_phase phase);

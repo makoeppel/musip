@@ -24,10 +24,41 @@ package swb_2env_pkg;
   );
   import "DPI-C" function int swb_opq_2env_check_complete();
 
+  class swb_opq_beat extends uvm_sequence_item;
+    int unsigned lane_id;
+    int unsigned beat_idx;
+    bit [31:0]   data;
+    bit [3:0]    datak;
+    string       stream_name;
+
+    `uvm_object_utils(swb_opq_beat)
+
+    function new(string name = "swb_opq_beat");
+      super.new(name);
+      lane_id = 0;
+      beat_idx = 0;
+      data = '0;
+      datak = '0;
+      stream_name = "";
+    endfunction
+
+    function string convert2string();
+      return $sformatf(
+        "%s beat[%0d] lane=%0d datak=0x%0h data=0x%08h",
+        stream_name,
+        beat_idx,
+        lane_id,
+        datak,
+        data
+      );
+    endfunction
+  endclass
+
   `include "../../uvm/sv/swb_types.sv"
   `include "../../uvm/sv/swb_sequences.sv"
   `include "../../uvm/sv/swb_scoreboard.sv"
   `include "swb_2env_agents.sv"
+  `include "swb_2env_boundary_scoreboard.sv"
   `include "swb_2env_env.sv"
   `include "swb_2env_test.sv"
 endpackage

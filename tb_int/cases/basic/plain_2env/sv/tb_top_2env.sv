@@ -32,6 +32,56 @@ module tb_top_2env;
     .dma_done      (ctrl_if.dma_done)
   );
 
+  swb_opq_boundary_contract_sva #(
+    .STREAM_ID(0)
+  ) u_lane0_contract (
+    .clk(clk),
+    .reset_n(ctrl_if.reset_n),
+    .valid(feb_if0.valid),
+    .datak(feb_if0.datak),
+    .data(feb_if0.data)
+  );
+
+  swb_opq_boundary_contract_sva #(
+    .STREAM_ID(1)
+  ) u_lane1_contract (
+    .clk(clk),
+    .reset_n(ctrl_if.reset_n),
+    .valid(feb_if1.valid),
+    .datak(feb_if1.datak),
+    .data(feb_if1.data)
+  );
+
+  swb_opq_boundary_contract_sva #(
+    .STREAM_ID(2)
+  ) u_lane2_contract (
+    .clk(clk),
+    .reset_n(ctrl_if.reset_n),
+    .valid(feb_if2.valid),
+    .datak(feb_if2.datak),
+    .data(feb_if2.data)
+  );
+
+  swb_opq_boundary_contract_sva #(
+    .STREAM_ID(3)
+  ) u_lane3_contract (
+    .clk(clk),
+    .reset_n(ctrl_if.reset_n),
+    .valid(feb_if3.valid),
+    .datak(feb_if3.datak),
+    .data(feb_if3.data)
+  );
+
+  swb_opq_boundary_contract_sva #(
+    .STREAM_ID(99)
+  ) u_opq_egress_contract (
+    .clk(clk),
+    .reset_n(ctrl_if.reset_n),
+    .valid(opq_if.valid),
+    .datak(opq_if.datak),
+    .data(opq_if.data)
+  );
+
   initial begin
     clk = 1'b0;
     ctrl_if.reset_n         = 1'b0;
@@ -59,6 +109,7 @@ module tb_top_2env;
     uvm_config_db#(virtual feb_ingress_if)::set(null, "uvm_test_top.opq_env.ingress_agent_2*", "vif", feb_if2);
     uvm_config_db#(virtual feb_ingress_if)::set(null, "uvm_test_top.opq_env.ingress_agent_3*", "vif", feb_if3);
     uvm_config_db#(virtual opq_egress_if)::set(null, "uvm_test_top.datapath_env.egress_driver*", "vif", opq_if);
+    uvm_config_db#(virtual opq_egress_if)::set(null, "uvm_test_top.datapath_env.egress_monitor*", "vif", opq_if);
     uvm_config_db#(virtual dma_sink_if)::set(null, "uvm_test_top.datapath_env.dma_monitor*", "vif", dma_if);
     run_test("swb_basic_2env_test");
   end

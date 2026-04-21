@@ -17,9 +17,11 @@ class swb_opq_env extends uvm_env;
 endclass
 
 class swb_datapath_env extends uvm_env;
-  swb_opq_egress_driver egress_driver;
-  swb_dma_monitor       dma_monitor;
-  swb_scoreboard        scoreboard;
+  swb_opq_egress_driver       egress_driver;
+  swb_opq_egress_monitor      egress_monitor;
+  swb_dma_monitor             dma_monitor;
+  swb_scoreboard              scoreboard;
+  swb_opq_boundary_scoreboard boundary_scoreboard;
 
   `uvm_component_utils(swb_datapath_env)
 
@@ -30,12 +32,15 @@ class swb_datapath_env extends uvm_env;
   function void build_phase(uvm_phase phase);
     super.build_phase(phase);
     egress_driver = swb_opq_egress_driver::type_id::create("egress_driver", this);
-    dma_monitor   = swb_dma_monitor::type_id::create("dma_monitor", this);
-    scoreboard    = swb_scoreboard::type_id::create("scoreboard", this);
+    egress_monitor = swb_opq_egress_monitor::type_id::create("egress_monitor", this);
+    dma_monitor = swb_dma_monitor::type_id::create("dma_monitor", this);
+    scoreboard = swb_scoreboard::type_id::create("scoreboard", this);
+    boundary_scoreboard = swb_opq_boundary_scoreboard::type_id::create("boundary_scoreboard", this);
   endfunction
 
   function void connect_phase(uvm_phase phase);
     super.connect_phase(phase);
     dma_monitor.ap.connect(scoreboard.dma_imp);
+    egress_monitor.ap.connect(boundary_scoreboard.egress_imp);
   endfunction
 endclass

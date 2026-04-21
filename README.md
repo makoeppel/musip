@@ -83,21 +83,24 @@ The OPQ/SWB integration flow added in this workspace uses root-level `make` targ
 If you just want the shortest safe path:
 
 1. Run `make ip-init`
-2. Run `make ip-check-license`
-3. Run `make ip-tlm-basic`
-4. Read `tb_int/cases/basic/ref/out/summary.json`
+2. Run `make ip-tlm-basic-smoke`
+3. Read `tb_int/cases/basic/ref/out_smoke/summary.json`
+4. Run `make ip-plain-basic-2env-smoke`
 5. Run `make ip-lint-rtl`
-6. Run `make ip-compile-plain`
-7. Run `make ip-compile-plain-2env`
+6. Run `make ip-tlm-basic`
+7. Run `make ip-plain-basic-2env`
 8. Run `make ip-compile-basic`
+9. Run `make ip-formal-boundary`
 
 Important:
 
-- `make ip-tlm-basic` is the current workaround flow. It does not need the blocked `vsim` runtime.
+- `make ip-tlm-basic-smoke` is the smallest deterministic replay bundle. It is the right first step when you are debugging the OPQ seam.
+- `make ip-tlm-basic` is the full simulatorless fallback flow. It exports replay vectors and expected DMA words without running RTL.
 - `make ip-lint-rtl` applies a strict style gate to the clean maintained bridge/wrapper files and a hygiene gate to legacy or imported RTL touched by this integration branch.
-- `make ip-plain-basic` is the quartus-system-style plain mixed-language replay bench. It avoids UVM and only needs a standard mixed-language Mentor runtime once that binary exists.
-- `make ip-plain-basic-2env` is the split workaround path: a VHDL-only post-OPQ datapath plus a DPI-backed 2-env UVM harness at the OPQ seam.
+- `make ip-plain-basic` is the quartus-system-style plain mixed-language replay bench. It runs on the current host with the local `questa_fse` Starter runtime.
+- `make ip-plain-basic-2env` is the split workaround path: a VHDL-only post-OPQ datapath plus a DPI-backed 2-env UVM harness at the OPQ seam. It also runs on the current host with `questa_fse` plus `-nodpiexports`.
 - `make ip-uvm-basic` is the real RTL/UVM run, but it still requires a full Mentor/Questa runtime binary.
+- `make ip-formal-boundary` is the boundary-contract scaffold. It proves the OPQ seam packet grammar checker against a small legal packet family.
 - Once that runtime exists, you can replay the exact fallback case in RTL with:
 
 ```bash

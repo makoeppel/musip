@@ -17,7 +17,7 @@ Primary targets:
 Fast path:
 
 1. If you do not have a full Mentor/Questa runtime, stop here and use `../ref/`.
-2. If you only have standard mixed-language simulation, use `../plain/` first, or `../plain_2env/` if you want to split the OPQ seam.
+2. On the current host, use `../plain/` first, or `../plain_2env/` if you want to split the OPQ seam. Both use the local `questa_fse` Starter runtime as the workaround path.
 3. If you do have the full runtime, point `QUESTA_HOME` at it.
 4. To replay the exact fallback case in RTL, run `make run SIM_ARGS="+SWB_REPLAY_DIR=/absolute/path/to/tb_int/cases/basic/ref/out"`.
 5. To generate a fresh constrained-random case inside UVM instead, run `make run` without `SWB_REPLAY_DIR`.
@@ -32,4 +32,4 @@ Helpful overrides:
 Runtime note:
 
 - The Intel FPGA Edition `vsim` binary boots as `intelqsim` and cannot consume the ETH `mtiverification` and `msimhdlmix` floating features. The local `run_questa.sh` wrapper fails fast with that explanation instead of letting Questa die with a generic SALT error.
-- While that runtime is unavailable, use `../ref/` to generate the same basic Poisson traffic case, export replay vectors, and validate the expected DMA packing rules without pretending to run the RTL.
+- While that runtime is unavailable, use `../ref/` to generate replay vectors, `../plain/` for the quartus-system-style replay bench, and `../plain_2env/` for the split seam plus explicit boundary scoreboarding.

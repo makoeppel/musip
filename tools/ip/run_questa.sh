@@ -28,10 +28,11 @@ floating server provides standard Mentor features such as msimhdlmix and
 mtiverification.
 
 Point QUESTA_HOME at a full Mentor/Questa installation to run the UVM harness.
-The compile flow can still use the Intel binaries, but runtime cannot.
-Use make ip-tlm-basic to build/reference vectors, and make ip-plain-basic or
-make ip-plain-basic-2env once a standard mixed-language Mentor runtime is
-available.
+The workaround paths do not use this wrapper:
+use make ip-tlm-basic or make ip-tlm-basic-smoke to build replay vectors,
+make ip-plain-basic or make ip-plain-basic-smoke for the quartus-system-style
+replay bench, or make ip-plain-basic-2env / ip-plain-basic-2env-smoke for the
+split OPQ-seam workaround on the local Starter runtime.
 EOF
     exit 2
 fi
