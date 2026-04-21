@@ -106,6 +106,7 @@ begin
     port map (
         i_rx            => rx,
         i_rmask_n       => rmask_n,
+        i_use_direct_mux=> '0',
         i_lookup_ctrl   => lookup_ctrl,
         o_subh_cnt      => subh_cnt,
         o_hit_cnt       => hit_cnt,

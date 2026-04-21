@@ -75,3 +75,25 @@ Once all these are installed one can generate the documentation via:
 make doc_mkdocs
 make serve_mkdocs
 ```
+
+## OPQ/SWB Integration Bring-Up
+
+The OPQ/SWB integration flow added in this workspace uses root-level `make` targets.
+
+If you just want the shortest safe path:
+
+1. Run `make ip-init`
+2. Run `make ip-check-license`
+3. Run `make ip-tlm-basic`
+4. Read `tb_int/cases/basic/ref/out/summary.json`
+5. Run `make ip-compile-basic`
+
+Important:
+
+- `make ip-tlm-basic` is the current workaround flow. It does not need the blocked `vsim` runtime.
+- `make ip-uvm-basic` is the real RTL/UVM run, but it still requires a full Mentor/Questa runtime binary.
+- Once that runtime exists, you can replay the exact fallback case in RTL with:
+
+```bash
+make ip-uvm-basic SIM_ARGS="+SWB_REPLAY_DIR=$(pwd)/tb_int/cases/basic/ref/out"
+```

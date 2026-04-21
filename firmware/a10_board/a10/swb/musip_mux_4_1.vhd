@@ -22,6 +22,7 @@ generic (
 port (
     i_rx              : in  work.mu3e.link32_array_t(g_LINK_N-1 downto 0);
     i_rmask_n         : in  std_logic_vector(g_LINK_N-1 downto 0);
+    i_use_direct_mux  : in  std_logic := '0';
 
     i_lookup_ctrl     : in  std_logic_vector(31 downto 0);
 
@@ -71,6 +72,15 @@ architecture arch of musip_mux_4_1 is
     signal rx_valid             : std_logic_vector(g_LINK_N-1 downto 0);
     signal index_256            : int_0_3_array_t(g_LINK_N-1 downto 0);
 
+    signal subtime_data         : std_logic_vector(255 downto 0);
+    signal subtime_valid        : std_logic;
+    signal subtime_word_cnt     : std_logic_vector(63 downto 0);
+    signal subtime_word_rate    : std_logic_vector(31 downto 0);
+    signal direct_data          : std_logic_vector(255 downto 0);
+    signal direct_valid         : std_logic;
+    signal direct_word_cnt      : std_logic_vector(63 downto 0);
+    signal direct_word_rate     : std_logic_vector(31 downto 0);
+
     -- internal counters
     signal s_subh_cnt           : slv64_array_t(g_LINK_N-1 downto 0) := (others => (others => '0'));
     signal s_hit_cnt            : slv64_array_t(g_LINK_N-1 downto 0) := (others => (others => '0'));
@@ -81,6 +91,10 @@ begin
     o_subh_cnt    <= s_subh_cnt;
     o_hit_cnt     <= s_hit_cnt;
     o_package_cnt <= s_package_cnt;
+    o_data        <= direct_data when i_use_direct_mux = '1' else subtime_data;
+    o_valid       <= direct_valid when i_use_direct_mux = '1' else subtime_valid;
+    o_word_cnt    <= direct_word_cnt when i_use_direct_mux = '1' else subtime_word_cnt;
+    o_word_rate   <= direct_word_rate when i_use_direct_mux = '1' else subtime_word_rate;
 
     gen_links_to_256bit : for i in 0 to g_LINK_N-1 GENERATE
 
@@ -255,32 +269,40 @@ begin
         i_cur_subtime   => last_subheader_time,
         i_mask_n        => i_rmask_n,
 
-        o_data          => o_data,
-        o_valid         => o_valid,
+        o_data          => subtime_data,
+        o_valid         => subtime_valid,
 
-        o_word_cnt      => o_word_cnt,
+        o_word_cnt      => subtime_word_cnt,
         o_fifo_full_cnt => open,
 
         i_reset_n       => i_reset_n,
         i_clk           => i_clk--,
     );
 
-    -- -- MUX 4 to 1
-    -- mux_4_1_256 : entity work.mux_4_1_256
-    -- generic map (
-    --     N => g_LINK_N--,
-    -- )
-    -- port map (
-    --     i_data      => rx_256,
-    --     i_valid     => rx_valid,
+    e_subtime_word_rate : entity work.word_rate
+    generic map ( g_CLK_MHZ => 250.0 )
+    port map (
+        i_valid   => subtime_valid,
+        o_rate    => subtime_word_rate,
+        i_reset_n => i_reset_n,
+        i_clk     => i_clk--,
+    );
 
-    --     o_data      => o_data,
-    --     o_valid     => o_valid,
-    --     o_word_cnt  => o_word_cnt,
-    --     o_word_rate => o_word_rate,
+    e_mux_4_1_256 : entity work.mux_4_1_256
+    generic map (
+        N => g_LINK_N--,
+    )
+    port map (
+        i_data      => rx_256,
+        i_valid     => rx_valid,
 
-    --     i_reset_n   => i_reset_n,
-    --     i_clk       => i_clk--,
-    -- );
+        o_data      => direct_data,
+        o_valid     => direct_valid,
+        o_word_cnt  => direct_word_cnt,
+        o_word_rate => direct_word_rate,
+
+        i_reset_n   => i_reset_n,
+        i_clk       => i_clk--,
+    );
 
 end architecture;
