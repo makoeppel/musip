@@ -52,6 +52,7 @@ CMake will download googletests to run the tests.
 cd build
 ./tests/sample_test
 ./tests/bits_utils_test
+./tests/mutrig_config_test
 ```
 
 There are also some test managed with pytest.

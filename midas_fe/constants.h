@@ -39,11 +39,26 @@ constexpr uint32_t N_FEBS = 4;
 /* Maximum number of quad FEBs */
 constexpr uint32_t N_FEBS_QUAD = 4;
 
+/* Maximum number of mutrigs FEBs */
+constexpr uint32_t N_MUTRIGS_PER_FEB = 4;
+
+/* Maximum number of mutrigs channels */
+constexpr uint32_t NMUTRIGCHANNELS = 32;
+
 /* Maximum number of quad chips FEBs */
 constexpr uint32_t N_CHIPS = 8;
 
 /* Maximum number of chips FEBs */
 constexpr uint32_t N_CHIPS_MAX = 12;
+
+/* Number bytes mupix config */
+constexpr uint32_t N_BYTES_MUPIX = 48;
+
+/* Number bytes mutrig config */
+constexpr uint32_t N_BYTES_MUTRIG = 333;
+
+/* Number bit mutrig config */
+constexpr uint32_t N_BITS_MUTRIG = 2662;
 
 /* DMA constants */
 constexpr size_t dma_buf_size = MUDAQ_DMABUF_DATA_LEN;
@@ -123,3 +138,25 @@ struct reset {
         {"Enable", {0x32, false}},         {"Disable", {0x33, false}},
         {"Address", {0x40, true}}};
 };
+
+/*Timing detector common commands (mutrig)*/
+constexpr uint16_t FEB_REPLY_SUCCESS = 0x0000;
+constexpr uint16_t FEB_REPLY_ERROR = 0x0001;
+constexpr uint16_t CMD_MUTRIG_ASIC_CFG = 0x0110; // configure ASIC # with pattern in payload. ASIC number is cmd&0x000F
+/*commands 0x0110 ... 0x011f reserved*/
+constexpr uint16_t CMD_MUTRIG_ASIC_OFF = 0x0130; // configure all off builtin pattern
+constexpr uint16_t CMD_MUTRIG_CNT_RESET = 0x0160;
+constexpr uint16_t CMD_TILE_TMB_INIT = 0x0200; // set necescary initial values on the TMB
+constexpr uint16_t CMD_TILE_ASIC_PWR = 0x0210; // Power and configure ASIC, asics (payload[0]&0x1fff) will be powered on
+constexpr uint16_t CMD_TILE_ASIC_PWROR = 0x0220; // ASIC power override (payload[0]&0x1fff) -> Analog supplies ; (payload[1]&0x1fff) -> Digital supplies
+constexpr uint16_t CMD_TILE_TEMPERATURES_READ = 0x0230; // read out the Temperature of all sensors on the TMB
+constexpr uint16_t CMD_TILE_POWERMONITORS_READ = 0x0240; // read out all powermonitors on the TMB
+constexpr uint16_t CMD_TILE_TMB_STATUS = 0x0250; // read out the status of the Powermonitor
+constexpr uint16_t CMD_TILE_INJECTION_SETTING = 0x0260; // change test pulse setting base on last bit: 0 -> off, 1 -> on
+constexpr uint16_t CMD_TILE_TEMPERATURES_READ_IDS= 0x0270; // read out the Temperature sensor IDs of all sensors on the TMB
+constexpr size_t N_TMB_MATRIX_TEMPERATURES = 26;
+constexpr size_t N_TxTM_VALUES = 26;
+constexpr size_t N_TMB_TEMPERATURES_VALUES = 26+1;
+constexpr size_t N_TMB_TEMPERATURE_IDS_VALUES = 26*2+1;
+constexpr float TMB_TEMPERATURE_FACTOR = 0.0078125;
+constexpr size_t N_TMB_STATUS_VALUES = 4;

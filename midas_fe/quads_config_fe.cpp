@@ -58,11 +58,19 @@ BOOL equipment_common_overwrite = TRUE;
 // configuration variables
 FEBSlowcontrolInterface* feb_sc;
 midas::odb m_settings;
-uint8_t bitpattern_mupix[48] = {};
+uint8_t bitpattern_mupix[N_BYTES_MUPIX] = {};
+uint8_t bitpattern_mutrig[N_BYTES_MUTRIG] = {};
 mudaq::DmaMudaqDevice* mup = nullptr;
 std::vector<uint32_t> lvds_banks = {};
 std::vector<uint32_t> matrix_banks = {};
 std::vector<uint32_t> adc_banks = {};
+std::vector<uint32_t> counters_XXCR = {};
+std::vector<uint32_t> counters_XXCH = {};
+std::vector<uint32_t> counters_XXCF = {};
+std::vector<uint32_t> counters_XXCE = {};
+std::vector<uint32_t> counters_XXCP = {};
+std::vector<uint32_t> values_XXSM = {};
+std::vector<float> values_XXTM = {};
 
 // runstart
 reset reset_protocol;
@@ -222,27 +230,25 @@ int quad_loop() { return SUCCESS; }
 void sc_settings_changed(midas::odb o) {
     std::string name = o.get_name();
 
+    if (!o) return;
+
     cm_msg(MINFO, "sc_settings_changed", "Setting changed (%s)", name.c_str());
 
     if (name == "MupixConfig" && o) {
         ConfigureASICs(*feb_sc, m_settings, bitpattern_mupix);
-        o = false;
     }
 
     // TODO: this can be done in the frontend loop all the time
     if (name == "InitFEBs" && o) {
         InitFEBs(*feb_sc, m_settings);
-        o = false;
     }
 
     if (name == "ResetASICs" && o) {
         resetASICs(*feb_sc, m_settings);
-        o = false;
     }
 
     if (name == "ADC Continuous Readout" && o) {
         adcContinuousReadout(*feb_sc, m_settings);
-        o = false;
     }
 
     if (name == "Run Cycle FEB" && o) {
@@ -256,12 +262,10 @@ void sc_settings_changed(midas::odb o) {
         write_command_by_name("Sync");
         usleep(500000);  // we sleep here to wait until the command is processed
         write_command_by_name("Start Run");
-        o = false;
     }
 
     if (name == "MupixTDACConfig" && o) {
         ConfigureTDACs(*feb_sc, m_settings);
-        o = false;
     }
 
     if (name == "Configure injection" && o) {
@@ -269,7 +273,6 @@ void sc_settings_changed(midas::odb o) {
         const std::vector<uint8_t> rows = m_settings["DAQ"]["Commands"]["Injection rows"];
         if (ConfigureInjectASICs(*feb_sc, columns, rows) != FE_SUCCESS)
             cm_msg(MERROR, "on_settings_changed", "injection configuration failed!");
-        o = false;
     }
 
     if (name == "Trigger injection" && o) {
@@ -277,7 +280,6 @@ void sc_settings_changed(midas::odb o) {
             m_settings["DAQ"]["Commands"]["Injection pulse duration"];
         if (InjectASICs(*feb_sc, injection_pulse_duration) != FE_SUCCESS)
             cm_msg(MERROR, "on_settings_changed", "injection trigger failed!");
-        o = false;
     }
 
     if (name == "Trigger injection loop" && o) {
@@ -289,7 +291,6 @@ void sc_settings_changed(midas::odb o) {
         if (InjectASICsInLoop(*feb_sc, injection_pulse_duration, num_repetitions,
                               wait_between_pulses) != FE_SUCCESS)
             cm_msg(MERROR, "on_settings_changed", "injection trigger loop failed!");
-        o = false;
     }
 
     if (name == "Full chip Injection" && o) {
@@ -306,8 +307,26 @@ void sc_settings_changed(midas::odb o) {
                               injection_pulse_duration, num_repetitions,
                               wait_between_pulses) != FE_SUCCESS)
             cm_msg(MERROR, "on_settings_changed", "injection configuration failed!");
-        o = false;
     }
+
+    if(name == "init_tmb" && o){
+        TMBinit(*feb_sc, m_settings);
+    }
+
+    if( name == "override_power_moduleid" && o){
+        UpdatePowerOverride(*feb_sc, m_settings);
+    }
+
+    if( (name == "module_power_mask" || name == "module_power") && o){
+        UpdatePower(*feb_sc, m_settings);
+    }
+
+    if ( name == "MutrigConfig" && o) {
+        ConfigureMuTRiGASICs(*feb_sc, m_settings, bitpattern_mutrig);
+    }
+
+    o = false;
+
 }
 
 int frontend_init() {
@@ -359,6 +378,8 @@ int frontend_init() {
     // create watch
     settings["DAQ/Commands"].watch(sc_settings_changed);
 
+    ConfigureMuTRiGASICs(*feb_sc, m_settings, bitpattern_mutrig);
+
     return SUCCESS;
 }
 
@@ -369,9 +390,10 @@ int read_sc_event(char* pevent, int off) {
     uint32_t offset = 1;
     for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
         bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
+        bool FEBsIsQuads = m_settings["DAQ"]["Links"]["FEBsQuads"][febIDx];
         lvds_banks.push_back(febIDx);
         lvds_banks.push_back(MAX_LVDS_LINKS_PER_FEB);
-        if (FEBActive) {
+        if (FEBActive && FEBsIsQuads) {
             std::vector<uint32_t> status(offset + (MAX_LVDS_LINKS_PER_FEB * 4));
             feb_sc->FEB_read(febIDx, LVDS_STATUS_START_REGISTER_W, status, false);
             for (uint32_t i = 0; i < MAX_LVDS_LINKS_PER_FEB; i++) {
@@ -394,9 +416,10 @@ int read_sc_event(char* pevent, int off) {
     matrix_banks.clear();
     for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
         bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
+        bool FEBsIsQuads = m_settings["DAQ"]["Links"]["FEBsQuads"][febIDx];
         matrix_banks.push_back(febIDx);
         matrix_banks.push_back(MAX_LVDS_LINKS_PER_FEB);
-        if (FEBActive) {
+        if (FEBActive && FEBsIsQuads) {
             std::vector<uint32_t> data(1);
             feb_sc->FEB_read(febIDx, MP_IS_A_0_REGISTER_R, data);
             matrix_banks.push_back(data[0]);
@@ -424,7 +447,8 @@ int read_sc_event(char* pevent, int off) {
     adc_banks.clear();
     for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
         bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
-        if (FEBActive) {
+        bool FEBsIsQuads = m_settings["DAQ"]["Links"]["FEBsQuads"][febIDx];
+        if (FEBActive && FEBsIsQuads) {
             vector<uint32_t> adcdata(N_CHIPS * 4 * 3);
             feb_sc->FEB_read(febIDx, MP_READBACK_MEMS_START_REGISTER_R, adcdata);
             for (uint32_t c = 0; c < N_CHIPS * 3; c += 3) {
@@ -465,6 +489,101 @@ int read_sc_event(char* pevent, int off) {
         }
     }
 
+    // fill counter banks
+    counters_XXCH.clear();
+    counters_XXCF.clear();
+    counters_XXCE.clear();
+    counters_XXCR.clear();
+    for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
+        bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
+        bool FEBsIsMutrig = m_settings["DAQ"]["Links"]["FEBsMutrig"][febIDx];
+        if (FEBActive && FEBsIsMutrig) {
+
+            // TODO: +2 should be fixed in firmware
+            std::vector<uint32_t> counter(2+N_MUTRIGS_PER_FEB*64);
+            feb_sc->FEB_read(febIDx, MUTRIG_CNT_ADDR_REGISTER_R, counter, true);
+
+            // reset counter address
+            feb_sc->FEB_write(febIDx, MUTRIG_CTRL_RESET_REGISTER_W, 0x10);
+            feb_sc->FEB_write(febIDx, MUTRIG_CTRL_RESET_REGISTER_W, 0x0);
+
+            for(int asic = 0; asic < N_MUTRIGS_PER_FEB; asic++) {
+                counters_XXCH.push_back(counter[2+asic*64+3]);
+                counters_XXCE.push_back(counter[2+asic*64+6]);
+                counters_XXCF.push_back(counter[2+asic*64+7]);
+                for ( size_t ch = 0; ch < NMUTRIGCHANNELS; ch++ )
+                    counters_XXCR.push_back(counter[2+asic*64+8+ch]);
+
+                uint16_t finetime_extended_cur = counter[2+asic*64+55] & 0xFF;
+                uint16_t finetime_extended_last = counter[2+asic*64+54] & 0xFF;
+                uint16_t time8ns_cur = counter[2+asic*64+55] >> 8;
+                uint16_t time8ns_last = counter[2+asic*64+54] >> 8;
+
+                if ((time8ns_cur * 160 + finetime_extended_cur) >= (time8ns_last * 160 + finetime_extended_last))
+                    counters_XXCP.push_back((time8ns_cur * 160 + finetime_extended_cur) - (time8ns_last * 160 + finetime_extended_last));
+                else counters_XXCP.push_back(0);
+            }
+        } else { // fill with zero to keep the size
+            for(int asic = 0; asic < N_MUTRIGS_PER_FEB; asic++) {
+                counters_XXCH.push_back(0);
+                counters_XXCE.push_back(0);
+                counters_XXCF.push_back(0);
+                for ( size_t ch = 0; ch < NMUTRIGCHANNELS; ch++ )
+                    counters_XXCR.push_back(0);
+                counters_XXCP.push_back(0);
+            }
+        }
+    }
+
+    // fill mutrig temp banks
+    values_XXTM.clear();
+    std::vector<uint32_t> rval(N_TMB_MATRIX_TEMPERATURES, -1);
+    for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
+        bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
+        bool FEBsIsMutrig = m_settings["DAQ"]["Links"]["FEBsMutrig"][febIDx];
+        auto rpc_ret = feb_sc->FEBsc_NiosRPC(febIDx, CMD_TILE_TEMPERATURES_READ, {});
+        if (FEBActive && FEBsIsMutrig && rpc_ret != -17) {
+            feb_sc->FEB_read(febIDx, FEBSlowcontrolInterface::OFFSETS::FEBsc_RPC_DATAOFFSET, rval);
+
+            // store and scale temperatures
+            for (size_t idx=0; idx < N_TMB_MATRIX_TEMPERATURES; idx++) {
+                float fval = TMB_TEMPERATURE_FACTOR * to_signed_16b(rval[idx+1]);
+                if( ((rval[0]>>(idx)) & 0x01) == 0)
+                    fval = 0;
+                //printf("XXTM idx = %lu gid=%lu : %x --> %f\n",idx,gID,rval[idx+1],fval);
+                values_XXTM.push_back(fval);
+            }
+        } else {
+            for (size_t idx=0; idx < N_TMB_MATRIX_TEMPERATURES; idx++)
+                values_XXTM.push_back(0xFFFFFFFF);
+        }
+    }
+
+    // fill TMB status
+    values_XXSM.clear();
+    std::vector<uint32_t> rval_SM(N_TMB_STATUS_VALUES, -1);
+    for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
+        bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
+        bool FEBsIsMutrig = m_settings["DAQ"]["Links"]["FEBsMutrig"][febIDx];
+        auto rpc_ret = feb_sc->FEBsc_NiosRPC(febIDx, CMD_TILE_TMB_STATUS, {});
+        if (FEBActive && FEBsIsMutrig && rpc_ret != -17) {
+            feb_sc->FEB_read(febIDx, FEBSlowcontrolInterface::OFFSETS::FEBsc_RPC_DATAOFFSET, rval_SM);
+            values_XXSM.push_back(rval_SM[0]);
+            values_XXSM.push_back(rval_SM[1]);
+            values_XXSM.push_back((int)roundf(TMB_TEMPERATURE_FACTOR * to_signed_16b(rval_SM[2]) * 100));
+            values_XXSM.push_back((int)roundf(TMB_TEMPERATURE_FACTOR * to_signed_16b(rval_SM[3]) * 100));
+        } else {
+            for (size_t idx=0; idx < N_TMB_MATRIX_TEMPERATURES; idx++) {
+                values_XXSM.push_back(0);
+                values_XXSM.push_back(0);
+                values_XXSM.push_back(0xFFFFFFFF);
+                values_XXSM.push_back(0xFFFFFFFF);
+            }
+        }
+    }
+
+    MuTRiGResetLVDSAddr(*feb_sc, m_settings);
+
     // create bank, pdata
     bk_init32a(pevent);
     DWORD* pdata = NULL;
@@ -484,6 +603,42 @@ int read_sc_event(char* pevent, int off) {
     bk_create(pevent, "PVSC", TID_BYTE, (void**)&pbyte);
     for (auto data : adc_banks) *pbyte++ = data;
     bk_close(pevent, pbyte);
+
+    // create a bank with the channel rate of the mutrig
+    bk_create(pevent, "MTCR", TID_DWORD, (void**)&pdata);
+    for (auto data : counters_XXCR) *pdata++ = data;
+    bk_close(pevent, pdata);
+
+    // create a bank with the hit rate of the mutrig
+    bk_create(pevent, "MTCH", TID_DWORD, (void**)&pdata);
+    for (auto data : counters_XXCH) *pdata++ = data;
+    bk_close(pevent, pdata);
+
+    // create a bank with the frame rate of the mutrig
+    bk_create(pevent, "MTCF", TID_DWORD, (void**)&pdata);
+    for (auto data : counters_XXCF) *pdata++ = data;
+    bk_close(pevent, pdata);
+
+    // create a bank with the CRC errors of the mutrig
+    bk_create(pevent, "MTCE", TID_DWORD, (void**)&pdata);
+    for (auto data : counters_XXCE) *pdata++ = data;
+    bk_close(pevent, pdata);
+
+    // create a bank with some time checks of the mutrig
+    bk_create(pevent, "MTCP", TID_DWORD, (void**)&pdata);
+    for (auto data : counters_XXCP) *pdata++ = data;
+    bk_close(pevent, pdata);
+
+    // create a bank with temperatures of the TMB
+    float* pfloat = NULL;
+    bk_create(pevent, "MTTM", TID_DWORD, (void**)&pfloat);
+    for (auto data : values_XXTM) *pfloat++ = data;
+    bk_close(pevent, pfloat);
+
+    // create a bank with the TMB status
+    bk_create(pevent, "MTSM", TID_DWORD, (void**)&pdata);
+    for (auto data : values_XXSM) *pdata++ = data;
+    bk_close(pevent, pdata);
 
     return bk_size(pevent);
 }

@@ -14,12 +14,15 @@ FetchContent_MakeAvailable(googletest)
 # Add your test executable
 add_executable(sample_test sample_test.cpp)
 add_executable(bits_utils_test bits_utils_test.cpp)
+add_executable(mutrig_config_test mutrig_config_test.cpp)
 
 # Link to GoogleTest libraries
 target_link_libraries(sample_test gtest_main)
 target_link_libraries(bits_utils_test gtest_main)
+target_link_libraries(mutrig_config_test gtest_main libmudaq midas::mfed)
 
 # Auto-discover and register tests
 include(GoogleTest)
 gtest_discover_tests(sample_test)
 gtest_discover_tests(bits_utils_test)
+gtest_discover_tests(mutrig_config_test)
