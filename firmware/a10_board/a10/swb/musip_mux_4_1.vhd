@@ -242,45 +242,45 @@ begin
     end generate;
 
     -- subheader merger
-    e_subtime_merger : entity work.subtime_merger
-    generic map (
-        g_LINK_N => 4,
-        g_FIFO_ADDR_WIDTH => 8,
-        g_N_SUBTIME_BITS => 3,
-        g_DATA_WIDTH => 64--,
-    )
-    port map (
-        i_data          => next_64bit_word,
-        i_valid         => next_64bit_word_valid,
-        i_cur_subtime   => last_subheader_time,
-        i_mask_n        => i_rmask_n,
-
-        o_data          => o_data,
-        o_valid         => o_valid,
-
-        o_word_cnt      => o_word_cnt,
-        o_fifo_full_cnt => open,
-
-        i_reset_n       => i_reset_n,
-        i_clk           => i_clk--,
-    );
-
-    -- -- MUX 4 to 1
-    -- mux_4_1_256 : entity work.mux_4_1_256
+    -- e_subtime_merger : entity work.subtime_merger
     -- generic map (
-    --     N => g_LINK_N--,
+    --     g_LINK_N => 4,
+    --     g_FIFO_ADDR_WIDTH => 8,
+    --     g_N_SUBTIME_BITS => 3,
+    --     g_DATA_WIDTH => 64--,
     -- )
     -- port map (
-    --     i_data      => rx_256,
-    --     i_valid     => rx_valid,
+    --     i_data          => next_64bit_word,
+    --     i_valid         => next_64bit_word_valid,
+    --     i_cur_subtime   => last_subheader_time,
+    --     i_mask_n        => i_rmask_n,
 
-    --     o_data      => o_data,
-    --     o_valid     => o_valid,
-    --     o_word_cnt  => o_word_cnt,
-    --     o_word_rate => o_word_rate,
+    --     o_data          => o_data,
+    --     o_valid         => o_valid,
 
-    --     i_reset_n   => i_reset_n,
-    --     i_clk       => i_clk--,
+    --     o_word_cnt      => o_word_cnt,
+    --     o_fifo_full_cnt => open,
+
+    --     i_reset_n       => i_reset_n,
+    --     i_clk           => i_clk--,
     -- );
+
+    -- MUX 4 to 1
+    mux_4_1_256 : entity work.mux_4_1_256
+    generic map (
+        N => g_LINK_N--,
+    )
+    port map (
+        i_data      => rx_256,
+        i_valid     => rx_valid,
+
+        o_data      => o_data,
+        o_valid     => o_valid,
+        o_word_cnt  => o_word_cnt,
+        o_word_rate => o_word_rate,
+
+        i_reset_n   => i_reset_n,
+        i_clk       => i_clk--,
+    );
 
 end architecture;
