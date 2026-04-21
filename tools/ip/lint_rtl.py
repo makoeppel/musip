@@ -26,6 +26,7 @@ HYGIENE_FILES = [
     ROOT / "firmware/a10_board/a10/swb/musip_mux_4_1.vhd",
     ROOT / "firmware/a10_board/a10/swb/swb_block.vhd",
     ROOT / "tb_int/cases/basic/plain/tb_swb_block_plain_replay.vhd",
+    ROOT / "tb_int/cases/basic/plain_2env/dut/swb_datapath_2env_wrapper.vhd",
     ROOT / "firmware/a10_board/a10/merger/opq_monolithic_4lane_merge_opq_0.vhd",
     ROOT / "firmware/a10_board/a10/merger/ticket_fifo.v",
     ROOT / "firmware/a10_board/a10/merger/lane_fifo.v",

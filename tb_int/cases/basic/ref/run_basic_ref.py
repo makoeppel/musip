@@ -294,6 +294,55 @@ def serialize_plan(plan: CasePlan) -> list[list[dict[str, int | str]]]:
     return lane_streams
 
 
+def collect_sorted_hits(
+    frames_by_lane: list[list[FrameItem]],
+) -> list[tuple[int, int, int, int, int]]:
+    records: list[tuple[int, int, int, int, int]] = []
+
+    for lane_frames in frames_by_lane:
+        for frame in lane_frames:
+            for shd in frame.subheaders:
+                for hit in shd.hits:
+                    abs_ts = make_abs_ts(frame.ts_high_word, frame.ts_low_word, shd.shd_ts, hit.payload_word)
+                    records.append((abs_ts, frame.ts_high_word, frame.ts_low_word, shd.shd_ts, hit.payload_word))
+
+    records.sort(key=lambda item: item[0])
+    return records
+
+
+def build_opq_egress_frames(frames_by_lane: list[list[FrameItem]]) -> list[FrameItem]:
+    merged_frames: list[FrameItem] = []
+    current_frame: FrameItem | None = None
+    current_frame_key: tuple[int, int] | None = None
+    current_subheader: SubheaderDesc | None = None
+
+    for _, ts_high_word, ts_low_word, shd_ts, payload_word in collect_sorted_hits(frames_by_lane):
+        frame_key = (ts_high_word, ts_low_word)
+
+        if frame_key != current_frame_key:
+            current_frame = FrameItem(
+                lane_id=0,
+                frame_id=len(merged_frames),
+                ts_high_word=ts_high_word,
+                ts_low_word=ts_low_word,
+                pkg_cnt=len(merged_frames) & 0xFFFF,
+                feb_id=0,
+            )
+            merged_frames.append(current_frame)
+            current_frame_key = frame_key
+            current_subheader = None
+
+        assert current_frame is not None
+
+        if current_subheader is None or current_subheader.shd_ts != shd_ts:
+            current_subheader = SubheaderDesc(shd_ts=shd_ts)
+            current_frame.subheaders.append(current_subheader)
+
+        current_subheader.hits.append(HitDesc(payload_word=payload_word))
+
+    return merged_frames
+
+
 def parse_lane_stream(lane_id: int, stream: Iterable[dict[str, int | str]]) -> list[FrameItem]:
     words = [item for item in stream if int(item["valid"]) == 1]
     frames: list[FrameItem] = []
@@ -437,17 +486,33 @@ def main(argv: list[str]) -> int:
 
     plan = build_basic_case(frame_count=args.frames, lane_saturation=list(args.sat), seed=args.seed)
     lane_streams = serialize_plan(plan)
+    opq_egress_stream: list[dict[str, int | str]] = []
+    opq_egress_frames = build_opq_egress_frames(plan.frames_by_lane)
+    for merged_frame in opq_egress_frames:
+        opq_egress_stream.extend(serialize_frame(merged_frame))
     parsed_frames_by_lane = [parse_lane_stream(lane_id, lane_streams[lane_id]) for lane_id in range(SWB_N_LANES)]
     reparsed_dma_words, reparsed_total_hits = pack_expected_words_from_frames(parsed_frames_by_lane)
+    reparsed_opq_frames = parse_lane_stream(0, opq_egress_stream)
+    reparsed_opq_dma_words, reparsed_opq_total_hits = pack_expected_words_from_frames(
+        [reparsed_opq_frames, [], [], []]
+    )
 
     normalized_source = [normalize_dma_word(word) for word in plan.expected_dma_words]
     normalized_reparsed = [normalize_dma_word(word) for word in reparsed_dma_words]
+    normalized_opq_reparsed = [normalize_dma_word(word) for word in reparsed_opq_dma_words]
 
     if normalized_source != normalized_reparsed:
         raise RuntimeError("Reparsed lane streams do not reproduce the expected DMA payload words")
     if plan.total_hits != reparsed_total_hits:
         raise RuntimeError(
             f"Total hit count mismatch after reparsing: source={plan.total_hits} reparsed={reparsed_total_hits}"
+        )
+    if normalized_source != normalized_opq_reparsed:
+        raise RuntimeError("Synthesized OPQ egress replay does not reproduce the expected DMA payload words")
+    if plan.total_hits != reparsed_opq_total_hits:
+        raise RuntimeError(
+            "Total hit count mismatch after reparsing the synthesized OPQ egress replay: "
+            f"source={plan.total_hits} reparsed={reparsed_opq_total_hits}"
         )
 
     digest = hashlib.sha256(
@@ -489,13 +554,36 @@ def main(argv: list[str]) -> int:
                 )
                 handle.write(f"{packed_beat:010X}\n")
 
+    with (out_dir / "opq_egress.jsonl").open("w", encoding="utf-8") as handle:
+        for index, item in enumerate(opq_egress_stream):
+            record = {
+                "index": index,
+                "valid": int(item["valid"]),
+                "data": f"0x{int(item['data']) & 0xFFFF_FFFF:08X}",
+                "datak": f"0x{int(item['datak']) & 0xF:X}",
+                "kind": item["kind"],
+            }
+            handle.write(json.dumps(record, sort_keys=True))
+            handle.write("\n")
+
+    with (out_dir / "opq_egress.mem").open("w", encoding="ascii") as handle:
+        for item in opq_egress_stream:
+            packed_beat = (
+                ((int(item["valid"]) & 0x1) << 36)
+                | ((int(item["datak"]) & 0xF) << 32)
+                | (int(item["data"]) & 0xFFFF_FFFF)
+            )
+            handle.write(f"{packed_beat:010X}\n")
+
     replay_manifest = {
         "format": {
             "lane_mem_word": "{valid[36], datak[35:32], data[31:0]}",
+            "opq_egress_mem_word": "{valid[36], datak[35:32], data[31:0]} synthesized merged OPQ egress replay",
             "expected_dma_word": "normalized 256-bit payload word, one per line",
         },
         "replay_dir_plusarg": str(out_dir),
         "lane_mem_files": [f"lane{lane_id}_ingress.mem" for lane_id in range(SWB_N_LANES)],
+        "opq_egress_mem": "opq_egress.mem",
         "expected_dma_words_mem": "expected_dma_words.mem",
     }
 
@@ -516,11 +604,15 @@ def main(argv: list[str]) -> int:
             "expected_dma_words_mem": "expected_dma_words.mem",
             "lane_streams": [f"lane{lane_id}_ingress.jsonl" for lane_id in range(SWB_N_LANES)],
             "lane_streams_mem": [f"lane{lane_id}_ingress.mem" for lane_id in range(SWB_N_LANES)],
+            "opq_egress": "opq_egress.jsonl",
+            "opq_egress_mem": "opq_egress.mem",
             "uvm_replay_manifest": "uvm_replay_manifest.json",
         },
         "checks": {
             "reparsed_dma_match": True,
             "reparsed_total_hits": reparsed_total_hits,
+            "reparsed_opq_dma_match": True,
+            "reparsed_opq_total_hits": reparsed_opq_total_hits,
         },
     }
 

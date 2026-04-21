@@ -88,13 +88,15 @@ If you just want the shortest safe path:
 4. Read `tb_int/cases/basic/ref/out/summary.json`
 5. Run `make ip-lint-rtl`
 6. Run `make ip-compile-plain`
-7. Run `make ip-compile-basic`
+7. Run `make ip-compile-plain-2env`
+8. Run `make ip-compile-basic`
 
 Important:
 
 - `make ip-tlm-basic` is the current workaround flow. It does not need the blocked `vsim` runtime.
 - `make ip-lint-rtl` applies a strict style gate to the clean maintained bridge/wrapper files and a hygiene gate to legacy or imported RTL touched by this integration branch.
 - `make ip-plain-basic` is the quartus-system-style plain mixed-language replay bench. It avoids UVM and only needs a standard mixed-language Mentor runtime once that binary exists.
+- `make ip-plain-basic-2env` is the split workaround path: a VHDL-only post-OPQ datapath plus a DPI-backed 2-env UVM harness at the OPQ seam.
 - `make ip-uvm-basic` is the real RTL/UVM run, but it still requires a full Mentor/Questa runtime binary.
 - Once that runtime exists, you can replay the exact fallback case in RTL with:
 
@@ -106,4 +108,10 @@ If you only have standard mixed-language simulation and not the verification/UVM
 
 ```bash
 make ip-plain-basic REPLAY_DIR=$(pwd)/tb_int/cases/basic/ref/out
+```
+
+If you want the split OPQ-seam workaround instead, use:
+
+```bash
+make ip-plain-basic-2env REPLAY_DIR=$(pwd)/tb_int/cases/basic/ref/out
 ```

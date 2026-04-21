@@ -20,6 +20,7 @@ Recommended order:
 1. Run `make ip-tlm-basic`
 2. Run `make ip-compile-plain`
 3. Once a standard Mentor runtime exists, run `make ip-plain-basic`
+4. If you want the split OPQ-seam workaround instead, run `make ip-plain-basic-2env`
 
 Primary local targets:
 

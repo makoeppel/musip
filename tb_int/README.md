@@ -18,11 +18,15 @@ Use this order:
    Use this before compile. It strict-checks the clean maintained files and hygiene-checks the legacy or imported RTL.
 5. `make ip-compile-plain`
    Use this to compile the quartus-system-style plain replay bench.
-6. `make ip-compile-basic`
+6. `make ip-compile-plain-2env`
+   Use this to compile the split 2-env DPI workaround harness around the OPQ seam.
+7. `make ip-compile-basic`
    Use this to make sure the mixed-language UVM harness still compiles.
-7. `make ip-plain-basic`
+8. `make ip-plain-basic`
    Use this after a standard Mentor mixed-language runtime is available.
-8. `make ip-uvm-basic`
+9. `make ip-plain-basic-2env`
+   Use this after a standard Mentor mixed-language runtime is available if you want the VHDL-only post-OPQ datapath split.
+10. `make ip-uvm-basic`
    Use this after the full Mentor verification runtime is available.
 
 What each make target means:
@@ -33,11 +37,14 @@ What each make target means:
 - `make ip-check-license`: check whether the ETH Siemens/Mentor features are reachable.
 - `make ip-lint-rtl`: strict-check maintained bridge/wrapper RTL and hygiene-check touched legacy or imported RTL.
 - `make ip-compile-plain`: compile the plain mixed-language replay bench.
+- `make ip-compile-plain-2env`: compile the split 2-env DPI workaround harness.
 - `make ip-compile-basic`: compile the mixed-language UVM harness only.
 - `make ip-tlm-basic`: generate the simulatorless basic case and export replay files.
 - `make ip-plain-basic`: run the plain mixed-language replay bench.
+- `make ip-plain-basic-2env`: run the split 2-env DPI workaround harness.
 - `make ip-uvm-basic`: run the real RTL/UVM case.
 - `make ip-e2e`: alias for `ip-uvm-basic`.
 - `make ip-e2e-ref`: alias for `ip-tlm-basic`.
 - `make ip-e2e-plain`: alias for `ip-plain-basic`.
+- `make ip-e2e-plain-2env`: alias for `ip-plain-basic-2env`.
 - `make ip-clean`: remove both UVM scratch data and fallback replay output.

@@ -1,0 +1,33 @@
+package swb_2env_pkg;
+  import uvm_pkg::*;
+  `include "uvm_macros.svh"
+
+  localparam int SWB_N_LANES                = 4;
+  localparam int SWB_N_SUBHEADERS           = 128;
+  localparam int SWB_MAX_HITS_PER_SUBHEADER = 4;
+  localparam bit [5:0] SWB_MUPIX_HEADER_ID  = 6'b111010;
+  localparam bit [7:0] SWB_K285             = 8'hBC;
+  localparam bit [7:0] SWB_K284             = 8'h9C;
+  localparam bit [7:0] SWB_K237             = 8'hF7;
+
+  import "DPI-C" function void swb_opq_2env_init(input string replay_dir);
+  import "DPI-C" function void swb_opq_2env_push_ingress(
+    input int lane,
+    input int valid,
+    input int unsigned data,
+    input int unsigned datak
+  );
+  import "DPI-C" function void swb_opq_2env_step_egress(
+    output int valid,
+    output int unsigned data,
+    output int unsigned datak
+  );
+  import "DPI-C" function int swb_opq_2env_check_complete();
+
+  `include "../../uvm/sv/swb_types.sv"
+  `include "../../uvm/sv/swb_sequences.sv"
+  `include "../../uvm/sv/swb_scoreboard.sv"
+  `include "swb_2env_agents.sv"
+  `include "swb_2env_env.sv"
+  `include "swb_2env_test.sv"
+endpackage

@@ -17,7 +17,7 @@ Primary targets:
 Fast path:
 
 1. If you do not have a full Mentor/Questa runtime, stop here and use `../ref/`.
-2. If you only have standard mixed-language simulation, use `../plain/` first.
+2. If you only have standard mixed-language simulation, use `../plain/` first, or `../plain_2env/` if you want to split the OPQ seam.
 3. If you do have the full runtime, point `QUESTA_HOME` at it.
 4. To replay the exact fallback case in RTL, run `make run SIM_ARGS="+SWB_REPLAY_DIR=/absolute/path/to/tb_int/cases/basic/ref/out"`.
 5. To generate a fresh constrained-random case inside UVM instead, run `make run` without `SWB_REPLAY_DIR`.

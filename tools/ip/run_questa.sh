@@ -29,8 +29,9 @@ mtiverification.
 
 Point QUESTA_HOME at a full Mentor/Questa installation to run the UVM harness.
 The compile flow can still use the Intel binaries, but runtime cannot.
-Use make ip-tlm-basic to build/reference vectors, and make ip-plain-basic once
-a standard mixed-language Mentor runtime is available.
+Use make ip-tlm-basic to build/reference vectors, and make ip-plain-basic or
+make ip-plain-basic-2env once a standard mixed-language Mentor runtime is
+available.
 EOF
     exit 2
 fi
