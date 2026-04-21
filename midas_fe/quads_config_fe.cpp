@@ -378,8 +378,6 @@ int frontend_init() {
     // create watch
     settings["DAQ/Commands"].watch(sc_settings_changed);
 
-    ConfigureMuTRiGASICs(*feb_sc, m_settings, bitpattern_mutrig);
-
     return SUCCESS;
 }
 
