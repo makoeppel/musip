@@ -1,0 +1,16 @@
+{
+  "format": {
+    "lane_mem_word": "{valid[36], datak[35:32], data[31:0]}",
+    "opq_egress_mem_word": "{valid[36], datak[35:32], data[31:0]} synthesized merged OPQ egress replay",
+    "expected_dma_word": "normalized 256-bit payload word, one per line"
+  },
+  "replay_dir_plusarg": "/home/yifeng/packages/musip_2604/tb_int/wave_reports/BASIC/B049/ref",
+  "lane_mem_files": [
+    "lane0_ingress.mem",
+    "lane1_ingress.mem",
+    "lane2_ingress.mem",
+    "lane3_ingress.mem"
+  ],
+  "opq_egress_mem": "opq_egress.mem",
+  "expected_dma_words_mem": "expected_dma_words.mem"
+}

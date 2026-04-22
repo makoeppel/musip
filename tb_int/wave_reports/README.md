@@ -1,6 +1,14 @@
 # `wave_reports/` bundle guide
 
 This directory holds checked-in waveform/analyzer bundles for promoted MuSiP DV cases.
+Canonical case bundles are organized as `wave_reports/<bucket>/<case_id>/`:
+
+- `BASIC/<case_id>/`
+- `EDGE/<case_id>/`
+- `PROF/<case_id>/`
+- `ERROR/<case_id>/`
+- `CROSS/<case_id>/`
+
 Each promoted case bundle keeps one same-axis VCD that records:
 
 - `tb_top.feb_if0..3`
@@ -23,13 +31,12 @@ The bundled packet analyzer is an ingress-focused decode surface generated from 
 
 ## Current bundles
 
-| case | intent | bundle |
-|---|---|---|
-| `B047` | lane1-only merged-path closure | [`B047_lane1_only/`](B047_lane1_only/) |
-| `B048` | lane2-only merged-path closure | [`B048_lane2_only/`](B048_lane2_only/) |
-| `B049` | lane3-only merged-path closure | [`B049_lane3_only/`](B049_lane3_only/) |
-| `P041` | `75%` DMA half-full backpressure | [`P041_dma_half_full_75/`](P041_dma_half_full_75/) |
-| sample | existing shared-axis OPQ report example | [`opq_twoframe_260422/`](opq_twoframe_260422/) |
+| bucket | case | intent | bundle |
+|---|---|---|---|
+| `BASIC` | `B047` | lane1-only merged-path closure | [`BASIC/B047/`](BASIC/B047/) |
+| `BASIC` | `B048` | lane2-only merged-path closure | [`BASIC/B048/`](BASIC/B048/) |
+| `BASIC` | `B049` | lane3-only merged-path closure | [`BASIC/B049/`](BASIC/B049/) |
+| `PROF` | `P041` | `75%` DMA half-full backpressure | [`PROF/P041/`](PROF/P041/) |
 
 Each case bundle contains:
 
@@ -46,7 +53,7 @@ Serve any bundle's packet analyzer with:
 
 ```bash
 python3 external/mu3e-ip-cores/tools/packet_transaction_traffic_analyzer/scripts/serve_packet_analyzer.py \
-  --dir tb_int/wave_reports/B047_lane1_only/packet_analyzer \
+  --dir tb_int/wave_reports/BASIC/B047/packet_analyzer \
   --port 8765
 ```
 
@@ -55,7 +62,7 @@ Optional visual-debug capture:
 ```bash
 python3 external/mu3e-ip-cores/tools/packet_transaction_traffic_analyzer/scripts/run_packet_analyzer_visual_debug.py \
   --url http://127.0.0.1:8765/ \
-  --out-dir tb_int/wave_reports/B047_lane1_only/packet_analyzer/visual_debug
+  --out-dir tb_int/wave_reports/BASIC/B047/packet_analyzer/visual_debug
 ```
 
 ## Navigation help

@@ -19,7 +19,11 @@ def repo_root() -> Path:
 
 def build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--case-id", required=True, help="Wave bundle directory name under tb_int/wave_reports.")
+    parser.add_argument(
+        "--case-id",
+        required=True,
+        help="Canonical DV case id, for example B047, E129, P041, X116, or CROSS-004.",
+    )
     parser.add_argument("--profile-name", required=True, help="SWB_PROFILE_NAME plusarg value.")
     parser.add_argument("--frames", type=int, default=2, help="Number of frames per lane.")
     parser.add_argument("--seed", type=int, required=True, help="Deterministic SWB_CASE_SEED value.")
@@ -53,7 +57,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
         "--out-root",
         type=Path,
         default=Path("tb_int/wave_reports"),
-        help="Output root that will receive <case-id>/...",
+        help="Output root that will receive <bucket>/<case-id>/...",
     )
     return parser
 
@@ -71,6 +75,20 @@ def parse_mask(raw: str) -> tuple[int, str]:
     if value < 0 or value > 0xF:
         raise ValueError(f"FEB enable mask must fit in 4 bits, got {raw!r}")
     return value, f"{value:x}"
+
+
+def bucket_name_for_case_id(case_id: str) -> str:
+    upper = case_id.upper()
+    if re.fullmatch(r"CROSS-\d{3}", upper):
+        return "CROSS"
+    if re.fullmatch(r"[BEPX]\d{3}", upper):
+        return {
+            "B": "BASIC",
+            "E": "EDGE",
+            "P": "PROF",
+            "X": "ERROR",
+        }[upper[0]]
+    raise ValueError(f"Unsupported canonical case id for wave bundle layout: {case_id!r}")
 
 
 def make_sim_args(args: argparse.Namespace, mask_hex: str) -> list[str]:
@@ -92,6 +110,7 @@ def make_sim_args(args: argparse.Namespace, mask_hex: str) -> list[str]:
 
 def write_bundle_readme(
     path: Path,
+    bucket: str,
     case_id: str,
     profile_name: str,
     sim_args: list[str],
@@ -100,13 +119,14 @@ def write_bundle_readme(
 ) -> None:
     serve_cmd = (
         "python3 external/mu3e-ip-cores/tools/packet_transaction_traffic_analyzer/scripts/"
-        f"serve_packet_analyzer.py --dir tb_int/wave_reports/{case_id}/packet_analyzer --port 8765"
+        f"serve_packet_analyzer.py --dir tb_int/wave_reports/{bucket}/{case_id}/packet_analyzer --port 8765"
     )
     path.write_text(
         "\n".join(
             [
                 f"# `{case_id}` wave bundle",
                 "",
+                f"- **bucket:** `{bucket}`",
                 f"- **profile:** `{profile_name}`",
                 f"- **same-axis VCD:** `{vcd_rel}`",
                 f"- **sim args:** `{shlex.join(sim_args)}`",
@@ -170,7 +190,8 @@ def main(argv: list[str]) -> int:
 
     mask_value, mask_hex = parse_mask(args.feb_enable_mask)
 
-    out_dir = (root / args.out_root / args.case_id).resolve()
+    bucket = bucket_name_for_case_id(args.case_id)
+    out_dir = (root / args.out_root / bucket / args.case_id).resolve()
     ref_dir = out_dir / "ref"
     sim_dir = out_dir / "sim"
     analyzer_dir = out_dir / "packet_analyzer"
@@ -248,6 +269,7 @@ def main(argv: list[str]) -> int:
 
     summary_lines = collect_summary_lines(run_log)
     bundle_payload = {
+        "bucket": bucket,
         "case_id": args.case_id,
         "profile_name": args.profile_name,
         "frames": args.frames,
@@ -270,6 +292,7 @@ def main(argv: list[str]) -> int:
     bundle_json.write_text(json.dumps(bundle_payload, indent=2) + "\n", encoding="utf-8")
     write_bundle_readme(
         bundle_readme,
+        bucket,
         args.case_id,
         args.profile_name,
         sim_args,
