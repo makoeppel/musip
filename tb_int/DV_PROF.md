@@ -172,5 +172,6 @@ Each `R` case names the axes it varies. The axis table is shared with [`DV_CROSS
 ## Regenerate
 
 ```
-python3 ~/.codex/skills/dv-workflow/scripts/dv_report_gen.py --tb tb_int
+python3 tb_int/scripts/build_dv_report_json.py --tb tb_int
+python3 tb_int/scripts/dv_report_gen.py --tb tb_int
 ```

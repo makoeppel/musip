@@ -116,5 +116,6 @@ merge_ucdb \
 
 python3 "${TB_DIR}/scripts/build_dv_report_json.py" --tb "${TB_DIR}"
 python3 "${TB_DIR}/scripts/dv_report_gen.py" --tb "${TB_DIR}"
+python3 "${HOME}/.codex/skills/rtl-doc-style/scripts/rtl_doc_style_check.py" "${TB_DIR}" "${TB_DIR}/doc"
 
 echo "coverage closure artifacts written under ${COV_DIR}"

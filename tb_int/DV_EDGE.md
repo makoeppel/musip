@@ -171,5 +171,6 @@ All cases below address specific fields or beats defined in the stimulus field m
 ## Regenerate
 
 ```
-python3 ~/.codex/skills/dv-workflow/scripts/dv_report_gen.py --tb tb_int
+python3 tb_int/scripts/build_dv_report_json.py --tb tb_int
+python3 tb_int/scripts/dv_report_gen.py --tb tb_int
 ```

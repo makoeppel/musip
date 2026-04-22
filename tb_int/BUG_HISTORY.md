@@ -20,13 +20,12 @@ Fix status detail contract for active entries and future updates:
 - `potential_hazard` = whether the fix looks permanent or is still provisional / profile-limited
 - `Claude Opus 4.7 xhigh review decision` = explicit review state; use `pending / not run` until that review has actually happened
 
-Current local posture:
+Historical formal note:
+- the current formal direction in this repo is the seam scaffold under `tb_int/cases/basic/plain_2env/formal/`; it is a property-level boundary check rather than a standalone full-formal signoff flow
 - the promoted merge-enabled replay path now closes on the musip-regenerated authentic Qsys OPQ wrapper (`OPQ_SOURCE_MODE=upstream_qsys_generated`)
 - the promoted merge-enabled path now also applies `feb_enable_mask` before the OPQ ingress bridge, so masked lanes no longer leak into the merged hit ledger
 - the musip-local event-builder cleanup and the UCDB save/merge flow are now landed in this workspace
 - the external upstream `signoff_4lane` audit item is kept in the ledger for reference but is out of scope for musip-local signoff here
-
-Attribution rule for this repo:
 - do not label a musip-local failure as a standalone OPQ / `packet_scheduler` bug unless it is independently reproduced in `mu3e-ip-cores/packet_scheduler`
 - musip-only evidence stays in this ledger as a musip integration / wrapper / harness issue, even when the touched local snapshot lives under `firmware/a10_board/a10/merger/`
 - if a future failure truly looks OPQ-internal, stop and report it explicitly before filing it against `packet_scheduler`

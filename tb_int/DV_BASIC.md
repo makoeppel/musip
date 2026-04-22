@@ -179,5 +179,6 @@ K-char table (8b/10b): `K28.5 = 0xBC` (preamble), `K28.4 = 0x9C` (trailer), `K23
 ## Regenerate
 
 ```
-python3 ~/.codex/skills/dv-workflow/scripts/dv_report_gen.py --tb tb_int
+python3 tb_int/scripts/build_dv_report_json.py --tb tb_int
+python3 tb_int/scripts/dv_report_gen.py --tb tb_int
 ```

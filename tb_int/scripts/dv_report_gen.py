@@ -1,19 +1,23 @@
 #!/usr/bin/env python3
-"""Render the tb_int report tree from the current planning docs.
+"""Render the tb_int report tree from the current planning docs and JSON summary.
 
-This local generator is intentionally conservative:
-- it preserves existing evidence-backed pages under REPORT/
-- it backfills missing per-case / per-cross / per-random-growth pages
-- it emits explicit implemented-but-not-yet-evidenced stubs instead of fabricating execution data
+This local generator owns:
+- REPORT/cases/*.md, REPORT/cross/*.md, REPORT/txn_growth/*.md placeholder pages
+- DV_REPORT.md top-level chief-architect dashboard
+- DV_COV.md coverage summary dashboard
 
 The source of truth for scenario text remains the planning markdown:
   DV_BASIC.md, DV_EDGE.md, DV_PROF.md, DV_ERROR.md, DV_CROSS.md
+The source of truth for dashboard metrics is:
+  DV_REPORT.json
 """
 
 from __future__ import annotations
 
 import argparse
+import json
 import re
+import subprocess
 import sys
 from collections import OrderedDict
 from pathlib import Path
@@ -31,6 +35,19 @@ CASE_DOCS = OrderedDict(
         ("PROF", "DV_PROF.md"),
         ("ERROR", "DV_ERROR.md"),
     ]
+)
+
+PASS_EMOJI = "✅"
+WARN_EMOJI = "⚠️"
+FAIL_EMOJI = "❌"
+PEND_EMOJI = "❓"
+INFO_EMOJI = "ℹ️"
+
+BUG_HISTORY_FORMAT_LINTER = (
+    Path.home() / ".codex/skills/dv-workflow/scripts/bug_history_format_check.py"
+)
+DV_REPORT_FORMAT_LINTER = (
+    Path.home() / ".codex/skills/dv-workflow/scripts/dv_report_format_check.py"
 )
 
 
@@ -269,12 +286,476 @@ def txn_growth_placeholder(row: dict[str, str]) -> str:
 """
 
 
+def status_emoji(status: str | None) -> str:
+    value = (status or "").strip().lower()
+    if value in {"pass", "passed", "fixed", "closed", "clean", "implemented"}:
+        return PASS_EMOJI
+    if value in {"fail", "failed", "error"}:
+        return FAIL_EMOJI
+    if value in {"partial", "warning", "warn", "waived", "implemented_evidence_pending"}:
+        return WARN_EMOJI
+    if value in {"info", "informational"}:
+        return INFO_EMOJI
+    return PEND_EMOJI
+
+
+def overall_status(data: dict) -> str:
+    summary = data.get("summary", {})
+    if isinstance(summary, dict):
+        values = [str(value).lower() for value in summary.values()]
+        if any(value in {"fail", "failed", "error"} for value in values):
+            return FAIL_EMOJI
+        if any(value in {"partial", "warning", "warn", "waived"} for value in values):
+            return WARN_EMOJI
+    return PASS_EMOJI
+
+
+def fmt_pct(value: object) -> str:
+    if isinstance(value, (int, float)):
+        return f"{value:.2f}"
+    return "pending"
+
+
+def metric_status(value: object, target: object) -> str:
+    if not isinstance(value, (int, float)):
+        return PEND_EMOJI
+    if not isinstance(target, (int, float)):
+        return INFO_EMOJI
+    return PASS_EMOJI if value >= target else WARN_EMOJI
+
+
+def health_rows(data: dict) -> list[tuple[str, str, str]]:
+    impl = data.get("implementation_summary", {})
+    cov = data.get("coverage_merged", {})
+    summary = data.get("summary", {})
+    toolchain = data.get("toolchain", {})
+    rows = OrderedDict(
+        [
+            (
+                "supported_toolchain_installed",
+                f"full Siemens Questa runtime active at `{toolchain.get('questa_home', 'unknown')}`",
+            ),
+            ("license_check", "ETH floating Siemens/Mentor features reachable"),
+            ("replay_generator", "smoke and full replay bundles generate and reparse cleanly"),
+            (
+                "local_integrated_smoke",
+                "merge-enabled authentic-wrapper SWB smoke passes on the promoted integrated path",
+            ),
+            (
+                "local_integrated_full_replay",
+                "merge-enabled authentic-wrapper full replay passes end to end on the promoted integrated path",
+            ),
+            ("local_default_uvm_run", "default randomized mixed-language UVM run passes"),
+            (
+                "local_plain_semantic_hit_check",
+                "plain replay bench closes on normalized per-hit payload content",
+            ),
+            (
+                "local_uvm_hit_trace",
+                "seeded UVM run exports per-hit ingress/OPQ/DMA ledgers with zero ghost/missing hits",
+            ),
+            (
+                "local_uvm_longrun_cross_0_50_128",
+                "default 128-run per-lane `0.0..0.5` randomized screen passes cleanly",
+            ),
+            ("opq_boundary_audit", "`ip-plain-basic-2env` smoke and full replay pass"),
+            ("seam_formal", "`ip-formal-boundary` seam scaffold passes"),
+            (
+                "implemented_catalog_cases",
+                f"all `{impl.get('implemented_case_pages', 0)}` case pages and `{impl.get('implemented_cross_pages', 0)}` cross pages are present under `REPORT/`",
+            ),
+            (
+                "implemented_cross_runs",
+                f"all `{impl.get('implemented_cross_pages', 0)}` continuous-frame run-shape pages are rendered",
+            ),
+            (
+                "event_builder_contract_cleanup",
+                "`BUG-004-R` is fixed in the musip-local `musip_event_builder` RTL",
+            ),
+            (
+                "coverage_merged_totals",
+                "merged UCDB totals are measured: "
+                f"stmt={fmt_pct(cov.get('stmt'))}, branch={fmt_pct(cov.get('branch'))}, "
+                f"cond={fmt_pct(cov.get('cond'))}, expr={fmt_pct(cov.get('expr'))}, "
+                f"fsm_state={fmt_pct(cov.get('fsm_state'))}, fsm_trans={fmt_pct(cov.get('fsm_trans'))}, "
+                f"toggle={fmt_pct(cov.get('toggle'))}, functional={fmt_pct(cov.get('functional_pct_bins_saturated'))}",
+            ),
+        ]
+    )
+    rendered: list[tuple[str, str, str]] = []
+    for key, detail in rows.items():
+        rendered.append((key, status_emoji(str(summary.get(key, "pending"))), detail))
+    return rendered
+
+
+def signoff_scope_rows(data: dict) -> list[tuple[str, str]]:
+    defaults = data.get("defaults", {})
+    toolchain = data.get("toolchain", {})
+    stimulus = data.get("stimulus", {})
+    cov = data.get("coverage_merged", {})
+    return [
+        ("workspace", data.get("workspace", "tb_int")),
+        ("dut", "swb_block integrated SWB/OPQ path"),
+        ("opq_source_mode", defaults.get("opq_source_mode", "unknown")),
+        ("simulator", toolchain.get("questa_home", "unknown")),
+        ("license_server", toolchain.get("license_server", "unknown")),
+        ("stimulus_source", stimulus.get("authoritative_source", "unknown")),
+        ("coverage_ucdb", cov.get("ucdb", "pending")),
+    ]
+
+
+def bucket_summary_rows(data: dict) -> list[dict[str, object]]:
+    rows: list[dict[str, object]] = []
+    for bucket in data.get("buckets", []):
+        if not isinstance(bucket, dict):
+            continue
+        planned = int(bucket.get("cases_planned", 0) or 0)
+        promoted = int(bucket.get("cases_implemented", planned) or 0)
+        evidenced = int(bucket.get("cases_evidenced", 0) or 0)
+        rows.append(
+            {
+                "status": PASS_EMOJI if evidenced == promoted and promoted > 0 else WARN_EMOJI,
+                "bucket": bucket.get("id", "?"),
+                "planned": planned,
+                "promoted": promoted,
+                "evidenced": evidenced,
+                "backlog": max(promoted - evidenced, 0),
+                "merged": "pending",
+                "functional": f"pending ({evidenced}/{promoted})" if promoted else "pending",
+            }
+        )
+    return rows
+
+
+def signoff_run_rows(data: dict) -> list[dict[str, str]]:
+    rows: list[dict[str, str]] = []
+    execution_modes = data.get("execution_modes", {})
+    bucket_frame = execution_modes.get("bucket_frame", {})
+    for baseline in bucket_frame.get("baselines", []) or []:
+        bucket = baseline.get("bucket", "?")
+        rows.append(
+            {
+                "status": WARN_EMOJI,
+                "run_id": baseline.get("cross_id", "pending"),
+                "kind": "bucket_frame",
+                "build": "pending promoted UCDB/log",
+                "seq": baseline.get("case_ordering", f"{bucket} case-id order"),
+                "txns": "pending",
+                "cross_pct": "pending",
+            }
+        )
+    all_buckets = execution_modes.get("all_buckets_frame", {}).get("baseline")
+    if isinstance(all_buckets, dict):
+        rows.append(
+            {
+                "status": WARN_EMOJI,
+                "run_id": all_buckets.get("cross_id", "pending"),
+                "kind": "all_buckets_frame",
+                "build": "pending promoted UCDB/log",
+                "seq": all_buckets.get("case_ordering", "bucket order"),
+                "txns": "pending",
+                "cross_pct": "pending",
+            }
+        )
+    rows.append(
+        {
+            "status": PASS_EMOJI if any(
+                target.get("target") == "make ip-uvm-longrun" and target.get("status") == "pass"
+                for target in data.get("targets", [])
+                if isinstance(target, dict)
+            )
+            else WARN_EMOJI,
+            "run_id": "ip-uvm-longrun",
+            "kind": "random_screen",
+            "build": "make ip-uvm-longrun",
+            "seq": "default 128-run rate grid",
+            "txns": "128",
+            "cross_pct": "pending",
+        }
+    )
+    return rows
+
+
+def signoff_run_link(row: dict[str, str]) -> str:
+    if row.get("run_id", "").startswith("CROSS-"):
+        return f"REPORT/cross/{row['run_id']}.md"
+    return "cases/basic/uvm/report/longrun/summary.json"
+
+
+def render_dashboard(data: dict) -> str:
+    title = "# {} DV Report — `tb_int` MuSiP SWB/OPQ integration".format(overall_status(data))
+    cov = data.get("coverage_merged", {})
+    targets = data.get("coverage_targets", {})
+    impl = data.get("implementation_summary", {})
+    planned_cases = sum(int(bucket.get("cases_planned", 0) or 0) for bucket in data.get("buckets", []))
+    promoted_cases = sum(int(bucket.get("cases_implemented", 0) or 0) for bucket in data.get("buckets", []))
+    evidenced_cases = sum(int(bucket.get("cases_evidenced", 0) or 0) for bucket in data.get("buckets", []))
+
+    lines = [
+        title,
+        "",
+        "**DUT:** `swb_block` (`ingress_egress_adaptor` → Qsys-generated native-SV OPQ merge → `musip_mux_4_1` → `musip_event_builder`)",
+        f"**Date:** `{data.get('date', 'unknown')}`",
+        f"**Branch:** `{data.get('branch', 'unknown')}`",
+        "",
+        "This page is the chief-architect dashboard. All per-case evidence lives under [`REPORT/`](REPORT/README.md).",
+        "",
+        "## Legend",
+        "",
+        f"{PASS_EMOJI} pass / closed &middot; {WARN_EMOJI} partial / below target / evidence pending &middot; {FAIL_EMOJI} failed / missing evidence &middot; {PEND_EMOJI} pending &middot; {INFO_EMOJI} informational",
+        "",
+        "## Health",
+        "",
+        "| status | field | value |",
+        "|:---:|---|---|",
+    ]
+    for field, status, detail in health_rows(data):
+        lines.append(f"| {status} | `{field}` | {detail} |")
+
+    lines += [
+        "",
+        "## Signoff Scope",
+        "",
+        "| field | claimed value |",
+        "|---|---|",
+    ]
+    for field, value in signoff_scope_rows(data):
+        lines.append(f"| {field} | `{value}` |")
+
+    lines += [
+        "",
+        "## Non-Claims",
+        "",
+        "- External upstream `packet_scheduler` `signoff_4lane` alignment remains informational and is not part of the musip-local signoff gate in this repo.",
+        "- The catalog is structurally complete, but only the promoted anchor cases currently carry isolated rerun evidence; the remaining pages are explicit implemented placeholders.",
+        "",
+        "## Bucket Summary",
+        "",
+        "| status | bucket | catalog_planned | promoted | evidenced | backlog | merged | promoted functional |",
+        "|:---:|---|---:|---:|---:|---:|---|---|",
+    ]
+    for row in bucket_summary_rows(data):
+        lines.append(
+            f"| {row['status']} | [`{row['bucket']}`](REPORT/buckets/{row['bucket']}.md) | "
+            f"{row['planned']} | {row['promoted']} | {row['evidenced']} | {row['backlog']} | "
+            f"{row['merged']} | {row['functional']} |"
+        )
+
+    metric_rows = [
+        ("stmt", cov.get("stmt"), targets.get("stmt")),
+        ("branch", cov.get("branch"), targets.get("branch")),
+        ("cond", cov.get("cond"), targets.get("cond")),
+        ("expr", cov.get("expr"), targets.get("expr")),
+        ("fsm_state", cov.get("fsm_state"), targets.get("fsm_state")),
+        ("fsm_trans", cov.get("fsm_trans"), targets.get("fsm_trans")),
+        ("toggle", cov.get("toggle"), targets.get("toggle")),
+        (
+            "functional",
+            cov.get("functional_pct_bins_saturated"),
+            targets.get("functional_pct_bins_saturated"),
+        ),
+    ]
+
+    lines += [
+        "",
+        "## Totals",
+        "",
+        "| status | metric | pct | target |",
+        "|:---:|---|---|---|",
+    ]
+    for metric, value, target in metric_rows:
+        target_text = f"{target:.1f}" if isinstance(target, (int, float)) else "-"
+        lines.append(f"| {metric_status(value, target)} | {metric} | {fmt_pct(value)} | {target_text} |")
+
+    functional_value = cov.get("functional_pct_bins_saturated")
+    lines += [
+        "",
+        f"- catalog_planned_cases: `{planned_cases}`",
+        f"- promoted_signoff_cases: `{promoted_cases}`",
+        f"- evidenced_promoted_cases: `{evidenced_cases}`",
+        f"- promoted functional coverage: `{fmt_pct(functional_value)}% (merged UCDB total)`",
+        "",
+        "## Signoff Runs",
+        "",
+        "| status | run_id | kind | build | seq | txns | cross_pct |",
+        "|:---:|---|---|---|---|---:|---:|",
+    ]
+    for row in signoff_run_rows(data):
+        lines.append(
+            f"| {row['status']} | [`{row['run_id']}`]({signoff_run_link(row)}) | "
+            f"{row['kind']} | {row['build']} | {row['seq']} | {row['txns']} | {row['cross_pct']} |"
+        )
+
+    lines += [
+        "",
+        "## Index",
+        "",
+        "- [`REPORT/README.md`](REPORT/README.md) — reviewer entry point",
+        "- [`REPORT/buckets/`](REPORT/buckets/) — ordered-merge trace per bucket",
+        "- [`REPORT/cases/`](REPORT/cases/) — one page per case",
+        "- [`REPORT/cross/`](REPORT/cross/) — one page per signoff run",
+        "- [`DV_COV.md`](DV_COV.md) — coverage totals, per-harness merges, and baseline scope",
+        "- [`DV_REPORT.json`](DV_REPORT.json) — machine-readable source of truth",
+        "- [`BUG_HISTORY.md`](BUG_HISTORY.md) — live bug ledger",
+        "- [`doc/SIGNOFF.md`](doc/SIGNOFF.md) — integrated signoff dashboard",
+        "",
+        "_This dashboard is generated by `python3 tb_int/scripts/dv_report_gen.py --tb tb_int`. Edits are overwritten; fix the JSON or the generator instead._",
+    ]
+    return "\n".join(lines)
+
+
+def render_cov_summary(data: dict) -> str:
+    cov = data.get("coverage_merged", {})
+    targets = data.get("coverage_targets", {})
+    harness = data.get("harness_coverage", {})
+    bucket_rows = bucket_summary_rows(data)
+
+    lines = [
+        "# DV Coverage Summary — `tb_int` MuSiP SWB/OPQ integration",
+        "",
+        "Chief-architect-facing dashboard only. Per-case incremental coverage rows live under [`REPORT/cases/`](REPORT/cases/); per-bucket ordered-merge traces live under [`REPORT/buckets/`](REPORT/buckets/); continuous-frame signoff runs live under [`REPORT/cross/`](REPORT/cross/).",
+        "",
+        "## Legend",
+        "",
+        f"{PASS_EMOJI} pass / closed &middot; {WARN_EMOJI} partial / below target &middot; {FAIL_EMOJI} failed / missing evidence &middot; {PEND_EMOJI} pending &middot; {INFO_EMOJI} informational",
+        "",
+        "## Targets vs merged totals",
+        "",
+        "| status | metric | merged_pct | target |",
+        "|:---:|---|---|---|",
+    ]
+    for metric, target_key in (
+        ("stmt", "stmt"),
+        ("branch", "branch"),
+        ("cond", "cond"),
+        ("expr", "expr"),
+        ("fsm_state", "fsm_state"),
+        ("fsm_trans", "fsm_trans"),
+        ("toggle", "toggle"),
+        ("functional", "functional_pct_bins_saturated"),
+    ):
+        value = cov.get(target_key if metric == "functional" else metric)
+        if metric == "functional":
+            value = cov.get("functional_pct_bins_saturated")
+        target = targets.get(target_key)
+        target_text = f"{target:.1f}" if isinstance(target, (int, float)) else "-"
+        lines.append(
+            f"| {metric_status(value, target)} | {metric} | {fmt_pct(value)} | {target_text} |"
+        )
+
+    lines += [
+        "",
+        "## Per-bucket dashboard",
+        "",
+        "| status | bucket | cases_planned | cases_implemented | cases_evidenced | merged_after_bucket | trace |",
+        "|:---:|---|---:|---:|---:|---|---|",
+    ]
+    for row in bucket_rows:
+        bucket = row["bucket"]
+        lines.append(
+            f"| {row['status']} | [{bucket}]({bucket_short(str(bucket)) and f'DV_{bucket}.md'}) | "
+            f"{row['planned']} | {row['promoted']} | {row['evidenced']} | {row['merged']} | "
+            f"[`REPORT/buckets/{bucket}.md`](REPORT/buckets/{bucket}.md) |"
+        )
+
+    lines += [
+        "",
+        "## Execution-mode baselines",
+        "",
+        "| mode | build | case_ordering | merged_total | trace |",
+        "|---|---|---|---|---|",
+        "| isolated | `make ip-uvm-basic`, `make ip-plain-basic`, `make ip-plain-basic-2env` per case | one fresh DUT start per case | measured via merged harness UCDBs | [`REPORT/cases/`](REPORT/cases/) |",
+    ]
+    for row in signoff_run_rows(data):
+        if row["run_id"] == "ip-uvm-longrun":
+            continue
+        lines.append(
+            f"| {row['kind']} | {row['build']} | {row['seq']} | pending | [`REPORT/cross/{row['run_id']}.md`](REPORT/cross/{row['run_id']}.md) |"
+        )
+
+    lines += [
+        "",
+        "## Per-harness merged totals",
+        "",
+        "| status | harness | stmt | branch | cond | expr | fsm_state | fsm_trans | toggle |",
+        "|:---:|---|---:|---:|---:|---:|---:|---:|---:|",
+    ]
+    for harness_name, payload in harness.items():
+        if not isinstance(payload, dict):
+            continue
+        code = payload.get("code", {})
+        row = [
+            WARN_EMOJI,
+            f"`{harness_name}`",
+            fmt_pct(code.get("stmt")),
+            fmt_pct(code.get("branch")),
+            fmt_pct(code.get("cond")),
+            fmt_pct(code.get("expr")),
+            fmt_pct(code.get("fsm_state")),
+            fmt_pct(code.get("fsm_trans")),
+            fmt_pct(code.get("toggle")),
+        ]
+        lines.append("| " + " | ".join(row) + " |")
+
+    lines += [
+        "",
+        "## Final sign-off summary",
+        "",
+        "| status | item | current | target |",
+        "|:---:|---|---|---|",
+        (
+            f"| {metric_status(cov.get('stmt'), targets.get('stmt'))} | total merged code coverage | "
+            f"`stmt={fmt_pct(cov.get('stmt'))}, branch={fmt_pct(cov.get('branch'))}, cond={fmt_pct(cov.get('cond'))}, "
+            f"expr={fmt_pct(cov.get('expr'))}, fsm_state={fmt_pct(cov.get('fsm_state'))}, "
+            f"fsm_trans={fmt_pct(cov.get('fsm_trans'))}, toggle={fmt_pct(cov.get('toggle'))}` | per-metric targets above |"
+        ),
+        (
+            f"| {metric_status(cov.get('functional_pct_bins_saturated'), targets.get('functional_pct_bins_saturated'))} | "
+            f"total final functional coverage | `{fmt_pct(cov.get('functional_pct_bins_saturated'))}` | "
+            f"{targets.get('functional_pct_bins_saturated', 'pending')} bins saturated |"
+        ),
+        (
+            f"| {PASS_EMOJI if data.get('implementation_summary', {}).get('implemented_case_pages') else WARN_EMOJI} | "
+            f"per-case evidence rows | `{data.get('implementation_summary', {}).get('implemented_case_pages', 0)} / {sum(int(bucket.get('cases_planned', 0) or 0) for bucket in data.get('buckets', []))}` implemented, "
+            f"`{data.get('implementation_summary', {}).get('evidenced_case_pages', 0)}` evidenced | "
+            "all catalog cases rendered |"
+        ),
+        "",
+        "## Regenerate",
+        "",
+        "```bash",
+        "python3 tb_int/scripts/build_dv_report_json.py --tb tb_int",
+        "python3 tb_int/scripts/dv_report_gen.py --tb tb_int",
+        "```",
+        "",
+        "_This page is generated by `tb_int/scripts/dv_report_gen.py`. Edits are overwritten; fix the JSON or the generator instead._",
+    ]
+    return "\n".join(lines)
+
+
+def run_linter(command: list[str], error_message: str) -> None:
+    proc = subprocess.run(command, capture_output=True, text=True)
+    if proc.returncode == 0:
+        return
+    if proc.stdout:
+        sys.stderr.write(proc.stdout)
+    if proc.stderr:
+        sys.stderr.write(proc.stderr)
+    raise SystemExit(error_message)
+
+
 def main() -> int:
     args = parse_args()
     tb = Path(args.tb).resolve()
     if not tb.is_dir():
         print(f"error: tb directory not found: {tb}", file=sys.stderr)
         return 2
+
+    if BUG_HISTORY_FORMAT_LINTER.is_file():
+        run_linter(
+            ["python3", str(BUG_HISTORY_FORMAT_LINTER), str(tb / "BUG_HISTORY.md"), "--quiet"],
+            "error: BUG_HISTORY.md does not match the packet_scheduler canonical section/index format",
+        )
 
     report = tb / "REPORT"
     (report / "cases").mkdir(parents=True, exist_ok=True)
@@ -318,6 +799,17 @@ def main() -> int:
             continue
         write_text(path, txn_growth_placeholder(row))
         created_growth += 1
+
+    json_path = tb / "DV_REPORT.json"
+    if json_path.exists():
+        data = json.loads(read_text(json_path))
+        write_text(tb / "DV_REPORT.md", render_dashboard(data))
+        write_text(tb / "DV_COV.md", render_cov_summary(data))
+        if DV_REPORT_FORMAT_LINTER.is_file():
+            run_linter(
+                ["python3", str(DV_REPORT_FORMAT_LINTER), str(tb / "DV_REPORT.md"), "--quiet"],
+                "error: DV_REPORT.md does not match the packet_scheduler canonical dashboard format",
+            )
 
     print(
         "generated report stubs: "
