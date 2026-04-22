@@ -233,11 +233,11 @@ When the OPQ snapshot under `firmware/a10_board/a10/merger/` changes, rerun at l
 | `uvm/` | `+SWB_REPLAY_DIR=<path>` | load deterministic replay instead of generating a fresh random case |
 | `uvm/` | `+SWB_FRAMES`, `+SWB_SAT0..3` | override random-case shape |
 | `uvm/` | `+SWB_CASE_SEED=<n>` | exact rerun of a randomized case |
-| `uvm/` | `+SWB_FRAME_SLOT_CYCLES=<n>` | force a fixed SOP-to-SOP slot on every enabled lane; use for human-facing wave captures where headers must align across lanes while trailers still reflect packet size |
+| `uvm/` | `+SWB_FRAME_SLOT_CYCLES=<n>` | force a fixed SOP-to-SOP slot on every enabled lane; use for human-facing wave captures where headers must align across lanes while trailers still reflect packet size. For the integrated `N_SHD=128` path the physically meaningful slot is `4096` cycles (`16.384 us`) because each subheader consumes `16 * 8 ns = 128 ns`; shorter values are visualization-only compression |
 | `uvm/` | `+SWB_HIT_TRACE_PREFIX=<abs-prefix>` | write ingress, OPQ, and DMA hit ledgers plus a summary file |
 | `uvm/` | `SWB_USE_MERGE=0` or `1` | select debug bypass or real merge path |
 | `uvm/` | `LONGRUN_ARGS='...'` | forward CLI options to `run_longrun.py` |
-| `plain_2env/` | `+SWB_FRAME_SLOT_CYCLES=<n>` | same aligned-frame evidence mode at the explicit OPQ seam |
+| `plain_2env/` | `+SWB_FRAME_SLOT_CYCLES=<n>` | same aligned-frame evidence mode at the explicit OPQ seam; use `4096` cycles for physically faithful `N_SHD=128` captures and label any shorter slot as compressed evidence |
 | `plain/` | `REPLAY_DIR=<path>` | choose the deterministic replay bundle |
 | `plain/` | `SMOKE_REPLAY_DIR=<path>` | choose the smoke replay bundle |
 | `plain/` | `USE_MERGE=0` or `1` | select debug bypass or real merge path |
