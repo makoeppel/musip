@@ -140,8 +140,12 @@ class swb_case_plan extends uvm_object;
   bit [255:0] expected_dma_words[$];
   int unsigned expected_word_count;
   int unsigned total_hits;
+  int unsigned frame_count;
   int unsigned case_seed;
+  int unsigned dma_half_full_pct;
+  int unsigned hit_mode_id;
   bit [3:0]  feb_enable_mask;
+  bit        use_merge;
   real lane_saturation[SWB_N_LANES];
   string profile_name;
   string hit_mode_name;
@@ -157,8 +161,12 @@ class swb_case_plan extends uvm_object;
     expected_dma_words.delete();
     expected_word_count = 0;
     total_hits          = 0;
+    frame_count         = 0;
     case_seed           = 0;
+    dma_half_full_pct   = 0;
+    hit_mode_id         = 0;
     feb_enable_mask     = 4'hf;
+    use_merge           = 1'b0;
     profile_name        = "";
     hit_mode_name       = "poisson";
     foreach (frames_by_lane[lane]) begin
@@ -571,6 +579,7 @@ class swb_case_builder extends uvm_object;
     plan.clear();
     plan.feb_enable_mask = 4'hf;
     plan.profile_name = "replay";
+    plan.hit_mode_id = SWB_HIT_MODE_POISSON;
 
     for (int unsigned lane_id = 0; lane_id < SWB_N_LANES; lane_id++) begin
       swb_case_builder::load_lane_replay(
@@ -584,6 +593,7 @@ class swb_case_builder extends uvm_object;
       plan,
       $sformatf("%s/expected_dma_words.mem", replay_dir)
     );
+    plan.frame_count = plan.frames_by_lane[0].size();
     plan.total_hits = swb_case_builder::count_total_hits(plan);
   end
   endfunction
@@ -610,12 +620,25 @@ class swb_case_builder extends uvm_object;
     end
     plan.clear();
     plan.feb_enable_mask = feb_enable_mask;
+    plan.frame_count = frame_count;
     plan.profile_name = "basic_random";
     case (hit_mode)
-      SWB_HIT_MODE_ZERO:   plan.hit_mode_name = "zero";
-      SWB_HIT_MODE_SINGLE: plan.hit_mode_name = "single";
-      SWB_HIT_MODE_MAX:    plan.hit_mode_name = "max";
-      default:             plan.hit_mode_name = "poisson";
+      SWB_HIT_MODE_ZERO: begin
+        plan.hit_mode_name = "zero";
+        plan.hit_mode_id = SWB_HIT_MODE_ZERO;
+      end
+      SWB_HIT_MODE_SINGLE: begin
+        plan.hit_mode_name = "single";
+        plan.hit_mode_id = SWB_HIT_MODE_SINGLE;
+      end
+      SWB_HIT_MODE_MAX: begin
+        plan.hit_mode_name = "max";
+        plan.hit_mode_id = SWB_HIT_MODE_MAX;
+      end
+      default: begin
+        plan.hit_mode_name = "poisson";
+        plan.hit_mode_id = SWB_HIT_MODE_POISSON;
+      end
     endcase
 
     foreach (lane_saturation[lane_id]) begin

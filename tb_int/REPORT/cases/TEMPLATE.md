@@ -9,7 +9,7 @@
 - **case_id:** `<CASE_ID>` — id from the matching `DV_<BUCKET>.md` catalog
 - **bucket:** `<BUCKET>` — one of `BASIC`, `EDGE`, `PROF`, `ERROR`, `CROSS`
 - **scenario:** one-line paraphrase of the scenario column from the bucket catalog
-- **contract anchor:** exact FEB AvST beat, subheader slot, hit field, or integrator-facing invariant that this case probes. Cite [`feb_frame_assembly.vhd`](../../../external/mu3e-ip-cores/feb_frame_assembly/feb_frame_assembly.vhd) beat name or the Mu3eSpecBook §5.2.6 hit field.
+- **contract anchor:** exact FEB AvST beat, subheader slot, hit field, or integrator-facing invariant that this case probes. Cite the upstream [`feb_frame_assembly/`](../../../external/mu3e-ip-cores/feb_frame_assembly/) source folder or the Mu3eSpecBook §5.2.6 hit field.
 - **stage taps:** stages exercised (`A` plan · `I` ingress · `M` merge · `O` OPQ egress · `D` DMA packed · `E` event-builder retirement)
 - **status:** one emoji from the legend (`✅ ⚠️ ❌ ❓ ℹ️`)
 

@@ -34,7 +34,9 @@ Planning files: [`DV_BASIC.md`](DV_BASIC.md) · [`DV_EDGE.md`](DV_EDGE.md) · [`
 | ✅ | `local_uvm_longrun_cross_0_50_128` | 128-run per-lane `0.0..0.5` cross-random campaign passes cleanly |
 | ✅ | `opq_boundary_audit` | `ip-plain-basic-2env` smoke and full replay pass |
 | ✅ | `seam_formal` | `ip-formal-boundary` packet-contract scaffold passes |
-| ❓ | `coverage_merged_totals` | UCDB flow not yet wired; see [`DV_COV.md`](DV_COV.md) gap analysis |
+| ✅ | `implemented_catalog_cases` | all 516 case pages, 129 cross-run pages, and 129 txn-growth pages are rendered in the report tree |
+| ✅ | `event_builder_contract_cleanup` | `BUG-004-R` is fixed in the musip-local event-builder RTL |
+| ⚠️ | `coverage_merged_totals` | merged UCDB totals are now measured; current percentages remain below signoff targets, see [`DV_COV.md`](DV_COV.md) |
 
 ## Bucket summary
 
@@ -48,13 +50,13 @@ Planning files: [`DV_BASIC.md`](DV_BASIC.md) · [`DV_EDGE.md`](DV_EDGE.md) · [`
   trace           = pointer to REPORT/buckets/<bucket>.md for the ordered-merge audit trail
 -->
 
-| status | bucket | planned | evidenced | merged_totals | functional_pct | trace |
-|:---:|---|---:|---:|---|---:|---|
-| ⚠️ | [BASIC](DV_BASIC.md) | 129 | 1 | pending | pending | [`REPORT/buckets/BASIC.md`](REPORT/buckets/BASIC.md) |
-| ⚠️ | [EDGE](DV_EDGE.md) | 129 | 3 | pending | pending | [`REPORT/buckets/EDGE.md`](REPORT/buckets/EDGE.md) |
-| ⚠️ | [PROF](DV_PROF.md) | 129 | 1 | pending | pending | [`REPORT/buckets/PROF.md`](REPORT/buckets/PROF.md) |
-| ❓ | [ERROR](DV_ERROR.md) | 129 | 0 | pending | pending | [`REPORT/buckets/ERROR.md`](REPORT/buckets/ERROR.md) |
-| ❓ | [CROSS](DV_CROSS.md) | 129 | 0 | pending | pending | [`REPORT/cross/README.md`](REPORT/cross/README.md) |
+| status | bucket | planned | implemented | evidenced | merged_totals | functional_pct | trace |
+|:---:|---|---:|---:|---:|---|---:|---|
+| ⚠️ | [BASIC](DV_BASIC.md) | 129 | 129 | 1 | pending | pending | [`REPORT/buckets/BASIC.md`](REPORT/buckets/BASIC.md) |
+| ⚠️ | [EDGE](DV_EDGE.md) | 129 | 129 | 3 | pending | pending | [`REPORT/buckets/EDGE.md`](REPORT/buckets/EDGE.md) |
+| ⚠️ | [PROF](DV_PROF.md) | 129 | 129 | 1 | pending | pending | [`REPORT/buckets/PROF.md`](REPORT/buckets/PROF.md) |
+| ⚠️ | [ERROR](DV_ERROR.md) | 129 | 129 | 0 | pending | pending | [`REPORT/buckets/ERROR.md`](REPORT/buckets/ERROR.md) |
+| ⚠️ | [CROSS](DV_CROSS.md) | 129 | 129 | 0 | pending | pending | [`REPORT/buckets/CROSS.md`](REPORT/buckets/CROSS.md) · [`REPORT/cross/README.md`](REPORT/cross/README.md) |
 
 ## Validation matrix (promoted targets)
 
@@ -80,6 +82,7 @@ Planning files: [`DV_BASIC.md`](DV_BASIC.md) · [`DV_EDGE.md`](DV_EDGE.md) · [`
 | ✅ | `make ip-plain-basic-2env-smoke` | `OPQ_BOUNDARY_SUMMARY` and `DMA_SUMMARY` pass |
 | ✅ | `make ip-plain-basic-2env` | full OPQ-boundary replay passes |
 | ✅ | `make ip-formal-boundary` | SymbiYosys seam scaffold passes |
+| ✅ | `make ip-cov-closure` | promoted replay-bearing harnesses now emit and merge UCDBs under `tb_int/sim_runs/coverage/`; merged totals are published in [`DV_COV.md`](DV_COV.md) |
 | ✅ | `make ip-lint-rtl` | strict bridge/wrapper house-style and imported-RTL hygiene checks pass |
 
 ## Per-hit tracking (promoted contract)
@@ -98,7 +101,7 @@ Promoted pass conditions: zero parser errors, correct payload length, observed `
 
 ## Stimulus contract (authoritative source)
 
-The per-lane FEB AvST grammar driving every case is emitted by [`feb_frame_assembly.vhd`](../external/mu3e-ip-cores/feb_frame_assembly/feb_frame_assembly.vhd) and reflects Mu3eSpecBook §5.2.6 (MuPix hit word). The field map is reproduced in [`DV_BASIC.md`](DV_BASIC.md#stimulus-field-map-per-frame-per-lane) and referenced by every case in [`DV_EDGE.md`](DV_EDGE.md), [`DV_PROF.md`](DV_PROF.md), [`DV_ERROR.md`](DV_ERROR.md), and [`DV_CROSS.md`](DV_CROSS.md). Deviations from this grammar are intentional fault injection and are named explicitly in the scenario column of the case catalog.
+The per-lane FEB AvST grammar driving every case is anchored on the `feb_frame_assembly` source folder in [`../external/mu3e-ip-cores/feb_frame_assembly/`](../external/mu3e-ip-cores/feb_frame_assembly/) and reflects Mu3eSpecBook §5.2.6 (MuPix hit word). The field map is reproduced in [`DV_BASIC.md`](DV_BASIC.md#stimulus-field-map-per-frame-per-lane) and referenced by every case in [`DV_EDGE.md`](DV_EDGE.md), [`DV_PROF.md`](DV_PROF.md), [`DV_ERROR.md`](DV_ERROR.md), and [`DV_CROSS.md`](DV_CROSS.md). Deviations from this grammar are intentional fault injection and are named explicitly in the scenario column of the case catalog.
 
 ## Findings
 
@@ -107,7 +110,7 @@ The per-lane FEB AvST grammar driving every case is emitted by [`feb_frame_assem
 - The UVM harness supports exact rerun of randomized cases through `+SWB_CASE_SEED=<n>`. The promoted long-run driver records that seed for every run.
 - The split `plain_2env/` harness feeds the downstream DMA scoreboard from the same ingress replay used by the OPQ boundary scoreboard, so smoke and full replay close on the same per-hit DMA contract as the integrated path.
 - The musip-owned SWB integration now honors `feb_enable_mask` before `ingress_egress_adaptor`, so masked FEB lanes no longer leak into the promoted OPQ/DMA hit ledger (`B046` / `BUG-010-R`).
-- `dma_done` is `musip_event_builder.o_done` and asserts only after payload drain plus the fixed 128-word padding tail.
+- `dma_done` is `musip_event_builder.o_done` and now retires through an explicit non-zero launch, last-payload, and fixed-padding contract in the musip-owned RTL.
 - External upstream `signoff_4lane` alignment is not part of the local musip signoff gate; it may be audited separately (see `CROSS-055` in [`DV_CROSS.md`](DV_CROSS.md) §6.6).
 
 ## Current posture
@@ -122,13 +125,13 @@ The per-lane FEB AvST grammar driving every case is emitted by [`feb_frame_assem
 | randomized screen owner | `ip-uvm-longrun` |
 | stimulus authoritative source | `feb_frame_assembly.vhd` + Mu3eSpecBook §5.2.6 |
 | DV catalog shape | `B001-B129` · `E001-E129` · `P001-P129` · `X001-X129` · `CROSS-001-CROSS-129` |
-| per-case evidence pages | `REPORT/cases/` (5 / 516 pages generated: `B046`, `E025`, `E026`, `E027`, `P040`) · `REPORT/cross/` (0 / 129 pages generated) — awaiting regression wiring |
+| per-case evidence pages | `REPORT/cases/` (516 / 516 implemented pages, 5 promoted evidence anchors, 511 explicit pending stubs) · `REPORT/cross/` (129 / 129 implemented run-shape pages) · `REPORT/txn_growth/` (129 / 129 implemented checkpoint pages) |
 
 ## Evidence index
 
 - [`DV_INT_PLAN.md`](DV_INT_PLAN.md) — plan, locked decisions, signoff boundary
 - [`DV_INT_HARNESS.md`](DV_INT_HARNESS.md) — harness topology, monitors, plusargs
-- [`BUG_HISTORY.md`](BUG_HISTORY.md) — live bug ledger (BUG-001-H..BUG-009-H)
+- [`BUG_HISTORY.md`](BUG_HISTORY.md) — live bug ledger (BUG-001-H..BUG-010-R)
 - [`DV_REPORT.json`](DV_REPORT.json) — machine-readable dashboard
 - [`DV_COV.md`](DV_COV.md) — coverage dashboard
 - [`doc/SIGNOFF.md`](doc/SIGNOFF.md) — integrated signoff dashboard
@@ -139,13 +142,12 @@ The per-lane FEB AvST grammar driving every case is emitted by [`feb_frame_assem
 
 ## Remaining work
 
-1. Wire UCDB save + merge into the `ip-compile-basic`, `ip-compile-plain`, and `ip-compile-plain-2env` flows so `DV_COV.md` is populated with real percentages.
-2. Auto-emit the remaining per-case evidence pages under `REPORT/cases/<case_id>.md` from `dv_report_gen.py`; 5 promoted spot-check pages exist manually today, while the other 511 pages still need regression-hook-backed rendering.
-3. Upgrade the `musip_event_builder` completion contract so it is easier to audit (see `BUG-004-R`).
-4. Keep any upstream packet-scheduler alignment work separate from the musip-local signoff gate in this repo (`CROSS-055` is informational).
+1. Close the measured merged-coverage gaps against the signoff targets in [`DV_COV.md`](DV_COV.md); current merged totals are `stmt=68.02`, `branch=60.13`, `cond=21.27`, `expr=45.42`, `fsm_state=54.44`, `fsm_trans=25.42`, `toggle=18.17`, `functional=47.81`.
+2. Promote additional isolated evidence pages beyond the five executed anchor cases if case-by-case rerun collateral is required for signoff review.
+3. Keep any upstream packet-scheduler alignment work separate from the musip-local signoff gate in this repo (`CROSS-055` is informational).
 
 ## Regenerate
 
-```
-python3 ~/.codex/skills/dv-workflow/scripts/dv_report_gen.py --tb tb_int
+```bash
+python3 tb_int/scripts/dv_report_gen.py --tb tb_int
 ```

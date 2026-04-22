@@ -23,7 +23,7 @@ Fix status detail contract for active entries and future updates:
 Current local posture:
 - the promoted merge-enabled replay path now closes on the musip-regenerated authentic Qsys OPQ wrapper (`OPQ_SOURCE_MODE=upstream_qsys_generated`)
 - the promoted merge-enabled path now also applies `feb_enable_mask` before the OPQ ingress bridge, so masked lanes no longer leak into the merged hit ledger
-- the only still-open local item is the deferred `musip_event_builder` contract cleanup
+- the musip-local event-builder cleanup and the UCDB save/merge flow are now landed in this workspace
 - the external upstream `signoff_4lane` audit item is kept in the ledger for reference but is out of scope for musip-local signoff here
 
 Attribution rule for this repo:
@@ -38,7 +38,7 @@ Attribution rule for this repo:
 | [BUG-001-H](#bug-001-h-default-non-replay-uvm-build-crashed-in-swb_case_builderbuild_basic_case) | H | non-datapath-refactor | `n/a (build-phase only)` | fixed | `make ip-uvm-basic` | `pending` | The default non-replay UVM path crashed in `swb_case_builder::build_basic_case` because the reverse padding loop underflowed its lane iterator. |
 | [BUG-002-R](#bug-002-r-local-integrated-native-sv-merge-path-stalled-before-dma_done) | R | hard stuck error | `n/a (deprecated local owner only)` | waived | deprecated local-owner bring-up before `OPQ_SOURCE_MODE=upstream_qsys_generated` promotion | `n/a` | The deprecated musip-local standalone OPQ copy used to stall upstream of `dma_done`; this entry is waived because signoff now uses the authentic Qsys-generated OPQ wrapper instead. |
 | [BUG-003-R](#bug-003-r-local-full-end-to-end-replay-diverged-from-the-expected-dma-ledger) | R | hard stuck error | `n/a (full replay exact repro)` | fixed | `make ip-plain-basic`, `make ip-uvm-basic` on the promoted Qsys-generated path | `pending` | The promoted authentic Qsys-generated OPQ wrapper used to drop hits because musip packaging fell back to upstream default lane/handle FIFO depths; the full end-to-end replay now closes. |
-| [BUG-004-R](#bug-004-r-musip_event_builder-completion-contract-is-still-legacy-and-should-be-upgraded) | R | non-datapath-refactor | `n/a (code inspection / contract review)` | open | `firmware/a10_board/a10/swb/musip_event_builder.vhd` | `n/a` | `musip_event_builder` still uses a legacy implicit completion contract that should be upgraded after the current signoff work is complete. |
+| [BUG-004-R](#bug-004-r-musip_event_builder-completion-contract-cleanup) | R | non-datapath-refactor | `n/a (contract cleanup with replay and coverage reruns)` | fixed | `firmware/a10_board/a10/swb/musip_event_builder.vhd` | `pending` | `musip_event_builder` now makes non-zero launch, last-payload retirement, one-word payload completion, and fixed padding behavior explicit. |
 | [BUG-005-R](#bug-005-r-external-upstream-signoff_4lane-audit-still-shows-an-alignment-gap) | R | hard stuck error | `n/a (external audit only)` | open | `OPQ_SOURCE_MODE=signoff_4lane` audit runs | `n/a` | External upstream `signoff_4lane` alignment remains open, but it is not part of the musip-local blocker set in this repo. |
 | [BUG-006-H](#bug-006-h-random-uvm-cases-were-not-exactly-reproducible-because-the-case-seed-was-not-captured) | H | non-datapath-refactor | `n/a (random-case reproducibility)` | fixed | `make ip-uvm-basic` randomized runs | `pending` | Random UVM cases were not exactly reproducible because the case-builder RNG state was implicit and not captured in the plan or logs. |
 | [BUG-007-H](#bug-007-h-per-hit-trace-export-failed-when-the-report-directory-did-not-exist) | H | non-datapath-refactor | `n/a (trace export only)` | fixed | seeded UVM trace run with `+SWB_HIT_TRACE_PREFIX=.../report/...` | `pending` | Per-hit trace export failed because the UVM run target did not create the report directory before simulation. |
@@ -126,27 +126,30 @@ Attribution rule for this repo:
 - Commit:
   - `pending`
 
-### BUG-004-R: `musip_event_builder` completion contract is still legacy and should be upgraded
+### BUG-004-R: `musip_event_builder` completion contract cleanup
 - First seen in:
   - `firmware/a10_board/a10/swb/musip_event_builder.vhd`
 - Symptom:
-  - `dma_done` behavior is easy to misread because completion is tied to an internal legacy packetizer rather than an explicit externally documented DMA contract
-  - the block still uses a fixed 128-word padding loop and implicit local completion sequencing
+  - `dma_done` behavior was easy to misread because completion depended on implicit local state transitions rather than an explicit non-zero launch and last-payload contract
+  - the one-word payload corner was not retired explicitly, and the fixed padding phase was encoded as legacy local sequencing instead of a clearer payload-then-padding flow
 - Root cause:
   - `dma_done` is really `musip_event_builder.o_done`, exposed through `EVENT_BUILD_STATUS_REGISTER_R`
-  - the current completion protocol is encoded as local legacy state-machine behavior rather than a clearer explicit packet-length / completion contract
+  - the original state machine mixed launch qualification, payload retirement, and padding retirement into a legacy counter scheme that hid the one-word payload case and left the zero-word no-launch behavior implicit
 - Fix status:
-  - state: open, deferred
-  - files/modules: intended follow-on work in `firmware/a10_board/a10/swb/musip_event_builder.vhd`, entity `musip_event_builder`; no functional cleanup patch has been applied yet
-  - mechanism: no change in tree yet; the intended upgrade is to replace the implicit local completion behavior with a clearer packet-length and done contract
-  - before_fix_outcome: the current event-builder contract remains easy to misread and harder to audit than the rest of the bench-visible interfaces
-  - after_fix_outcome: none yet; this is a tracked follow-on cleanup item, not an active blocker for end-to-end closure
-  - potential_hazard: medium; the block is not the current blocker, but its contract shape makes future debug more fragile than necessary
+  - state: fixed in working tree, not yet committed
+  - files/modules: `firmware/a10_board/a10/swb/musip_event_builder.vhd`, entity `musip_event_builder`
+  - mechanism: the event builder now uses explicit non-zero launch gating, separate payload and padding retire signals, a dedicated last-payload state, and a fixed `128`-word padding counter. One-word payloads now retire through the same explicit last-payload path as longer events, and zero-word requests remain a documented no-launch case.
+  - before_fix_outcome: the completion contract was easy to misread, the one-word payload corner was not represented explicitly in the state machine, and padding retirement was encoded indirectly
+  - after_fix_outcome: replay, UVM, and split-boundary reruns all preserve the expected `payload_words + 128 padding_words` accounting while the non-zero launch, last-payload `o_endofevent`, and sticky `o_done` behavior are now explicit in the RTL
+  - potential_hazard: low; the cleanup is localized to musip-owned event-builder control logic and was rerun through the promoted replay and coverage flows
   - Claude Opus 4.7 xhigh review decision: pending / not run
 - Runtime / coverage context:
-  - current evidence says this is not the root cause of the present local closure problem, because the integrated and boundary harnesses both pass through the same event builder
+  - promoted reruns after the cleanup pass cleanly across:
+    - `make ip-compile-plain`, `make ip-compile-basic`, `make ip-compile-plain-2env`
+    - `make ip-cov-closure`
+  - merged coverage artifacts now exist under `tb_int/sim_runs/coverage/`, and every promoted replay-bearing UCDB still reports `SWB_CHECK_PASS`
 - Commit:
-  - `n/a`
+  - `pending`
 
 ### BUG-005-R: External upstream `signoff_4lane` audit still shows an alignment gap
 - First seen in:
@@ -243,7 +246,7 @@ Attribution rule for this repo:
     - zero-payload rerun with trace prefix `tb_int/cases/basic/uvm/report/zero_payload_fix`
     - clean result: `SWB_CHECK_PASS`, `UVM_ERROR : 0`, `payload_words=0`, `ingress/opq/dma hits = 0/0/0`
     - extended rerun closure: `tb_int/cases/basic/uvm/report/longrun_ext_260422_fixed/summary.json` with `pass_count=256 fail_count=0`, including `run_246 case_seed=1327604986`
-  - this bug also sharpens BUG-004-R: the underlying event-builder zero-word completion contract is still legacy-shaped, but the immediate false-negative signoff issue was in the UVM harness
+  - BUG-004-R now closes the underlying event-builder cleanup. This harness fix remains necessary because the legal zero-payload contract is still "no launch" rather than a synthetic empty DMA transaction.
 - Commit:
   - `pending`
 

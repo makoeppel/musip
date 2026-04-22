@@ -3,7 +3,7 @@
 **DUT chain:** `lane*_ingress` -> `ingress_egress_adaptor` (OPQ merge) -> `musip_mux_4_1` -> `musip_event_builder` -> DMA
 **Author:** Yifeng Wang (yifenwan@phys.ethz.ch)
 **Date:** 2026-04-22
-**Status:** The musip-local integrated path is green on the promoted full Questa toolchain. Replay generation, plain replay, full UVM, split OPQ-boundary replay, the formal seam scaffold, seeded per-hit tracing, and the promoted default 128-run randomized UVM screen all pass in this workspace. A stronger 256-run rerun is retained as historical archive evidence only.
+**Status:** The musip-local integrated path is green on the promoted full Questa toolchain. Replay generation, plain replay, full UVM, split OPQ-boundary replay, the formal seam scaffold, seeded per-hit tracing, the event-builder cleanup, and the promoted UCDB save/merge flow all pass in this workspace. A stronger 256-run rerun is retained as historical archive evidence only. Coverage is now measured under `tb_int/sim_runs/coverage/`, but the merged totals remain below the signoff targets in [`DV_COV.md`](DV_COV.md).
 
 **Companion docs:**
 
@@ -107,7 +107,7 @@ Current evidence says `dma_done` is **not** the active datapath blocker in the l
 - the promoted default 128-run randomized UVM screen passes cleanly.
 - a retained historical 256-run rerun archive also passes cleanly, including the former zero-payload corner seed `1327604986`.
 
-The event-builder completion contract is still worth upgrading later because it is legacy-shaped and easy to misread, but it is no longer blocking end-to-end closure in this repo.
+The event-builder completion contract has now been cleaned up locally: non-zero launch is explicit, one-word payloads retire through the same last-payload path as longer events, and the fixed `128`-word padding phase is tracked directly in the RTL. Zero-word requests remain an explicit no-launch case under the current contract.
 
 ---
 
@@ -167,8 +167,8 @@ Promoted comparison rules:
 | 7 | integrated merge-enabled closure in the local workspace | done |
 | 8 | per-hit tracking from ingress through OPQ and DMA | done |
 | 9 | promoted randomized long-run screen | done |
-| 10 | event-builder completion-contract cleanup | deferred |
-| 11 | UCDB-based coverage collection and merge flow | deferred |
+| 10 | event-builder completion-contract cleanup | done |
+| 11 | UCDB-based coverage collection and merge flow | done |
 
 ---
 
@@ -178,13 +178,12 @@ Promoted comparison rules:
 - UVM 1.2 from the promoted Questa install, with the shipped `uvm_dpi.so`.
 - No standalone OPQ signoff claim from this tree.
 - No real PCIe or DMA-engine simulation; `i_dmamemhalffull` stays low and the scoreboard is the sink.
-- No UCDB coverage flow yet. Coverage is still tracked as pending even though the randomized screen exists.
-- The `musip_event_builder` completion contract is still legacy-shaped and should be upgraded in a follow-on cleanup.
+- UCDB save/merge is now wired for the promoted replay-bearing harnesses. Coverage is measured under `tb_int/sim_runs/coverage/`, but the merged totals are still below the target thresholds in `DV_COV.md`.
 - External upstream `signoff_4lane` alignment may still be audited separately, but it is out of scope for musip-local closure in this repo.
 
 ---
 
-## 9. Current signoff boundary (2026-04-21)
+## 9. Current signoff boundary (2026-04-22)
 
 Signed off locally on the promoted toolchain:
 
@@ -196,11 +195,13 @@ Signed off locally on the promoted toolchain:
 - default 128-run randomized UVM campaign over the per-lane `0.0..0.5` saturation grid,
 - retained historical 256-run randomized UVM rerun archive over the same per-lane `0.0..0.5` saturation grid,
 - split OPQ-boundary replay in `plain_2env/`,
-- OPQ-seam packet-contract formal scaffold.
+- OPQ-seam packet-contract formal scaffold,
+- event-builder completion-contract cleanup,
+- UCDB-based save/merge flow for the promoted replay-bearing harnesses.
 
 Not yet signed off:
 
-- UCDB-based code and functional coverage accounting,
-- event-builder completion-contract cleanup beyond the current passing behavior.
+- merged code and functional coverage closure against the target thresholds in `DV_COV.md`,
+- optional external upstream `signoff_4lane` alignment work.
 
-The musip-local end-to-end datapath is therefore closed in this workspace. Remaining work is cleanup, coverage, and optional external alignment work, not a local replay blocker.
+The musip-local end-to-end datapath and the phase-11 coverage plumbing are therefore closed in this workspace. Remaining work is coverage-target closure and optional external alignment work, not a local replay or infrastructure blocker.

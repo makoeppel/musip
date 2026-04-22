@@ -17,7 +17,7 @@ export MGLS_LICENSE_FILE ?= $(ETH_LIC_SERVER)
 export LM_LICENSE_FILE ?= $(ETH_LIC_SERVER)
 export QSIM_INI ?= $(QUESTA_HOME)/modelsim.ini
 
-.PHONY: help ip-init ip-sync-opq ip-svd ip-check-license ip-compile-basic ip-compile-plain ip-compile-plain-2env ip-uvm-basic ip-uvm-longrun ip-tlm-basic ip-tlm-basic-smoke ip-plain-basic ip-plain-basic-smoke ip-plain-basic-2env ip-plain-basic-2env-smoke ip-formal-boundary ip-e2e ip-e2e-ref ip-e2e-plain ip-e2e-plain-2env ip-clean ip-lint-rtl
+.PHONY: help ip-init ip-sync-opq ip-svd ip-check-license ip-compile-basic ip-compile-basic-cov ip-compile-plain ip-compile-plain-cov ip-compile-plain-2env ip-compile-plain-2env-cov ip-uvm-basic ip-uvm-basic-cov ip-uvm-longrun ip-tlm-basic ip-tlm-basic-smoke ip-plain-basic ip-plain-basic-smoke ip-plain-basic-cov ip-plain-basic-cov-smoke ip-plain-basic-2env ip-plain-basic-2env-smoke ip-plain-basic-2env-cov ip-plain-basic-2env-cov-smoke ip-formal-boundary ip-cov-closure ip-e2e ip-e2e-ref ip-e2e-plain ip-e2e-plain-2env ip-clean ip-lint-rtl
 
 help:
 	@printf '%s\n' \
@@ -27,17 +27,26 @@ help:
 	  '  make ip-svd           # generate a basic OPQ CSR SVD under build/ip/' \
 	  '  make ip-check-license # verify ETH Questa features for the UVM flow' \
 	  '  make ip-compile-basic # compile the mixed-language basic UVM harness' \
+	  '  make ip-compile-basic-cov # compile the mixed-language basic UVM harness with coverage enabled' \
 	  '  make ip-compile-plain # compile the plain mixed-language replay bench' \
+	  '  make ip-compile-plain-cov # compile the plain mixed-language replay bench with coverage enabled' \
 	  '  make ip-compile-plain-2env # compile the split 2-env DPI replay harness' \
+	  '  make ip-compile-plain-2env-cov # compile the split 2-env DPI replay harness with coverage enabled' \
 	  '  make ip-uvm-basic     # run the basic UVM SWB case (merge enabled by default)' \
+	  '  make ip-uvm-basic-cov # run the basic UVM SWB case and save a UCDB' \
 	  '  make ip-uvm-longrun   # run the musip UVM long-run campaign wrapper' \
 	  '  make ip-tlm-basic     # run the simulatorless basic reference case' \
 	  '  make ip-tlm-basic-smoke # run the minimal directed replay generator' \
 	  '  make ip-plain-basic   # run the plain mixed-language replay bench (merge enabled by default)' \
 	  '  make ip-plain-basic-smoke # run the plain mixed-language directed smoke bench' \
+	  '  make ip-plain-basic-cov # run the plain mixed-language replay bench and save a UCDB' \
+	  '  make ip-plain-basic-cov-smoke # run the plain smoke replay bench and save a UCDB' \
 	  '  make ip-plain-basic-2env # run the split 2-env DPI replay harness' \
 	  '  make ip-plain-basic-2env-smoke # run the split 2-env directed smoke harness' \
+	  '  make ip-plain-basic-2env-cov # run the split 2-env replay harness and save a UCDB' \
+	  '  make ip-plain-basic-2env-cov-smoke # run the split 2-env smoke harness and save a UCDB' \
 	  '  make ip-formal-boundary # run the OPQ-boundary formal scaffold' \
+	  '  make ip-cov-closure   # run the promoted UCDB closure bundle and regenerate the DV report' \
 	  '  make ip-e2e           # alias for the basic end-to-end UVM case' \
 	  '  make ip-e2e-ref       # alias for the simulatorless basic reference case' \
 	  '  make ip-e2e-plain     # alias for the plain mixed-language replay bench' \
@@ -67,14 +76,26 @@ ip-check-license:
 ip-compile-basic:
 	$(MAKE) -C $(IP_UVM_DIR) compile
 
+ip-compile-basic-cov:
+	$(MAKE) -C $(IP_UVM_DIR) COV=1 compile
+
 ip-compile-plain:
 	$(MAKE) -C $(IP_PLAIN_DIR) compile
+
+ip-compile-plain-cov:
+	$(MAKE) -C $(IP_PLAIN_DIR) COV=1 compile
 
 ip-compile-plain-2env:
 	$(MAKE) -C $(IP_PLAIN_2ENV_DIR) compile
 
+ip-compile-plain-2env-cov:
+	$(MAKE) -C $(IP_PLAIN_2ENV_DIR) COV=1 compile
+
 ip-uvm-basic:
 	$(MAKE) -C $(IP_UVM_DIR) run
+
+ip-uvm-basic-cov:
+	$(MAKE) -C $(IP_UVM_DIR) COV=1 run_cov
 
 ip-uvm-longrun:
 	$(MAKE) -C $(IP_UVM_DIR) longrun
@@ -91,14 +112,29 @@ ip-plain-basic:
 ip-plain-basic-smoke:
 	$(MAKE) -C $(IP_PLAIN_DIR) run-smoke
 
+ip-plain-basic-cov:
+	$(MAKE) -C $(IP_PLAIN_DIR) COV=1 run_cov
+
+ip-plain-basic-cov-smoke:
+	$(MAKE) -C $(IP_PLAIN_DIR) COV=1 run_cov_smoke
+
 ip-plain-basic-2env:
 	$(MAKE) -C $(IP_PLAIN_2ENV_DIR) run
 
 ip-plain-basic-2env-smoke:
 	$(MAKE) -C $(IP_PLAIN_2ENV_DIR) run-smoke
 
+ip-plain-basic-2env-cov:
+	$(MAKE) -C $(IP_PLAIN_2ENV_DIR) COV=1 run_cov
+
+ip-plain-basic-2env-cov-smoke:
+	$(MAKE) -C $(IP_PLAIN_2ENV_DIR) COV=1 run_cov_smoke
+
 ip-formal-boundary:
 	$(MAKE) -C $(IP_PLAIN_2ENV_FORMAL_DIR) oss-contract
+
+ip-cov-closure:
+	bash tb_int/scripts/run_cov_closure.sh
 
 ip-e2e: ip-uvm-basic
 

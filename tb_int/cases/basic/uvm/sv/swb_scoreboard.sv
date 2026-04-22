@@ -137,6 +137,84 @@ class swb_scoreboard extends uvm_component;
   bit                     emit_hit_trace;
   string                  hit_trace_prefix;
 
+  covergroup case_contract_cg with function sample(
+    int unsigned expected_word_count_i,
+    int unsigned total_hits_i,
+    int unsigned active_lanes_i,
+    int unsigned frame_count_i,
+    int unsigned dma_half_full_pct_i,
+    bit          use_merge_i,
+    int unsigned hit_mode_id_i,
+    bit          saw_end_of_event_i,
+    int unsigned padding_words_i
+  );
+    option.per_instance = 1;
+
+    cp_payload_words: coverpoint expected_word_count_i {
+      bins payload_zero = {0};
+      bins payload_one = {1};
+      bins payload_small_words = {[2:4]};
+      bins payload_medium_words = {[5:128]};
+      bins payload_large_words = {[129:$]};
+    }
+
+    cp_total_hits: coverpoint total_hits_i {
+      bins hits_zero = {0};
+      bins hits_one_word = {[1:4]};
+      bins hits_light = {[5:64]};
+      bins hits_medium = {[65:512]};
+      bins hits_heavy = {[513:$]};
+    }
+
+    cp_active_lanes: coverpoint active_lanes_i {
+      bins lane_count_1 = {1};
+      bins lane_count_2 = {2};
+      bins lane_count_3 = {3};
+      bins lane_count_4 = {4};
+    }
+
+    cp_frame_count: coverpoint frame_count_i {
+      bins frame_count_1 = {1};
+      bins frame_count_2 = {2};
+      bins frame_count_short = {[3:8]};
+      bins frame_count_long = {[9:$]};
+    }
+
+    cp_dma_half_full: coverpoint dma_half_full_pct_i {
+      bins dma_backpressure_none = {0};
+      bins dma_backpressure_light = {[1:25]};
+      bins dma_backpressure_medium = {[26:50]};
+      bins dma_backpressure_heavy = {[51:100]};
+    }
+
+    cp_use_merge: coverpoint use_merge_i {
+      bins merge_bypass = {0};
+      bins merge_enabled = {1};
+    }
+
+    cp_hit_mode: coverpoint hit_mode_id_i {
+      bins hit_mode_poisson = {0};
+      bins hit_mode_zero = {1};
+      bins hit_mode_single = {2};
+      bins hit_mode_max = {3};
+    }
+
+    cp_end_of_event: coverpoint saw_end_of_event_i {
+      bins eoe_elided = {0};
+      bins eoe_asserted = {1};
+    }
+
+    cp_padding_words: coverpoint padding_words_i {
+      bins padding_none = {0};
+      bins padding_fixed_128 = {128};
+      bins padding_other = default;
+    }
+
+    cx_payload_merge: cross cp_payload_words, cp_use_merge;
+    cx_lane_mode: cross cp_active_lanes, cp_hit_mode;
+    cx_backpressure_payload: cross cp_dma_half_full, cp_payload_words;
+  endgroup
+
   `uvm_component_utils(swb_scoreboard)
 
   function new(string name, uvm_component parent);
@@ -158,6 +236,20 @@ class swb_scoreboard extends uvm_component;
     dma_missing_count = 0;
     emit_hit_trace = 1'b0;
     hit_trace_prefix = "";
+    case_contract_cg = new();
+  endfunction
+
+  function automatic int unsigned count_active_lanes(bit [3:0] mask);
+    int unsigned lanes;
+  begin
+    lanes = 0;
+    for (int idx = 0; idx < 4; idx++) begin
+      if (mask[idx]) begin
+        lanes++;
+      end
+    end
+    return lanes;
+  end
   endfunction
 
   function void build_phase(uvm_phase phase);
@@ -561,11 +653,13 @@ class swb_scoreboard extends uvm_component;
     bit           opq_complete;
     bit           scoreboard_pass;
     bit           require_dma_completion;
+    bit           padding_contract_ok;
   begin
     super.check_phase(phase);
     ingress_complete = 1'b1;
     opq_complete = 1'b1;
     require_dma_completion = (plan.expected_dma_words.size() != 0);
+    padding_contract_ok = 1'b1;
 
     if (recv_words != plan.expected_dma_words.size()) begin
       `uvm_error(
@@ -575,6 +669,20 @@ class swb_scoreboard extends uvm_component;
     end
     if (require_dma_completion && !saw_end_of_event) begin
       `uvm_error("DMA_EOE", "No end-of-event marker observed on DMA output")
+    end
+    if (require_dma_completion && padding_words != 128) begin
+      padding_contract_ok = 1'b0;
+      `uvm_error(
+        "DMA_PADDING",
+        $sformatf("Expected the fixed 128-word padding tail but observed %0d padding words", padding_words)
+      )
+    end
+    if (!require_dma_completion && padding_words != 0) begin
+      padding_contract_ok = 1'b0;
+      `uvm_error(
+        "DMA_PADDING_ZERO",
+        $sformatf("Zero-payload case unexpectedly emitted %0d padding words", padding_words)
+      )
     end
 
     for (int lane = 0; lane < SWB_N_LANES; lane++) begin
@@ -639,11 +747,24 @@ class swb_scoreboard extends uvm_component;
       (parse_errors == 0) &&
       ingress_complete &&
       (!expect_opq_merged || opq_complete) &&
+      padding_contract_ok &&
       (!require_dma_completion || saw_end_of_event) &&
       (recv_words == plan.expected_dma_words.size()) &&
       (dma_ghost_count == 0) &&
       (dma_missing_count == 0) &&
       (!expect_opq_merged || ((opq_ghost_count == 0) && (opq_missing_count == 0)));
+
+    case_contract_cg.sample(
+      plan.expected_word_count,
+      plan.total_hits,
+      count_active_lanes(plan.feb_enable_mask),
+      plan.frame_count,
+      plan.dma_half_full_pct,
+      plan.use_merge,
+      plan.hit_mode_id,
+      saw_end_of_event,
+      padding_words
+    );
 
     if (emit_hit_trace) begin
       dump_stage_hits({hit_trace_prefix, "_expected_hits.tsv"}, expected_merged_hits);

@@ -107,7 +107,11 @@ class swb_basic_test extends uvm_test;
       swb_case_builder::build_basic_case(plan, frame_count, lane_saturation, feb_enable_mask, hit_mode);
     end
     plan.feb_enable_mask = feb_enable_mask;
+    plan.frame_count = frame_count;
     plan.case_seed = case_seed;
+    plan.dma_half_full_pct = dma_half_full_pct;
+    plan.use_merge = use_merge;
+    plan.hit_mode_id = hit_mode;
     if (profile_name_override != "") begin
       plan.profile_name = profile_name_override;
     end

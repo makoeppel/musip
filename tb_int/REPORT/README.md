@@ -26,7 +26,7 @@ This is the generated evidence tree for the `tb_int` MuSiP SWB/OPQ integration D
 | ERROR | [`../DV_ERROR.md`](../DV_ERROR.md) | `X001..X129` | 129 |
 | CROSS | [`../DV_CROSS.md`](../DV_CROSS.md) | `CROSS-001..CROSS-129` | 129 |
 
-The canonical stimulus field map for every case is declared once in [`../DV_BASIC.md`](../DV_BASIC.md#stimulus-field-map-per-frame-per-lane) and is derived from [`feb_frame_assembly.vhd`](../../external/mu3e-ip-cores/feb_frame_assembly/feb_frame_assembly.vhd) plus Mu3eSpecBook §5.2.6.
+The canonical stimulus field map for every case is declared once in [`../DV_BASIC.md`](../DV_BASIC.md#stimulus-field-map-per-frame-per-lane) and is derived from the upstream [`../../external/mu3e-ip-cores/feb_frame_assembly/`](../../external/mu3e-ip-cores/feb_frame_assembly/) source folder plus Mu3eSpecBook §5.2.6.
 
 ## Status emoji legend
 
@@ -51,10 +51,10 @@ The canonical stimulus field map for every case is declared once in [`../DV_BASI
 
 | area | state | note |
 |---|:---:|---|
-| per-case pages under `cases/`           | ⚠️ | promoted spot-check evidence exists for 5 / 516 cases (`B046`, `E025`, `E026`, `E027`, `P040`); generator-backed full rendering still pending |
+| per-case pages under `cases/`           | ⚠️ | all 516 case pages are now rendered; promoted executed evidence exists for `B046`, `E025`, `E026`, `E027`, and `P040`, while the remaining pages are explicit pending placeholders |
 | per-bucket ordered-merge traces         | ⚠️ | skeleton rows remain for coverage, but promoted spot-check rows are now linked to real case pages |
-| continuous-frame cross signoff (`cross/`) | ❓ | `CROSS-001..005` baselines mapped in [`../DV_REPORT.json`](../DV_REPORT.json), full `cross/<run_id>.md` rendering pending |
-| random-soak txn_growth curves           | ❓ | UVM checkpoint emitter not yet wired (skill §Checkpoint UCDBs) — `txn_growth/README.md` carries the explicit placeholder |
+| continuous-frame cross signoff (`cross/`) | ❓ | all `CROSS-001..129` pages are rendered as placeholders; promoted UCDB/log evidence is still pending for the continuous-frame runs |
+| random-soak txn_growth curves           | ❓ | all `P001..P129` txn-growth pages are rendered as placeholders; the UVM checkpoint emitter is still not wired |
 | integration toolchain pass/fail gates   | ✅ | see [`../DV_REPORT.md`](../DV_REPORT.md#health) and [`../DV_REPORT.json`](../DV_REPORT.json) `summary` |
 | bug ledger                              | ℹ️  | live at [`../BUG_HISTORY.md`](../BUG_HISTORY.md) (`BUG-001-H..BUG-010-R`) |
 
@@ -63,11 +63,11 @@ The canonical stimulus field map for every case is declared once in [`../DV_BASI
 This tree is produced by:
 
 ```bash
-python3 ~/.codex/skills/dv-workflow/scripts/dv_report_gen.py --tb tb_int
+python3 tb_int/scripts/dv_report_gen.py --tb tb_int
 ```
 
-- reads [`../DV_REPORT.json`](../DV_REPORT.json) as the single source of truth
-- overwrites previously generated pages idempotently
+- reads the current `DV_*.md` planning docs as the scenario source and preserves existing evidence-backed case pages
+- overwrites previously generated placeholder pages idempotently
 - never touches `DV_*.md` plan files, RTL, or UVM source
 - exits non-zero if the JSON is missing, malformed, or inconsistent with the planned bucket ranges
 

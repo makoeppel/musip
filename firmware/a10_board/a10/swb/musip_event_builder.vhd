@@ -6,7 +6,6 @@
 library ieee;
 use ieee.numeric_std.all;
 use ieee.std_logic_1164.all;
-use ieee.std_logic_unsigned.all;
 
 
 entity musip_event_builder is
@@ -34,18 +33,22 @@ end entity;
 
 architecture arch of musip_event_builder is
 
+    constant PAD_WORD_COUNT_C    : natural := 128;
+    constant PAD_WORD_LAST_IDX_C : unsigned(31 downto 0) := to_unsigned(PAD_WORD_COUNT_C - 1, 32);
+
     ------------------------------------------------------------------------
     -- State machine
     ------------------------------------------------------------------------
     type event_builder_state_t is (
         waiting,
-        write_hits,
-        write_last_hit,
+        write_payload,
+        write_last_payload,
         write_4kb_padding
     );
 
     signal event_builder_state : event_builder_state_t := waiting;
-    signal cnt_4kb : std_logic_vector(31 downto 0);
+    signal payload_words_remaining : unsigned(31 downto 0) := (others => '0');
+    signal padding_words_sent      : unsigned(31 downto 0) := (others => '0');
 
 
     ------------------------------------------------------------------------
@@ -65,13 +68,13 @@ architecture arch of musip_event_builder is
     signal hit_drop_cnt : std_logic_vector(63 downto 0) := (others => '0');
     signal full_cnt : std_logic_vector(63 downto 0) := (others => '0');
 
-    signal word_counter  : std_logic_vector(31 downto 0) := (others => '0');
-
-
     ------------------------------------------------------------------------
     -- Control signals
     ------------------------------------------------------------------------
-    signal done          : std_logic := '0';
+    signal done               : std_logic := '0';
+    signal launch_request     : std_logic := '0';
+    signal payload_write_fire : std_logic := '0';
+    signal padding_write_fire : std_logic := '0';
 
 begin
 
@@ -100,11 +103,14 @@ begin
     );
 
     --! data out
-    fifo_en <= '1' when (fifo_empty = '0' and i_dmamemhalffull = '0') and (event_builder_state = write_hits or event_builder_state = write_last_hit) else '0';
+    launch_request <= '1' when i_wen = '1' and unsigned(i_get_n_words) /= to_unsigned(0, i_get_n_words'length) and done = '0' else '0';
+    payload_write_fire <= '1' when (fifo_empty = '0' and i_dmamemhalffull = '0') and (event_builder_state = write_payload or event_builder_state = write_last_payload) else '0';
+    padding_write_fire <= '1' when event_builder_state = write_4kb_padding and i_dmamemhalffull = '0' else '0';
+    fifo_en <= payload_write_fire;
     drop_hit <= '1' when fifo_en = '0' and wrusedw(13) = '1' else '0';
-    o_wen <= '1' when event_builder_state = write_4kb_padding and i_dmamemhalffull = '0' else fifo_en;
-    o_data <= fifo_data when event_builder_state = write_hits or event_builder_state = write_last_hit else (others => '1');
-    o_endofevent <= '1' when (fifo_empty = '0' and i_dmamemhalffull = '0') and event_builder_state = write_last_hit else '0';
+    o_wen <= padding_write_fire or payload_write_fire;
+    o_data <= fifo_data when event_builder_state = write_payload or event_builder_state = write_last_payload else (others => '1');
+    o_endofevent <= '1' when payload_write_fire = '1' and event_builder_state = write_last_payload else '0';
     o_done <= done;
 
     e_hit_rate : entity work.word_rate
@@ -119,12 +125,12 @@ begin
     begin
     if ( i_reset_n = '0' ) then
         done <= '0';
-        cnt_4kb <= (others => '0');
         event_builder_state <= waiting;
         hit_cnt <= (others => '0');
         hit_drop_cnt <= (others => '0');
-        word_counter <= (others => '0');
         full_cnt <= (others => '0');
+        payload_words_remaining <= (others => '0');
+        padding_words_sent <= (others => '0');
         --
     elsif rising_edge(i_clk) then
 
@@ -134,7 +140,6 @@ begin
 
         if ( i_wen = '0' ) then
             done <= '0';
-            word_counter <= (others => '0');
         end if;
 
         if ( fifo_full = '1' ) then
@@ -143,36 +148,44 @@ begin
 
         case event_builder_state is
             when waiting =>
-                if ( i_wen = '1' and i_get_n_words /= 0 and done = '0' ) then
-                    word_counter <= i_get_n_words;
-                    event_builder_state <= write_hits;
+                -- A zero-word request is treated as "no launch" because this block
+                -- has no independent event-start strobe. The completion latch stays
+                -- low until a non-zero request is armed and retired.
+                if ( launch_request = '1' ) then
+                    payload_words_remaining <= unsigned(i_get_n_words);
+                    if ( unsigned(i_get_n_words) = to_unsigned(1, i_get_n_words'length) ) then
+                        event_builder_state <= write_last_payload;
+                    else
+                        event_builder_state <= write_payload;
+                    end if;
                 end if;
 
-            when write_hits =>
-                if ( word_counter = 2 and fifo_empty = '0' and i_dmamemhalffull = '0' ) then
-                    event_builder_state <= write_last_hit;
-                    word_counter <= std_logic_vector(unsigned(word_counter) - 1);
+            when write_payload =>
+                if ( payload_write_fire = '1' ) then
                     hit_cnt <= std_logic_vector(unsigned(hit_cnt) + 1);
-                elsif ( fifo_empty = '0' and i_dmamemhalffull = '0' ) then
-                    word_counter <= std_logic_vector(unsigned(word_counter) - 1);
-                    hit_cnt <= std_logic_vector(unsigned(hit_cnt) + 1);
+                    if ( payload_words_remaining = to_unsigned(2, payload_words_remaining'length) ) then
+                        payload_words_remaining <= to_unsigned(1, payload_words_remaining'length);
+                        event_builder_state <= write_last_payload;
+                    elsif ( payload_words_remaining > to_unsigned(2, payload_words_remaining'length) ) then
+                        payload_words_remaining <= payload_words_remaining - 1;
+                    end if;
                 end if;
 
-            when write_last_hit =>
-                if ( fifo_empty = '0' and i_dmamemhalffull = '0' ) then
-                    word_counter <= (others => '0');
-                    cnt_4kb <= (others => '0');
+            when write_last_payload =>
+                if ( payload_write_fire = '1' ) then
+                    payload_words_remaining <= (others => '0');
+                    padding_words_sent <= (others => '0');
                     event_builder_state <= write_4kb_padding;
                     hit_cnt <= std_logic_vector(unsigned(hit_cnt) + 1);
                 end if;
 
             when write_4kb_padding =>
-                if ( i_dmamemhalffull = '0' ) then
-                    if ( cnt_4kb = "01111111" ) then
+                if ( padding_write_fire = '1' ) then
+                    if ( padding_words_sent = PAD_WORD_LAST_IDX_C ) then
                         done <= '1';
                         event_builder_state <= waiting;
                     else
-                        cnt_4kb <= cnt_4kb + '1';
+                        padding_words_sent <= padding_words_sent + 1;
                     end if;
                 end if;
 

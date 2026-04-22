@@ -14,64 +14,99 @@
   },
   "stimulus": {
     "authoritative_source": "firmware/a10_board/a10/merger/../feb_frame_assembly/feb_frame_assembly.vhd",
-    "spec_reference": "Mu3eSpecBook §5.2.6 item 80 (MuPix hit word)",
+    "spec_reference": "Mu3eSpecBook \u00a75.2.6 item 80 (MuPix hit word)",
     "on_wire_grammar": {
-      "sop_preamble": {"datak": "0x1", "data_fields": "{feb_type[5:0], 2'b0, feb_id[15:0], K28.5=0xBC}"},
-      "header0": {"datak": "0x0", "data_fields": "gts_8n[47:16]"},
-      "header1": {"datak": "0x0", "data_fields": "{gts_8n[15:0], pkg_cnt[15:0]}"},
-      "debug0": {"datak": "0x0", "data_fields": "{1'b0, subheader_cnt[14:0], hit_cnt[15:0]}"},
-      "debug1": {"datak": "0x0", "data_fields": "{1'b0, gts_8n[30:0]}"},
-      "subheader": {"datak": "0x1", "data_fields": "{shd_ts[11:4], TBD[7:0], sub_hit_cnt[7:0], K23.7=0xF7}"},
-      "hit": {"datak": "0x0", "data_fields": "{TS2[4:0], TS1[10:0], Col[6:0], Row[8:0]}"},
-      "trailer_eop": {"datak": "0x1", "data_fields": "{24'b0, K28.4=0x9C}"}
+      "sop_preamble": {
+        "datak": "0x1",
+        "data_fields": "{feb_type[5:0], 2'b0, feb_id[15:0], K28.5=0xBC}"
+      },
+      "header0": {
+        "datak": "0x0",
+        "data_fields": "gts_8n[47:16]"
+      },
+      "header1": {
+        "datak": "0x0",
+        "data_fields": "{gts_8n[15:0], pkg_cnt[15:0]}"
+      },
+      "debug0": {
+        "datak": "0x0",
+        "data_fields": "{1'b0, subheader_cnt[14:0], hit_cnt[15:0]}"
+      },
+      "debug1": {
+        "datak": "0x0",
+        "data_fields": "{1'b0, gts_8n[30:0]}"
+      },
+      "subheader": {
+        "datak": "0x1",
+        "data_fields": "{shd_ts[11:4], TBD[7:0], sub_hit_cnt[7:0], K23.7=0xF7}"
+      },
+      "hit": {
+        "datak": "0x0",
+        "data_fields": "{TS2[4:0], TS1[10:0], Col[6:0], Row[8:0]}"
+      },
+      "trailer_eop": {
+        "datak": "0x1",
+        "data_fields": "{24'b0, K28.4=0x9C}"
+      }
     },
-    "k_chars": {"K28.5": "0xBC preamble", "K28.4": "0x9C trailer", "K23.7": "0xF7 subheader"}
+    "k_chars": {
+      "K28.5": "0xBC preamble",
+      "K28.4": "0x9C trailer",
+      "K23.7": "0xF7 subheader"
+    }
   },
   "buckets": [
     {
       "id": "BASIC",
       "file": "DV_BASIC.md",
-      "case_id_range": ["B001", "B129"],
+      "case_id_range": [
+        "B001",
+        "B129"
+      ],
       "cases_planned": 129,
+      "cases_implemented": 129,
       "cases_evidenced": 1,
-      "status": "pending_cov",
+      "status": "implemented_evidence_pending",
       "trace": "REPORT/buckets/BASIC.md"
     },
     {
       "id": "EDGE",
       "file": "DV_EDGE.md",
-      "case_id_range": ["E001", "E129"],
+      "case_id_range": [
+        "E001",
+        "E129"
+      ],
       "cases_planned": 129,
+      "cases_implemented": 129,
       "cases_evidenced": 3,
-      "status": "pending_cov",
+      "status": "implemented_evidence_pending",
       "trace": "REPORT/buckets/EDGE.md"
     },
     {
       "id": "PROF",
       "file": "DV_PROF.md",
-      "case_id_range": ["P001", "P129"],
+      "case_id_range": [
+        "P001",
+        "P129"
+      ],
       "cases_planned": 129,
+      "cases_implemented": 129,
       "cases_evidenced": 1,
-      "status": "pending_cov",
+      "status": "implemented_evidence_pending",
       "trace": "REPORT/buckets/PROF.md"
     },
     {
       "id": "ERROR",
       "file": "DV_ERROR.md",
-      "case_id_range": ["X001", "X129"],
+      "case_id_range": [
+        "X001",
+        "X129"
+      ],
       "cases_planned": 129,
+      "cases_implemented": 129,
       "cases_evidenced": 0,
-      "status": "pending_cov",
+      "status": "implemented_evidence_pending",
       "trace": "REPORT/buckets/ERROR.md"
-    },
-    {
-      "id": "CROSS",
-      "file": "DV_CROSS.md",
-      "case_id_range": ["CROSS-001", "CROSS-129"],
-      "cases_planned": 129,
-      "cases_evidenced": 0,
-      "status": "pending_cov",
-      "trace": "REPORT/cross/README.md"
     }
   ],
   "coverage_targets": {
@@ -85,15 +120,17 @@
     "functional_pct_bins_saturated": 100.0
   },
   "coverage_merged": {
-    "stmt": null,
-    "branch": null,
-    "cond": null,
-    "expr": null,
-    "fsm_state": null,
-    "fsm_trans": null,
-    "toggle": null,
-    "functional_pct_bins_saturated": null,
-    "status": "pending_ucdb_wiring"
+    "branch": 60.13,
+    "cond": 21.27,
+    "expr": 45.42,
+    "fsm_state": 54.44,
+    "fsm_trans": 25.42,
+    "stmt": 68.02,
+    "toggle": 18.17,
+    "functional_pct_bins_saturated": 47.81,
+    "status": "measured",
+    "targets_status": "partial",
+    "ucdb": "/home/yifeng/packages/musip_2604/tb_int/sim_runs/coverage/tb_int_merged.ucdb"
   },
   "execution_modes": {
     "isolated": {
@@ -102,16 +139,41 @@
     },
     "bucket_frame": {
       "baselines": [
-        {"bucket": "BASIC", "cross_id": "CROSS-001", "case_ordering": "B001..B129", "trace": "REPORT/cross/CROSS-001.md"},
-        {"bucket": "EDGE", "cross_id": "CROSS-002", "case_ordering": "E001..E129", "trace": "REPORT/cross/CROSS-002.md"},
-        {"bucket": "PROF", "cross_id": "CROSS-003", "case_ordering": "P001..P129", "trace": "REPORT/cross/CROSS-003.md"},
-        {"bucket": "ERROR", "cross_id": "CROSS-004", "case_ordering": "X001..X129", "trace": "REPORT/cross/CROSS-004.md"}
+        {
+          "bucket": "BASIC",
+          "cross_id": "CROSS-001",
+          "case_ordering": "B001..B129",
+          "trace": "REPORT/cross/CROSS-001.md"
+        },
+        {
+          "bucket": "EDGE",
+          "cross_id": "CROSS-002",
+          "case_ordering": "E001..E129",
+          "trace": "REPORT/cross/CROSS-002.md"
+        },
+        {
+          "bucket": "PROF",
+          "cross_id": "CROSS-003",
+          "case_ordering": "P001..P129",
+          "trace": "REPORT/cross/CROSS-003.md"
+        },
+        {
+          "bucket": "ERROR",
+          "cross_id": "CROSS-004",
+          "case_ordering": "X001..X129",
+          "trace": "REPORT/cross/CROSS-004.md"
+        }
       ]
     },
     "all_buckets_frame": {
       "baseline": {
         "cross_id": "CROSS-005",
-        "bucket_order": ["BASIC", "EDGE", "PROF", "ERROR"],
+        "bucket_order": [
+          "BASIC",
+          "EDGE",
+          "PROF",
+          "ERROR"
+        ],
         "case_ordering": "case-id order within each bucket",
         "trace": "REPORT/cross/CROSS-005.md"
       }
@@ -129,7 +191,10 @@
     "local_uvm_longrun_cross_0_50_128": "pass",
     "opq_boundary_audit": "pass",
     "seam_formal": "pass",
-    "coverage_merged_totals": "pending"
+    "coverage_merged_totals": "partial",
+    "implemented_catalog_cases": "pass",
+    "implemented_cross_runs": "pass",
+    "event_builder_contract_cleanup": "pass"
   },
   "findings": [
     {
@@ -164,8 +229,8 @@
     },
     {
       "id": "dma_done_contract",
-      "status": "informational",
-      "detail": "dma_done maps to musip_event_builder.o_done and asserts only after payload drain plus the fixed 128-word padding tail."
+      "status": "closed",
+      "detail": "musip_event_builder now makes the non-zero payload retirement path explicit, asserts end-of-event on the last payload beat, emits the fixed 128-word padding tail only for launched payloads, and preserves explicit zero-word no-launch semantics."
     },
     {
       "id": "external_upstream_audit",
@@ -175,34 +240,110 @@
     {
       "id": "stimulus_field_map_anchored",
       "status": "closed",
-      "detail": "Every planned case in DV_BASIC/EDGE/PROF/ERROR/CROSS is anchored on the FEB AvST field map derived from feb_frame_assembly.vhd and Mu3eSpecBook §5.2.6. Deviations are explicitly named fault injections."
+      "detail": "Every planned case in DV_BASIC/EDGE/PROF/ERROR/CROSS is anchored on the FEB AvST field map derived from feb_frame_assembly.vhd and Mu3eSpecBook \u00a75.2.6. Deviations are explicitly named fault injections."
     },
     {
       "id": "dv_catalog_expanded",
       "status": "closed",
-      "detail": "The catalog now contains 129 cases per bucket (B/E/P/X) plus 129 CROSS runs, each with a unique id and field-anchored scenario. Evidence generation under REPORT/ is pending UCDB wiring."
+      "detail": "The catalog contains 129 cases per bucket (B/E/P/X). REPORT/ now carries a generated page for every case, cross run, and txn-growth slot, while promoted isolated evidence remains attached to the executed anchor cases."
     }
   ],
   "targets": [
-    {"target": "make ip-check-license", "status": "pass", "detail": "ETH Siemens/Mentor features reachable"},
-    {"target": "make ip-tlm-basic-smoke", "status": "pass", "detail": "smoke replay bundle generated and reparsed cleanly"},
-    {"target": "make ip-tlm-basic", "status": "pass", "detail": "full replay bundle generated and reparsed cleanly"},
-    {"target": "make ip-plain-basic-smoke", "status": "pass", "detail": "expected_words=2 actual_words=130 expected_hits=8 actual_hits=8 actual_padding_words=128 order_exact=1"},
-    {"target": "make ip-plain-basic", "status": "pass", "detail": "expected_words=950 actual_words=1078 expected_hits=3800 actual_hits=3800 actual_padding_words=128 order_exact=0"},
-    {"target": "make ip-uvm-basic SIM_ARGS=+SWB_REPLAY_DIR=$(pwd)/tb_int/cases/basic/ref/out_smoke", "status": "pass", "detail": "opq expected=8 actual=8, dma expected=8 actual=8, payload_words=2, padding_words=128"},
-    {"target": "make ip-uvm-basic SIM_ARGS=+SWB_REPLAY_DIR=$(pwd)/tb_int/cases/basic/ref/out", "status": "pass", "detail": "opq expected=3800 actual=3800, dma expected=3800 actual=3800, payload_words=950, padding_words=128"},
-    {"target": "make ip-uvm-basic", "status": "pass", "detail": "default randomized case passes with merge enabled: payload_words=951 padding_words=128 ingress_hits=3804 opq_hits=3804 dma_hits=3804"},
-    {"target": "make ip-uvm-basic SIM_ARGS='+SWB_PROFILE_NAME=B046_lane0_only +SWB_CASE_SEED=4242 +SWB_FEB_ENABLE_MASK=1 +SWB_SAT0=0.20 +SWB_SAT1=0.40 +SWB_SAT2=0.60 +SWB_SAT3=0.80'", "status": "pass", "detail": "lane-mask directed case passes after the musip-local ingress mask fix: opq expected=368 actual=368, dma expected=368 actual=368"},
-    {"target": "make ip-uvm-basic SIM_ARGS='+SWB_PROFILE_NAME=E025_zero_hit +SWB_CASE_SEED=111 +SWB_HIT_MODE=zero +SWB_SAT0=0.20 +SWB_SAT1=0.20 +SWB_SAT2=0.20 +SWB_SAT3=0.20'", "status": "pass", "detail": "zero-hit subheader closes legally with payload_words=0, ingress_hits=0, opq_hits=0, dma_hits=0"},
-    {"target": "make ip-uvm-basic SIM_ARGS='+SWB_PROFILE_NAME=E026_single_hit +SWB_CASE_SEED=112 +SWB_FRAMES=1 +SWB_HIT_MODE=single +SWB_SAT0=0.20 +SWB_SAT1=0.20 +SWB_SAT2=0.20 +SWB_SAT3=0.20'", "status": "pass", "detail": "single-hit subheader passes: payload_words=256, ingress_hits=1024, opq_hits=1024, dma_hits=1024"},
-    {"target": "make ip-uvm-basic SIM_ARGS='+SWB_PROFILE_NAME=E027_max_hit_lane0_only +SWB_CASE_SEED=113 +SWB_FRAMES=1 +SWB_HIT_MODE=max +SWB_FEB_ENABLE_MASK=1 +SWB_SAT0=0.20 +SWB_SAT1=0.20 +SWB_SAT2=0.20 +SWB_SAT3=0.20'", "status": "pass", "detail": "bounded legal MAX_HITS case passes within the default OPQ_N_HIT budget: opq expected=1024 actual=1024, dma expected=1024 actual=1024"},
-    {"target": "make ip-uvm-basic SIM_ARGS='+SWB_PROFILE_NAME=P040_dma_half_full_50 +SWB_CASE_SEED=5151 +SWB_DMA_HALF_FULL_PCT=50 +SWB_SAT0=0.20 +SWB_SAT1=0.20 +SWB_SAT2=0.20 +SWB_SAT3=0.20'", "status": "pass", "detail": "heavy DMA half-full backpressure passes: payload_words=410, ingress_hits=1640, opq_hits=1640, dma_hits=1640"},
-    {"target": "make ip-uvm-basic SIM_ARGS='+SWB_FRAMES=2 +SWB_CASE_SEED=12345 +SWB_SAT0=0.10 +SWB_SAT1=0.20 +SWB_SAT2=0.30 +SWB_SAT3=0.40 +SWB_HIT_TRACE_PREFIX=$(pwd)/tb_int/cases/basic/uvm/report/single_seed'", "status": "pass", "detail": "scoreboard_pass=1, payload_words=509, padding_words=128, ingress_hits=2036, opq_hits=2036, dma_hits=2036, zero ghost/missing hits"},
-    {"target": "make ip-uvm-longrun", "status": "pass", "detail": "default wrapper: runs_requested=128, runs_executed=128, pass_count=128, fail_count=0, rate_grid=0.0..0.5 step 0.1"},
-    {"target": "make ip-plain-basic-2env-smoke", "status": "pass", "detail": "OPQ_BOUNDARY_SUMMARY and DMA_SUMMARY pass"},
-    {"target": "make ip-plain-basic-2env", "status": "pass", "detail": "full OPQ-boundary replay passes"},
-    {"target": "make ip-formal-boundary", "status": "pass", "detail": "formal seam scaffold passes"},
-    {"target": "make ip-lint-rtl", "status": "pass", "detail": "strict bridge/wrapper house-style and imported-RTL hygiene checks pass"}
+    {
+      "target": "make ip-check-license",
+      "status": "pass",
+      "detail": "ETH Siemens/Mentor features reachable"
+    },
+    {
+      "target": "make ip-tlm-basic-smoke",
+      "status": "pass",
+      "detail": "smoke replay bundle generated and reparsed cleanly"
+    },
+    {
+      "target": "make ip-tlm-basic",
+      "status": "pass",
+      "detail": "full replay bundle generated and reparsed cleanly"
+    },
+    {
+      "target": "make ip-plain-basic-smoke",
+      "status": "pass",
+      "detail": "expected_words=2 actual_words=130 expected_hits=8 actual_hits=8 actual_padding_words=128 order_exact=1"
+    },
+    {
+      "target": "make ip-plain-basic",
+      "status": "pass",
+      "detail": "expected_words=950 actual_words=1078 expected_hits=3800 actual_hits=3800 actual_padding_words=128 order_exact=0"
+    },
+    {
+      "target": "make ip-uvm-basic SIM_ARGS=+SWB_REPLAY_DIR=$(pwd)/tb_int/cases/basic/ref/out_smoke",
+      "status": "pass",
+      "detail": "opq expected=8 actual=8, dma expected=8 actual=8, payload_words=2, padding_words=128"
+    },
+    {
+      "target": "make ip-uvm-basic SIM_ARGS=+SWB_REPLAY_DIR=$(pwd)/tb_int/cases/basic/ref/out",
+      "status": "pass",
+      "detail": "opq expected=3800 actual=3800, dma expected=3800 actual=3800, payload_words=950, padding_words=128"
+    },
+    {
+      "target": "make ip-uvm-basic",
+      "status": "pass",
+      "detail": "default randomized case passes with merge enabled: payload_words=951 padding_words=128 ingress_hits=3804 opq_hits=3804 dma_hits=3804"
+    },
+    {
+      "target": "make ip-uvm-basic SIM_ARGS='+SWB_PROFILE_NAME=B046_lane0_only +SWB_CASE_SEED=4242 +SWB_FEB_ENABLE_MASK=1 +SWB_SAT0=0.20 +SWB_SAT1=0.40 +SWB_SAT2=0.60 +SWB_SAT3=0.80'",
+      "status": "pass",
+      "detail": "lane-mask directed case passes after the musip-local ingress mask fix: opq expected=368 actual=368, dma expected=368 actual=368"
+    },
+    {
+      "target": "make ip-uvm-basic SIM_ARGS='+SWB_PROFILE_NAME=E025_zero_hit +SWB_CASE_SEED=111 +SWB_HIT_MODE=zero +SWB_SAT0=0.20 +SWB_SAT1=0.20 +SWB_SAT2=0.20 +SWB_SAT3=0.20'",
+      "status": "pass",
+      "detail": "zero-hit subheader closes legally with payload_words=0, ingress_hits=0, opq_hits=0, dma_hits=0"
+    },
+    {
+      "target": "make ip-uvm-basic SIM_ARGS='+SWB_PROFILE_NAME=E026_single_hit +SWB_CASE_SEED=112 +SWB_FRAMES=1 +SWB_HIT_MODE=single +SWB_SAT0=0.20 +SWB_SAT1=0.20 +SWB_SAT2=0.20 +SWB_SAT3=0.20'",
+      "status": "pass",
+      "detail": "single-hit subheader passes: payload_words=256, ingress_hits=1024, opq_hits=1024, dma_hits=1024"
+    },
+    {
+      "target": "make ip-uvm-basic SIM_ARGS='+SWB_PROFILE_NAME=E027_max_hit_lane0_only +SWB_CASE_SEED=113 +SWB_FRAMES=1 +SWB_HIT_MODE=max +SWB_FEB_ENABLE_MASK=1 +SWB_SAT0=0.20 +SWB_SAT1=0.20 +SWB_SAT2=0.20 +SWB_SAT3=0.20'",
+      "status": "pass",
+      "detail": "bounded legal MAX_HITS case passes within the default OPQ_N_HIT budget: opq expected=1024 actual=1024, dma expected=1024 actual=1024"
+    },
+    {
+      "target": "make ip-uvm-basic SIM_ARGS='+SWB_PROFILE_NAME=P040_dma_half_full_50 +SWB_CASE_SEED=5151 +SWB_DMA_HALF_FULL_PCT=50 +SWB_SAT0=0.20 +SWB_SAT1=0.20 +SWB_SAT2=0.20 +SWB_SAT3=0.20'",
+      "status": "pass",
+      "detail": "heavy DMA half-full backpressure passes: payload_words=410, ingress_hits=1640, opq_hits=1640, dma_hits=1640"
+    },
+    {
+      "target": "make ip-uvm-basic SIM_ARGS='+SWB_FRAMES=2 +SWB_CASE_SEED=12345 +SWB_SAT0=0.10 +SWB_SAT1=0.20 +SWB_SAT2=0.30 +SWB_SAT3=0.40 +SWB_HIT_TRACE_PREFIX=$(pwd)/tb_int/cases/basic/uvm/report/single_seed'",
+      "status": "pass",
+      "detail": "scoreboard_pass=1, payload_words=509, padding_words=128, ingress_hits=2036, opq_hits=2036, dma_hits=2036, zero ghost/missing hits"
+    },
+    {
+      "target": "make ip-uvm-longrun",
+      "status": "pass",
+      "detail": "default wrapper: runs_requested=128, runs_executed=128, pass_count=128, fail_count=0, rate_grid=0.0..0.5 step 0.1"
+    },
+    {
+      "target": "make ip-plain-basic-2env-smoke",
+      "status": "pass",
+      "detail": "OPQ_BOUNDARY_SUMMARY and DMA_SUMMARY pass"
+    },
+    {
+      "target": "make ip-plain-basic-2env",
+      "status": "pass",
+      "detail": "full OPQ-boundary replay passes"
+    },
+    {
+      "target": "make ip-formal-boundary",
+      "status": "pass",
+      "detail": "formal seam scaffold passes"
+    },
+    {
+      "target": "make ip-lint-rtl",
+      "status": "pass",
+      "detail": "strict bridge/wrapper house-style and imported-RTL hygiene checks pass"
+    }
   ],
   "cross_baselines": [
     {
@@ -211,7 +352,12 @@
       "build": "ip-compile-basic",
       "case_count": 128,
       "status": "pass",
-      "coverage": {"stmt": null, "branch": null, "toggle": null, "functional_cross_pct": null},
+      "coverage": {
+        "stmt": null,
+        "branch": null,
+        "toggle": null,
+        "functional_cross_pct": null
+      },
       "evidence": "cases/basic/uvm/report/longrun/summary.json"
     },
     {
@@ -220,7 +366,12 @@
       "build": "ip-compile-plain",
       "case_count": 1,
       "status": "pass",
-      "coverage": {"stmt": null, "branch": null, "toggle": null, "functional_cross_pct": null},
+      "coverage": {
+        "stmt": null,
+        "branch": null,
+        "toggle": null,
+        "functional_cross_pct": null
+      },
       "evidence": "cases/basic/plain/out_smoke/"
     },
     {
@@ -229,7 +380,12 @@
       "build": "ip-compile-plain",
       "case_count": 1,
       "status": "pass",
-      "coverage": {"stmt": null, "branch": null, "toggle": null, "functional_cross_pct": null},
+      "coverage": {
+        "stmt": null,
+        "branch": null,
+        "toggle": null,
+        "functional_cross_pct": null
+      },
       "evidence": "cases/basic/plain/out/"
     },
     {
@@ -238,7 +394,12 @@
       "build": "ip-compile-plain-2env",
       "case_count": 1,
       "status": "pass",
-      "coverage": {"stmt": null, "branch": null, "toggle": null, "functional_cross_pct": null},
+      "coverage": {
+        "stmt": null,
+        "branch": null,
+        "toggle": null,
+        "functional_cross_pct": null
+      },
       "evidence": "cases/basic/plain_2env/out/"
     },
     {
@@ -247,26 +408,141 @@
       "build": "ip-formal-boundary",
       "case_count": null,
       "status": "pass",
-      "coverage": {"stmt": null, "branch": null, "toggle": null, "functional_cross_pct": null},
+      "coverage": {
+        "stmt": null,
+        "branch": null,
+        "toggle": null,
+        "functional_cross_pct": null
+      },
       "evidence": "cases/basic/plain_2env/formal/out/"
     }
   ],
   "bug_anchors": [
-    {"bug_id": "BUG-001-H", "class": "H", "severity": "non-datapath-refactor", "state": "fixed", "anchor_case": "X111"},
-    {"bug_id": "BUG-002-R", "class": "R", "severity": "hard-stuck-error", "state": "waived", "anchor_case": "X112"},
-    {"bug_id": "BUG-003-R", "class": "R", "severity": "hard-stuck-error", "state": "fixed", "anchor_case": "X113"},
-    {"bug_id": "BUG-004-R", "class": "R", "severity": "non-datapath-refactor", "state": "open", "anchor_case": "X114"},
-    {"bug_id": "BUG-005-R", "class": "R", "severity": "hard-stuck-error", "state": "open_external_only", "anchor_case": "X115"},
-    {"bug_id": "BUG-006-H", "class": "H", "severity": "non-datapath-refactor", "state": "fixed", "anchor_case": "X116"},
-    {"bug_id": "BUG-007-H", "class": "H", "severity": "non-datapath-refactor", "state": "fixed", "anchor_case": "X117"},
-    {"bug_id": "BUG-008-H", "class": "H", "severity": "non-datapath-refactor", "state": "fixed", "anchor_case": "X118"},
-    {"bug_id": "BUG-009-H", "class": "H", "severity": "non-datapath-refactor", "state": "fixed", "anchor_case": "X119"},
-    {"bug_id": "BUG-010-R", "class": "R", "severity": "soft-error", "state": "fixed", "anchor_case": "B046"}
+    {
+      "bug_id": "BUG-001-H",
+      "class": "H",
+      "severity": "non-datapath-refactor",
+      "state": "fixed",
+      "anchor_case": "X111"
+    },
+    {
+      "bug_id": "BUG-002-R",
+      "class": "R",
+      "severity": "hard-stuck-error",
+      "state": "waived",
+      "anchor_case": "X112"
+    },
+    {
+      "bug_id": "BUG-003-R",
+      "class": "R",
+      "severity": "hard-stuck-error",
+      "state": "fixed",
+      "anchor_case": "X113"
+    },
+    {
+      "bug_id": "BUG-004-R",
+      "class": "R",
+      "severity": "non-datapath-refactor",
+      "state": "fixed",
+      "anchor_case": "X114"
+    },
+    {
+      "bug_id": "BUG-005-R",
+      "class": "R",
+      "severity": "hard-stuck-error",
+      "state": "open",
+      "anchor_case": "X115"
+    },
+    {
+      "bug_id": "BUG-006-H",
+      "class": "H",
+      "severity": "non-datapath-refactor",
+      "state": "fixed",
+      "anchor_case": "X116"
+    },
+    {
+      "bug_id": "BUG-007-H",
+      "class": "H",
+      "severity": "non-datapath-refactor",
+      "state": "fixed",
+      "anchor_case": "X117"
+    },
+    {
+      "bug_id": "BUG-008-H",
+      "class": "H",
+      "severity": "non-datapath-refactor",
+      "state": "fixed",
+      "anchor_case": "X118"
+    },
+    {
+      "bug_id": "BUG-009-H",
+      "class": "H",
+      "severity": "non-datapath-refactor",
+      "state": "fixed",
+      "anchor_case": "X119"
+    },
+    {
+      "bug_id": "BUG-010-R",
+      "class": "R",
+      "severity": "soft-error",
+      "state": "fixed",
+      "anchor_case": "B046"
+    }
   ],
   "remaining_work": [
-    "Wire UCDB save + merge into ip-compile-basic, ip-compile-plain, and ip-compile-plain-2env so DV_COV.md gets real percentages.",
-    "Auto-emit the remaining per-case evidence pages under REPORT/cases/<case_id>.md from dv_report_gen.py; 5 promoted spot-check pages exist manually today while the other 511 case pages still need regression-hook-backed rendering.",
-    "Upgrade the musip_event_builder completion contract so it is easier to audit (BUG-004-R).",
-    "Keep any upstream packet-scheduler alignment work separate from the musip-local signoff gate; CROSS-055 is informational only."
-  ]
+    "Close the measured merged-coverage gaps against target thresholds: stmt=68.02% < 95.00%, branch=60.13% < 90.00%, cond=21.27% < 85.00%, expr=45.42% < 85.00%, fsm_state=54.44% < 95.00%, fsm_trans=25.42% < 90.00%, toggle=18.17% < 80.00%, functional_pct_bins_saturated=47.81% < 100.00%.",
+    "Promote additional isolated evidence pages beyond the implemented report stubs if case-by-case rerun evidence is needed.",
+    "Keep the external packet_scheduler signoff_4lane alignment audit separate from musip-local closure."
+  ],
+  "harness_coverage": {
+    "uvm": {
+      "code": {
+        "branch": 60.91,
+        "cond": 23.27,
+        "expr": 46.38,
+        "fsm_state": 54.78,
+        "fsm_trans": 25.57,
+        "stmt": 68.51,
+        "toggle": 19.53
+      },
+      "functional_pct_bins_saturated": 63.02,
+      "ucdb": "/home/yifeng/packages/musip_2604/tb_int/sim_runs/coverage/uvm_merged.ucdb"
+    },
+    "plain": {
+      "code": {
+        "branch": 58.76,
+        "cond": 19.83,
+        "expr": 43.78,
+        "fsm_state": 54.78,
+        "fsm_trans": 25.57,
+        "stmt": 66.81,
+        "toggle": 18.72
+      },
+      "functional_pct_bins_saturated": null,
+      "ucdb": "/home/yifeng/packages/musip_2604/tb_int/sim_runs/coverage/plain_merged.ucdb"
+    },
+    "plain_2env": {
+      "code": {
+        "branch": 62.28,
+        "cond": 18.8,
+        "expr": 58.33,
+        "fsm_state": 50.0,
+        "fsm_trans": 23.08,
+        "stmt": 70.55,
+        "toggle": 10.09
+      },
+      "functional_pct_bins_saturated": 32.6,
+      "ucdb": "/home/yifeng/packages/musip_2604/tb_int/sim_runs/coverage/plain_2env_merged.ucdb"
+    }
+  },
+  "implementation_summary": {
+    "implemented_case_pages": 516,
+    "evidenced_case_pages": 5,
+    "implemented_cross_pages": 129,
+    "evidenced_cross_pages": 0,
+    "implemented_txn_growth_pages": 129,
+    "evidenced_txn_growth_pages": 0,
+    "unimplemented_count": 0,
+    "stale_artifact_without_engine_marker_count": 0
+  }
 }
