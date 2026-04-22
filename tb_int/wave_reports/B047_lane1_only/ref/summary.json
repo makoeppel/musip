@@ -1,0 +1,40 @@
+{
+  "profile": "poisson",
+  "frames_per_lane": 2,
+  "seed": 4242,
+  "lane_saturation": [
+    0.2,
+    0.4,
+    0.6,
+    0.8
+  ],
+  "total_hits": 3816,
+  "expected_word_count": 954,
+  "expected_dma_sha256": "af0c91f539f13beefa2cd01ccb3cd1238b2c43f7efcf3a3a3ebfa6260cefe5d2",
+  "artifacts": {
+    "plan": "plan.json",
+    "expected_dma_words": "expected_dma_words.txt",
+    "expected_dma_words_mem": "expected_dma_words.mem",
+    "lane_streams": [
+      "lane0_ingress.jsonl",
+      "lane1_ingress.jsonl",
+      "lane2_ingress.jsonl",
+      "lane3_ingress.jsonl"
+    ],
+    "lane_streams_mem": [
+      "lane0_ingress.mem",
+      "lane1_ingress.mem",
+      "lane2_ingress.mem",
+      "lane3_ingress.mem"
+    ],
+    "opq_egress": "opq_egress.jsonl",
+    "opq_egress_mem": "opq_egress.mem",
+    "uvm_replay_manifest": "uvm_replay_manifest.json"
+  },
+  "checks": {
+    "reparsed_dma_match": true,
+    "reparsed_total_hits": 3816,
+    "reparsed_opq_dma_match": true,
+    "reparsed_opq_total_hits": 3816
+  }
+}

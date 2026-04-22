@@ -28,6 +28,7 @@ QUESTA_INI := $(BUILD_DIR)/modelsim.ini
 RUN_LOG ?= $(REPORT_DIR)/run_uvm.log
 COV_UCDB ?= $(REPORT_DIR)/swb_uvm.ucdb
 COV_UCDB_ABS := $(abspath $(COV_UCDB))
+RUN_DO ?= run -all; quit -f
 
 export SALT_LICENSE_SERVER ?= $(ETH_LIC_SERVER)
 export MGLS_LICENSE_FILE ?= $(ETH_LIC_SERVER)
@@ -127,7 +128,7 @@ ifneq ($(TRACE_PREFIX_DIR),)
 	mkdir -p $(TRACE_PREFIX_DIR)
 endif
 	cd $(BUILD_DIR) && set -o pipefail; \
-	QSIM_INI=$(QUESTA_INI) $(QUESTA_RUNNER) $(VSIM) $(VSIM_FLAGS) $(OPQ_VSIM_LIB_FLAGS) $(UVM_DPI_LIB_OPT) tb_top -do "run -all; quit -f" +SWB_USE_MERGE=$(SWB_USE_MERGE) $(SIM_ARGS) | tee "$(RUN_LOG)"
+	QSIM_INI=$(QUESTA_INI) $(QUESTA_RUNNER) $(VSIM) $(VSIM_FLAGS) $(OPQ_VSIM_LIB_FLAGS) $(UVM_DPI_LIB_OPT) tb_top -do "$(RUN_DO)" +SWB_USE_MERGE=$(SWB_USE_MERGE) $(SIM_ARGS) | tee "$(RUN_LOG)"
 
 run_cov: compile
 	mkdir -p $(REPORT_DIR)
@@ -137,7 +138,7 @@ ifneq ($(TRACE_PREFIX_DIR),)
 endif
 	rm -f $(COV_UCDB_ABS)
 	cd $(BUILD_DIR) && set -o pipefail; \
-	QSIM_INI=$(QUESTA_INI) $(QUESTA_RUNNER) $(VSIM) $(VSIM_FLAGS) $(OPQ_VSIM_LIB_FLAGS) $(UVM_DPI_LIB_OPT) tb_top -do "coverage save -onexit $(COV_UCDB_ABS); run -all; quit -f" +SWB_USE_MERGE=$(SWB_USE_MERGE) $(SIM_ARGS) | tee "$(RUN_LOG)"
+	QSIM_INI=$(QUESTA_INI) $(QUESTA_RUNNER) $(VSIM) $(VSIM_FLAGS) $(OPQ_VSIM_LIB_FLAGS) $(UVM_DPI_LIB_OPT) tb_top -do "coverage save -onexit $(COV_UCDB_ABS); $(RUN_DO)" +SWB_USE_MERGE=$(SWB_USE_MERGE) $(SIM_ARGS) | tee "$(RUN_LOG)"
 
 longrun: compile
 	$(PYTHON) $(CURDIR)/run_longrun.py $(LONGRUN_ARGS)

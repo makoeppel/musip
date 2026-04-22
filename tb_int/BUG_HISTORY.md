@@ -50,6 +50,8 @@ Historical formal note:
 | [BUG-008-H](#bug-008-h-zero-payload-random-cases-falsely-failed-because-the-uvm-harness-always-required-dma_done-and-eoe) | H | non-datapath-refactor | `corner-only (zero-payload random corner)` | fixed | extended long-run campaign run `246` with `sat=[0,0,0,0]` | `pending` | Zero-payload random cases falsely failed because the UVM harness always required `dma_done` and an end-of-event marker even when the current event-builder contract produced no DMA transaction. |
 | [BUG-009-H](#bug-009-h-plain_2env-dma-scoreboarding-was-blind-to-ingress-hits-because-the-split-harness-only-wired-the-opq-boundary-scoreboard) | H | non-datapath-refactor | `directed-only (split-harness replay audit)` | fixed | `make ip-plain-basic-2env-smoke` rerun during signoff refresh | `pending` | The split `plain_2env` harness only wired ingress replay into the OPQ boundary scoreboard, so the downstream DMA scoreboard saw real DMA hits without any expected-hit ledger. |
 | [BUG-010-R](#bug-010-r-feb_enable_mask-did-not-gate-opq-ingress-so-masked-lanes-still-entered-the-merged-datapath) | R | soft error | `directed-only (directed exact repro)` | fixed | `make ip-uvm-basic` with `B046_lane0_only` | `pending` | `feb_enable_mask` did not gate the OPQ ingress bridge, so masked FEB lanes still entered the merged datapath and corrupted the per-hit expectation ledger. |
+| [BUG-011-R](#bug-011-r-auth-qsys-opq-egress-seam-did-not-reconstruct-canonical-mu3e-framing-so-merged-opq-traffic-failed-to-parse) | R | hard stuck error | `common (any merge-enabled auth-wrapper traffic on the broken seam)` | fixed | `make ip-uvm-basic` with `B047_lane1_only` on the current auth-wrapper state | `39a6a83` | The musip-owned auth-wrapper seam forwarded raw Qsys egress words without reconstructing canonical Mu3e SOP/EOP semantics, so merged OPQ traffic accumulated parse errors and DMA stayed empty. |
+| [BUG-012-R](#bug-012-r-merged-opq-egress-was-still-remasked-by-raw-feb-lane-enables-so-non-lane0-mask-cases-blackholed-valid-dma-traffic) | R | soft error | `corner-only (merged path with lane0 masked off)` | fixed | `make ip-uvm-basic` with `B047_lane1_only` after `BUG-011-R` seam repair | `39a6a83` | The merged OPQ egress always emerged on logical lane0, but the downstream mux still used the raw FEB lane mask, so lane1/2/3-only cases blackholed valid merged traffic before DMA packing. |
 
 ## 2026-04-21
 
@@ -62,7 +64,7 @@ Historical formal note:
   - the reverse padding loop used an unsigned lane iterator
   - after lane `0` it underflowed and walked outside `frames_by_lane`
 - Fix status:
-  - state: fixed in working tree, not yet committed
+  - state: fixed and committed
   - files/modules: `tb_int/cases/basic/uvm/sv/swb_types.sv` in the `swb_case_builder` class; this is the UVM basic-case generator that owned the broken reverse padding loop
   - mechanism: the reverse padding loop now uses signed reverse iterators and stops scanning when `extra_hits` reaches zero
   - before_fix_outcome: `make ip-uvm-basic` died in build phase before the run reached the real datapath behavior
@@ -73,7 +75,7 @@ Historical formal note:
   - this is a harness bug, not an RTL datapath defect
   - closing it was required before randomized UVM evidence could be trusted
 - Commit:
-  - `pending`
+  - `39a6a83`
 
 ## 2026-04-22
 
@@ -114,7 +116,7 @@ Historical formal note:
   - on the failing replay this reduced the effective lane credit budget, exhausted `lane3` credit mid-frame, and dropped 130 hits from `frame1` even though ticket credit was still healthy
   - this was a musip-local packaging / wrapper bug; it was not promoted as a standalone OPQ-internal bug claim
 - Fix status:
-  - state: fixed in working tree, not yet committed
+  - state: fixed and committed
   - files/modules: `firmware/a10_board/a10/merger/qsys/opq_upstream_4lane_native_sv/ordered_priority_queue_native_sv_fixed4_hw.tcl` in the musip packaging transform now injects the fixed-profile `LANE_FIFO_DEPTH` and `HANDLE_FIFO_DEPTH` generics into the generated `ordered_priority_queue_dut_sv` wrapper; `firmware/a10_board/a10/merger/qsys/opq_upstream_4lane_native_sv/opq_upstream_4lane.tcl` bumps the packaged instance version so Quartus/Qsys regenerates the wrapper; the generated module `firmware/a10_board/a10/merger/qsys/opq_upstream_4lane_native_sv/generated/ordered_priority_queue_native_sv_fixed4_26422504/synth/ordered_priority_queue_dut_sv.sv` now passes the intended fixed-profile depths into `ordered_priority_queue_monolithic_sv`
   - mechanism: the musip authentic-wrapper packaging now pins the intended `4-lane / 256-subheader / 2048-lane-fifo / 1024-ticket-fifo / 256-handle-fifo / 65536-page-ram` profile all the way into the monolithic SV top, so the wrapper can no longer fall back to the upstream default lane/handle FIFO depths
   - before_fix_outcome: full replay produced a short DMA ledger and timed out; the deterministic exact repro dropped 130 `lane3 frame1` hits and finished with `expected_hits=3800 actual_hits=3668`
@@ -129,7 +131,7 @@ Historical formal note:
     - default randomized UVM after the fix: `payload_words=951`, `padding_words=128`, `ingress_hits=3804`, `opq_hits=3804`, `dma_hits=3804`
     - seeded trace case remains clean at `payload=252`, `padding=128`, `ingress/opq/dma hits = 1008/1008/1008`
 - Commit:
-  - `pending`
+  - `39a6a83`
 
 ### BUG-004-R: `musip_event_builder` completion contract cleanup
 - First seen in:
@@ -302,5 +304,58 @@ Historical formal note:
 - Runtime / coverage context:
   - passing evidence lives in `tb_int/cases/basic/uvm/report/B046_lane0_only.log`
   - this is a musip-local integration bug, not a standalone OPQ attribution claim
+- Commit:
+  - `pending`
+
+### BUG-011-R: auth-Qsys OPQ egress seam did not reconstruct canonical Mu3e framing, so merged OPQ traffic failed to parse
+- First seen in:
+  - `make ip-uvm-basic SIM_ARGS='+SWB_PROFILE_NAME=B047_lane1_only +SWB_CASE_SEED=4242 +SWB_FEB_ENABLE_MASK=2 +SWB_SAT0=0.20 +SWB_SAT1=0.40 +SWB_SAT2=0.60 +SWB_SAT3=0.80'`
+  - on the current musip-auth wrapper state using the authentic Qsys-generated OPQ owner
+- Symptom:
+  - the first failing lane1-only repro timed out with `opq expected=844 actual=0`, `dma expected=844 actual=0`, and `parse_errors=1271`
+  - the merged OPQ path was alive electrically, but the downstream parser never recognized a legal framed packet stream
+- Root cause:
+  - the musip-owned [`ingress_egress_adaptor.vhd`](firmware/a10_board/a10/merger/ingress_egress_adaptor.vhd) switched to the authentic `opq_upstream_4lane` Qsys wrapper but still reconstructed `link32_t` from `egress_data` alone
+  - `egress_startofpacket`, `egress_endofpacket`, and `egress_error` were left disconnected, and the wrapper seam did not translate the raw `K28.5` / `K28.4` control beats back into canonical Mu3e SOP/EOP semantics on the local merged lane
+- Fix status:
+  - state: fixed in working tree, not yet committed
+  - files/modules: `firmware/a10_board/a10/merger/ingress_egress_adaptor.vhd` in entity `ingress_egress_adaptor`
+  - mechanism: the adaptor now captures the auth-wrapper egress sidebands explicitly, rewrites the SOP control beat back into canonical Mu3e framing (`MUPIX_HEADER_ID` plus `sop`), propagates EOP from the `K28.4` beat, and maps wrapper error sidebands into `link32_t.err`
+  - before_fix_outcome: the first `B047_lane1_only` repro reached the merged OPQ seam but then reported `opq expected=844 actual=0`, `dma expected=844 actual=0`, `parse_errors=1271`, and a timeout
+  - after_fix_outcome: the same case now reaches `opq expected=844 actual=844 ghosts=0 missing=0` with `parse_errors=0`, exposing the separate downstream remask bug that became `BUG-012-R`
+  - potential_hazard: low to medium; this is a musip-local seam reconstruction fix on top of the authentic OPQ owner, so future wrapper churn should still be watched closely
+  - attribution note: this is recorded as a musip-local wrapper integration defect. It is not a standalone OPQ datapath attribution claim against `mu3e-ip-cores`.
+  - Claude Opus 4.7 xhigh review decision: pending / not run
+- Runtime / coverage context:
+  - failing evidence lives in the first local auth-wrapper `B047_lane1_only` repro log
+  - passing reruns now exist for `B047`, `B048`, `B049`, and `P041`
+- Commit:
+  - `pending`
+
+### BUG-012-R: merged OPQ egress was still remasked by raw FEB lane enables, so non-lane0 mask cases blackholed valid DMA traffic
+- First seen in:
+  - `make ip-uvm-basic SIM_ARGS='+SWB_PROFILE_NAME=B047_lane1_only +SWB_CASE_SEED=4242 +SWB_FEB_ENABLE_MASK=2 +SWB_SAT0=0.20 +SWB_SAT1=0.40 +SWB_SAT2=0.60 +SWB_SAT3=0.80'`
+  - immediately after the `BUG-011-R` seam repair removed the OPQ parse failure
+- Symptom:
+  - the repaired seam closed OPQ scoreboarding, but DMA still stayed empty for lane1-only with `opq expected=844 actual=844` versus `dma expected=844 actual=0`
+  - the same structural problem would have blackholed lane2-only and lane3-only merged traffic as well
+- Root cause:
+  - merged OPQ egress always exits the musip wrapper on logical lane0
+  - downstream `musip_mux_4_1` in [`swb_block.vhd`](firmware/a10_board/a10/swb/swb_block.vhd) still consumed the raw `mask_n(3 downto 0)` FEB enables, so masks like `0x2`, `0x4`, or `0x8` suppressed the already-merged lane0 stream before DMA packing
+- Fix status:
+  - state: fixed in working tree, not yet committed
+  - files/modules: `firmware/a10_board/a10/swb/swb_block.vhd` in entity `swb_block`
+  - mechanism: the SWB wrapper now computes a merge-aware `rx_data_sim_merged_mask`; when `use_opq_merge='1'`, logical lane0 inherits the OR of FEB masks 0..3 and logical lanes1..3 are forced inactive
+  - before_fix_outcome: the first post-`BUG-011-R` `B047_lane1_only` rerun produced `opq expected=844 actual=844 ghosts=0 missing=0` but `dma expected=844 actual=0 ghosts=0 missing=844`
+  - after_fix_outcome: `B047`, `B048`, and `B049` now all pass with matching `opq_hits` and `dma_hits`, and the stressed `P041_dma_half_full_75` run also remains clean
+  - potential_hazard: low; this is a musip-local merged-lane mask repair with no change to the upstream OPQ IP itself
+  - attribution note: this is a musip-local SWB integration bug, not a standalone OPQ datapath attribution claim
+  - Claude Opus 4.7 xhigh review decision: pending / not run
+- Runtime / coverage context:
+  - promoted evidence:
+    - `B047_lane1_only`: `opq/dma hits = 844/844`
+    - `B048_lane2_only`: `opq/dma hits = 1180/1180`
+    - `B049_lane3_only`: `opq/dma hits = 1420/1420`
+  - this bug only appears when the merged path is enabled and the surviving FEB mask excludes lane0
 - Commit:
   - `pending`

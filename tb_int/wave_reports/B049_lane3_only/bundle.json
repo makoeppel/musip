@@ -1,0 +1,33 @@
+{
+  "case_id": "B049_lane3_only",
+  "profile_name": "B049_lane3_only",
+  "frames": 2,
+  "seed": 4242,
+  "lane_saturation": [
+    0.2,
+    0.4,
+    0.6,
+    0.8
+  ],
+  "feb_enable_mask": "0x8",
+  "dma_half_full_pct": 0,
+  "frame_window": {
+    "frame_start": 0,
+    "frame_count": 2
+  },
+  "artifacts": {
+    "vcd": "sim/B049_lane3_only.vcd",
+    "run_log": "sim/run_vcd.log",
+    "ref_dir": "ref",
+    "packet_analyzer": "packet_analyzer"
+  },
+  "summary_lines": {
+    "start_time": "# Start time: 19:37:59 on Apr 22,2026",
+    "case": "# UVM_INFO /home/yifeng/packages/musip_2604/tb_int/cases/basic/uvm/sv/swb_basic_test.sv(163) @ 66000: uvm_test_top [CASE] Basic case: frames=2 sat=[0.20 0.40 0.60 0.80] mask=0x8 hit_mode=poisson raw_total_hits=1420 padding_hits_added=0 total_hits=1420 expected_words=355 use_merge=1 dma_half_full_pct=0 case_seed=4242",
+    "opq": "# UVM_INFO /home/yifeng/packages/musip_2604/tb_int/cases/basic/uvm/sv/swb_scoreboard.sv(590) @ 50046000: uvm_test_top.env.scoreboard [HIT_STAGE_SUMMARY] opq expected=1420 actual=1420 ghosts=0 missing=0",
+    "dma": "# UVM_INFO /home/yifeng/packages/musip_2604/tb_int/cases/basic/uvm/sv/swb_scoreboard.sv(590) @ 50046000: uvm_test_top.env.scoreboard [HIT_STAGE_SUMMARY] dma expected=1420 actual=1420 ghosts=0 missing=0",
+    "dma_summary": "# UVM_INFO /home/yifeng/packages/musip_2604/tb_int/cases/basic/uvm/sv/swb_scoreboard.sv(734) @ 50046000: uvm_test_top.env.scoreboard [DMA_SUMMARY] Compared 355 payload words, ignored 128 trailing padding words, ingress_hits=3809 opq_hits=1420 dma_hits=1420 parse_errors=0",
+    "pass": "# UVM_INFO /home/yifeng/packages/musip_2604/tb_int/cases/basic/uvm/sv/swb_scoreboard.sv(783) @ 50046000: uvm_test_top.env.scoreboard [SWB_CHECK_PASS] profile=B049_lane3_only case_seed=4242 payload_words=355 padding_words=128 ingress_hits=3809 opq_hits=1420 dma_hits=1420",
+    "end_time": "# End time: 19:38:03 on Apr 22,2026, Elapsed time: 0:00:04"
+  }
+}

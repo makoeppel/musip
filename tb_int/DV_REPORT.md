@@ -51,9 +51,9 @@ This page is the chief-architect dashboard. All per-case evidence lives under [`
 
 | status | bucket | catalog_planned | promoted | evidenced | backlog | merged | promoted functional |
 |:---:|---|---:|---:|---:|---:|---|---|
-| ⚠️ | [`BASIC`](REPORT/buckets/BASIC.md) | 129 | 129 | 1 | 128 | pending | pending (1/129) |
+| ⚠️ | [`BASIC`](REPORT/buckets/BASIC.md) | 129 | 129 | 4 | 125 | pending | pending (4/129) |
 | ⚠️ | [`EDGE`](REPORT/buckets/EDGE.md) | 129 | 129 | 3 | 126 | pending | pending (3/129) |
-| ⚠️ | [`PROF`](REPORT/buckets/PROF.md) | 129 | 129 | 1 | 128 | pending | pending (1/129) |
+| ⚠️ | [`PROF`](REPORT/buckets/PROF.md) | 129 | 129 | 2 | 127 | pending | pending (2/129) |
 | ⚠️ | [`ERROR`](REPORT/buckets/ERROR.md) | 129 | 129 | 13 | 116 | pending | pending (13/129) |
 
 ## Totals
@@ -71,7 +71,7 @@ This page is the chief-architect dashboard. All per-case evidence lives under [`
 
 - catalog_planned_cases: `516`
 - promoted_signoff_cases: `516`
-- evidenced_promoted_cases: `18`
+- evidenced_promoted_cases: `22`
 - promoted functional coverage: `47.81% (merged UCDB total)`
 
 ## Signoff Runs
