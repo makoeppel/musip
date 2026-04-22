@@ -146,9 +146,11 @@ class swb_basic_test extends uvm_test;
       `uvm_info(
         "CASE",
         $sformatf(
-          "Replay case: dir=%s frames=%0d total_hits=%0d expected_words=%0d mask=0x%0h use_merge=%0d case_seed=%0d",
+          "Replay case: dir=%s frames=%0d raw_total_hits=%0d padding_hits_added=%0d total_hits=%0d expected_words=%0d mask=0x%0h use_merge=%0d case_seed=%0d",
           replay_dir,
           frame_count,
+          plan.raw_total_hits_before_padding,
+          plan.padding_hits_added,
           plan.total_hits,
           plan.expected_word_count,
           feb_enable_mask,
@@ -161,7 +163,7 @@ class swb_basic_test extends uvm_test;
       `uvm_info(
         "CASE",
         $sformatf(
-          "Basic case: frames=%0d sat=[%0.2f %0.2f %0.2f %0.2f] mask=0x%0h hit_mode=%s total_hits=%0d expected_words=%0d use_merge=%0d dma_half_full_pct=%0d case_seed=%0d",
+          "Basic case: frames=%0d sat=[%0.2f %0.2f %0.2f %0.2f] mask=0x%0h hit_mode=%s raw_total_hits=%0d padding_hits_added=%0d total_hits=%0d expected_words=%0d use_merge=%0d dma_half_full_pct=%0d case_seed=%0d",
           frame_count,
           lane_saturation[0],
           lane_saturation[1],
@@ -169,6 +171,8 @@ class swb_basic_test extends uvm_test;
           lane_saturation[3],
           feb_enable_mask,
           plan.hit_mode_name,
+          plan.raw_total_hits_before_padding,
+          plan.padding_hits_added,
           plan.total_hits,
           plan.expected_word_count,
           use_merge,

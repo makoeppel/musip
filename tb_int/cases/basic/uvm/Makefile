@@ -90,6 +90,8 @@ SV_INCLUDE_SOURCES = \
 	$(CURDIR)/sv/swb_basic_test.sv
 
 SIM_ARGS ?=
+TRACE_PREFIX := $(strip $(patsubst +SWB_HIT_TRACE_PREFIX=%,%,$(filter +SWB_HIT_TRACE_PREFIX=%,$(SIM_ARGS))))
+TRACE_PREFIX_DIR := $(strip $(if $(TRACE_PREFIX),$(dir $(TRACE_PREFIX))))
 COMPILE_STAMP := $(BUILD_DIR)/.compile-stamp.$(OPQ_SOURCE_MODE).$(OPQ_N_SHD).$(OPQ_LANE_FIFO_DEPTH).$(OPQ_TICKET_FIFO_DEPTH).$(OPQ_HANDLE_FIFO_DEPTH).$(OPQ_PAGE_RAM_DEPTH)
 VCOM_FLAGS := -2008
 VLOG_FLAGS := -sv
@@ -121,12 +123,18 @@ $(COMPILE_STAMP): $(VHDL_SOURCES) $(OPQ_SIM_QSYS_VHDL_SOURCES) $(OPQ_SIM_QSYS_VE
 
 run: compile
 	mkdir -p $(REPORT_DIR)
+ifneq ($(TRACE_PREFIX_DIR),)
+	mkdir -p $(TRACE_PREFIX_DIR)
+endif
 	cd $(BUILD_DIR) && set -o pipefail; \
 	QSIM_INI=$(QUESTA_INI) $(QUESTA_RUNNER) $(VSIM) $(VSIM_FLAGS) $(OPQ_VSIM_LIB_FLAGS) $(UVM_DPI_LIB_OPT) tb_top -do "run -all; quit -f" +SWB_USE_MERGE=$(SWB_USE_MERGE) $(SIM_ARGS) | tee "$(RUN_LOG)"
 
 run_cov: compile
 	mkdir -p $(REPORT_DIR)
 	mkdir -p $(dir $(COV_UCDB_ABS))
+ifneq ($(TRACE_PREFIX_DIR),)
+	mkdir -p $(TRACE_PREFIX_DIR)
+endif
 	rm -f $(COV_UCDB_ABS)
 	cd $(BUILD_DIR) && set -o pipefail; \
 	QSIM_INI=$(QUESTA_INI) $(QUESTA_RUNNER) $(VSIM) $(VSIM_FLAGS) $(OPQ_VSIM_LIB_FLAGS) $(UVM_DPI_LIB_OPT) tb_top -do "coverage save -onexit $(COV_UCDB_ABS); run -all; quit -f" +SWB_USE_MERGE=$(SWB_USE_MERGE) $(SIM_ARGS) | tee "$(RUN_LOG)"

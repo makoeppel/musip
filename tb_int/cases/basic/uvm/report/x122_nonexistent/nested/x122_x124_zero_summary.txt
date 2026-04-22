@@ -1,0 +1,17 @@
+scoreboard_pass=1
+profile_name=X122_X124_zero_payload
+case_seed=1327604986
+expect_opq_merged=1
+expected_payload_words=0
+observed_payload_words=0
+padding_words=0
+parse_errors=0
+saw_end_of_event=0
+ingress_hits=0
+expected_hits=0
+opq_hits=0
+dma_hits=0
+opq_ghost_count=0
+opq_missing_count=0
+dma_ghost_count=0
+dma_missing_count=0

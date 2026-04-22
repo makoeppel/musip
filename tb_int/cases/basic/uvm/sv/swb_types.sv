@@ -140,6 +140,8 @@ class swb_case_plan extends uvm_object;
   bit [255:0] expected_dma_words[$];
   int unsigned expected_word_count;
   int unsigned total_hits;
+  int unsigned raw_total_hits_before_padding;
+  int unsigned padding_hits_added;
   int unsigned frame_count;
   int unsigned case_seed;
   int unsigned dma_half_full_pct;
@@ -161,6 +163,8 @@ class swb_case_plan extends uvm_object;
     expected_dma_words.delete();
     expected_word_count = 0;
     total_hits          = 0;
+    raw_total_hits_before_padding = 0;
+    padding_hits_added  = 0;
     frame_count         = 0;
     case_seed           = 0;
     dma_half_full_pct   = 0;
@@ -595,6 +599,8 @@ class swb_case_builder extends uvm_object;
     );
     plan.frame_count = plan.frames_by_lane[0].size();
     plan.total_hits = swb_case_builder::count_total_hits(plan);
+    plan.raw_total_hits_before_padding = plan.total_hits;
+    plan.padding_hits_added = 0;
   end
   endfunction
 
@@ -686,8 +692,9 @@ class swb_case_builder extends uvm_object;
       end
     end
 
-    plan.total_hits = swb_case_builder::count_total_hits(plan);
-    extra_hits = (4 - (plan.total_hits % 4)) % 4;
+    plan.raw_total_hits_before_padding = swb_case_builder::count_total_hits(plan);
+    extra_hits = (4 - (plan.raw_total_hits_before_padding % 4)) % 4;
+    plan.padding_hits_added = extra_hits;
     if (extra_hits != 0) begin
       for (int lane_scan = SWB_N_LANES - 1; lane_scan >= 0 && extra_hits != 0; lane_scan--) begin
         if (plan.feb_enable_mask[lane_scan] == 1'b0) begin

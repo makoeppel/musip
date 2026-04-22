@@ -1,0 +1,17 @@
+scoreboard_pass=1
+profile_name=basic_random
+case_seed=12345
+expect_opq_merged=1
+expected_payload_words=509
+observed_payload_words=509
+padding_words=128
+parse_errors=0
+saw_end_of_event=1
+ingress_hits=2036
+expected_hits=2036
+opq_hits=2036
+dma_hits=2036
+opq_ghost_count=0
+opq_missing_count=0
+dma_ghost_count=0
+dma_missing_count=0

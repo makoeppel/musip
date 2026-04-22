@@ -1,0 +1,1 @@
+plain_dma_check: expected_words=950 actual_words=1078 expected_hits=3800 actual_hits=3800 actual_padding_words=128 order_exact=0

@@ -501,6 +501,8 @@ class swb_scoreboard extends uvm_component;
     $fdisplay(fd, "scoreboard_pass=%0d", scoreboard_pass);
     $fdisplay(fd, "profile_name=%s", plan.profile_name);
     $fdisplay(fd, "case_seed=%0d", plan.case_seed);
+    $fdisplay(fd, "raw_total_hits_before_padding=%0d", plan.raw_total_hits_before_padding);
+    $fdisplay(fd, "padding_hits_added=%0d", plan.padding_hits_added);
     $fdisplay(fd, "expect_opq_merged=%0d", expect_opq_merged);
     $fdisplay(fd, "expected_payload_words=%0d", plan.expected_dma_words.size());
     $fdisplay(fd, "observed_payload_words=%0d", recv_words);

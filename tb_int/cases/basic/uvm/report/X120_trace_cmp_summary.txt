@@ -1,0 +1,23 @@
+expected_hits.tsv: identical
+ingress_hits.tsv: identical
+opq_hits.tsv: identical
+dma_hits.tsv: identical
+summary:case_seed: match
+summary:dma_ghost_count: match
+summary:dma_hits: match
+summary:dma_missing_count: match
+summary:expect_opq_merged: match
+summary:expected_hits: match
+summary:expected_payload_words: match
+summary:ingress_hits: match
+summary:observed_payload_words: match
+summary:opq_ghost_count: match
+summary:opq_hits: match
+summary:opq_missing_count: match
+summary:padding_hits_added: match
+summary:padding_words: match
+summary:parse_errors: match
+summary:raw_total_hits_before_padding: match
+summary:saw_end_of_event: match
+summary:scoreboard_pass: match
+summary:profile_name: expected difference X120_seed1 vs X120_repeat_seed1

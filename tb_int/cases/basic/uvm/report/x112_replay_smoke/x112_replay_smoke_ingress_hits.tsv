@@ -1,0 +1,9 @@
+stage_name	observed_idx	hidden_id	lane_id	frame_idx	subheader_idx	hit_idx	debug_ts_8ns	normalized_hit_word	raw_hit_word	ingress_sort_key
+lane0_ingress	0	0	0	0	1	0	40960	000000000000a000	000000000000a000	000000a000_0_     0_     1_     0
+lane0_ingress	1	1	0	0	1	1	40964	00041c200000a004	00041c200000a004	000000a004_0_     0_     1_     1
+lane1_ingress	2	2	1	0	2	0	40977	000c48000000a011	000c48000000a011	000000a011_1_     0_     2_     0
+lane1_ingress	3	3	1	0	2	1	40981	001064200000a015	001064200000a015	000000a015_1_     0_     2_     1
+lane2_ingress	4	4	2	0	3	0	40994	001890000000a022	001890000000a022	000000a022_2_     0_     3_     0
+lane2_ingress	5	5	2	0	3	1	40998	001cac200000a026	001cac200000a026	000000a026_2_     0_     3_     1
+lane3_ingress	6	6	3	0	4	0	41011	0024d8000000a033	0024d8000000a033	000000a033_3_     0_     4_     0
+lane3_ingress	7	7	3	0	4	1	41015	0028f4200000a037	0028f4200000a037	000000a037_3_     0_     4_     1

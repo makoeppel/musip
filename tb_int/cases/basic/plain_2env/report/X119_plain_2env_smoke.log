@@ -1,0 +1,163 @@
+Reading pref.tcl
+
+# 2026.1_1
+
+# ** Note: (vsim-220) '/home/yifeng/packages/musip_2604/tb_int/cases/basic/plain_2env/work/nocov/modelsim.ini' is used as the ini file.
+# vsim -c -L altera_mf_ver -L 220model_ver -L altera_mf -L 220model -voptargs="+acc" -sv_lib /data1/questaone_sim/questasim/uvm-1.2/linux_x86_64/uvm_dpi -sv_lib /home/yifeng/packages/musip_2604/tb_int/cases/basic/plain_2env/work/nocov/libswb_opq_2env_dpi tb_top_2env "+SWB_REPLAY_DIR=/home/yifeng/packages/musip_2604/tb_int/cases/basic/ref/out_smoke" -do "run -all; quit -f" 
+# Start time: 18:12:55 on Apr 22,2026
+# Loading /tmp/yifeng@teferi.ethz.ch_dpi_4457/linux_x86_64_gcc-12/export_tramp.so
+# ** Note: (vsim-3812) Design is being optimized...
+# ** Warning: (vopt-10587) Some optimizations are turned off because the +acc switch is in effect. This will cause your simulation to run slowly. Please use -access/-debug to maintain needed visibility. The +acc switch would be deprecated in a future release.
+# ** Note: (vopt-220) '/home/yifeng/packages/musip_2604/tb_int/cases/basic/plain_2env/work/nocov/modelsim.ini' is used as the ini file.
+# ** Note: (vopt-143) Recognized 1 FSM in module "swb_opq_boundary_contract_sva(fast)".
+# ** Note: (vopt-143) Recognized 1 FSM in module "swb_opq_boundary_contract_sva(fast__1)".
+# ** Note: (vopt-143) Recognized 1 FSM in module "swb_opq_boundary_contract_sva(fast__2)".
+# ** Note: (vopt-143) Recognized 1 FSM in module "swb_opq_boundary_contract_sva(fast__3)".
+# ** Note: (vopt-143) Recognized 1 FSM in module "swb_opq_boundary_contract_sva(fast__4)".
+# ** Note: (vopt-143) Recognized 4 FSMs in architecture body "musip_mux_4_1(arch)".
+# ** Note: (vopt-143) Recognized 1 FSM in architecture body "musip_event_builder(arch)".
+# ** Note: (vsim-12126) Error and warning message counts have been restored: Errors=0, Warnings=1.
+# //  Questa Sim-64
+# //  Version 2026.1_1 linux_x86_64 Mar  2 2026
+# //
+# // Unpublished work. Copyright 2026 Siemens
+# //
+# // This material contains trade secrets or otherwise confidential information
+# // owned by Siemens Industry Software Inc. or its affiliates (collectively,
+# // "SISW"), or its licensors. Access to and use of this information is strictly
+# // limited as set forth in the Customer's applicable agreements with SISW.
+# //
+# // This material may not be copied, distributed, or otherwise disclosed outside
+# // of the Customer's facilities without the express written permission of SISW,
+# // and may not be used in any way not expressly authorized by SISW.
+# //
+# ** Note: (vsim-8785) UVM-aware debugging capabilities will be disabled since no compiled "questa_uvm_pkg" can be found.
+# This also means that later if you turn on UVM-aware debugging your debug simulations may have
+# different random seeds from your non-debug simulations.
+# Loading sv_std.std
+# Loading work.feb_ingress_if(fast)
+# Loading work.opq_egress_if(fast)
+# Loading work.swb_ctrl_if(fast)
+# Loading work.dma_sink_if(fast)
+# Loading work.uvm_pkg(fast)
+# Loading work.swb_2env_pkg(fast)
+# Loading work.tb_top_2env_sv_unit(fast)
+# Loading work.tb_top_2env(fast)
+# Loading work.feb_ingress_if(fast__2)
+# Loading work.opq_egress_if(fast__2)
+# Loading work.dma_sink_if(fast__2)
+# Loading work.swb_ctrl_if(fast__2)
+# Loading work.swb_opq_boundary_contract_sva(fast)
+# Loading work.swb_opq_boundary_contract_sva(fast__1)
+# Loading work.swb_opq_boundary_contract_sva(fast__2)
+# Loading work.swb_opq_boundary_contract_sva(fast__3)
+# Loading work.swb_opq_boundary_contract_sva(fast__4)
+# Loading std.standard
+# Loading std.textio(body)
+# Loading ieee.std_logic_1164(body)
+# Loading ieee.numeric_std(body)
+# Loading ieee.math_real(body)
+# Loading ieee.std_logic_textio(body)
+# Loading work.util_slv(body)
+# Loading synopsys.attributes
+# Loading ieee.std_logic_misc(body)
+# Loading ieee.std_logic_arith(body)
+# Loading ieee.std_logic_unsigned(body)
+# Loading work.util(body)
+# Loading work.mu3e(body)
+# Loading work.mudaq(body)
+# Loading work.swb_datapath_2env_wrapper(rtl)#1
+# Loading work.a10_pcie_registers
+# Loading work.musip_mux_4_1(arch)#1
+# Loading work.chip_lookup(arch)#1
+# Loading work.word_rate(rtl)#1
+# Loading work.subtime_merger(rtl)#1
+# Loading work.hit_compactor(rtl)#1
+# Loading altera_mf.altera_mf_components
+# Loading work.ip_scfifo_v2(arch)#2
+# Loading altera_mf.altera_device_families(body)
+# Loading altera_mf.scfifo(behavior)#2
+# Loading work.fifo_reg(arch)#1
+# Loading work.mux_4_1_256(rtl)#1
+# Loading work.musip_event_builder(arch)#1
+# Loading work.ip_scfifo_v2(arch)#1
+# Loading altera_mf.scfifo(behavior)#1
+# Compiling /tmp/yifeng@teferi.ethz.ch_dpi_4457/linux_x86_64_gcc-12/exportwrapper.c
+# Loading /tmp/yifeng@teferi.ethz.ch_dpi_4457/linux_x86_64_gcc-12/vsim_auto_compile.so
+# Loading /data1/questaone_sim/questasim/uvm-1.2/linux_x86_64/uvm_dpi.so
+# Loading /home/yifeng/packages/musip_2604/tb_int/cases/basic/plain_2env/work/nocov/libswb_opq_2env_dpi.so
+# run -all
+# UVM_INFO /data1/questaone_sim/questasim/verilog_src/uvm-1.2/src/base/uvm_root.svh(392) @ 0: reporter [UVM/RELNOTES] 
+# ----------------------------------------------------------------
+# UVM-1.2
+# (C) 2007-2014 Mentor Graphics Corporation
+# (C) 2007-2014 Cadence Design Systems, Inc.
+# (C) 2006-2014 Synopsys, Inc.
+# (C) 2011-2013 Cypress Semiconductor Corp.
+# (C) 2013-2014 NVIDIA Corporation
+# ----------------------------------------------------------------
+# 
+#   ***********       IMPORTANT RELEASE NOTES         ************
+# 
+#   You are using a version of the UVM library that has been compiled
+#   with `UVM_NO_DEPRECATED undefined.
+#   See http://www.eda.org/svdb/view.php?id=3313 for more details.
+# 
+#   You are using a version of the UVM library that has been compiled
+#   with `UVM_OBJECT_DO_NOT_NEED_CONSTRUCTOR undefined.
+#   See http://www.eda.org/svdb/view.php?id=3770 for more details.
+# 
+#       (Specify +UVM_NO_RELNOTES to turn off this notice)
+# 
+# ** Warning: NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top_2env/dut/dut_mux/gen_links_to_256bit(3)/e_lookup
+# ** Warning: NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top_2env/dut/dut_mux/gen_links_to_256bit(2)/e_lookup
+# ** Warning: NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top_2env/dut/dut_mux/gen_links_to_256bit(1)/e_lookup
+# ** Warning: NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+#    Time: 0 ps  Iteration: 0  Instance: /tb_top_2env/dut/dut_mux/gen_links_to_256bit(0)/e_lookup
+# UVM_INFO @ 0: reporter [RNTST] Running test swb_basic_2env_test...
+# ** Warning: NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+#    Time: 0 ps  Iteration: 1  Instance: /tb_top_2env/dut/dut_mux/gen_links_to_256bit(3)/e_lookup
+# ** Warning: NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+#    Time: 0 ps  Iteration: 1  Instance: /tb_top_2env/dut/dut_mux/gen_links_to_256bit(2)/e_lookup
+# ** Warning: NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+#    Time: 0 ps  Iteration: 1  Instance: /tb_top_2env/dut/dut_mux/gen_links_to_256bit(1)/e_lookup
+# ** Warning: NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+#    Time: 0 ps  Iteration: 1  Instance: /tb_top_2env/dut/dut_mux/gen_links_to_256bit(0)/e_lookup
+# UVM_INFO /home/yifeng/packages/musip_2604/tb_int/cases/basic/plain_2env/sv/../../uvm/sv/swb_scoreboard.sv(264) @ 0: uvm_test_top.datapath_env.scoreboard [SB_CFG] expect_opq_merged=0
+# UVM_INFO /home/yifeng/packages/musip_2604/tb_int/cases/basic/plain_2env/sv/swb_2env_test.sv(66) @ 66000: uvm_test_top [CASE_2ENV] Replay case: dir=/home/yifeng/packages/musip_2604/tb_int/cases/basic/ref/out_smoke frames=1 total_hits=8 expected_words=2
+# UVM_INFO /home/yifeng/packages/musip_2604/tb_int/cases/basic/plain_2env/sv/swb_2env_agents.sv(153) @ 66000: uvm_test_top.opq_env.ingress_agent_0.driver [OPQ_DRV] Lane 0 driving frame 0 with 2 hits
+# UVM_INFO /home/yifeng/packages/musip_2604/tb_int/cases/basic/plain_2env/sv/swb_2env_agents.sv(153) @ 1126000: uvm_test_top.opq_env.ingress_agent_1.driver [OPQ_DRV] Lane 1 driving frame 0 with 2 hits
+# UVM_INFO /home/yifeng/packages/musip_2604/tb_int/cases/basic/plain_2env/sv/swb_2env_agents.sv(153) @ 2186000: uvm_test_top.opq_env.ingress_agent_2.driver [OPQ_DRV] Lane 2 driving frame 0 with 2 hits
+# UVM_INFO /home/yifeng/packages/musip_2604/tb_int/cases/basic/plain_2env/sv/swb_2env_agents.sv(153) @ 3246000: uvm_test_top.opq_env.ingress_agent_3.driver [OPQ_DRV] Lane 3 driving frame 0 with 2 hits
+# UVM_INFO /data1/questaone_sim/questasim/verilog_src/uvm-1.2/src/base/uvm_objection.svh(1270) @ 4374000: reporter [TEST_DONE] 'run' phase is ready to proceed to the 'extract' phase
+# UVM_INFO /home/yifeng/packages/musip_2604/tb_int/cases/basic/plain_2env/sv/swb_2env_boundary_scoreboard.sv(188) @ 4374000: uvm_test_top.datapath_env.boundary_scoreboard [OPQ_BOUNDARY_SUMMARY] Lane valid beats=[264 264 264 264] opq_egress=18
+# UVM_INFO /home/yifeng/packages/musip_2604/tb_int/cases/basic/plain_2env/sv/../../uvm/sv/swb_scoreboard.sv(588) @ 4374000: uvm_test_top.datapath_env.scoreboard [HIT_STAGE_SUMMARY] dma expected=8 actual=8 ghosts=0 missing=0
+# UVM_INFO /home/yifeng/packages/musip_2604/tb_int/cases/basic/plain_2env/sv/../../uvm/sv/swb_scoreboard.sv(732) @ 4374000: uvm_test_top.datapath_env.scoreboard [DMA_SUMMARY] Compared 2 payload words, ignored 128 trailing padding words, ingress_hits=8 opq_hits=0 dma_hits=8 parse_errors=0
+# UVM_INFO /home/yifeng/packages/musip_2604/tb_int/cases/basic/plain_2env/sv/../../uvm/sv/swb_scoreboard.sv(781) @ 4374000: uvm_test_top.datapath_env.scoreboard [SWB_CHECK_PASS] profile=replay case_seed=0 payload_words=2 padding_words=128 ingress_hits=8 opq_hits=0 dma_hits=8
+# UVM_INFO /data1/questaone_sim/questasim/verilog_src/uvm-1.2/src/base/uvm_report_server.svh(847) @ 4374000: reporter [UVM/REPORT/SERVER] 
+# --- UVM Report Summary ---
+# 
+# ** Report counts by severity
+# UVM_INFO :   13
+# UVM_WARNING :    0
+# UVM_ERROR :    0
+# UVM_FATAL :    0
+# ** Report counts by id
+# [CASE_2ENV]     1
+# [DMA_SUMMARY]     1
+# [HIT_STAGE_SUMMARY]     1
+# [OPQ_BOUNDARY_SUMMARY]     1
+# [OPQ_DRV]     4
+# [RNTST]     1
+# [SB_CFG]     1
+# [SWB_CHECK_PASS]     1
+# [TEST_DONE]     1
+# [UVM/RELNOTES]     1
+# 
+# ** Note: $finish    : /data1/questaone_sim/questasim/verilog_src/uvm-1.2/src/base/uvm_root.svh(517)
+#    Time: 4374 ns  Iteration: 69  Instance: /tb_top_2env
+# End time: 18:12:58 on Apr 22,2026, Elapsed time: 0:00:03
+# Errors: 0, Warnings: 9

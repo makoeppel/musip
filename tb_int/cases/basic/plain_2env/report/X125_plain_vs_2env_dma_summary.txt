@@ -1,0 +1,9 @@
+plain_words=1078
+plain_hits=3800
+plain_padding_words=128
+twoenv_hits=3800
+counter_match=1
+order_exact=0
+first_mismatch_index=1
+plain_hit=0x000088000000A002
+twoenv_hit=0x020244000000A001

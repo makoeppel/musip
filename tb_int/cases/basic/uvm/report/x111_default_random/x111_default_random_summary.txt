@@ -1,0 +1,17 @@
+scoreboard_pass=1
+profile_name=X111_default_random
+case_seed=1066426748
+expect_opq_merged=1
+expected_payload_words=951
+observed_payload_words=951
+padding_words=128
+parse_errors=0
+saw_end_of_event=1
+ingress_hits=3804
+expected_hits=3804
+opq_hits=3804
+dma_hits=3804
+opq_ghost_count=0
+opq_missing_count=0
+dma_ghost_count=0
+dma_missing_count=0

@@ -104,7 +104,7 @@
       ],
       "cases_planned": 129,
       "cases_implemented": 129,
-      "cases_evidenced": 0,
+      "cases_evidenced": 13,
       "status": "implemented_evidence_pending",
       "trace": "REPORT/buckets/ERROR.md"
     }
@@ -537,7 +537,7 @@
   },
   "implementation_summary": {
     "implemented_case_pages": 516,
-    "evidenced_case_pages": 5,
+    "evidenced_case_pages": 18,
     "implemented_cross_pages": 129,
     "evidenced_cross_pages": 0,
     "implemented_txn_growth_pages": 129,
