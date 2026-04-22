@@ -80,6 +80,7 @@ Key integration facts:
 | 8 | Randomized screen owner | `make ip-uvm-longrun` is the promoted musip-local randomized screen. Default campaign: 128 unique 4-lane rate combinations over the `0.0..0.5` grid, 2 frames, campaign seed `260421`. A historical stronger 256-run archive with campaign seed `260422` remains in `cases/basic/uvm/report/longrun_ext_260422_fixed/summary.json`, but it is not the promoted nightly gate. |
 | 9 | Formal scope | `ip-formal-boundary` is a contract-grammar scaffold at the OPQ seam, not a formal proof of the real OPQ implementation. |
 | 10 | Lint rigor | `ip-lint-rtl` stays strict on owned bridge/wrapper RTL and hygiene-only on imported or legacy RTL. |
+| 11 | Waveform-evidence prior | Human-facing ingress waveform evidence must use synchronized frame-start slots so the same frame ID launches on all enabled lanes in the same cycle. Within that slot the trailer timing is expected to vary with packet size. Harness support is via `+SWB_FRAME_SLOT_CYCLES=<n>`; the default replay and randomized signoff tests remain free-running unless this lever is requested. |
 
 ---
 

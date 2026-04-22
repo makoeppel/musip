@@ -8,7 +8,8 @@ endclass
 
 class swb_opq_ingress_monitor extends uvm_component;
   virtual feb_ingress_if vif;
-  uvm_analysis_port #(swb_opq_beat) ap;
+  uvm_analysis_port #(swb_opq_beat)   ap;
+  uvm_analysis_port #(swb_stream_beat) stream_ap;
   int unsigned lane_id;
   int unsigned beat_count;
 
@@ -16,8 +17,9 @@ class swb_opq_ingress_monitor extends uvm_component;
 
   function new(string name, uvm_component parent);
     super.new(name, parent);
-    ap = new("ap", this);
-    lane_id = 0;
+    ap        = new("ap", this);
+    stream_ap = new("stream_ap", this);
+    lane_id   = 0;
     beat_count = 0;
   endfunction
 
@@ -30,7 +32,8 @@ class swb_opq_ingress_monitor extends uvm_component;
   endfunction
 
   task run_phase(uvm_phase phase);
-    swb_opq_beat item;
+    swb_opq_beat   item;
+    swb_stream_beat stream_item;
   begin
     forever begin
       @(posedge vif.clk);
@@ -41,8 +44,15 @@ class swb_opq_ingress_monitor extends uvm_component;
         item.data = vif.data;
         item.datak = vif.datak;
         item.stream_name = $sformatf("lane%0d_ingress", lane_id);
+        stream_item = swb_stream_beat::type_id::create($sformatf("lane%0d_stream_beat", lane_id));
+        stream_item.lane_id = lane_id;
+        stream_item.beat_idx = beat_count;
+        stream_item.data = vif.data;
+        stream_item.datak = vif.datak;
+        stream_item.stream_name = item.stream_name;
         beat_count++;
         ap.write(item);
+        stream_ap.write(stream_item);
       end
     end
   end
@@ -52,12 +62,14 @@ endclass
 class swb_opq_ingress_driver extends uvm_driver #(swb_frame_item);
   virtual feb_ingress_if vif;
   int unsigned lane_id;
+  int unsigned frame_slot_cycles;
 
   `uvm_component_utils(swb_opq_ingress_driver)
 
   function new(string name, uvm_component parent);
     super.new(name, parent);
     lane_id = 0;
+    frame_slot_cycles = 0;
   endfunction
 
   function void build_phase(uvm_phase phase);
@@ -66,14 +78,48 @@ class swb_opq_ingress_driver extends uvm_driver #(swb_frame_item);
       `uvm_fatal("NOVIF", $sformatf("No feb_ingress_if for %s", get_full_name()))
     end
     void'(uvm_config_db#(int unsigned)::get(this, "", "lane_id", lane_id));
+    void'($value$plusargs("SWB_FRAME_SLOT_CYCLES=%d", frame_slot_cycles));
   endfunction
 
   task drive_cycle(bit valid, bit [31:0] data, bit [3:0] datak);
     @(posedge vif.clk);
-    vif.valid <= valid;
-    vif.data  <= data;
-    vif.datak <= datak;
+    vif.valid    <= valid;
+    vif.data     <= data;
+    vif.datak    <= datak;
     swb_opq_2env_push_ingress(lane_id, valid, data, datak);
+  endtask
+
+  function int unsigned frame_slot_cycles_used(swb_frame_item frame);
+    return 7 + frame.subheader_count() + frame.hit_count();
+  endfunction
+
+  task pad_to_frame_slot(swb_frame_item frame);
+    int unsigned used_cycles;
+    int unsigned pad_cycles;
+  begin
+    if (frame_slot_cycles == 0) begin
+      return;
+    end
+
+    used_cycles = frame_slot_cycles_used(frame);
+    if (used_cycles > frame_slot_cycles) begin
+      `uvm_fatal(
+        "FRAME_SLOT",
+        $sformatf(
+          "Lane %0d frame %0d consumes %0d cycles but SWB_FRAME_SLOT_CYCLES=%0d",
+          lane_id,
+          frame.frame_id,
+          used_cycles,
+          frame_slot_cycles
+        )
+      )
+    end
+
+    pad_cycles = frame_slot_cycles - used_cycles;
+    repeat (pad_cycles) begin
+      drive_cycle(1'b0, '0, '0);
+    end
+  end
   endtask
 
   task drive_frame(swb_frame_item frame);
@@ -106,10 +152,19 @@ class swb_opq_ingress_driver extends uvm_driver #(swb_frame_item);
       seq_item_port.get_next_item(req);
       `uvm_info(
         "OPQ_DRV",
-        $sformatf("Lane %0d driving frame %0d with %0d hits", lane_id, req.frame_id, req.hit_count()),
+        $sformatf(
+          "Lane %0d driving frame %0d with %0d hits%s",
+          lane_id,
+          req.frame_id,
+          req.hit_count(),
+          (frame_slot_cycles != 0)
+            ? $sformatf(" (slot=%0d cyc, used=%0d cyc)", frame_slot_cycles, frame_slot_cycles_used(req))
+            : ""
+        ),
         UVM_MEDIUM
       )
       drive_frame(req);
+      pad_to_frame_slot(req);
       seq_item_port.item_done();
     end
   end
@@ -177,9 +232,9 @@ class swb_opq_egress_driver extends uvm_component;
         vif.drive_idle();
       end else begin
         swb_opq_2env_step_egress(valid_i, data_i, datak_i);
-        vif.valid <= valid_i[0];
-        vif.data  <= data_i[31:0];
-        vif.datak <= datak_i[3:0];
+        vif.valid    <= valid_i[0];
+        vif.data     <= data_i[31:0];
+        vif.datak    <= datak_i[3:0];
       end
     end
   end
