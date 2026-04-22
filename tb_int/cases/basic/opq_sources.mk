@@ -1,9 +1,9 @@
 OPQ_SOURCE_MODE ?= upstream_qsys_generated
 MU3E_IP_CORES_ROOT ?= $(ROOT)/external/mu3e-ip-cores
-OPQ_N_SHD ?= 256
-OPQ_LANE_FIFO_DEPTH ?= 2048
-OPQ_TICKET_FIFO_DEPTH ?= 1024
-OPQ_HANDLE_FIFO_DEPTH ?= 256
+OPQ_N_SHD ?= 128
+OPQ_LANE_FIFO_DEPTH ?= 1024
+OPQ_TICKET_FIFO_DEPTH ?= 512
+OPQ_HANDLE_FIFO_DEPTH ?= 64
 OPQ_PAGE_RAM_DEPTH ?= 65536
 
 OPQ_LOCAL_DIR := $(ROOT)/firmware/a10_board/a10/merger
@@ -49,18 +49,15 @@ OPQ_VHDL_DUT_SOURCES = \
 	$(OPQ_QSYS_WRAPPER_VHDL)
 
 OPQ_SIM_QSYS_VHDL_SOURCES = \
-	$(wildcard $(OPQ_QSYS_COMPONENT_SYNTH_DIR)/*_pkg.vhd) \
-	$(wildcard $(OPQ_QSYS_COMPONENT_SYNTH_DIR)/*_core.vhd) \
-	$(filter-out %_pkg.vhd %_core.vhd,$(wildcard $(OPQ_QSYS_COMPONENT_SYNTH_DIR)/*.vhd))
+	$(shell find $(OPQ_QSYS_COMPONENT_SYNTH_DIR) -type f -name '*.vhd' | sort)
 
 OPQ_SIM_QSYS_VERILOG_SOURCES = \
-	$(wildcard $(OPQ_QSYS_COMPONENT_SYNTH_DIR)/*.v) \
-	$(wildcard $(OPQ_QSYS_COMPONENT_SYNTH_DIR)/*.sv)
+	$(shell find $(OPQ_QSYS_COMPONENT_SYNTH_DIR) -type f \( -name '*.v' -o -name '*.sv' \) | sort)
 
 # The generated Qsys wrapper bakes the fixed profile into its top-level SV,
 # but the submodules are compiled as separate SystemVerilog units. Keep the
 # command-line defines pinned to the same packaged values so every compile unit
-# sees the identical 4-lane / 256-subheader contract as the synthesis QIP.
+# sees the identical 4-lane / N_SHD contract as the synthesis QIP.
 OPQ_DUT_DEFINES = \
 	+define+OPQ_USE_NATIVE_SV \
 	+define+OPQ_N_LANE=4 \
@@ -102,18 +99,12 @@ OPQ_DUT_DEFINES = \
 	+define+OPQ_HANDLE_FIFO_DEPTH=$(OPQ_HANDLE_FIFO_DEPTH) \
 	+define+OPQ_PAGE_RAM_DEPTH=$(OPQ_PAGE_RAM_DEPTH)
 else ifeq ($(OPQ_SOURCE_MODE),qsys_authentic)
-OPQ_SIM_EXTRA_LIBS = opq_monolithic_4lane_merge
-OPQ_SIM_QSYS_LIB = opq_monolithic_4lane_merge
-OPQ_VSIM_LIB_FLAGS = $(OPQ_INTEL_PRIM_SIM_LIB_FLAGS) -L $(OPQ_SIM_QSYS_LIB)
+OPQ_VSIM_LIB_FLAGS = $(OPQ_INTEL_PRIM_SIM_LIB_FLAGS)
 
 OPQ_VHDL_DUT_SOURCES = \
-	$(OPQ_LOCAL_DIR)/opq_upstream_4lane_compat.vhd
+	$(OPQ_AUTH_SUBMODULE_DIR)/opq_monolithic_4lane_merge_opq_0.vhd
 
-OPQ_SIM_QSYS_VHDL_SOURCES = \
-	$(OPQ_AUTH_SUBMODULE_DIR)/opq_monolithic_4lane_merge_opq_0.vhd \
-	$(OPQ_LOCAL_DIR)/opq_monolithic_4lane_merge.vhd
-
-OPQ_SIM_QSYS_VERILOG_SOURCES = \
+OPQ_VERILOG_DUT_SOURCES = \
 	$(OPQ_AUTH_SUBMODULE_DIR)/handle_fifo.v \
 	$(OPQ_AUTH_SUBMODULE_DIR)/lane_fifo.v \
 	$(OPQ_AUTH_SUBMODULE_DIR)/ticket_fifo.v \

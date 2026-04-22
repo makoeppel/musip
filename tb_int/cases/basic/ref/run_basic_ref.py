@@ -20,7 +20,7 @@ from typing import Iterable
 
 
 SWB_N_LANES = 4
-SWB_N_SUBHEADERS = 256
+SWB_N_SUBHEADERS = 128
 SWB_MAX_HITS_PER_SUBHEADER = 4
 SWB_MUPIX_HEADER_ID = 0b111010
 SWB_K285 = 0xBC
@@ -199,10 +199,11 @@ def build_basic_case(frame_count: int, lane_saturation: list[float], seed: int) 
     plan = CasePlan()
     plan.lane_saturation = lane_saturation[:]
     plan.profile = "poisson"
+    frame_ts_stride = SWB_N_SUBHEADERS << 4
 
     for frame_idx in range(frame_count):
         ts_high_word = (0x1200_0000 + frame_idx) & 0xFFFF_FFFF
-        ts_low_word = (0xA000 + frame_idx * 16) & 0xFFFF
+        ts_low_word = (0xA000 + frame_idx * frame_ts_stride) & 0xFFFF
 
         for lane_id in range(SWB_N_LANES):
             frame = FrameItem(

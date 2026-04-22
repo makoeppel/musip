@@ -180,6 +180,37 @@ class swb_case_plan extends uvm_object;
   endfunction
 endclass
 
+class swb_case_segment extends uvm_object;
+  string       case_id;
+  string       mode_name;
+  string       replay_dir;
+  bit [3:0]    feb_enable_mask;
+  bit          use_merge;
+  int unsigned dma_half_full_pct;
+  int unsigned dma_half_full_seed;
+  int unsigned case_seed;
+  bit          reset_before;
+
+  `uvm_object_utils(swb_case_segment)
+
+  function new(string name = "swb_case_segment");
+    super.new(name);
+    clear();
+  endfunction
+
+  function void clear();
+    case_id            = "";
+    mode_name          = "replay";
+    replay_dir         = "";
+    feb_enable_mask    = 4'hf;
+    use_merge          = 1'b1;
+    dma_half_full_pct  = 0;
+    dma_half_full_seed = 32'h5a17_c0de;
+    case_seed          = 0;
+    reset_before       = 1'b0;
+  endfunction
+endclass
+
 typedef enum int {
   SWB_HIT_MODE_POISSON,
   SWB_HIT_MODE_ZERO,
@@ -604,6 +635,113 @@ class swb_case_builder extends uvm_object;
   end
   endfunction
 
+  static function void load_segment_manifest(
+    ref swb_case_segment segments[$],
+    input string manifest_path
+  );
+    int fd;
+    int line_no;
+    int fields;
+    string line;
+    string case_id;
+    string mode_name;
+    string replay_dir;
+    bit [3:0] mask;
+    int unsigned use_merge_raw;
+    int unsigned dma_half_full_pct;
+    int unsigned dma_half_full_seed;
+    int unsigned case_seed;
+    int unsigned reset_before_raw;
+    byte first_char;
+    swb_case_segment segment;
+  begin
+    fd = $fopen(manifest_path, "r");
+    if (fd == 0) begin
+      `uvm_fatal("SEGMENT_MANIFEST", $sformatf("Unable to open segment manifest %s", manifest_path))
+    end
+
+    segments.delete();
+    line_no = 0;
+    while (!$feof(fd)) begin
+      void'($fgets(line, fd));
+      line_no++;
+      if (line.len() == 0) begin
+        continue;
+      end
+      first_char = line.getc(0);
+      if ((first_char == 35) || (first_char == 10)) begin
+        continue;
+      end
+
+      case_id = "";
+      mode_name = "";
+      replay_dir = "";
+      mask = 4'hf;
+      use_merge_raw = 1;
+      dma_half_full_pct = 0;
+      dma_half_full_seed = 32'h5a17_c0de;
+      case_seed = 0;
+      reset_before_raw = 0;
+      fields = $sscanf(
+        line,
+        "%s %s %s %h %d %d %d %d %d",
+        case_id,
+        mode_name,
+        replay_dir,
+        mask,
+        use_merge_raw,
+        dma_half_full_pct,
+        dma_half_full_seed,
+        case_seed,
+        reset_before_raw
+      );
+      if (fields == 0) begin
+        continue;
+      end
+      if (fields != 9) begin
+        `uvm_fatal(
+          "SEGMENT_MANIFEST",
+          $sformatf(
+            "Malformed segment manifest line %0d in %s: expected 9 fields, got %0d: %s",
+            line_no,
+            manifest_path,
+            fields,
+            line
+          )
+        )
+      end
+      if (mode_name != "replay") begin
+        `uvm_fatal(
+          "SEGMENT_MANIFEST",
+          $sformatf(
+            "Unsupported segment mode %s on line %0d in %s; only replay is promoted today",
+            mode_name,
+            line_no,
+            manifest_path
+          )
+        )
+      end
+
+      segment = swb_case_segment::type_id::create($sformatf("segment_%0d", segments.size()));
+      segment.case_id = case_id;
+      segment.mode_name = mode_name;
+      segment.replay_dir = replay_dir;
+      segment.feb_enable_mask = mask;
+      segment.use_merge = (use_merge_raw != 0);
+      segment.dma_half_full_pct = dma_half_full_pct;
+      segment.dma_half_full_seed = dma_half_full_seed;
+      segment.case_seed = case_seed;
+      segment.reset_before = (reset_before_raw != 0);
+      segments.push_back(segment);
+    end
+    void'($fclose(fd));
+
+    if (segments.size() == 0) begin
+      `uvm_fatal("SEGMENT_MANIFEST", $sformatf("Segment manifest %s produced no runnable segments", manifest_path))
+    end
+  end
+  endfunction
+
   static function void build_basic_case(
     ref swb_case_plan plan,
     int unsigned frame_count,
@@ -612,6 +750,7 @@ class swb_case_builder extends uvm_object;
     swb_hit_mode_e hit_mode
   );
     int unsigned frame_idx;
+    int unsigned frame_ts_stride;
     int unsigned lane_id;
     int unsigned shd_idx;
     int unsigned hit_target;
@@ -651,12 +790,14 @@ class swb_case_builder extends uvm_object;
       plan.lane_saturation[lane_id] = lane_saturation[lane_id];
     end
 
+    frame_ts_stride = (SWB_N_SUBHEADERS << 4);
+
     for (frame_idx = 0; frame_idx < frame_count; frame_idx++) begin
       bit [31:0] ts_high_word;
       bit [15:0] ts_low_word;
 
       ts_high_word = 32'h1200_0000 + frame_idx;
-      ts_low_word  = 16'hA000 + (frame_idx * 16);
+      ts_low_word  = 16'hA000 + (frame_idx * frame_ts_stride);
 
       for (lane_id = 0; lane_id < SWB_N_LANES; lane_id++) begin
         swb_frame_item frame;
