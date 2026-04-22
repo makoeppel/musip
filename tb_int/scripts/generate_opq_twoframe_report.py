@@ -34,6 +34,8 @@ PANEL_CHUNK_SLOTS = {
     "egress": 48,
     "dma": 32,
 }
+MIN_PANEL_HSCALE = 2
+MAX_PANEL_HSCALE = 6
 
 
 @dataclass
@@ -63,6 +65,7 @@ class DmaWord:
 class PanelBundle:
     panel_id: str
     render_index: int
+    base_hscale: int
     title: str
     subtitle: str
     extra_class: str
@@ -579,6 +582,7 @@ def build_ingress_panel(
     bundle = PanelBundle(
         panel_id="ingress",
         render_index=0,
+        base_hscale=3,
         title="Ingress Window",
         subtitle=(
             "4 FEB lanes into the OPQ; frame pair F1/F2. "
@@ -661,6 +665,7 @@ def build_egress_panel(
     bundle = PanelBundle(
         panel_id="egress",
         render_index=1,
+        base_hscale=3,
         title="Merged OPQ Egress",
         subtitle=(
             "Merged OPQ output for the same frame pair. "
@@ -855,6 +860,7 @@ def build_dma_panel(
     bundle = PanelBundle(
         panel_id="dma",
         render_index=2,
+        base_hscale=4,
         title="PCIe App Payload",
         subtitle=(
             "256-bit PCIe app payload words covering the same frame pair. "
@@ -900,6 +906,12 @@ def panel_block(panel: PanelBundle) -> str:
   <div class="chunk-toolbar">
     <button class="chunk-btn" type="button" data-panel-prev="{html.escape(panel.panel_id)}">Prev</button>
     <div class="chunk-status" data-panel-status="{html.escape(panel.panel_id)}">Loading first chunk...</div>
+    <div class="zoom-tools">
+      <button class="chunk-btn" type="button" data-panel-zoom-out="{html.escape(panel.panel_id)}">Zoom Out</button>
+      <button class="chunk-btn" type="button" data-panel-zoom-reset="{html.escape(panel.panel_id)}">Reset</button>
+      <button class="chunk-btn" type="button" data-panel-zoom-in="{html.escape(panel.panel_id)}">Zoom In</button>
+      <div class="zoom-status" data-panel-zoom-status="{html.escape(panel.panel_id)}">Scale {panel.base_hscale}</div>
+    </div>
     <button class="chunk-btn" type="button" data-panel-next="{html.escape(panel.panel_id)}">Next</button>
   </div>
   <div class="wave-scroll" data-wave-scroll="{html.escape(panel.panel_id)}">
@@ -937,6 +949,7 @@ def render_page(
         panel.panel_id: {
             "panel_id": panel.panel_id,
             "render_index": panel.render_index,
+            "base_hscale": panel.base_hscale,
             "chunk_count": len(panel.chunks),
             "nav_step_px": CHUNK_NAV_STEP_PX,
             "chunks": panel.chunks,
@@ -1090,6 +1103,19 @@ def render_page(
       font-size: 12px;
       color: var(--muted);
       flex: 1;
+    }}
+    .zoom-tools {{
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }}
+    .zoom-status {{
+      min-width: 82px;
+      text-align: right;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
     }}
     .chunk-hint {{
       margin-top: 12px;
@@ -1269,6 +1295,8 @@ def render_page(
 </main>
 <script>
 const PANEL_META = {json.dumps(panel_meta, separators=(",", ":"))};
+const MIN_PANEL_HSCALE = {MIN_PANEL_HSCALE};
+const MAX_PANEL_HSCALE = {MAX_PANEL_HSCALE};
 
 async function loadLedger(details) {{
   if (!details || details.dataset.ledgerLoaded === '1' || details.dataset.ledgerLoading === '1') {{
@@ -1354,6 +1382,23 @@ function updatePanelUi(meta, chunkIndex) {{
   if (nextBtn) {{
     nextBtn.disabled = chunkIndex >= meta.chunk_count - 1;
   }}
+  const zoomStatus = document.querySelector('[data-panel-zoom-status="' + meta.panel_id + '"]');
+  if (zoomStatus) {{
+    const rel = Math.round((meta.currentHscale / meta.base_hscale) * 100);
+    zoomStatus.textContent = 'Scale ' + meta.currentHscale + ' (' + rel + '%)';
+  }}
+  const zoomOutBtn = document.querySelector('[data-panel-zoom-out="' + meta.panel_id + '"]');
+  const zoomResetBtn = document.querySelector('[data-panel-zoom-reset="' + meta.panel_id + '"]');
+  const zoomInBtn = document.querySelector('[data-panel-zoom-in="' + meta.panel_id + '"]');
+  if (zoomOutBtn) {{
+    zoomOutBtn.disabled = meta.currentHscale <= MIN_PANEL_HSCALE;
+  }}
+  if (zoomResetBtn) {{
+    zoomResetBtn.disabled = meta.currentHscale === meta.base_hscale;
+  }}
+  if (zoomInBtn) {{
+    zoomInBtn.disabled = meta.currentHscale >= MAX_PANEL_HSCALE;
+  }}
 }}
 
 function scrollStripToChunk(meta, chunkIndex, behavior) {{
@@ -1390,8 +1435,13 @@ async function renderPanelChunk(panelId, chunkIndex, options) {{
     if (!display) {{
       return;
     }}
+    const renderJson = JSON.parse(JSON.stringify(json));
+    if (!renderJson.config) {{
+      renderJson.config = {{}};
+    }}
+    renderJson.config.hscale = meta.currentHscale;
     display.innerHTML = '';
-    WaveDrom.RenderWaveForm(meta.render_index, json, 'WaveDrom_Display_', false);
+    WaveDrom.RenderWaveForm(meta.render_index, renderJson, 'WaveDrom_Display_', false);
     if (waveScroll && !opts.preserveScroll) {{
       waveScroll.scrollLeft = 0;
     }}
@@ -1412,6 +1462,7 @@ function bindPanel(meta) {{
   meta.currentChunk = 0;
   meta.rendering = null;
   meta.cache = {{}};
+  meta.currentHscale = meta.base_hscale;
   const strip = document.querySelector('[data-panel-strip="' + meta.panel_id + '"]');
   if (strip) {{
     let scrollTimer = null;
@@ -1446,6 +1497,33 @@ function bindPanel(meta) {{
     nextBtn.addEventListener('click', function () {{
       renderPanelChunk(meta.panel_id, meta.currentChunk + 1, {{ preserveScroll: false }});
       scrollStripToChunk(meta, Math.min(meta.chunk_count - 1, meta.currentChunk + 1), 'smooth');
+    }});
+  }}
+  const zoomOutBtn = document.querySelector('[data-panel-zoom-out="' + meta.panel_id + '"]');
+  if (zoomOutBtn) {{
+    zoomOutBtn.addEventListener('click', function () {{
+      if (meta.currentHscale > MIN_PANEL_HSCALE) {{
+        meta.currentHscale -= 1;
+        renderPanelChunk(meta.panel_id, meta.currentChunk, {{ preserveScroll: true }});
+      }}
+    }});
+  }}
+  const zoomResetBtn = document.querySelector('[data-panel-zoom-reset="' + meta.panel_id + '"]');
+  if (zoomResetBtn) {{
+    zoomResetBtn.addEventListener('click', function () {{
+      if (meta.currentHscale !== meta.base_hscale) {{
+        meta.currentHscale = meta.base_hscale;
+        renderPanelChunk(meta.panel_id, meta.currentChunk, {{ preserveScroll: true }});
+      }}
+    }});
+  }}
+  const zoomInBtn = document.querySelector('[data-panel-zoom-in="' + meta.panel_id + '"]');
+  if (zoomInBtn) {{
+    zoomInBtn.addEventListener('click', function () {{
+      if (meta.currentHscale < MAX_PANEL_HSCALE) {{
+        meta.currentHscale += 1;
+        renderPanelChunk(meta.panel_id, meta.currentChunk, {{ preserveScroll: true }});
+      }}
     }});
   }}
   renderPanelChunk(meta.panel_id, 0, {{ preserveScroll: false }});
