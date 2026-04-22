@@ -6,26 +6,34 @@ IP_PLAIN_DIR := tb_int/cases/basic/plain
 IP_PLAIN_2ENV_DIR := tb_int/cases/basic/plain_2env
 IP_PLAIN_2ENV_FORMAL_DIR := tb_int/cases/basic/plain_2env/formal
 OPQ_SVD_OUT := build/ip/opq_monolithic_4lane_merge.svd
-ETH_LIC_SERVER ?= 8161@129.132.148.195
+QUESTA_HOME ?= /data1/questaone_sim/questasim
+UVM_HOME ?= $(QUESTA_HOME)/verilog_src/uvm-1.2
+ETH_LIC_SERVER ?= 8161@lic-mentor.ethz.ch
 
+export QUESTA_HOME
+export UVM_HOME
+export SALT_LICENSE_SERVER ?= $(ETH_LIC_SERVER)
 export MGLS_LICENSE_FILE ?= $(ETH_LIC_SERVER)
+export LM_LICENSE_FILE ?= $(ETH_LIC_SERVER)
+export QSIM_INI ?= $(QUESTA_HOME)/modelsim.ini
 
-.PHONY: help ip-init ip-sync-opq ip-svd ip-check-license ip-compile-basic ip-compile-plain ip-compile-plain-2env ip-uvm-basic ip-tlm-basic ip-tlm-basic-smoke ip-plain-basic ip-plain-basic-smoke ip-plain-basic-2env ip-plain-basic-2env-smoke ip-formal-boundary ip-e2e ip-e2e-ref ip-e2e-plain ip-e2e-plain-2env ip-clean ip-lint-rtl
+.PHONY: help ip-init ip-sync-opq ip-svd ip-check-license ip-compile-basic ip-compile-plain ip-compile-plain-2env ip-uvm-basic ip-uvm-longrun ip-tlm-basic ip-tlm-basic-smoke ip-plain-basic ip-plain-basic-smoke ip-plain-basic-2env ip-plain-basic-2env-smoke ip-formal-boundary ip-e2e ip-e2e-ref ip-e2e-plain ip-e2e-plain-2env ip-clean ip-lint-rtl
 
 help:
 	@printf '%s\n' \
 	  'Available targets:' \
-	  '  make ip-init          # init submodules and refresh the OPQ snapshot' \
-	  '  make ip-sync-opq      # refresh the OPQ snapshot only' \
+	  '  make ip-init          # init submodules and generate the upstream packaged OPQ Qsys wrapper for musip' \
+	  '  make ip-sync-opq      # regenerate and validate the musip-local upstream OPQ Qsys wrapper' \
 	  '  make ip-svd           # generate a basic OPQ CSR SVD under build/ip/' \
 	  '  make ip-check-license # verify ETH Questa features for the UVM flow' \
 	  '  make ip-compile-basic # compile the mixed-language basic UVM harness' \
 	  '  make ip-compile-plain # compile the plain mixed-language replay bench' \
 	  '  make ip-compile-plain-2env # compile the split 2-env DPI replay harness' \
-	  '  make ip-uvm-basic     # run the basic UVM OPQ/SWB case' \
+	  '  make ip-uvm-basic     # run the basic UVM SWB case (merge enabled by default)' \
+	  '  make ip-uvm-longrun   # run the musip UVM long-run campaign wrapper' \
 	  '  make ip-tlm-basic     # run the simulatorless basic reference case' \
 	  '  make ip-tlm-basic-smoke # run the minimal directed replay generator' \
-	  '  make ip-plain-basic   # run the plain mixed-language replay bench' \
+	  '  make ip-plain-basic   # run the plain mixed-language replay bench (merge enabled by default)' \
 	  '  make ip-plain-basic-smoke # run the plain mixed-language directed smoke bench' \
 	  '  make ip-plain-basic-2env # run the split 2-env DPI replay harness' \
 	  '  make ip-plain-basic-2env-smoke # run the split 2-env directed smoke harness' \
@@ -38,6 +46,12 @@ help:
 	  '  make ip-lint-rtl      # strict lint for clean modules, hygiene lint for legacy/snapshot RTL'
 
 ip-init:
+	git submodule sync --recursive
+	@if [ -d external/mu3e-ip-cores ]; then \
+	  git -C external/mu3e-ip-cores config --local url."https://github.com/".insteadOf git@github.com:; \
+	  git -C external/mu3e-ip-cores config --local url."https://github.com/".insteadOf ssh://git@github.com/; \
+	  git -C external/mu3e-ip-cores submodule sync --recursive || true; \
+	fi
 	git submodule update --init --recursive
 	$(MAKE) ip-sync-opq
 
@@ -61,6 +75,9 @@ ip-compile-plain-2env:
 
 ip-uvm-basic:
 	$(MAKE) -C $(IP_UVM_DIR) run
+
+ip-uvm-longrun:
+	$(MAKE) -C $(IP_UVM_DIR) longrun
 
 ip-tlm-basic:
 	$(MAKE) -C $(IP_REF_DIR) run

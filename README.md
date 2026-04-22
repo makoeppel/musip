@@ -89,6 +89,17 @@ Current validation status on April 21, 2026:
 - the promoted randomized screen is the default `make ip-uvm-longrun` 128-case per-lane `0.0..0.5` saturation wrapper, and the current stronger evidence set also includes a clean 256-case rerun in `tb_int/cases/basic/uvm/report/longrun_ext_260422_fixed/summary.json`,
 - Intel FE/FSE `vsim` remains unsupported for this flow; all simulation evidence in `tb_int/` is from the full Questa install above.
 
+### Upstream Mu3e IP Signoff Index
+
+The parent repo tracks the upstream `external/mu3e-ip-cores` signoff entry points for the IPs that already publish a master `SIGNOFF.md`. In the table below, `✅` means the pinned upstream commit includes a master signoff dashboard; both `SYN` and `DV` point to that same dashboard so the landing page always follows the current master file rather than stale split-doc paths.
+
+| Upstream IP | Pinned upstream commit | SYN | DV |
+|---|---|:---:|:---:|
+| `packet_scheduler` | `bf59a0d` | [✅](external/mu3e-ip-cores/packet_scheduler/doc/SIGNOFF.md) | [✅](external/mu3e-ip-cores/packet_scheduler/doc/SIGNOFF.md) |
+| `ring-buffer_cam` | `3c512dd` | [✅](external/mu3e-ip-cores/ring-buffer_cam/doc/SIGNOFF.md) | [✅](external/mu3e-ip-cores/ring-buffer_cam/doc/SIGNOFF.md) |
+| `mutrig_frame_deassembly` | `8af676e` | [✅](external/mu3e-ip-cores/mutrig_frame_deassembly/doc/SIGNOFF.md) | [✅](external/mu3e-ip-cores/mutrig_frame_deassembly/doc/SIGNOFF.md) |
+| `emulator_mutrig` | `e763a56` | [✅](external/mu3e-ip-cores/emulator_mutrig/doc/SIGNOFF.md) | [✅](external/mu3e-ip-cores/emulator_mutrig/doc/SIGNOFF.md) |
+
 If you just want the shortest safe path:
 
 1. Run `make ip-init`
@@ -103,7 +114,7 @@ If you just want the shortest safe path:
 
 Important:
 
-- `make ip-init` now expects the checked-out `external/mu3e-ip-cores` submodule and refreshes the musip-local OPQ wrapper from that in-repo upstream source.
+- `make ip-init` now syncs the nested `external/mu3e-ip-cores` submodule tree, rewrites public GitHub SSH URLs to HTTPS for this workspace, and refreshes the musip-local OPQ wrapper from that in-repo upstream source.
 - `make ip-tlm-basic-smoke` is the smallest deterministic replay bundle. It is the right first step when you are debugging the OPQ seam.
 - `make ip-tlm-basic` exports replay vectors and expected DMA words without running RTL. Use it when you want a deterministic replay bundle for the full case.
 - `make ip-lint-rtl` applies a strict style gate to the clean maintained bridge/wrapper files and a hygiene gate to legacy or imported RTL touched by this integration branch.
