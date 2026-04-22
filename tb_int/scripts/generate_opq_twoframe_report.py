@@ -974,7 +974,7 @@ def render_page(
       <div><strong>Frame Slot</strong>{summary.get("frame_slot_cycles", "free-run")}</div>
       <div><strong>VCD</strong>{html.escape(summary["vcd_path"])}</div>
       <div><strong>Ref Bundle</strong>{html.escape(summary["ref_dir"])}</div>
-      <div><strong>Server URL</strong><a href="{html.escape(summary["url"])}" style="color:#8ec5ff">{html.escape(summary["url"])}</a></div>
+      <div><strong>Page URL</strong><a id="page-url" href="./index.html" style="color:#8ec5ff">{html.escape(summary["url"] or "./index.html")}</a></div>
       <div><strong>Note</strong>Idle gaps between panels or between egress subwindows are compressed with a yellow <code>//</code> marker; frame content itself is not truncated.</div>
     </div>
     <div class="legend">
@@ -1039,6 +1039,11 @@ function bindLazyLedgers(root) {{
 }}
 
 window.addEventListener('load', function () {{
+  const pageUrl = document.getElementById('page-url');
+  if (pageUrl) {{
+    pageUrl.href = window.location.href;
+    pageUrl.textContent = window.location.href;
+  }}
   if (window.WaveDrom && typeof WaveDrom.ProcessAll === 'function') {{
     WaveDrom.ProcessAll();
   }}
