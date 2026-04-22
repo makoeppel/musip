@@ -16,6 +16,20 @@ if [ ! -x "$vsim_bin" ]; then
 fi
 
 vsim_version=$("$vsim_bin" -version 2>&1 | head -n 1 || true)
+lic_server_default=8161@lic-mentor.ethz.ch
+lic_server=${SALT_LICENSE_SERVER:-${MGLS_LICENSE_FILE:-${LM_LICENSE_FILE:-$lic_server_default}}}
+
+qsim_ini=${QSIM_INI:-}
+if [ -z "$qsim_ini" ]; then
+    if [ -n "${QUESTA_HOME:-}" ] && [ -f "${QUESTA_HOME}/modelsim.ini" ]; then
+        qsim_ini=${QUESTA_HOME}/modelsim.ini
+    else
+        questa_root=$(cd "$(dirname "$vsim_bin")/.." && pwd)
+        if [ -f "${questa_root}/modelsim.ini" ]; then
+            qsim_ini=${questa_root}/modelsim.ini
+        fi
+    fi
+fi
 
 # The ETH server exposes standard Questa features such as msimhdlmix and
 # mtiverification. Intel FPGA Edition binaries always boot as intelqsim* and
@@ -27,44 +41,20 @@ It requests the intelqsim/intelqsimstarter product at runtime, while the ETH
 floating server provides standard Mentor features such as msimhdlmix and
 mtiverification.
 
-Point QUESTA_HOME at a full Mentor/Questa installation to run the UVM harness.
-The workaround paths do not use this wrapper:
-use make ip-tlm-basic or make ip-tlm-basic-smoke to build replay vectors,
-make ip-plain-basic or make ip-plain-basic-smoke for the quartus-system-style
-replay bench, or make ip-plain-basic-2env / ip-plain-basic-2env-smoke for the
-split OPQ-seam workaround on the local Starter runtime.
+Point QUESTA_HOME at the full Siemens/Mentor install for this workspace,
+for example /data1/questaone_sim/questasim.
 EOF
     exit 2
 fi
 
-if [ -d /usr/tmp ]; then
-    exec "$vsim_bin" "$@"
+run_env=(
+    env
+    "SALT_LICENSE_SERVER=$lic_server"
+    "MGLS_LICENSE_FILE=$lic_server"
+    "LM_LICENSE_FILE=$lic_server"
+)
+if [ -n "$qsim_ini" ]; then
+    run_env+=("QSIM_INI=$qsim_ini")
 fi
 
-if ! command -v bwrap >/dev/null 2>&1; then
-    cat >&2 <<'EOF'
-run_questa.sh: /usr/tmp is missing and bubblewrap is unavailable.
-Questa SALT needs /usr/tmp/.salt_mgls for its control cache on this host.
-Create /usr/tmp or install bubblewrap, then rerun.
-EOF
-    exit 2
-fi
-
-exec bwrap \
-    --share-net \
-    --ro-bind /bin /bin \
-    --ro-bind /lib /lib \
-    --ro-bind /lib64 /lib64 \
-    --ro-bind /usr/bin /usr/bin \
-    --ro-bind /usr/lib /usr/lib \
-    --ro-bind /usr/lib64 /usr/lib64 \
-    --ro-bind /etc /etc \
-    --ro-bind /data1 /data1 \
-    --ro-bind /home /home \
-    --ro-bind /opt /opt \
-    --bind /tmp /tmp \
-    --proc /proc \
-    --dev /dev \
-    --symlink /tmp /usr/tmp \
-    --chdir "$PWD" \
-    /bin/sh -c 'exec "$@"' sh "$vsim_bin" "$@"
+exec "${run_env[@]}" "$vsim_bin" "$@"
