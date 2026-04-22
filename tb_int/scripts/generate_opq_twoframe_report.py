@@ -19,7 +19,6 @@ import argparse
 import html
 import importlib.util
 import json
-import math
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -29,6 +28,12 @@ SWB_K285 = 0xBC
 SWB_K284 = 0x9C
 SWB_K237 = 0xF7
 SWB_MUPIX_HEADER_ID = 0b111010
+CHUNK_NAV_STEP_PX = 72
+PANEL_CHUNK_SLOTS = {
+    "ingress": 48,
+    "egress": 48,
+    "dma": 32,
+}
 
 
 @dataclass
@@ -52,6 +57,18 @@ class DmaWord:
     eoe: int
     word_idx: int
     slots: list[dict[str, Any]]
+
+
+@dataclass
+class PanelBundle:
+    panel_id: str
+    render_index: int
+    title: str
+    subtitle: str
+    extra_class: str
+    chunks: list[dict[str, Any]]
+    ledger_html: str
+    full_detail: str
 
 
 def load_vcd_module() -> Any:
@@ -366,6 +383,75 @@ def write_text(path: Path, text: str) -> str:
     return path.name
 
 
+def write_json(path: Path, payload: Any) -> str:
+    path.write_text(json.dumps(payload, separators=(",", ":")))
+    return path.name
+
+
+def chunk_bounds(axis_len: int, chunk_slots: int) -> list[tuple[int, int]]:
+    return [
+        (start, min(axis_len, start + chunk_slots))
+        for start in range(0, axis_len, chunk_slots)
+    ]
+
+
+def axis_cycle_span(axis: list[Any]) -> tuple[int | None, int | None]:
+    cycles = [item for item in axis if not isinstance(item, dict)]
+    if not cycles:
+        return (None, None)
+    return (cycles[0], cycles[-1])
+
+
+def axis_gap_labels(axis: list[Any]) -> list[str]:
+    return [item["label"] for item in axis if isinstance(item, dict)]
+
+
+def chunk_nav_label(cycle_start: int | None, slot_start: int) -> str:
+    if cycle_start is not None:
+        return f"C{cycle_start}"
+    return f"S{slot_start}"
+
+
+def chunk_detail_text(
+    slot_start: int,
+    slot_stop: int,
+    cycle_start: int | None,
+    cycle_end: int | None,
+    gap_labels: list[str],
+) -> str:
+    parts = [f"slots {slot_start}..{slot_stop - 1}"]
+    if cycle_start is not None and cycle_end is not None:
+        parts.append(f"cycles {cycle_start}..{cycle_end}")
+        parts.append(f"{2 + 4 * cycle_start:.3f}..{2 + 4 * cycle_end:.3f} ns")
+    if gap_labels:
+        parts.append("; ".join(gap_labels))
+    return " | ".join(parts)
+
+
+def chunk_marker_stride(chunk_count: int) -> int:
+    return max(1, (chunk_count + 11) // 12)
+
+
+def chunk_record(
+    src_name: str,
+    slot_start: int,
+    slot_stop: int,
+    axis_slice: list[Any],
+) -> dict[str, Any]:
+    cycle_start, cycle_end = axis_cycle_span(axis_slice)
+    return {
+        "src": src_name,
+        "label": chunk_nav_label(cycle_start, slot_start),
+        "detail": chunk_detail_text(
+            slot_start,
+            slot_stop,
+            cycle_start,
+            cycle_end,
+            axis_gap_labels(axis_slice),
+        ),
+    }
+
+
 def ledger_placeholder(summary_text: str, src_name: str) -> str:
     return (
         f'<details class="ledger-box lazy-ledger" data-ledger-src="./{html.escape(src_name)}">'
@@ -414,30 +500,24 @@ def build_ingress_panel(
     lane_frames: dict[int, list[list[Beat]]],
     out_dir: Path,
     stem: str,
-) -> tuple[dict[str, Any], str, tuple[int, int]]:
+) -> tuple[PanelBundle, tuple[int, int]]:
     start_cycle = min(frame[0].cycle for frames in lane_frames.values() for frame in frames)
     end_cycle = max(frame[-1].cycle for frames in lane_frames.values() for frame in frames)
     axis = build_axis([(start_cycle, end_cycle)])
-
-    signal: list[Any] = [build_clock_wave(axis), {}]
     table_blocks: list[str] = []
     total_rows = 0
+    lane_beat_maps: dict[int, dict[int, Beat]] = {}
+    lane_active_cycles: dict[int, set[int]] = {}
+    lane_datak_cycles: dict[int, set[int]] = {}
     for lane in range(4):
         frames = lane_frames[lane]
         lane_rows = ingress_table_rows(frames)
         total_rows += len(lane_rows)
         beats = [beat for frame in frames for beat in frame]
         beat_map = {beat.cycle: beat for beat in beats}
-        active_cycles = set(beat_map)
-        datak_cycles = {beat.cycle for beat in beats if beat.datak != 0}
-        signal.append(
-            [
-                f"Lane {lane}",
-                build_bit_row("valid", axis, active_cycles),
-                build_bit_row("datak!=0", axis, datak_cycles),
-                build_data_row("data[31:0]", axis, beat_map),
-            ]
-        )
+        lane_beat_maps[lane] = beat_map
+        lane_active_cycles[lane] = set(beat_map)
+        lane_datak_cycles[lane] = {beat.cycle for beat in beats if beat.datak != 0}
         lane_src = write_text(
             out_dir / f"{stem}.ledger.ingress.lane{lane}.html",
             html_table(
@@ -451,42 +531,76 @@ def build_ingress_panel(
                 lane_src,
             )
         )
-        signal.append({})
-
-    panel = {
-        "signal": signal,
-        "config": {"hscale": 3},
-        "head": {
-            "text": (
-                f"Ingress to OPQ: lanes 0..3, merged-frame pair F1/F2 "
-                f"(cycles {start_cycle}..{end_cycle})"
-            ),
-            "tick": 0,
-        },
-        "foot": {
-            "text": (
-                "Absolute axis: C0 = first rising edge at 2.000 ns, "
-                f"window = {start_cycle}..{end_cycle} cycles, "
-                f"{2 + 4 * start_cycle:.3f}..{2 + 4 * end_cycle:.3f} ns"
-            )
-        },
-    }
     ingress_src = write_text(
         out_dir / f"{stem}.ledger.ingress.html",
         "\n".join(table_blocks),
     )
-    return (
-        panel,
-        ledger_placeholder(f"Decoded ledger ({total_rows} rows)", ingress_src),
-        (start_cycle, end_cycle),
+    chunk_records: list[dict[str, Any]] = []
+    chunk_count = len(chunk_bounds(len(axis), PANEL_CHUNK_SLOTS["ingress"]))
+    for chunk_idx, (slot_start, slot_stop) in enumerate(chunk_bounds(len(axis), PANEL_CHUNK_SLOTS["ingress"])):
+        axis_slice = axis[slot_start:slot_stop]
+        signal: list[Any] = [build_clock_wave(axis_slice), {}]
+        for lane in range(4):
+            signal.append(
+                [
+                    f"Lane {lane}",
+                    build_bit_row("valid", axis_slice, lane_active_cycles[lane]),
+                    build_bit_row("datak!=0", axis_slice, lane_datak_cycles[lane]),
+                    build_data_row("data[31:0]", axis_slice, lane_beat_maps[lane]),
+                ]
+            )
+            signal.append({})
+
+        chunk_cycle_start, chunk_cycle_end = axis_cycle_span(axis_slice)
+        chunk_panel = {
+            "signal": signal,
+            "config": {"hscale": 3},
+            "head": {
+                "text": (
+                    f"Ingress to OPQ chunk {chunk_idx + 1}/{chunk_count}: "
+                    f"lanes 0..3, cycles {chunk_cycle_start}..{chunk_cycle_end}"
+                ),
+                "tick": 0,
+            },
+            "foot": {
+                "text": (
+                    "Absolute axis: C0 = first rising edge at 2.000 ns, "
+                    f"chunk window = {chunk_cycle_start}..{chunk_cycle_end} cycles, "
+                    f"{2 + 4 * chunk_cycle_start:.3f}..{2 + 4 * chunk_cycle_end:.3f} ns"
+                )
+            },
+        }
+        chunk_src = write_json(
+            out_dir / f"{stem}.panel.ingress.chunk{chunk_idx:03d}.json",
+            chunk_panel,
+        )
+        chunk_records.append(chunk_record(chunk_src, slot_start, slot_stop, axis_slice))
+
+    bundle = PanelBundle(
+        panel_id="ingress",
+        render_index=0,
+        title="Ingress Window",
+        subtitle=(
+            "4 FEB lanes into the OPQ; frame pair F1/F2. "
+            "Only the current chunk is rendered. Scroll the timeline strip to move through the full window."
+        ),
+        extra_class="ingress",
+        chunks=chunk_records,
+        ledger_html=ledger_placeholder(f"Decoded ledger ({total_rows} rows)", ingress_src),
+        full_detail=(
+            "Absolute axis: C0 = first rising edge at 2.000 ns, "
+            f"full window = {start_cycle}..{end_cycle} cycles, "
+            f"{2 + 4 * start_cycle:.3f}..{2 + 4 * end_cycle:.3f} ns"
+        ),
     )
+    return (bundle, (start_cycle, end_cycle))
 
 
 def build_egress_panel(
     frames: list[list[Beat]],
     out_dir: Path,
     stem: str,
-) -> tuple[dict[str, Any], str, list[tuple[int, int]]]:
+) -> tuple[PanelBundle, list[tuple[int, int]]]:
     segments = [(frame[0].cycle, frame[-1].cycle) for frame in frames]
     axis = build_axis(segments)
     beats = [beat for frame in frames for beat in frame]
@@ -494,64 +608,73 @@ def build_egress_panel(
     active_cycles = set(beat_map)
     datak_cycles = {beat.cycle for beat in beats if beat.datak != 0}
 
-    gap_rows = {
-        item_idx: item["label"] for item_idx, item in enumerate(axis) if isinstance(item, dict)
-    }
-    gap_map = {
-        idx: Beat(
-            cycle=-1,
-            time_ps=0,
-            data=0,
-            datak=0,
-            kind="gap",
-            frame_id=-1,
-        )
-        for idx in gap_rows
-    }
-
-    data_row = build_data_row("data[31:0]", axis, beat_map)
-    note_row = {"name": "gap-note", "wave": "".join("3" if isinstance(item, dict) else "x" for item in axis)}
-    note_row["data"] = [item["label"] for item in axis if isinstance(item, dict)]
-
-    panel = {
-        "signal": [
-            build_clock_wave(axis),
-            {},
-            [
-                "Merged OPQ Egress",
-                build_bit_row("valid", axis, active_cycles),
-                build_bit_row("datak!=0", axis, datak_cycles),
-                data_row,
-                note_row,
-            ],
-        ],
-        "config": {"hscale": 3},
-        "head": {
-            "text": (
-                f"Merged OPQ egress: F{frames[0][0].frame_id}/F{frames[1][0].frame_id} "
-                f"(segments {segments[0][0]}..{segments[0][1]} and {segments[1][0]}..{segments[1][1]})"
-            ),
-            "tick": 0,
-        },
-        "foot": {
-            "text": (
-                f"Absolute axis: seg0 {2 + 4 * segments[0][0]:.3f}..{2 + 4 * segments[0][1]:.3f} ns, "
-                f"seg1 {2 + 4 * segments[1][0]:.3f}..{2 + 4 * segments[1][1]:.3f} ns"
-            )
-        },
-    }
-
     table_rows = ingress_table_rows(frames)
     table_html = html_table(
         ["frame", "cycle", "time", "kind", "datak", "data", "decode"],
         table_rows,
     )
     egress_src = write_text(out_dir / f"{stem}.ledger.egress.html", table_html)
-    return (
-        panel,
-        ledger_placeholder(f"Decoded ledger ({len(table_rows)} rows)", egress_src),
-        segments,
+    chunk_records: list[dict[str, Any]] = []
+    chunk_count = len(chunk_bounds(len(axis), PANEL_CHUNK_SLOTS["egress"]))
+    for chunk_idx, (slot_start, slot_stop) in enumerate(chunk_bounds(len(axis), PANEL_CHUNK_SLOTS["egress"])):
+        axis_slice = axis[slot_start:slot_stop]
+        data_row = build_data_row("data[31:0]", axis_slice, beat_map)
+        note_row = {
+            "name": "gap-note",
+            "wave": "".join("3" if isinstance(item, dict) else "x" for item in axis_slice),
+            "data": [item["label"] for item in axis_slice if isinstance(item, dict)],
+        }
+        chunk_cycle_start, chunk_cycle_end = axis_cycle_span(axis_slice)
+        chunk_panel = {
+            "signal": [
+                build_clock_wave(axis_slice),
+                {},
+                [
+                    "Merged OPQ Egress",
+                    build_bit_row("valid", axis_slice, active_cycles),
+                    build_bit_row("datak!=0", axis_slice, datak_cycles),
+                    data_row,
+                    note_row,
+                ],
+            ],
+            "config": {"hscale": 3},
+            "head": {
+                "text": (
+                    f"Merged OPQ egress chunk {chunk_idx + 1}/{chunk_count}: "
+                    f"cycles {chunk_cycle_start}..{chunk_cycle_end}"
+                ),
+                "tick": 0,
+            },
+            "foot": {
+                "text": (
+                    f"Absolute axis: chunk {chunk_cycle_start}..{chunk_cycle_end} cycles, "
+                    f"{2 + 4 * chunk_cycle_start:.3f}..{2 + 4 * chunk_cycle_end:.3f} ns"
+                )
+            },
+        }
+        chunk_src = write_json(
+            out_dir / f"{stem}.panel.egress.chunk{chunk_idx:03d}.json",
+            chunk_panel,
+        )
+        chunk_records.append(chunk_record(chunk_src, slot_start, slot_stop, axis_slice))
+
+    bundle = PanelBundle(
+        panel_id="egress",
+        render_index=1,
+        title="Merged OPQ Egress",
+        subtitle=(
+            "Merged OPQ output for the same frame pair. "
+            "The long idle region remains represented by // markers, but only the visible chunk is rendered."
+        ),
+        extra_class="egress",
+        chunks=chunk_records,
+        ledger_html=ledger_placeholder(f"Decoded ledger ({len(table_rows)} rows)", egress_src),
+        full_detail=(
+            f"Absolute axis: seg0 {2 + 4 * segments[0][0]:.3f}..{2 + 4 * segments[0][1]:.3f} ns, "
+            f"seg1 {2 + 4 * segments[1][0]:.3f}..{2 + 4 * segments[1][1]:.3f} ns"
+        ),
     )
+    return (bundle, segments)
 
 
 def build_frame_prefix_map(plan_json: dict[str, Any]) -> dict[int, int]:
@@ -598,7 +721,7 @@ def build_dma_panel(
     frame_count: int,
     out_dir: Path,
     stem: str,
-) -> tuple[dict[str, Any], str, tuple[int, int]]:
+) -> tuple[PanelBundle, tuple[int, int]]:
     if len(actual_dma) < payload_word_count:
         raise ValueError("Actual DMA stream is shorter than expected payload")
 
@@ -633,76 +756,6 @@ def build_dma_panel(
     active_cycles = set(word_map)
     eoe_cycles = {word.cycle for word in words if word.eoe}
 
-    raw_row = {"name": "data[255:0]", "wave": "", "data": []}
-    slot_rows = [
-        {"name": f"slot{slot}", "wave": "", "data": []}
-        for slot in range(4)
-    ]
-
-    prev_raw = None
-    prev_slots = [None, None, None, None]
-    for item in axis:
-        if isinstance(item, dict):
-            raw_row["wave"] += "3"
-            raw_row["data"].append(item["label"])
-            for slot_row in slot_rows:
-                slot_row["wave"] += "3"
-                slot_row["data"].append(item["label"])
-            prev_raw = "3"
-            prev_slots = ["3", "3", "3", "3"]
-            continue
-
-        word = word_map.get(item)
-        if word is None:
-            token = "x"
-            raw_row["wave"] += "." if token == prev_raw and token in {"0", "1", "x"} else token
-            prev_raw = token
-            for slot, slot_row in enumerate(slot_rows):
-                slot_row["wave"] += "." if token == prev_slots[slot] and token in {"0", "1", "x"} else token
-                prev_slots[slot] = token
-            continue
-
-        raw_row["wave"] += "7"
-        raw_row["data"].append(f"W{word.word_idx:04d}")
-        prev_raw = "7"
-        for slot, hit in enumerate(word.slots):
-            frame_id = hit["frame_id"]
-            token = "7"
-            slot_rows[slot]["wave"] += token
-            slot_rows[slot]["data"].append(
-                f"F{frame_id} c{(hit['data64'] >> 50) & 0xFF} r{(hit['data64'] >> 42) & 0xFF} p{(hit['data64'] >> 37) & 0x1F}"
-            )
-            prev_slots[slot] = token
-
-    panel = {
-        "signal": [
-            build_clock_wave(axis),
-            {},
-            [
-                "PCIe App 256-bit Payload",
-                build_bit_row("wren", axis, active_cycles),
-                build_bit_row("end_of_event", axis, eoe_cycles),
-                raw_row,
-                *slot_rows,
-            ],
-        ],
-        "config": {"hscale": 4},
-        "head": {
-            "text": (
-                f"PCIe app payload covering merged F{frame_start}/F{frame_start + frame_count - 1} "
-                f"(word {first_idx}..{last_idx}, cycles {start_cycle}..{end_cycle})"
-            ),
-            "tick": 0,
-        },
-        "foot": {
-            "text": (
-                f"Absolute axis: cycles {start_cycle}..{end_cycle}, "
-                f"{2 + 4 * start_cycle:.3f}..{2 + 4 * end_cycle:.3f} ns; "
-                f"payload window contains {len(words)} consecutive 256-bit writes"
-            )
-        },
-    }
-
     table_rows: list[list[str]] = []
     for word in words:
         slot_texts = []
@@ -725,27 +778,146 @@ def build_dma_panel(
         table_rows,
     )
     dma_src = write_text(out_dir / f"{stem}.ledger.dma.html", table_html)
-    return (
-        panel,
-        ledger_placeholder(f"Decoded ledger ({len(table_rows)} rows)", dma_src),
-        (start_cycle, end_cycle),
+    chunk_records: list[dict[str, Any]] = []
+    chunk_count = len(chunk_bounds(len(axis), PANEL_CHUNK_SLOTS["dma"]))
+    for chunk_idx, (slot_start, slot_stop) in enumerate(chunk_bounds(len(axis), PANEL_CHUNK_SLOTS["dma"])):
+        axis_slice = axis[slot_start:slot_stop]
+        raw_row = {"name": "data[255:0]", "wave": "", "data": []}
+        slot_rows = [{"name": f"slot{slot}", "wave": "", "data": []} for slot in range(4)]
+        prev_raw = None
+        prev_slots = [None, None, None, None]
+        for item in axis_slice:
+            if isinstance(item, dict):
+                raw_row["wave"] += "3"
+                raw_row["data"].append(item["label"])
+                for slot_row in slot_rows:
+                    slot_row["wave"] += "3"
+                    slot_row["data"].append(item["label"])
+                prev_raw = "3"
+                prev_slots = ["3", "3", "3", "3"]
+                continue
+
+            word = word_map.get(item)
+            if word is None:
+                token = "x"
+                raw_row["wave"] += "." if token == prev_raw and token in {"0", "1", "x"} else token
+                prev_raw = token
+                for slot, slot_row in enumerate(slot_rows):
+                    slot_row["wave"] += "." if token == prev_slots[slot] and token in {"0", "1", "x"} else token
+                    prev_slots[slot] = token
+                continue
+
+            raw_row["wave"] += "7"
+            raw_row["data"].append(f"W{word.word_idx:04d}")
+            prev_raw = "7"
+            for slot, hit in enumerate(word.slots):
+                frame_id = hit["frame_id"]
+                slot_rows[slot]["wave"] += "7"
+                slot_rows[slot]["data"].append(
+                    f"F{frame_id} c{(hit['data64'] >> 50) & 0xFF} r{(hit['data64'] >> 42) & 0xFF} p{(hit['data64'] >> 37) & 0x1F}"
+                )
+                prev_slots[slot] = "7"
+
+        chunk_cycle_start, chunk_cycle_end = axis_cycle_span(axis_slice)
+        chunk_panel = {
+            "signal": [
+                build_clock_wave(axis_slice),
+                {},
+                [
+                    "PCIe App 256-bit Payload",
+                    build_bit_row("wren", axis_slice, active_cycles),
+                    build_bit_row("end_of_event", axis_slice, eoe_cycles),
+                    raw_row,
+                    *slot_rows,
+                ],
+            ],
+            "config": {"hscale": 4},
+            "head": {
+                "text": (
+                    f"PCIe app payload chunk {chunk_idx + 1}/{chunk_count}: "
+                    f"cycles {chunk_cycle_start}..{chunk_cycle_end}"
+                ),
+                "tick": 0,
+            },
+            "foot": {
+                "text": (
+                    f"Absolute axis: chunk {chunk_cycle_start}..{chunk_cycle_end} cycles, "
+                    f"{2 + 4 * chunk_cycle_start:.3f}..{2 + 4 * chunk_cycle_end:.3f} ns"
+                )
+            },
+        }
+        chunk_src = write_json(
+            out_dir / f"{stem}.panel.dma.chunk{chunk_idx:03d}.json",
+            chunk_panel,
+        )
+        chunk_records.append(chunk_record(chunk_src, slot_start, slot_stop, axis_slice))
+
+    bundle = PanelBundle(
+        panel_id="dma",
+        render_index=2,
+        title="PCIe App Payload",
+        subtitle=(
+            "256-bit PCIe app payload words covering the same frame pair. "
+            "Only the visible chunk is rendered so the browser does not build the full million-pixel-wide SVG."
+        ),
+        extra_class="dma",
+        chunks=chunk_records,
+        ledger_html=ledger_placeholder(f"Decoded ledger ({len(table_rows)} rows)", dma_src),
+        full_detail=(
+            f"Absolute axis: cycles {start_cycle}..{end_cycle}, "
+            f"{2 + 4 * start_cycle:.3f}..{2 + 4 * end_cycle:.3f} ns; "
+            f"payload window contains {len(words)} consecutive 256-bit writes"
+        ),
     )
+    return (bundle, (start_cycle, end_cycle))
 
 
-def panel_block(title: str, subtitle: str, diagram: dict[str, Any], ledger_html: str, extra_class: str) -> str:
-    json_text = json.dumps(diagram, separators=(",", ":"))
+def panel_block(panel: PanelBundle) -> str:
+    marker_stride = chunk_marker_stride(len(panel.chunks))
+    markers = []
+    for chunk_idx, chunk in enumerate(panel.chunks):
+        marker_text = ""
+        if chunk_idx == 0 or chunk_idx == len(panel.chunks) - 1 or chunk_idx % marker_stride == 0:
+            marker_text = chunk["label"]
+        markers.append(
+            f'<button class="chunk-stop{" major" if marker_text else ""}" '
+            f'type="button" '
+            f'data-panel-id="{html.escape(panel.panel_id)}" '
+            f'data-chunk-index="{chunk_idx}" '
+            f'style="left:{chunk_idx * CHUNK_NAV_STEP_PX}px" '
+            f'title="{html.escape(chunk["detail"])}">'
+            f"<span>{html.escape(marker_text)}</span>"
+            "</button>"
+        )
+    track_width = max(len(panel.chunks) * CHUNK_NAV_STEP_PX, CHUNK_NAV_STEP_PX)
     return f"""
-<section class="panel {extra_class}">
+<section class="panel {panel.extra_class}" data-panel-id="{html.escape(panel.panel_id)}">
   <div class="panel-head">
-    <h2>{html.escape(title)}</h2>
-    <p>{html.escape(subtitle)}</p>
+    <h2>{html.escape(panel.title)}</h2>
+    <p>{html.escape(panel.subtitle)}</p>
+    <p class="panel-note">{html.escape(panel.full_detail)}</p>
   </div>
-  <div class="wave-scroll">
-    <script type="WaveDrom">
-{json_text}
-    </script>
+  <div class="chunk-toolbar">
+    <button class="chunk-btn" type="button" data-panel-prev="{html.escape(panel.panel_id)}">Prev</button>
+    <div class="chunk-status" data-panel-status="{html.escape(panel.panel_id)}">Loading first chunk...</div>
+    <button class="chunk-btn" type="button" data-panel-next="{html.escape(panel.panel_id)}">Next</button>
   </div>
-  {ledger_html}
+  <div class="wave-scroll" data-wave-scroll="{html.escape(panel.panel_id)}">
+    <div id="WaveDrom_Display_{panel.render_index}" class="wave-display">
+      <div class="wave-render-status">Loading first chunk...</div>
+    </div>
+  </div>
+  <div class="chunk-hint">
+    Scroll the timeline strip below to move through the full window. Only the selected chunk is rendered.
+  </div>
+  <div class="chunk-strip-shell">
+    <div class="chunk-strip" data-panel-strip="{html.escape(panel.panel_id)}">
+      <div class="chunk-track" style="width:{track_width}px">
+        {''.join(markers)}
+      </div>
+    </div>
+  </div>
+  {panel.ledger_html}
 </section>
 """
 
@@ -753,22 +925,24 @@ def panel_block(title: str, subtitle: str, diagram: dict[str, Any], ledger_html:
 def render_page(
     out_html: Path,
     summary: dict[str, Any],
-    ingress_panel: dict[str, Any],
-    ingress_ledger: str,
-    egress_panel: dict[str, Any],
-    egress_ledger: str,
-    dma_panel: dict[str, Any],
-    dma_ledger: str,
+    panels: list[PanelBundle],
 ) -> None:
-    ingress_title = "Ingress Window"
-    egress_title = "Merged OPQ Egress"
-    dma_title = "PCIe App Payload"
     frame_slot_note = ""
     if summary.get("frame_slot_cycles", 0):
         frame_slot_note = (
             f" Waveform evidence uses aligned frame slots: SOP-to-SOP = "
             f"{summary['frame_slot_cycles']} cycles ({summary['frame_slot_cycles'] * 4} ns)."
         )
+    panel_meta = {
+        panel.panel_id: {
+            "panel_id": panel.panel_id,
+            "render_index": panel.render_index,
+            "chunk_count": len(panel.chunks),
+            "nav_step_px": CHUNK_NAV_STEP_PX,
+            "chunks": panel.chunks,
+        }
+        for panel in panels
+    }
 
     html_text = f"""<!DOCTYPE html>
 <html lang="en">
@@ -874,8 +1048,113 @@ def render_page(
       background: #ffffff;
       box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
     }}
+    .wave-display {{
+      display: inline-block;
+      min-width: 100%;
+    }}
     .wave-scroll svg {{
       display: block;
+    }}
+    .wave-render-status {{
+      min-height: 160px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #4a5870;
+      font-family: var(--mono);
+      font-size: 12px;
+    }}
+    .chunk-toolbar {{
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 14px 0 10px;
+    }}
+    .chunk-btn {{
+      font-family: var(--mono);
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #171d29;
+      color: var(--text);
+      cursor: pointer;
+    }}
+    .chunk-btn:disabled {{
+      opacity: 0.45;
+      cursor: default;
+    }}
+    .chunk-status {{
+      min-height: 20px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+      flex: 1;
+    }}
+    .chunk-hint {{
+      margin-top: 12px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+    }}
+    .chunk-strip-shell {{
+      margin-top: 10px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: rgba(0, 0, 0, 0.16);
+      padding: 8px 0;
+    }}
+    .chunk-strip {{
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 0 10px 2px;
+    }}
+    .chunk-track {{
+      position: relative;
+      height: 42px;
+    }}
+    .chunk-stop {{
+      position: absolute;
+      top: 0;
+      width: 64px;
+      height: 30px;
+      border: none;
+      border-left: 1px solid rgba(255, 255, 255, 0.08);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 0 4px;
+      text-align: left;
+      font-family: var(--mono);
+      font-size: 10px;
+    }}
+    .chunk-stop span {{
+      display: block;
+      margin-top: 14px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }}
+    .chunk-stop::before {{
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 2px;
+      height: 12px;
+      background: rgba(138, 163, 196, 0.45);
+    }}
+    .chunk-stop.major::before {{
+      height: 18px;
+      background: rgba(138, 197, 255, 0.9);
+    }}
+    .chunk-stop.active {{
+      color: #dff0ff;
+      background: linear-gradient(180deg, rgba(61, 108, 255, 0.24), rgba(61, 108, 255, 0));
+    }}
+    .chunk-stop.active::before {{
+      background: #7fd0ff;
+      height: 24px;
     }}
     .ledger-box {{
       margin-top: 16px;
@@ -977,7 +1256,7 @@ def render_page(
       <div><strong>Page URL</strong><a id="page-url" href="./index.html" style="color:#8ec5ff">{html.escape(summary["url"] or "./index.html")}</a></div>
       <div><strong>Note</strong>Idle gaps between panels or between egress subwindows are compressed with a yellow <code>//</code> marker; frame content itself is not truncated.</div>
     </div>
-    <div class="legend">
+  <div class="legend">
       <span class="hdr">header / trailer / timestamp / debug</span>
       <span class="sub">subheader</span>
       <span class="hit">hit payload</span>
@@ -985,12 +1264,12 @@ def render_page(
     </div>
   </section>
   <div class="grid">
-    {panel_block(ingress_title, "4 FEB lanes into the OPQ; frame pair F1/F2, absolute cycle axis preserved in the panel footnote.", ingress_panel, ingress_ledger, "ingress")}
-    {panel_block(egress_title, "Merged OPQ output for the same frame pair; the long inter-frame idle region is compressed with //.", egress_panel, egress_ledger, "egress")}
-    {panel_block(dma_title, "256-bit PCIe app payload words covering the same frame pair; raw word indices stay in the wave, full raw256 decode sits in the ledger.", dma_panel, dma_ledger, "dma")}
+    {''.join(panel_block(panel) for panel in panels)}
   </div>
 </main>
 <script>
+const PANEL_META = {json.dumps(panel_meta, separators=(",", ":"))};
+
 async function loadLedger(details) {{
   if (!details || details.dataset.ledgerLoaded === '1' || details.dataset.ledgerLoading === '1') {{
     return;
@@ -1038,14 +1317,150 @@ function bindLazyLedgers(root) {{
   }});
 }}
 
+async function loadPanelChunk(meta, chunkIndex) {{
+  const chunk = meta.chunks[chunkIndex];
+  if (!chunk) {{
+    throw new Error('Invalid chunk index ' + chunkIndex);
+  }}
+  if (!meta.cache) {{
+    meta.cache = {{}};
+  }}
+  if (meta.cache[chunkIndex]) {{
+    return meta.cache[chunkIndex];
+  }}
+  const response = await fetch('./' + chunk.src, {{ cache: 'no-store' }});
+  if (!response.ok) {{
+    throw new Error('HTTP ' + response.status + ' while loading ' + chunk.src);
+  }}
+  const json = await response.json();
+  meta.cache[chunkIndex] = json;
+  return json;
+}}
+
+function updatePanelUi(meta, chunkIndex) {{
+  const chunk = meta.chunks[chunkIndex];
+  const status = document.querySelector('[data-panel-status="' + meta.panel_id + '"]');
+  if (status && chunk) {{
+    status.textContent = 'Chunk ' + (chunkIndex + 1) + '/' + meta.chunk_count + ' | ' + chunk.detail;
+  }}
+  document.querySelectorAll('.chunk-stop[data-panel-id="' + meta.panel_id + '"]').forEach(function (node) {{
+    node.classList.toggle('active', Number(node.dataset.chunkIndex) === chunkIndex);
+  }});
+  const prevBtn = document.querySelector('[data-panel-prev="' + meta.panel_id + '"]');
+  const nextBtn = document.querySelector('[data-panel-next="' + meta.panel_id + '"]');
+  if (prevBtn) {{
+    prevBtn.disabled = chunkIndex <= 0;
+  }}
+  if (nextBtn) {{
+    nextBtn.disabled = chunkIndex >= meta.chunk_count - 1;
+  }}
+}}
+
+function scrollStripToChunk(meta, chunkIndex, behavior) {{
+  const strip = document.querySelector('[data-panel-strip="' + meta.panel_id + '"]');
+  if (strip) {{
+    strip.scrollTo({{ left: chunkIndex * meta.nav_step_px, behavior: behavior || 'auto' }});
+  }}
+}}
+
+async function renderPanelChunk(panelId, chunkIndex, options) {{
+  const meta = PANEL_META[panelId];
+  if (!meta) {{
+    return;
+  }}
+  const opts = options || {{}};
+  const clamped = Math.max(0, Math.min(meta.chunk_count - 1, chunkIndex));
+  if (meta.rendering === clamped) {{
+    return;
+  }}
+  meta.requestToken = (meta.requestToken || 0) + 1;
+  const requestToken = meta.requestToken;
+  meta.rendering = clamped;
+  const displayId = 'WaveDrom_Display_' + meta.render_index;
+  const display = document.getElementById(displayId);
+  const waveScroll = document.querySelector('[data-wave-scroll="' + panelId + '"]');
+  if (display && !opts.keepStatus) {{
+    display.innerHTML = '<div class="wave-render-status">Rendering chunk ' + (clamped + 1) + '/' + meta.chunk_count + '...</div>';
+  }}
+  try {{
+    const json = await loadPanelChunk(meta, clamped);
+    if (requestToken !== meta.requestToken) {{
+      return;
+    }}
+    if (!display) {{
+      return;
+    }}
+    display.innerHTML = '';
+    WaveDrom.RenderWaveForm(meta.render_index, json, 'WaveDrom_Display_', false);
+    if (waveScroll && !opts.preserveScroll) {{
+      waveScroll.scrollLeft = 0;
+    }}
+    meta.currentChunk = clamped;
+    updatePanelUi(meta, clamped);
+  }} catch (err) {{
+    if (display) {{
+      display.innerHTML = '<div class="wave-render-status">Failed to render chunk: ' +
+        String(err && err.message ? err.message : err) +
+        '</div>';
+    }}
+  }} finally {{
+    meta.rendering = null;
+  }}
+}}
+
+function bindPanel(meta) {{
+  meta.currentChunk = 0;
+  meta.rendering = null;
+  meta.cache = {{}};
+  const strip = document.querySelector('[data-panel-strip="' + meta.panel_id + '"]');
+  if (strip) {{
+    let scrollTimer = null;
+    strip.addEventListener('scroll', function () {{
+      if (scrollTimer) {{
+        clearTimeout(scrollTimer);
+      }}
+      scrollTimer = window.setTimeout(function () {{
+        const idx = Math.round(strip.scrollLeft / meta.nav_step_px);
+        if (idx !== meta.currentChunk) {{
+          renderPanelChunk(meta.panel_id, idx, {{ preserveScroll: false, keepStatus: true }});
+        }}
+      }}, 60);
+    }});
+  }}
+  document.querySelectorAll('.chunk-stop[data-panel-id="' + meta.panel_id + '"]').forEach(function (node) {{
+    node.addEventListener('click', function () {{
+      const idx = Number(node.dataset.chunkIndex);
+      renderPanelChunk(meta.panel_id, idx, {{ preserveScroll: false }});
+      scrollStripToChunk(meta, idx, 'smooth');
+    }});
+  }});
+  const prevBtn = document.querySelector('[data-panel-prev="' + meta.panel_id + '"]');
+  if (prevBtn) {{
+    prevBtn.addEventListener('click', function () {{
+      renderPanelChunk(meta.panel_id, meta.currentChunk - 1, {{ preserveScroll: false }});
+      scrollStripToChunk(meta, Math.max(0, meta.currentChunk - 1), 'smooth');
+    }});
+  }}
+  const nextBtn = document.querySelector('[data-panel-next="' + meta.panel_id + '"]');
+  if (nextBtn) {{
+    nextBtn.addEventListener('click', function () {{
+      renderPanelChunk(meta.panel_id, meta.currentChunk + 1, {{ preserveScroll: false }});
+      scrollStripToChunk(meta, Math.min(meta.chunk_count - 1, meta.currentChunk + 1), 'smooth');
+    }});
+  }}
+  renderPanelChunk(meta.panel_id, 0, {{ preserveScroll: false }});
+}}
+
 window.addEventListener('load', function () {{
   const pageUrl = document.getElementById('page-url');
   if (pageUrl) {{
     pageUrl.href = window.location.href;
     pageUrl.textContent = window.location.href;
   }}
-  if (window.WaveDrom && typeof WaveDrom.ProcessAll === 'function') {{
-    WaveDrom.ProcessAll();
+  if (window.WaveDrom && typeof WaveDrom.RenderWaveForm === 'function') {{
+    Object.keys(PANEL_META).forEach(function (panelId) {{
+      bindPanel(PANEL_META[panelId]);
+    }});
   }}
   bindLazyLedgers(document);
 }});
@@ -1092,17 +1507,17 @@ def main() -> int:
     frame_prefix_map = build_frame_prefix_map(plan_json)
     actual_dma = extract_dma(vcd, edges)
 
-    ingress_panel, ingress_ledger, ingress_span = build_ingress_panel(
+    ingress_panel, ingress_span = build_ingress_panel(
         ingress_frames,
         out_html.parent,
         out_html.stem,
     )
-    egress_panel, egress_ledger, egress_spans = build_egress_panel(
+    egress_panel, egress_spans = build_egress_panel(
         selected_opq,
         out_html.parent,
         out_html.stem,
     )
-    dma_panel, dma_ledger, dma_span = build_dma_panel(
+    dma_panel, dma_span = build_dma_panel(
         actual_dma,
         int(summary_json["expected_word_count"]),
         frame_prefix_map,
@@ -1128,12 +1543,7 @@ def main() -> int:
     render_page(
         out_html,
         summary,
-        ingress_panel,
-        ingress_ledger,
-        egress_panel,
-        egress_ledger,
-        dma_panel,
-        dma_ledger,
+        [ingress_panel, egress_panel, dma_panel],
     )
 
     meta_out = out_html.with_suffix(".summary.json")
