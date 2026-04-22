@@ -86,6 +86,7 @@ architecture arch of swb_block is
     signal rx_data, rx_data_sim : work.mu3e.link32_array_t(g_NLINKS_FEB_TOTL-1 downto 0) := (others => work.mu3e.LINK32_IDLE);
     signal rx_data_sim_opq : work.mu3e.link32_array_t(3 downto 0) := (others => work.mu3e.LINK32_IDLE);
     signal rx_data_sim_merged : work.mu3e.link32_array_t(3 downto 0) := (others => work.mu3e.LINK32_IDLE);
+    signal rx_data_sim_merged_mask : std_logic_vector(3 downto 0) := (others => '0');
     signal rx_sc : work.mu3e.link32_array_t(g_NLINKS_FEB_TOTL-1 downto 0)   := (others => work.mu3e.LINK32_IDLE);
     signal rx_rc : work.mu3e.link32_array_t(g_NLINKS_FEB_TOTL-1 downto 0)   := (others => work.mu3e.LINK32_IDLE);
     signal gen_link : work.mu3e.link32_t;
@@ -320,13 +321,18 @@ begin
         clk         => i_clk--,
     );
 
+    rx_data_sim_merged_mask(0) <= (mask_n(0) or mask_n(1) or mask_n(2) or mask_n(3)) when use_opq_merge = '1' else mask_n(0);
+    rx_data_sim_merged_mask(1) <= '0' when use_opq_merge = '1' else mask_n(1);
+    rx_data_sim_merged_mask(2) <= '0' when use_opq_merge = '1' else mask_n(2);
+    rx_data_sim_merged_mask(3) <= '0' when use_opq_merge = '1' else mask_n(3);
+
     e_musip_mux_4_1 : entity work.musip_mux_4_1
     generic map (
         g_LINK_N => 4
     )
     port map (
         i_rx            => rx_data_sim_merged(3 downto 0),
-        i_rmask_n       => mask_n(3 downto 0),
+        i_rmask_n       => rx_data_sim_merged_mask,
         i_use_direct_mux=> use_opq_merge,
 
         i_lookup_ctrl   => i_writeregs(SWB_LOOKUP_CTRL_REGISTER_W),
