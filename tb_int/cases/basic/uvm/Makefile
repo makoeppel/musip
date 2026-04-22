@@ -2,17 +2,34 @@ SHELL := /usr/bin/env bash
 
 ROOT := $(abspath ../../../..)
 BUILD_DIR := $(CURDIR)/work
-QUESTA_HOME ?= /data1/intelFPGA_pro/23.1/questa_fe
+include $(ROOT)/tb_int/cases/basic/opq_sources.mk
+QUESTA_HOME ?= /data1/questaone_sim/questasim
 UVM_HOME ?= $(QUESTA_HOME)/verilog_src/uvm-1.2
-VLIB := $(QUESTA_HOME)/bin/vlib
-VCOM := $(QUESTA_HOME)/bin/vcom
-VLOG := $(QUESTA_HOME)/bin/vlog
-VSIM := $(QUESTA_HOME)/bin/vsim
+QUESTA_INI := $(BUILD_DIR)/modelsim.ini
+QUESTA_INI_PREP := $(ROOT)/tools/ip/prepare_questa_ini.sh
+VLIB := $(firstword $(wildcard $(QUESTA_HOME)/bin/vlib $(QUESTA_HOME)/linux_x86_64/vlib))
+VMAP := $(firstword $(wildcard $(QUESTA_HOME)/bin/vmap $(QUESTA_HOME)/linux_x86_64/vmap))
+VCOM := $(firstword $(wildcard $(QUESTA_HOME)/bin/vcom $(QUESTA_HOME)/linux_x86_64/vcom))
+VLOG := $(firstword $(wildcard $(QUESTA_HOME)/bin/vlog $(QUESTA_HOME)/linux_x86_64/vlog))
+VSIM := $(firstword $(wildcard $(QUESTA_HOME)/bin/vsim $(QUESTA_HOME)/linux_x86_64/vsim))
 QUESTA_RUNNER := $(ROOT)/tools/ip/run_questa.sh
-ETH_LIC_SERVER ?= 8161@129.132.148.195
+ETH_LIC_SERVER ?= 8161@lic-mentor.ethz.ch
+UVM_DPI_LIB := $(firstword $(wildcard $(QUESTA_HOME)/uvm-1.2/linux_x86_64/uvm_dpi.so $(QUESTA_HOME)/uvm-1.2/linux/uvm_dpi.so))
+UVM_DPI_LIB_OPT := $(if $(UVM_DPI_LIB),-sv_lib $(basename $(UVM_DPI_LIB)))
+SWB_USE_MERGE ?= 1
+PYTHON ?= python3
+LONGRUN_ARGS ?=
 
+export SALT_LICENSE_SERVER ?= $(ETH_LIC_SERVER)
 export MGLS_LICENSE_FILE ?= $(ETH_LIC_SERVER)
-export LM_LICENSE_FILE ?= $(MGLS_LICENSE_FILE)
+export LM_LICENSE_FILE ?= $(ETH_LIC_SERVER)
+export QSIM_INI ?= $(QUESTA_INI)
+export OPQ_SOURCE_MODE
+export OPQ_N_SHD
+export OPQ_LANE_FIFO_DEPTH
+export OPQ_TICKET_FIFO_DEPTH
+export OPQ_HANDLE_FIFO_DEPTH
+export OPQ_PAGE_RAM_DEPTH
 
 VHDL_SOURCES = \
 	$(ROOT)/firmware/util/util_pkg.vhd \
@@ -39,18 +56,15 @@ VHDL_SOURCES = \
 	$(ROOT)/firmware/a10_board/a10/swb/swb_sc_main.vhd \
 	$(ROOT)/firmware/a10_board/a10/swb/swb_sc_secondary.vhd \
 	$(ROOT)/firmware/a10_board/a10/swb/qc_histos.vhd \
-	$(ROOT)/firmware/a10_board/a10/merger/opq_monolithic_4lane_merge_opq_0.vhd \
+	$(OPQ_VHDL_DUT_SOURCES) \
 	$(ROOT)/firmware/a10_board/a10/merger/ingress_egress_adaptor.vhd \
 	$(ROOT)/firmware/a10_board/a10/swb/musip_mux_4_1.vhd \
 	$(ROOT)/firmware/a10_board/a10/swb/swb_block.vhd \
 	$(CURDIR)/dut/swb_block_uvm_wrapper.vhd
 
-VERILOG_DUT_SOURCES = \
-	$(ROOT)/firmware/a10_board/a10/merger/ticket_fifo.v \
-	$(ROOT)/firmware/a10_board/a10/merger/lane_fifo.v \
-	$(ROOT)/firmware/a10_board/a10/merger/handle_fifo.v \
-	$(ROOT)/firmware/a10_board/a10/merger/page_ram.v \
-	$(ROOT)/firmware/a10_board/a10/merger/tile_fifo.v
+VERILOG_DUT_SOURCES = $(OPQ_VERILOG_DUT_SOURCES)
+
+SV_DUT_SOURCES = $(OPQ_SV_DUT_SOURCES)
 
 SV_SOURCES = \
 	$(CURDIR)/sv/interfaces.sv \
@@ -67,22 +81,32 @@ SV_INCLUDE_SOURCES = \
 	$(CURDIR)/sv/swb_basic_test.sv
 
 SIM_ARGS ?=
+COMPILE_STAMP := $(BUILD_DIR)/.compile-stamp.$(OPQ_SOURCE_MODE).$(OPQ_N_SHD).$(OPQ_LANE_FIFO_DEPTH).$(OPQ_TICKET_FIFO_DEPTH).$(OPQ_HANDLE_FIFO_DEPTH).$(OPQ_PAGE_RAM_DEPTH)
 
 .PHONY: compile run clean
+.PHONY: longrun
 
-compile: $(BUILD_DIR)/.compile-stamp
+compile: $(COMPILE_STAMP)
 
-$(BUILD_DIR)/.compile-stamp: $(VHDL_SOURCES) $(SV_SOURCES) $(SV_INCLUDE_SOURCES)
+$(COMPILE_STAMP): $(VHDL_SOURCES) $(OPQ_SIM_QSYS_VHDL_SOURCES) $(OPQ_SIM_QSYS_VERILOG_SOURCES) $(VERILOG_DUT_SOURCES) $(SV_DUT_SOURCES) $(SV_SOURCES) $(SV_INCLUDE_SOURCES) $(QUESTA_INI_PREP)
 	rm -rf $(BUILD_DIR)
 	mkdir -p $(BUILD_DIR)
-	cd $(BUILD_DIR) && $(VLIB) work
-	cd $(BUILD_DIR) && set -e; for file in $(VHDL_SOURCES); do $(VCOM) -2008 $$file; done
-	cd $(BUILD_DIR) && $(VLOG) $(VERILOG_DUT_SOURCES)
-	cd $(BUILD_DIR) && $(VLOG) -sv +incdir+$(UVM_HOME)/src +incdir+$(CURDIR)/sv $(SV_SOURCES)
+	$(QUESTA_INI_PREP) $(QUESTA_HOME) $(QUESTA_INI)
+	cd $(BUILD_DIR) && QSIM_INI=$(QUESTA_INI) $(VLIB) work
+	cd $(BUILD_DIR) && set -e; for lib in $(OPQ_SIM_EXTRA_LIBS); do QSIM_INI=$(QUESTA_INI) $(VLIB) $$lib; QSIM_INI=$(QUESTA_INI) $(VMAP) $$lib $$lib; done
+	cd $(BUILD_DIR) && set -e; for file in $(OPQ_SIM_QSYS_VHDL_SOURCES); do QSIM_INI=$(QUESTA_INI) $(VCOM) -2008 -work $(OPQ_SIM_QSYS_LIB) $$file; done
+	cd $(BUILD_DIR) && if [ -n "$(strip $(OPQ_SIM_QSYS_VERILOG_SOURCES))" ]; then QSIM_INI=$(QUESTA_INI) $(VLOG) -work $(OPQ_SIM_QSYS_LIB) -sv $(OPQ_DUT_DEFINES) $(OPQ_SIM_QSYS_VERILOG_SOURCES); fi
+	cd $(BUILD_DIR) && set -e; for file in $(VHDL_SOURCES); do QSIM_INI=$(QUESTA_INI) $(VCOM) -2008 $$file; done
+	cd $(BUILD_DIR) && if [ -n "$(strip $(VERILOG_DUT_SOURCES) $(SV_DUT_SOURCES))" ]; then QSIM_INI=$(QUESTA_INI) $(VLOG) -sv $(OPQ_DUT_DEFINES) $(VERILOG_DUT_SOURCES) $(SV_DUT_SOURCES); fi
+	cd $(BUILD_DIR) && QSIM_INI=$(QUESTA_INI) $(VLOG) -sv +incdir+$(UVM_HOME)/src +incdir+$(CURDIR)/sv $(SV_SOURCES)
 	touch $@
 
 run: compile
-	cd $(BUILD_DIR) && $(QUESTA_RUNNER) $(VSIM) -c -L altera_mf tb_top -do "run -all; quit -f" $(SIM_ARGS)
+	mkdir -p $(CURDIR)/report
+	cd $(BUILD_DIR) && QSIM_INI=$(QUESTA_INI) $(QUESTA_RUNNER) $(VSIM) -c $(OPQ_VSIM_LIB_FLAGS) $(UVM_DPI_LIB_OPT) tb_top -do "run -all; quit -f" +SWB_USE_MERGE=$(SWB_USE_MERGE) $(SIM_ARGS)
+
+longrun: compile
+	$(PYTHON) $(CURDIR)/run_longrun.py $(LONGRUN_ARGS)
 
 clean:
 	rm -rf $(BUILD_DIR)

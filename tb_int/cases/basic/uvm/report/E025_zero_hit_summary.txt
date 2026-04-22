@@ -1,0 +1,12 @@
+case=E025
+cmd=make ip-uvm-basic SIM_ARGS=+SWB_PROFILE_NAME=E025_zero_hit +SWB_CASE_SEED=111 +SWB_HIT_MODE=zero +SWB_SAT0=0.20 +SWB_SAT1=0.20 +SWB_SAT2=0.20 +SWB_SAT3=0.20
+13299:# UVM_INFO /home/yifeng/packages/musip_2604/tb_int/cases/basic/uvm/sv/swb_basic_test.sv(218) @ 2170000: uvm_test_top [ZERO_PAYLOAD] expected_word_count=0, so the harness skips the dma_done timeout and only checks that no unexpected payload escapes
+17653:# UVM_INFO /home/yifeng/packages/musip_2604/tb_int/cases/basic/uvm/sv/swb_scoreboard.sv(496) @ 3258000: uvm_test_top.env.scoreboard [HIT_STAGE_SUMMARY] opq expected=0 actual=0 ghosts=0 missing=0
+17654:# UVM_INFO /home/yifeng/packages/musip_2604/tb_int/cases/basic/uvm/sv/swb_scoreboard.sv(496) @ 3258000: uvm_test_top.env.scoreboard [HIT_STAGE_SUMMARY] dma expected=0 actual=0 ghosts=0 missing=0
+17655:# UVM_INFO /home/yifeng/packages/musip_2604/tb_int/cases/basic/uvm/sv/swb_scoreboard.sv(624) @ 3258000: uvm_test_top.env.scoreboard [DMA_SUMMARY] Compared 0 payload words, ignored 0 trailing padding words, ingress_hits=0 opq_hits=0 dma_hits=0 parse_errors=0
+17656:# UVM_INFO /home/yifeng/packages/musip_2604/tb_int/cases/basic/uvm/sv/swb_scoreboard.sv(660) @ 3258000: uvm_test_top.env.scoreboard [SWB_CHECK_PASS] profile=E025_zero_hit case_seed=111 payload_words=0 padding_words=0 ingress_hits=0 opq_hits=0 dma_hits=0
+17663:# UVM_ERROR :    0
+17667:# [DMA_SUMMARY]     1
+17669:# [HIT_STAGE_SUMMARY]     2
+17672:# [SWB_CHECK_PASS]     1
+17675:# [ZERO_PAYLOAD]     1

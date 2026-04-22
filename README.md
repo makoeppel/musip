@@ -80,40 +80,66 @@ make serve_mkdocs
 
 The OPQ/SWB integration flow added in this workspace uses root-level `make` targets.
 
+Current validation status on April 21, 2026:
+
+- the full Siemens Questa install at `/data1/questaone_sim/questasim` is the only supported simulator on this host,
+- `mu3e-ip-cores` is now tracked in-repo as the `external/mu3e-ip-cores` git submodule and is the default upstream owner for OPQ packaging and sync,
+- the replay generator, the integrated `plain/` and `uvm/` benches, the split OPQ-boundary harness, and the formal seam scaffold all pass on that toolchain,
+- the real integrated OPQ merge path is the promoted default in this repo; the former direct-path bypass workaround is retired,
+- the promoted randomized screen is the default `make ip-uvm-longrun` 128-case per-lane `0.0..0.5` saturation wrapper, and the current stronger evidence set also includes a clean 256-case rerun in `tb_int/cases/basic/uvm/report/longrun_ext_260422_fixed/summary.json`,
+- Intel FE/FSE `vsim` remains unsupported for this flow; all simulation evidence in `tb_int/` is from the full Questa install above.
+
 If you just want the shortest safe path:
 
 1. Run `make ip-init`
-2. Run `make ip-tlm-basic-smoke`
-3. Read `tb_int/cases/basic/ref/out_smoke/summary.json`
-4. Run `make ip-plain-basic-2env-smoke`
-5. Run `make ip-lint-rtl`
+2. Run `make ip-check-license`
+3. Run `make ip-tlm-basic-smoke`
+4. Run `make ip-compile-basic`
+5. Run `make ip-uvm-basic SIM_ARGS="+SWB_REPLAY_DIR=$(pwd)/tb_int/cases/basic/ref/out_smoke"`
 6. Run `make ip-tlm-basic`
-7. Run `make ip-plain-basic-2env`
-8. Run `make ip-compile-basic`
-9. Run `make ip-formal-boundary`
+7. Run `make ip-plain-basic`
+8. Run `make ip-plain-basic-2env`
+9. Run `make ip-uvm-longrun`
 
 Important:
 
+- `make ip-init` now expects the checked-out `external/mu3e-ip-cores` submodule and refreshes the musip-local OPQ wrapper from that in-repo upstream source.
 - `make ip-tlm-basic-smoke` is the smallest deterministic replay bundle. It is the right first step when you are debugging the OPQ seam.
-- `make ip-tlm-basic` is the full simulatorless fallback flow. It exports replay vectors and expected DMA words without running RTL.
+- `make ip-tlm-basic` exports replay vectors and expected DMA words without running RTL. Use it when you want a deterministic replay bundle for the full case.
 - `make ip-lint-rtl` applies a strict style gate to the clean maintained bridge/wrapper files and a hygiene gate to legacy or imported RTL touched by this integration branch.
-- `make ip-plain-basic` is the quartus-system-style plain mixed-language replay bench. It runs on the current host with the local `questa_fse` Starter runtime.
-- `make ip-plain-basic-2env` is the split workaround path: a VHDL-only post-OPQ datapath plus a DPI-backed 2-env UVM harness at the OPQ seam. It also runs on the current host with `questa_fse` plus `-nodpiexports`.
-- `make ip-uvm-basic` is the real RTL/UVM run, but it still requires a full Mentor/Questa runtime binary.
+- `make ip-uvm-basic` is the default RTL/UVM run on this host. It now uses the real integrated merge path by default (`SWB_USE_MERGE=1`).
+- `make ip-uvm-basic` accepts `+SWB_CASE_SEED=<n>` for exact random-case replay and `+SWB_HIT_TRACE_PREFIX=<abs-prefix>` to emit per-hit ingress, OPQ, and DMA ledgers plus a summary file.
+- `make ip-uvm-longrun` wraps the same harness and writes the default 128-run campaign summary to `tb_int/cases/basic/uvm/report/longrun/summary.json`.
+- The current stronger musip-local evidence also includes `python3 tb_int/cases/basic/uvm/run_longrun.py --runs 256 --campaign-seed 260422 --out-dir report/longrun_ext_260422_fixed`, which passes cleanly and writes `tb_int/cases/basic/uvm/report/longrun_ext_260422_fixed/summary.json`.
+- The install's `modelsim.ini` maps `altera_mf`, `altera`, `lpm`, and `sgate` to refreshed 2026-built Intel VHDL libraries under `/data1/questaone_sim/questasim/intel_2026/vhdl`. If the Siemens install is replaced, rerun `tools/ip/refresh_questa_intel_libs.sh`.
+- `make ip-plain-basic` is the plain mixed-language replay bench. It also uses the integrated merge path by default and validates the DMA result at the per-hit level with `tb_int/cases/basic/plain/check_dma_hits.py`.
+- `make ip-plain-basic-2env` is the split seam harness with explicit OPQ boundary scoreboarding. It remains the promoted boundary audit path, but it is no longer the only passing owner in this repo.
 - `make ip-formal-boundary` is the boundary-contract scaffold. It proves the OPQ seam packet grammar checker against a small legal packet family.
-- Once that runtime exists, you can replay the exact fallback case in RTL with:
+- To replay the exact smoke bundle in the full UVM harness, run:
+
+```bash
+make ip-uvm-basic SIM_ARGS="+SWB_REPLAY_DIR=$(pwd)/tb_int/cases/basic/ref/out_smoke"
+```
+
+To replay the full deterministic bundle in the full UVM harness, run:
 
 ```bash
 make ip-uvm-basic SIM_ARGS="+SWB_REPLAY_DIR=$(pwd)/tb_int/cases/basic/ref/out"
 ```
 
-If you only have standard mixed-language simulation and not the verification/UVM feature set, use:
+If you want the plain mixed-language replay bench instead, use:
 
 ```bash
 make ip-plain-basic REPLAY_DIR=$(pwd)/tb_int/cases/basic/ref/out
 ```
 
-If you want the split OPQ-seam workaround instead, use:
+If you want a seeded random UVM case with exported per-hit ledgers, use:
+
+```bash
+make ip-uvm-basic SIM_ARGS="+SWB_FRAMES=2 +SWB_CASE_SEED=12345 +SWB_SAT0=0.10 +SWB_SAT1=0.20 +SWB_SAT2=0.30 +SWB_SAT3=0.40 +SWB_HIT_TRACE_PREFIX=$(pwd)/tb_int/cases/basic/uvm/report/single_seed"
+```
+
+If you want the split OPQ boundary harness instead, use:
 
 ```bash
 make ip-plain-basic-2env REPLAY_DIR=$(pwd)/tb_int/cases/basic/ref/out

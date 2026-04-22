@@ -105,12 +105,46 @@ class swb_dma_word extends uvm_sequence_item;
   endfunction
 endclass
 
+class swb_stream_beat extends uvm_sequence_item;
+  int unsigned lane_id;
+  int unsigned beat_idx;
+  bit [31:0]   data;
+  bit [3:0]    datak;
+  string       stream_name;
+
+  `uvm_object_utils(swb_stream_beat)
+
+  function new(string name = "swb_stream_beat");
+    super.new(name);
+    lane_id = 0;
+    beat_idx = 0;
+    data = '0;
+    datak = '0;
+    stream_name = "";
+  endfunction
+
+  function string convert2string();
+    return $sformatf(
+      "%s beat[%0d] lane=%0d datak=0x%0h data=0x%08h",
+      stream_name,
+      beat_idx,
+      lane_id,
+      datak,
+      data
+    );
+  endfunction
+endclass
+
 class swb_case_plan extends uvm_object;
   swb_frame_item frames_by_lane[SWB_N_LANES][$];
   bit [255:0] expected_dma_words[$];
   int unsigned expected_word_count;
   int unsigned total_hits;
+  int unsigned case_seed;
+  bit [3:0]  feb_enable_mask;
   real lane_saturation[SWB_N_LANES];
+  string profile_name;
+  string hit_mode_name;
 
   `uvm_object_utils(swb_case_plan)
 
@@ -123,12 +157,23 @@ class swb_case_plan extends uvm_object;
     expected_dma_words.delete();
     expected_word_count = 0;
     total_hits          = 0;
+    case_seed           = 0;
+    feb_enable_mask     = 4'hf;
+    profile_name        = "";
+    hit_mode_name       = "poisson";
     foreach (frames_by_lane[lane]) begin
       frames_by_lane[lane].delete();
       lane_saturation[lane] = 0.0;
     end
   endfunction
 endclass
+
+typedef enum int {
+  SWB_HIT_MODE_POISSON,
+  SWB_HIT_MODE_ZERO,
+  SWB_HIT_MODE_SINGLE,
+  SWB_HIT_MODE_MAX
+} swb_hit_mode_e;
 
 typedef struct {
   longint unsigned abs_ts;
@@ -277,6 +322,21 @@ begin
 end
 endfunction
 
+function automatic bit [63:0] swb_normalize_dma_hit_word(bit [63:0] data_word);
+  bit [63:0] normalized;
+begin
+  normalized = data_word;
+  normalized[62:58] = '0;
+  return normalized;
+end
+endfunction
+
+function automatic longint unsigned swb_debug_ts_from_hit_word(bit [63:0] data_word);
+begin
+  return longint'(data_word[36:0]);
+end
+endfunction
+
 class swb_case_builder extends uvm_object;
   `uvm_object_utils(swb_case_builder)
 
@@ -305,19 +365,22 @@ class swb_case_builder extends uvm_object;
     swb_hit_record_t records[$];
     bit [63:0] word_pack[4];
     int unsigned pack_idx;
+    swb_frame_item frame;
+    swb_subheader_desc shd;
+    swb_hit_record_t record;
+    bit [31:0] payload_word;
   begin
     plan.expected_dma_words.delete();
     plan.total_hits = 0;
 
     foreach (plan.frames_by_lane[lane, frame_idx]) begin
-      swb_frame_item frame;
+      if (plan.feb_enable_mask[lane] == 1'b0) begin
+        continue;
+      end
       frame = plan.frames_by_lane[lane][frame_idx];
       foreach (frame.subheaders[shd_idx]) begin
-        swb_subheader_desc shd;
         shd = frame.subheaders[shd_idx];
         foreach (shd.hits[hit_idx]) begin
-          swb_hit_record_t record;
-          bit [31:0] payload_word;
           payload_word = shd.hits[hit_idx].payload_word;
           record.abs_ts = swb_make_abs_ts(frame.ts_high_word, frame.ts_low_word, shd.shd_ts, payload_word);
           record.hit_word = swb_make_expected_mupix_hit(frame.ts_high_word, frame.ts_low_word, shd.shd_ts, payload_word);
@@ -351,6 +414,9 @@ class swb_case_builder extends uvm_object;
   begin
     total_hits = 0;
     foreach (plan.frames_by_lane[lane, frame_idx]) begin
+      if (plan.feb_enable_mask[lane] == 1'b0) begin
+        continue;
+      end
       total_hits += plan.frames_by_lane[lane][frame_idx].hit_count();
     end
     return total_hits;
@@ -503,6 +569,8 @@ class swb_case_builder extends uvm_object;
       plan = swb_case_plan::type_id::create("case_plan");
     end
     plan.clear();
+    plan.feb_enable_mask = 4'hf;
+    plan.profile_name = "replay";
 
     for (int unsigned lane_id = 0; lane_id < SWB_N_LANES; lane_id++) begin
       swb_case_builder::load_lane_replay(
@@ -523,18 +591,32 @@ class swb_case_builder extends uvm_object;
   static function void build_basic_case(
     ref swb_case_plan plan,
     int unsigned frame_count,
-    real lane_saturation[SWB_N_LANES]
+    real lane_saturation[SWB_N_LANES],
+    bit [3:0] feb_enable_mask,
+    swb_hit_mode_e hit_mode
   );
     int unsigned frame_idx;
     int unsigned lane_id;
     int unsigned shd_idx;
     int unsigned hit_target;
     int unsigned extra_hits;
+    int frame_scan;
+    int shd_scan;
+    swb_frame_item frame;
+    swb_subheader_desc shd;
   begin
     if (plan == null) begin
       plan = swb_case_plan::type_id::create("case_plan");
     end
     plan.clear();
+    plan.feb_enable_mask = feb_enable_mask;
+    plan.profile_name = "basic_random";
+    case (hit_mode)
+      SWB_HIT_MODE_ZERO:   plan.hit_mode_name = "zero";
+      SWB_HIT_MODE_SINGLE: plan.hit_mode_name = "single";
+      SWB_HIT_MODE_MAX:    plan.hit_mode_name = "max";
+      default:             plan.hit_mode_name = "poisson";
+    endcase
 
     foreach (lane_saturation[lane_id]) begin
       plan.lane_saturation[lane_id] = lane_saturation[lane_id];
@@ -561,7 +643,16 @@ class swb_case_builder extends uvm_object;
           swb_subheader_desc shd;
           shd = swb_subheader_desc::type_id::create($sformatf("shd_l%0d_f%0d_s%0d", lane_id, frame_idx, shd_idx));
           shd.shd_ts = shd_idx[7:0];
-          hit_target = swb_poisson_trunc(lane_saturation[lane_id] * SWB_MAX_HITS_PER_SUBHEADER, SWB_MAX_HITS_PER_SUBHEADER);
+          case (hit_mode)
+            SWB_HIT_MODE_ZERO:   hit_target = 0;
+            SWB_HIT_MODE_SINGLE: hit_target = 1;
+            SWB_HIT_MODE_MAX:    hit_target = SWB_MAX_HITS_PER_SUBHEADER;
+            default:
+              hit_target = swb_poisson_trunc(
+                lane_saturation[lane_id] * SWB_MAX_HITS_PER_SUBHEADER,
+                SWB_MAX_HITS_PER_SUBHEADER
+              );
+          endcase
           repeat (hit_target) begin
             swb_case_builder::add_hit_to_subheader(frame, shd, lane_id, frame_idx, shd_idx);
           end
@@ -575,17 +666,16 @@ class swb_case_builder extends uvm_object;
     plan.total_hits = swb_case_builder::count_total_hits(plan);
     extra_hits = (4 - (plan.total_hits % 4)) % 4;
     if (extra_hits != 0) begin
-      for (lane_id = SWB_N_LANES - 1; lane_id >= 0; lane_id--) begin
-        int frame_scan;
-        for (frame_scan = plan.frames_by_lane[lane_id].size() - 1; frame_scan >= 0; frame_scan--) begin
-          int shd_scan;
-          swb_frame_item frame;
-          frame = plan.frames_by_lane[lane_id][frame_scan];
-          for (shd_scan = frame.subheaders.size() - 1; shd_scan >= 0; shd_scan--) begin
-            swb_subheader_desc shd;
+      for (int lane_scan = SWB_N_LANES - 1; lane_scan >= 0 && extra_hits != 0; lane_scan--) begin
+        if (plan.feb_enable_mask[lane_scan] == 1'b0) begin
+          continue;
+        end
+        for (frame_scan = plan.frames_by_lane[lane_scan].size() - 1; frame_scan >= 0 && extra_hits != 0; frame_scan--) begin
+          frame = plan.frames_by_lane[lane_scan][frame_scan];
+          for (shd_scan = frame.subheaders.size() - 1; shd_scan >= 0 && extra_hits != 0; shd_scan--) begin
             shd = frame.subheaders[shd_scan];
             while ((extra_hits != 0) && (shd.hit_count() < SWB_MAX_HITS_PER_SUBHEADER)) begin
-              swb_case_builder::add_hit_to_subheader(frame, shd, lane_id, frame.frame_id, shd_scan);
+              swb_case_builder::add_hit_to_subheader(frame, shd, lane_scan, frame.frame_id, shd_scan);
               extra_hits--;
             end
           end

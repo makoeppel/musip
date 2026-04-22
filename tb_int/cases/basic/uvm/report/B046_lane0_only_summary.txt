@@ -1,0 +1,10 @@
+case=B046
+cmd=make ip-uvm-basic SIM_ARGS=+SWB_PROFILE_NAME=B046_lane0_only +SWB_CASE_SEED=4242 +SWB_FEB_ENABLE_MASK=1 +SWB_SAT0=0.20 +SWB_SAT1=0.40 +SWB_SAT2=0.60 +SWB_SAT3=0.80
+180182:# UVM_INFO /home/yifeng/packages/musip_2604/tb_int/cases/basic/uvm/sv/swb_scoreboard.sv(496) @ 43698000: uvm_test_top.env.scoreboard [HIT_STAGE_SUMMARY] opq expected=368 actual=368 ghosts=0 missing=0
+180183:# UVM_INFO /home/yifeng/packages/musip_2604/tb_int/cases/basic/uvm/sv/swb_scoreboard.sv(496) @ 43698000: uvm_test_top.env.scoreboard [HIT_STAGE_SUMMARY] dma expected=368 actual=368 ghosts=0 missing=0
+180184:# UVM_INFO /home/yifeng/packages/musip_2604/tb_int/cases/basic/uvm/sv/swb_scoreboard.sv(624) @ 43698000: uvm_test_top.env.scoreboard [DMA_SUMMARY] Compared 92 payload words, ignored 128 trailing padding words, ingress_hits=3810 opq_hits=368 dma_hits=368 parse_errors=0
+180185:# UVM_INFO /home/yifeng/packages/musip_2604/tb_int/cases/basic/uvm/sv/swb_scoreboard.sv(660) @ 43698000: uvm_test_top.env.scoreboard [SWB_CHECK_PASS] profile=B046_lane0_only case_seed=4242 payload_words=92 padding_words=128 ingress_hits=3810 opq_hits=368 dma_hits=368
+180192:# UVM_ERROR :    0
+180196:# [DMA_SUMMARY]     1
+180198:# [HIT_STAGE_SUMMARY]     2
+180202:# [SWB_CHECK_PASS]     1

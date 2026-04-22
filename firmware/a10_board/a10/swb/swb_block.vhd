@@ -52,6 +52,9 @@ port (
     o_dma_wren          : out std_logic := '0';
     o_endofevent        : out std_logic := '0';
     o_dma_data          : out std_logic_vector(255 downto 0) := (others => '0');
+    o_opq_data          : out std_logic_vector(31 downto 0) := (others => '0');
+    o_opq_datak         : out std_logic_vector(3 downto 0) := (others => '0');
+    o_opq_valid         : out std_logic := '0';
 
     --! links to farm
     o_farm_tx           : out work.mu3e.link32_array_t(g_NLINKS_FARM_TOTL-1 downto 0) := (others => work.mu3e.LINK32_IDLE);
@@ -81,6 +84,7 @@ architecture arch of swb_block is
 
     --! demerged FEB links
     signal rx_data, rx_data_sim : work.mu3e.link32_array_t(g_NLINKS_FEB_TOTL-1 downto 0) := (others => work.mu3e.LINK32_IDLE);
+    signal rx_data_sim_opq : work.mu3e.link32_array_t(3 downto 0) := (others => work.mu3e.LINK32_IDLE);
     signal rx_data_sim_merged : work.mu3e.link32_array_t(3 downto 0) := (others => work.mu3e.LINK32_IDLE);
     signal rx_sc : work.mu3e.link32_array_t(g_NLINKS_FEB_TOTL-1 downto 0)   := (others => work.mu3e.LINK32_IDLE);
     signal rx_rc : work.mu3e.link32_array_t(g_NLINKS_FEB_TOTL-1 downto 0)   := (others => work.mu3e.LINK32_IDLE);
@@ -302,13 +306,15 @@ begin
 
     use_opq_merge <= i_writeregs(SWB_READOUT_STATE_REGISTER_W)(USE_BIT_MERGER);
 
+    g_opq_ingress_mask : for i in 0 to 3 generate
+    begin
+        rx_data_sim_opq(i) <= rx_data_sim(i) when mask_n(i) = '1' else work.mu3e.LINK32_IDLE;
+    end generate;
+
     e_ingress_egress_adaptor : entity work.ingress_egress_adaptor
-    generic map (
-        N_SHD => 128
-    )
     port map (
         enable      => use_opq_merge,
-        rx_ingress  => rx_data_sim(3 downto 0),
+        rx_ingress  => rx_data_sim_opq,
         rx_egress   => rx_data_sim_merged,
         reset_n     => data_path_reset_n,
         clk         => i_clk--,
@@ -341,6 +347,10 @@ begin
         i_reset_n      => data_path_reset_n,
         i_clk           => i_clk--,
     );
+
+    o_opq_data  <= rx_data_sim_merged(0).data;
+    o_opq_datak <= rx_data_sim_merged(0).datak;
+    o_opq_valid <= not rx_data_sim_merged(0).idle;
 
     --! event builder
     --! ------------------------------------------------------------------------
