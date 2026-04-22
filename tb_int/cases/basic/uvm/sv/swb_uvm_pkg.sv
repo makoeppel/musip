@@ -3,7 +3,7 @@ package swb_uvm_pkg;
   `include "uvm_macros.svh"
 
   localparam int SWB_N_LANES                = 4;
-  localparam int SWB_N_SUBHEADERS           = 128;
+  localparam int SWB_N_SUBHEADERS           = 256;
   localparam int SWB_MAX_HITS_PER_SUBHEADER = 4;
   localparam bit [5:0] SWB_MUPIX_HEADER_ID  = 6'b111010;
   localparam bit [7:0] SWB_K285             = 8'hBC;

@@ -18,6 +18,12 @@ interface dma_sink_if(input logic clk);
   logic         end_of_event;
 endinterface
 
+interface opq_egress_if(input logic clk);
+  logic        valid;
+  logic [31:0] data;
+  logic [3:0]  datak;
+endinterface
+
 interface swb_ctrl_if(input logic clk);
   logic        reset_n;
   logic [3:0]  feb_enable_mask;

@@ -35,6 +35,10 @@ class swb_basic_2env_test extends uvm_test;
 
   function void connect_phase(uvm_phase phase);
     super.connect_phase(phase);
+    opq_env.ingress_agents[0].monitor.stream_ap.connect(datapath_env.scoreboard.ingress_imp0);
+    opq_env.ingress_agents[1].monitor.stream_ap.connect(datapath_env.scoreboard.ingress_imp1);
+    opq_env.ingress_agents[2].monitor.stream_ap.connect(datapath_env.scoreboard.ingress_imp2);
+    opq_env.ingress_agents[3].monitor.stream_ap.connect(datapath_env.scoreboard.ingress_imp3);
     opq_env.ingress_agents[0].monitor.ap.connect(datapath_env.boundary_scoreboard.ingress_imp0);
     opq_env.ingress_agents[1].monitor.ap.connect(datapath_env.boundary_scoreboard.ingress_imp1);
     opq_env.ingress_agents[2].monitor.ap.connect(datapath_env.boundary_scoreboard.ingress_imp2);
@@ -52,12 +56,12 @@ class swb_basic_2env_test extends uvm_test;
     wait (ctrl_vif.reset_n === 1'b1);
     @(posedge ctrl_vif.clk);
 
-    ctrl_vif.use_merge       <= 1'b1;
-    ctrl_vif.enable_dma      <= 1'b0;
-    ctrl_vif.feb_enable_mask <= 4'hf;
-    ctrl_vif.lookup_ctrl     <= '0;
-    ctrl_vif.get_n_words     <= plan.expected_word_count;
-    ctrl_vif.enable_dma      <= 1'b1;
+    ctrl_vif.use_merge          <= 1'b1;
+    ctrl_vif.enable_dma         <= 1'b0;
+    ctrl_vif.feb_enable_mask    <= 4'hf;
+    ctrl_vif.lookup_ctrl        <= '0;
+    ctrl_vif.get_n_words        <= plan.expected_word_count;
+    ctrl_vif.enable_dma         <= 1'b1;
 
     `uvm_info(
       "CASE_2ENV",

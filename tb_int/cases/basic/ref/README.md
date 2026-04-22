@@ -1,6 +1,6 @@
 # `tb_int/cases/basic/ref`
 
-Simulatorless fallback for the basic SWB/OPQ bring-up case.
+Simulatorless replay-generator and reference bundle for the basic SWB/OPQ bring-up case.
 
 What it does:
 

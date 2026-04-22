@@ -5,8 +5,9 @@
 -- Date      : 20260421
 -- Change    : Plain mixed-language SWB replay bench. This mirrors the
 --             quartus_system-style deterministic harness: read replay vectors
---             from the basic reference flow, drive the narrow SWB wrapper, and
---             compare normalized DMA payload words without UVM.
+--             from the basic reference flow, drive the narrow SWB wrapper,
+--             capture the observed normalized DMA words, and leave semantic
+--             hit comparison to the post-run checker.
 -- -----------------------------------------------------------------------------
 
 library ieee;
@@ -21,15 +22,19 @@ use work.util.all;
 
 entity tb_swb_block_plain_replay is
 generic (
-    G_REPLAY_DIR            : string := ".";
-    G_TIMEOUT_PADDING_CYCLES: natural := 50000;
-    G_SETTLE_CYCLES         : natural := 16
+    G_REPLAY_DIR             : string := ".";
+    G_ACTUAL_OPQ_PATH        : string := "actual_opq_words.mem";
+    G_ACTUAL_DMA_PATH        : string := "actual_dma_words.mem";
+    G_USE_MERGE              : std_logic := '0';
+    G_TIMEOUT_PADDING_CYCLES : natural := 50000;
+    G_SETTLE_CYCLES          : natural := 16
 );
 end entity;
 
 architecture rtl of tb_swb_block_plain_replay is
 
     constant C_CLK_PERIOD : time := 4 ns;
+    constant C_DMA_PADDING_WORD : std_logic_vector(255 downto 0) := (others => '1');
 
     signal clk             : std_logic := '0';
     signal reset_n         : std_logic := '0';
@@ -37,11 +42,14 @@ architecture rtl of tb_swb_block_plain_replay is
     signal feb_datak       : std_logic_vector(15 downto 0) := (others => '0');
     signal feb_valid       : std_logic_vector(3 downto 0) := (others => '0');
     signal feb_enable_mask : std_logic_vector(3 downto 0) := (others => '1');
-    signal use_merge       : std_logic := '1';
+    signal use_merge       : std_logic := G_USE_MERGE;
     signal enable_dma      : std_logic := '0';
     signal get_n_words     : std_logic_vector(31 downto 0) := (others => '0');
     signal lookup_ctrl     : std_logic_vector(31 downto 0) := (others => '0');
     signal dma_half_full   : std_logic := '0';
+    signal opq_data        : std_logic_vector(31 downto 0);
+    signal opq_datak       : std_logic_vector(3 downto 0);
+    signal opq_valid       : std_logic;
     signal dma_data        : std_logic_vector(255 downto 0);
     signal dma_wren        : std_logic;
     signal end_of_event    : std_logic;
@@ -133,6 +141,9 @@ begin
         get_n_words     => get_n_words,
         lookup_ctrl     => lookup_ctrl,
         dma_half_full   => dma_half_full,
+        opq_data        => opq_data,
+        opq_datak       => opq_datak,
+        opq_valid       => opq_valid,
         dma_data        => dma_data,
         dma_wren        => dma_wren,
         end_of_event    => end_of_event,
@@ -173,6 +184,9 @@ begin
                 severity failure;
 
             wait until reset_n = '1';
+            -- Align replay launch to the SWB datapath reset domain, which is
+            -- released one clock after the top-level wrapper reset.
+            wait until rising_edge(clk);
 
             while not endfile(replay_file) loop
                 readline(replay_file, l);
@@ -197,11 +211,14 @@ begin
     end generate;
 
     proc_check : process
-        file expected_file           : text;
-        variable fs                  : file_open_status;
-        variable l                   : line;
-        variable expected_word       : std_logic_vector(255 downto 0);
-        variable good                : boolean;
+        file opq_file                : text;
+        variable opq_fs              : file_open_status;
+        variable opq_line            : line;
+        variable opq_word            : std_logic_vector(36 downto 0);
+        file actual_file             : text;
+        variable actual_fs           : file_open_status;
+        variable actual_line         : line;
+        variable dma_word_raw        : std_logic_vector(255 downto 0);
         variable recv_words          : natural := 0;
         variable padding_words       : natural := 0;
         variable timeout_cycles      : natural := 0;
@@ -209,6 +226,8 @@ begin
         variable saw_end_of_event_v  : boolean := false;
         variable expected_word_count : natural := 0;
         constant c_expected_path     : string := replay_path(G_REPLAY_DIR, "expected_dma_words.mem");
+        constant c_actual_opq_path   : string := G_ACTUAL_OPQ_PATH;
+        constant c_actual_path       : string := G_ACTUAL_DMA_PATH;
     begin
         expected_word_count := count_hex_lines(c_expected_path);
         assert expected_word_count > 0
@@ -218,9 +237,14 @@ begin
         get_n_words <= std_logic_vector(to_unsigned(expected_word_count, get_n_words'length));
         enable_dma  <= '0';
 
-        file_open(fs, expected_file, c_expected_path, read_mode);
-        assert fs = open_ok
-            report "Unable to open expected DMA file " & c_expected_path
+        file_open(actual_fs, actual_file, c_actual_path, write_mode);
+        assert actual_fs = open_ok
+            report "Unable to open actual DMA capture file " & c_actual_path
+            severity failure;
+
+        file_open(opq_fs, opq_file, c_actual_opq_path, write_mode);
+        assert opq_fs = open_ok
+            report "Unable to open actual OPQ capture file " & c_actual_opq_path
             severity failure;
 
         wait until reset_n = '1';
@@ -231,22 +255,18 @@ begin
         while timeout_cycles /= 0 loop
             wait until rising_edge(clk);
 
-            if dma_wren = '1' then
-                if recv_words < expected_word_count then
-                    readline(expected_file, l);
-                    read_hex(l, expected_word, good);
-                    assert good
-                        report "Malformed expected DMA line in " & c_expected_path
-                        severity failure;
+            if opq_valid = '1' then
+                opq_word := '1' & opq_datak & opq_data;
+                hwrite(opq_line, opq_word);
+                writeline(opq_file, opq_line);
+            end if;
 
-                    assert normalize_dma_word(dma_data) = expected_word
-                        report "DMA mismatch expected="
-                            & work.util.to_hstring(expected_word)
-                            & " actual="
-                            & work.util.to_hstring(normalize_dma_word(dma_data))
-                            & " raw="
-                            & work.util.to_hstring(dma_data)
-                        severity failure;
+            if dma_wren = '1' then
+                dma_word_raw := dma_data;
+                hwrite(actual_line, dma_word_raw);
+                writeline(actual_file, actual_line);
+
+                if dma_word_raw /= C_DMA_PADDING_WORD then
                     recv_words := recv_words + 1;
                 else
                     padding_words := padding_words + 1;
@@ -267,19 +287,17 @@ begin
 
         while settle_cycles < G_SETTLE_CYCLES loop
             wait until rising_edge(clk);
+            if opq_valid = '1' then
+                opq_word := '1' & opq_datak & opq_data;
+                hwrite(opq_line, opq_word);
+                writeline(opq_file, opq_line);
+            end if;
             if dma_wren = '1' then
-                if recv_words < expected_word_count then
-                    readline(expected_file, l);
-                    read_hex(l, expected_word, good);
-                    assert good
-                        report "Malformed expected DMA line in settle window"
-                        severity failure;
-                    assert normalize_dma_word(dma_data) = expected_word
-                        report "DMA mismatch in settle window expected="
-                            & work.util.to_hstring(expected_word)
-                            & " actual="
-                            & work.util.to_hstring(normalize_dma_word(dma_data))
-                            severity failure;
+                dma_word_raw := dma_data;
+                hwrite(actual_line, dma_word_raw);
+                writeline(actual_file, actual_line);
+
+                if dma_word_raw /= C_DMA_PADDING_WORD then
                     recv_words := recv_words + 1;
                 else
                     padding_words := padding_words + 1;
@@ -292,7 +310,8 @@ begin
         end loop;
 
         enable_dma <= '0';
-        file_close(expected_file);
+        file_close(opq_file);
+        file_close(actual_file);
 
         assert recv_words = expected_word_count
             report "Expected "
@@ -309,9 +328,13 @@ begin
             & integer'image(expected_word_count)
             & " padding_words="
             & integer'image(padding_words)
+            & " use_merge="
+            & std_logic'image(use_merge)
             & " replay_dir="
             & G_REPLAY_DIR
-            severity note;
+            & " actual_dma_path="
+            & c_actual_path
+        severity note;
 
         finish;
         wait;

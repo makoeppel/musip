@@ -4,7 +4,8 @@
 -- Version   : 26.3.6
 -- Date      : 20260421
 -- Change    : Expose a narrow UVM-facing seam for the SWB OPQ datapath: 4 FEB
---             ingress lanes, DMA egress, and the minimal readout controls.
+--             ingress lanes, merged OPQ egress debug, DMA egress, and the
+--             minimal readout controls.
 -- -----------------------------------------------------------------------------
 
 library ieee;
@@ -28,6 +29,9 @@ port (
     get_n_words        : in std_logic_vector(31 downto 0);
     lookup_ctrl        : in std_logic_vector(31 downto 0);
     dma_half_full      : in std_logic;
+    opq_data           : out std_logic_vector(31 downto 0);
+    opq_datak          : out std_logic_vector(3 downto 0);
+    opq_valid          : out std_logic;
     dma_data           : out std_logic_vector(255 downto 0);
     dma_wren           : out std_logic;
     end_of_event       : out std_logic;
@@ -93,6 +97,9 @@ begin
         o_rmem_we       => open,
 
         i_dmamemhalffull    => dma_half_full,
+        o_opq_data          => opq_data,
+        o_opq_datak         => opq_datak,
+        o_opq_valid         => opq_valid,
         o_dma_wren          => dma_wren,
         o_endofevent        => end_of_event,
         o_dma_data          => dma_data,

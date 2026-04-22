@@ -11,6 +11,7 @@ module tb_top;
   feb_ingress_if feb_if2(clk);
   feb_ingress_if feb_if3(clk);
   dma_sink_if    dma_if(clk);
+  opq_egress_if  opq_if(clk);
   swb_ctrl_if    ctrl_if(clk);
 
   always #2ns clk = ~clk;
@@ -42,6 +43,9 @@ module tb_top;
     .get_n_words     (ctrl_if.get_n_words),
     .lookup_ctrl     (ctrl_if.lookup_ctrl),
     .dma_half_full   (ctrl_if.dma_half_full),
+    .opq_data        (opq_if.data),
+    .opq_datak       (opq_if.datak),
+    .opq_valid       (opq_if.valid),
     .dma_data        (dma_if.data),
     .dma_wren        (dma_if.wren),
     .end_of_event    (dma_if.end_of_event),
@@ -80,6 +84,7 @@ module tb_top;
     uvm_config_db#(virtual feb_ingress_if)::set(null, "uvm_test_top.env.ingress_agent_1*", "vif", feb_if1);
     uvm_config_db#(virtual feb_ingress_if)::set(null, "uvm_test_top.env.ingress_agent_2*", "vif", feb_if2);
     uvm_config_db#(virtual feb_ingress_if)::set(null, "uvm_test_top.env.ingress_agent_3*", "vif", feb_if3);
+    uvm_config_db#(virtual opq_egress_if)::set(null, "uvm_test_top.env.opq_monitor*", "vif", opq_if);
     uvm_config_db#(virtual dma_sink_if)::set(null, "uvm_test_top.env.dma_monitor*", "vif", dma_if);
     run_test("swb_basic_test");
   end
