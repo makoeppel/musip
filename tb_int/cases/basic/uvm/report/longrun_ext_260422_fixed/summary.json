@@ -1,0 +1,4629 @@
+{
+  "runs_requested": 256,
+  "runs_executed": 256,
+  "frames": 2,
+  "rate_min": 0.0,
+  "rate_max": 0.5,
+  "rate_step": 0.1,
+  "rate_grid": [
+    0.0,
+    0.1,
+    0.2,
+    0.3,
+    0.4,
+    0.5
+  ],
+  "campaign_seed": 260422,
+  "pass_count": 256,
+  "fail_count": 0,
+  "results": [
+    {
+      "run_id": 0,
+      "case_seed": 716815257,
+      "rates": [
+        0.0,
+        0.5,
+        0.2,
+        0.4
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_000.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 1,
+      "case_seed": 807437913,
+      "rates": [
+        0.4,
+        0.4,
+        0.0,
+        0.4
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_001.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 2,
+      "case_seed": 1721307344,
+      "rates": [
+        0.0,
+        0.3,
+        0.1,
+        0.4
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_002.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 3,
+      "case_seed": 1579123322,
+      "rates": [
+        0.0,
+        0.4,
+        0.3,
+        0.2
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_003.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 4,
+      "case_seed": 757161809,
+      "rates": [
+        0.5,
+        0.3,
+        0.1,
+        0.5
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_004.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 5,
+      "case_seed": 1323676986,
+      "rates": [
+        0.4,
+        0.3,
+        0.2,
+        0.0
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_005.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 6,
+      "case_seed": 823306528,
+      "rates": [
+        0.4,
+        0.0,
+        0.4,
+        0.5
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_006.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 7,
+      "case_seed": 1238163127,
+      "rates": [
+        0.4,
+        0.2,
+        0.3,
+        0.2
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_007.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 8,
+      "case_seed": 1857725170,
+      "rates": [
+        0.0,
+        0.5,
+        0.3,
+        0.3
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_008.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 9,
+      "case_seed": 306120006,
+      "rates": [
+        0.2,
+        0.3,
+        0.3,
+        0.5
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_009.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 10,
+      "case_seed": 1697643887,
+      "rates": [
+        0.5,
+        0.5,
+        0.4,
+        0.0
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_010.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 11,
+      "case_seed": 1275373352,
+      "rates": [
+        0.1,
+        0.5,
+        0.3,
+        0.5
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_011.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 12,
+      "case_seed": 1667953476,
+      "rates": [
+        0.1,
+        0.1,
+        0.1,
+        0.5
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_012.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 13,
+      "case_seed": 1879961255,
+      "rates": [
+        0.4,
+        0.5,
+        0.2,
+        0.4
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_013.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 14,
+      "case_seed": 1232340544,
+      "rates": [
+        0.4,
+        0.2,
+        0.0,
+        0.5
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_014.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 15,
+      "case_seed": 1989848831,
+      "rates": [
+        0.3,
+        0.5,
+        0.5,
+        0.5
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_015.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 16,
+      "case_seed": 1378294571,
+      "rates": [
+        0.3,
+        0.1,
+        0.3,
+        0.0
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_016.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 17,
+      "case_seed": 1080147087,
+      "rates": [
+        0.5,
+        0.1,
+        0.5,
+        0.0
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_017.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 18,
+      "case_seed": 380775275,
+      "rates": [
+        0.5,
+        0.0,
+        0.2,
+        0.5
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_018.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 19,
+      "case_seed": 1373376778,
+      "rates": [
+        0.3,
+        0.5,
+        0.2,
+        0.1
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_019.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 20,
+      "case_seed": 1466629774,
+      "rates": [
+        0.3,
+        0.3,
+        0.0,
+        0.3
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_020.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 21,
+      "case_seed": 2019524439,
+      "rates": [
+        0.0,
+        0.2,
+        0.1,
+        0.0
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_021.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 22,
+      "case_seed": 490087588,
+      "rates": [
+        0.0,
+        0.4,
+        0.2,
+        0.0
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_022.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 23,
+      "case_seed": 1693367502,
+      "rates": [
+        0.3,
+        0.4,
+        0.5,
+        0.0
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_023.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 24,
+      "case_seed": 281567246,
+      "rates": [
+        0.5,
+        0.2,
+        0.0,
+        0.1
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_024.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 25,
+      "case_seed": 1919552534,
+      "rates": [
+        0.1,
+        0.4,
+        0.3,
+        0.1
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_025.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 26,
+      "case_seed": 437942804,
+      "rates": [
+        0.1,
+        0.2,
+        0.0,
+        0.2
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_026.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 27,
+      "case_seed": 434609836,
+      "rates": [
+        0.2,
+        0.5,
+        0.2,
+        0.0
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_027.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 28,
+      "case_seed": 2097519791,
+      "rates": [
+        0.4,
+        0.3,
+        0.0,
+        0.4
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_028.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 29,
+      "case_seed": 843306920,
+      "rates": [
+        0.3,
+        0.4,
+        0.3,
+        0.2
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_029.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 30,
+      "case_seed": 1938453141,
+      "rates": [
+        0.3,
+        0.0,
+        0.2,
+        0.5
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_030.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 31,
+      "case_seed": 1925658365,
+      "rates": [
+        0.1,
+        0.0,
+        0.0,
+        0.4
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_031.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 32,
+      "case_seed": 1013302361,
+      "rates": [
+        0.5,
+        0.5,
+        0.3,
+        0.3
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_032.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 33,
+      "case_seed": 1461406163,
+      "rates": [
+        0.3,
+        0.2,
+        0.0,
+        0.4
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_033.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 34,
+      "case_seed": 910654616,
+      "rates": [
+        0.2,
+        0.2,
+        0.2,
+        0.0
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_034.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 35,
+      "case_seed": 366693585,
+      "rates": [
+        0.5,
+        0.0,
+        0.4,
+        0.1
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_035.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 36,
+      "case_seed": 1985259425,
+      "rates": [
+        0.2,
+        0.0,
+        0.2,
+        0.3
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_036.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 37,
+      "case_seed": 1175244281,
+      "rates": [
+        0.1,
+        0.4,
+        0.0,
+        0.0
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_037.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 38,
+      "case_seed": 393638637,
+      "rates": [
+        0.2,
+        0.0,
+        0.1,
+        0.2
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_038.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 39,
+      "case_seed": 346909441,
+      "rates": [
+        0.0,
+        0.0,
+        0.3,
+        0.1
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_039.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 40,
+      "case_seed": 692592963,
+      "rates": [
+        0.5,
+        0.0,
+        0.5,
+        0.1
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_040.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 41,
+      "case_seed": 779476009,
+      "rates": [
+        0.3,
+        0.3,
+        0.4,
+        0.1
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_041.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 42,
+      "case_seed": 719985551,
+      "rates": [
+        0.3,
+        0.3,
+        0.5,
+        0.0
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_042.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 43,
+      "case_seed": 718864425,
+      "rates": [
+        0.4,
+        0.5,
+        0.3,
+        0.0
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_043.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 44,
+      "case_seed": 1949938494,
+      "rates": [
+        0.4,
+        0.1,
+        0.4,
+        0.3
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_044.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 45,
+      "case_seed": 850274456,
+      "rates": [
+        0.1,
+        0.2,
+        0.5,
+        0.5
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_045.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 46,
+      "case_seed": 1056663113,
+      "rates": [
+        0.1,
+        0.0,
+        0.2,
+        0.1
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_046.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 47,
+      "case_seed": 158719064,
+      "rates": [
+        0.5,
+        0.3,
+        0.5,
+        0.1
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_047.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 48,
+      "case_seed": 1428354425,
+      "rates": [
+        0.4,
+        0.2,
+        0.1,
+        0.2
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_048.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 49,
+      "case_seed": 946882666,
+      "rates": [
+        0.2,
+        0.4,
+        0.5,
+        0.0
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_049.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 50,
+      "case_seed": 1115100502,
+      "rates": [
+        0.4,
+        0.3,
+        0.4,
+        0.3
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_050.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 51,
+      "case_seed": 2004431601,
+      "rates": [
+        0.5,
+        0.5,
+        0.1,
+        0.5
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_051.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 52,
+      "case_seed": 1351816482,
+      "rates": [
+        0.0,
+        0.1,
+        0.4,
+        0.2
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_052.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 53,
+      "case_seed": 86863554,
+      "rates": [
+        0.1,
+        0.0,
+        0.5,
+        0.2
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_053.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 54,
+      "case_seed": 2128878533,
+      "rates": [
+        0.2,
+        0.5,
+        0.2,
+        0.2
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_054.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 55,
+      "case_seed": 362925747,
+      "rates": [
+        0.2,
+        0.5,
+        0.5,
+        0.1
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_055.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 56,
+      "case_seed": 1791898662,
+      "rates": [
+        0.5,
+        0.4,
+        0.0,
+        0.3
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_056.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 57,
+      "case_seed": 504335143,
+      "rates": [
+        0.4,
+        0.5,
+        0.0,
+        0.2
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_057.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 58,
+      "case_seed": 84814984,
+      "rates": [
+        0.4,
+        0.4,
+        0.4,
+        0.0
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_058.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 59,
+      "case_seed": 1573846698,
+      "rates": [
+        0.4,
+        0.1,
+        0.0,
+        0.4
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_059.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 60,
+      "case_seed": 599573957,
+      "rates": [
+        0.3,
+        0.3,
+        0.2,
+        0.2
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_060.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 61,
+      "case_seed": 1547971831,
+      "rates": [
+        0.4,
+        0.0,
+        0.1,
+        0.1
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_061.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 62,
+      "case_seed": 260729950,
+      "rates": [
+        0.3,
+        0.4,
+        0.2,
+        0.1
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_062.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 63,
+      "case_seed": 1429095909,
+      "rates": [
+        0.4,
+        0.2,
+        0.0,
+        0.2
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_063.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 64,
+      "case_seed": 773598744,
+      "rates": [
+        0.3,
+        0.3,
+        0.1,
+        0.1
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_064.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 65,
+      "case_seed": 1441177489,
+      "rates": [
+        0.1,
+        0.0,
+        0.5,
+        0.4
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_065.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 66,
+      "case_seed": 1432061868,
+      "rates": [
+        0.4,
+        0.2,
+        0.5,
+        0.0
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_066.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 67,
+      "case_seed": 1512830606,
+      "rates": [
+        0.1,
+        0.5,
+        0.2,
+        0.1
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_067.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 68,
+      "case_seed": 1322932519,
+      "rates": [
+        0.5,
+        0.2,
+        0.1,
+        0.5
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_068.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 69,
+      "case_seed": 43460790,
+      "rates": [
+        0.3,
+        0.0,
+        0.4,
+        0.0
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_069.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 70,
+      "case_seed": 458849346,
+      "rates": [
+        0.1,
+        0.3,
+        0.0,
+        0.1
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_070.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 71,
+      "case_seed": 1615783196,
+      "rates": [
+        0.2,
+        0.5,
+        0.5,
+        0.2
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_071.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 72,
+      "case_seed": 769429912,
+      "rates": [
+        0.3,
+        0.2,
+        0.5,
+        0.4
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_072.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 73,
+      "case_seed": 362747588,
+      "rates": [
+        0.1,
+        0.0,
+        0.4,
+        0.4
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_073.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 74,
+      "case_seed": 142873073,
+      "rates": [
+        0.3,
+        0.0,
+        0.5,
+        0.3
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_074.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 75,
+      "case_seed": 435406456,
+      "rates": [
+        0.4,
+        0.1,
+        0.4,
+        0.5
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_075.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 76,
+      "case_seed": 410705708,
+      "rates": [
+        0.4,
+        0.3,
+        0.2,
+        0.5
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_076.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 77,
+      "case_seed": 798564055,
+      "rates": [
+        0.4,
+        0.4,
+        0.5,
+        0.3
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_077.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 78,
+      "case_seed": 1913549971,
+      "rates": [
+        0.0,
+        0.0,
+        0.0,
+        0.5
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_078.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 79,
+      "case_seed": 612370467,
+      "rates": [
+        0.4,
+        0.4,
+        0.1,
+        0.1
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_079.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 80,
+      "case_seed": 1714030537,
+      "rates": [
+        0.4,
+        0.4,
+        0.3,
+        0.5
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_080.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 81,
+      "case_seed": 1811973579,
+      "rates": [
+        0.4,
+        0.3,
+        0.5,
+        0.1
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_081.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 82,
+      "case_seed": 1197327400,
+      "rates": [
+        0.2,
+        0.4,
+        0.5,
+        0.1
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_082.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 83,
+      "case_seed": 756901288,
+      "rates": [
+        0.2,
+        0.4,
+        0.5,
+        0.3
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_083.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 84,
+      "case_seed": 338758753,
+      "rates": [
+        0.5,
+        0.1,
+        0.3,
+        0.0
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_084.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 85,
+      "case_seed": 531317215,
+      "rates": [
+        0.3,
+        0.4,
+        0.1,
+        0.0
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_085.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 86,
+      "case_seed": 2103606497,
+      "rates": [
+        0.3,
+        0.0,
+        0.4,
+        0.5
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_086.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 87,
+      "case_seed": 1293193555,
+      "rates": [
+        0.5,
+        0.1,
+        0.2,
+        0.0
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_087.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 88,
+      "case_seed": 338667997,
+      "rates": [
+        0.1,
+        0.3,
+        0.0,
+        0.3
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_088.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 89,
+      "case_seed": 410534962,
+      "rates": [
+        0.3,
+        0.2,
+        0.2,
+        0.3
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_089.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 90,
+      "case_seed": 857152505,
+      "rates": [
+        0.4,
+        0.2,
+        0.4,
+        0.3
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_090.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 91,
+      "case_seed": 692103837,
+      "rates": [
+        0.0,
+        0.4,
+        0.4,
+        0.5
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_091.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 92,
+      "case_seed": 919825569,
+      "rates": [
+        0.4,
+        0.4,
+        0.1,
+        0.3
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_092.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 93,
+      "case_seed": 1620100769,
+      "rates": [
+        0.1,
+        0.3,
+        0.5,
+        0.3
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_093.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 94,
+      "case_seed": 610704845,
+      "rates": [
+        0.2,
+        0.5,
+        0.1,
+        0.1
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_094.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 95,
+      "case_seed": 771385458,
+      "rates": [
+        0.1,
+        0.2,
+        0.2,
+        0.1
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_095.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 96,
+      "case_seed": 175340881,
+      "rates": [
+        0.0,
+        0.1,
+        0.5,
+        0.2
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_096.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 97,
+      "case_seed": 103173023,
+      "rates": [
+        0.3,
+        0.4,
+        0.2,
+        0.2
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_097.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 98,
+      "case_seed": 1343738116,
+      "rates": [
+        0.2,
+        0.3,
+        0.3,
+        0.4
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_098.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 99,
+      "case_seed": 1938246532,
+      "rates": [
+        0.1,
+        0.1,
+        0.5,
+        0.4
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_099.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 100,
+      "case_seed": 1491638443,
+      "rates": [
+        0.3,
+        0.5,
+        0.5,
+        0.1
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_100.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 101,
+      "case_seed": 1303493172,
+      "rates": [
+        0.1,
+        0.4,
+        0.3,
+        0.0
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_101.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 102,
+      "case_seed": 1722385062,
+      "rates": [
+        0.2,
+        0.3,
+        0.0,
+        0.1
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_102.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 103,
+      "case_seed": 132101144,
+      "rates": [
+        0.1,
+        0.4,
+        0.3,
+        0.3
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_103.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 104,
+      "case_seed": 1841820638,
+      "rates": [
+        0.5,
+        0.0,
+        0.1,
+        0.4
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_104.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 105,
+      "case_seed": 725488705,
+      "rates": [
+        0.2,
+        0.1,
+        0.3,
+        0.3
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_105.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 106,
+      "case_seed": 451929276,
+      "rates": [
+        0.5,
+        0.2,
+        0.3,
+        0.1
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_106.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 107,
+      "case_seed": 1668415989,
+      "rates": [
+        0.0,
+        0.0,
+        0.1,
+        0.4
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_107.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 108,
+      "case_seed": 737321443,
+      "rates": [
+        0.4,
+        0.3,
+        0.1,
+        0.3
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_108.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 109,
+      "case_seed": 1164978943,
+      "rates": [
+        0.4,
+        0.4,
+        0.5,
+        0.2
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_109.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 110,
+      "case_seed": 437474064,
+      "rates": [
+        0.1,
+        0.0,
+        0.4,
+        0.1
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_110.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 111,
+      "case_seed": 1714571213,
+      "rates": [
+        0.3,
+        0.5,
+        0.2,
+        0.3
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_111.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 112,
+      "case_seed": 1035321223,
+      "rates": [
+        0.2,
+        0.3,
+        0.2,
+        0.3
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_112.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 113,
+      "case_seed": 1963063885,
+      "rates": [
+        0.1,
+        0.3,
+        0.0,
+        0.0
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_113.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 114,
+      "case_seed": 601493200,
+      "rates": [
+        0.1,
+        0.4,
+        0.3,
+        0.2
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_114.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 115,
+      "case_seed": 1214291234,
+      "rates": [
+        0.3,
+        0.3,
+        0.3,
+        0.2
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_115.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 116,
+      "case_seed": 812080995,
+      "rates": [
+        0.2,
+        0.2,
+        0.4,
+        0.4
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_116.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 117,
+      "case_seed": 97091226,
+      "rates": [
+        0.2,
+        0.4,
+        0.2,
+        0.5
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_117.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 118,
+      "case_seed": 1695953405,
+      "rates": [
+        0.1,
+        0.1,
+        0.1,
+        0.0
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_118.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 119,
+      "case_seed": 179443154,
+      "rates": [
+        0.0,
+        0.3,
+        0.1,
+        0.5
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_119.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 120,
+      "case_seed": 5559878,
+      "rates": [
+        0.4,
+        0.5,
+        0.4,
+        0.1
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_120.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 121,
+      "case_seed": 658921518,
+      "rates": [
+        0.4,
+        0.5,
+        0.0,
+        0.3
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_121.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 122,
+      "case_seed": 1234094561,
+      "rates": [
+        0.5,
+        0.3,
+        0.2,
+        0.2
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_122.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 123,
+      "case_seed": 703138451,
+      "rates": [
+        0.2,
+        0.0,
+        0.4,
+        0.3
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_123.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 124,
+      "case_seed": 600420147,
+      "rates": [
+        0.0,
+        0.4,
+        0.2,
+        0.5
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_124.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 125,
+      "case_seed": 1069452315,
+      "rates": [
+        0.2,
+        0.3,
+        0.4,
+        0.5
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_125.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 126,
+      "case_seed": 609422992,
+      "rates": [
+        0.2,
+        0.1,
+        0.0,
+        0.1
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_126.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 127,
+      "case_seed": 358401348,
+      "rates": [
+        0.4,
+        0.3,
+        0.4,
+        0.2
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_127.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 128,
+      "case_seed": 735206200,
+      "rates": [
+        0.3,
+        0.0,
+        0.5,
+        0.0
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_128.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 129,
+      "case_seed": 513884422,
+      "rates": [
+        0.4,
+        0.2,
+        0.1,
+        0.1
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_129.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 130,
+      "case_seed": 987984674,
+      "rates": [
+        0.1,
+        0.4,
+        0.1,
+        0.0
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_130.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 131,
+      "case_seed": 1539314946,
+      "rates": [
+        0.2,
+        0.2,
+        0.4,
+        0.2
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_131.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 132,
+      "case_seed": 680269283,
+      "rates": [
+        0.2,
+        0.5,
+        0.1,
+        0.3
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_132.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 133,
+      "case_seed": 1735444288,
+      "rates": [
+        0.0,
+        0.2,
+        0.1,
+        0.1
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_133.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 134,
+      "case_seed": 881020816,
+      "rates": [
+        0.2,
+        0.4,
+        0.0,
+        0.4
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_134.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 135,
+      "case_seed": 923980586,
+      "rates": [
+        0.2,
+        0.5,
+        0.2,
+        0.4
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_135.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 136,
+      "case_seed": 1258880235,
+      "rates": [
+        0.3,
+        0.0,
+        0.3,
+        0.4
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_136.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 137,
+      "case_seed": 1300657085,
+      "rates": [
+        0.2,
+        0.2,
+        0.0,
+        0.0
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_137.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 138,
+      "case_seed": 1491923409,
+      "rates": [
+        0.2,
+        0.2,
+        0.5,
+        0.0
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_138.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 139,
+      "case_seed": 1828387143,
+      "rates": [
+        0.1,
+        0.3,
+        0.1,
+        0.2
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_139.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 140,
+      "case_seed": 291857889,
+      "rates": [
+        0.2,
+        0.2,
+        0.1,
+        0.4
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_140.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 141,
+      "case_seed": 225034962,
+      "rates": [
+        0.5,
+        0.3,
+        0.3,
+        0.4
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_141.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 142,
+      "case_seed": 1339869499,
+      "rates": [
+        0.2,
+        0.1,
+        0.5,
+        0.0
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_142.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 143,
+      "case_seed": 210288080,
+      "rates": [
+        0.2,
+        0.1,
+        0.4,
+        0.1
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_143.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 144,
+      "case_seed": 1157446269,
+      "rates": [
+        0.5,
+        0.5,
+        0.4,
+        0.1
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_144.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 145,
+      "case_seed": 1310826672,
+      "rates": [
+        0.4,
+        0.3,
+        0.3,
+        0.3
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_145.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 146,
+      "case_seed": 89584760,
+      "rates": [
+        0.4,
+        0.4,
+        0.5,
+        0.5
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_146.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 147,
+      "case_seed": 1419094907,
+      "rates": [
+        0.3,
+        0.5,
+        0.5,
+        0.4
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_147.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 148,
+      "case_seed": 102392399,
+      "rates": [
+        0.3,
+        0.2,
+        0.2,
+        0.5
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_148.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 149,
+      "case_seed": 1222244645,
+      "rates": [
+        0.1,
+        0.3,
+        0.0,
+        0.5
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_149.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 150,
+      "case_seed": 1578958379,
+      "rates": [
+        0.4,
+        0.0,
+        0.1,
+        0.0
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_150.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 151,
+      "case_seed": 1102399629,
+      "rates": [
+        0.4,
+        0.3,
+        0.0,
+        0.0
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_151.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 152,
+      "case_seed": 1615449816,
+      "rates": [
+        0.5,
+        0.1,
+        0.0,
+        0.1
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_152.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 153,
+      "case_seed": 1004484358,
+      "rates": [
+        0.1,
+        0.1,
+        0.4,
+        0.0
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_153.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 154,
+      "case_seed": 1613109105,
+      "rates": [
+        0.5,
+        0.4,
+        0.0,
+        0.2
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_154.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 155,
+      "case_seed": 311798454,
+      "rates": [
+        0.3,
+        0.5,
+        0.3,
+        0.4
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_155.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 156,
+      "case_seed": 211151910,
+      "rates": [
+        0.0,
+        0.4,
+        0.5,
+        0.3
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_156.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 157,
+      "case_seed": 982632111,
+      "rates": [
+        0.0,
+        0.2,
+        0.1,
+        0.5
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_157.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 158,
+      "case_seed": 166207301,
+      "rates": [
+        0.1,
+        0.1,
+        0.5,
+        0.0
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_158.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 159,
+      "case_seed": 2033864142,
+      "rates": [
+        0.2,
+        0.2,
+        0.4,
+        0.5
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_159.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 160,
+      "case_seed": 1902886355,
+      "rates": [
+        0.1,
+        0.4,
+        0.3,
+        0.4
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_160.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 161,
+      "case_seed": 1557875558,
+      "rates": [
+        0.1,
+        0.2,
+        0.0,
+        0.1
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_161.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 162,
+      "case_seed": 568231518,
+      "rates": [
+        0.1,
+        0.2,
+        0.0,
+        0.5
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_162.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 163,
+      "case_seed": 816430387,
+      "rates": [
+        0.3,
+        0.3,
+        0.3,
+        0.1
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_163.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 164,
+      "case_seed": 551548563,
+      "rates": [
+        0.2,
+        0.4,
+        0.5,
+        0.4
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_164.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 165,
+      "case_seed": 75691733,
+      "rates": [
+        0.1,
+        0.4,
+        0.2,
+        0.4
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_165.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 166,
+      "case_seed": 1634604241,
+      "rates": [
+        0.4,
+        0.3,
+        0.3,
+        0.2
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_166.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 167,
+      "case_seed": 2104286632,
+      "rates": [
+        0.5,
+        0.1,
+        0.3,
+        0.5
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_167.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 168,
+      "case_seed": 571965858,
+      "rates": [
+        0.1,
+        0.4,
+        0.0,
+        0.1
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_168.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 169,
+      "case_seed": 2007331908,
+      "rates": [
+        0.3,
+        0.4,
+        0.3,
+        0.0
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_169.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 170,
+      "case_seed": 29828735,
+      "rates": [
+        0.4,
+        0.4,
+        0.2,
+        0.1
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_170.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 171,
+      "case_seed": 546927010,
+      "rates": [
+        0.4,
+        0.3,
+        0.3,
+        0.1
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_171.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 172,
+      "case_seed": 455101614,
+      "rates": [
+        0.2,
+        0.0,
+        0.3,
+        0.2
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_172.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 173,
+      "case_seed": 2019056411,
+      "rates": [
+        0.5,
+        0.3,
+        0.0,
+        0.1
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_173.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 174,
+      "case_seed": 1266350501,
+      "rates": [
+        0.4,
+        0.4,
+        0.3,
+        0.0
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_174.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 175,
+      "case_seed": 32807926,
+      "rates": [
+        0.0,
+        0.2,
+        0.5,
+        0.5
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_175.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 176,
+      "case_seed": 1421448691,
+      "rates": [
+        0.1,
+        0.3,
+        0.5,
+        0.0
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_176.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 177,
+      "case_seed": 62404245,
+      "rates": [
+        0.2,
+        0.2,
+        0.5,
+        0.2
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_177.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 178,
+      "case_seed": 894924140,
+      "rates": [
+        0.2,
+        0.3,
+        0.0,
+        0.3
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_178.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 179,
+      "case_seed": 1990536302,
+      "rates": [
+        0.3,
+        0.4,
+        0.0,
+        0.1
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_179.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 180,
+      "case_seed": 1600288694,
+      "rates": [
+        0.0,
+        0.2,
+        0.4,
+        0.3
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_180.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 181,
+      "case_seed": 2039160510,
+      "rates": [
+        0.3,
+        0.0,
+        0.0,
+        0.4
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_181.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 182,
+      "case_seed": 1651641225,
+      "rates": [
+        0.1,
+        0.5,
+        0.0,
+        0.2
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_182.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 183,
+      "case_seed": 1441773115,
+      "rates": [
+        0.0,
+        0.2,
+        0.4,
+        0.2
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_183.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 184,
+      "case_seed": 1182588403,
+      "rates": [
+        0.5,
+        0.1,
+        0.1,
+        0.2
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_184.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 185,
+      "case_seed": 1871652865,
+      "rates": [
+        0.5,
+        0.4,
+        0.3,
+        0.2
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_185.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 186,
+      "case_seed": 1684488417,
+      "rates": [
+        0.2,
+        0.0,
+        0.5,
+        0.3
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_186.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 187,
+      "case_seed": 287819175,
+      "rates": [
+        0.5,
+        0.4,
+        0.0,
+        0.0
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_187.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 188,
+      "case_seed": 743123655,
+      "rates": [
+        0.5,
+        0.5,
+        0.2,
+        0.0
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_188.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 189,
+      "case_seed": 2017856548,
+      "rates": [
+        0.1,
+        0.4,
+        0.2,
+        0.2
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_189.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 190,
+      "case_seed": 637422867,
+      "rates": [
+        0.0,
+        0.1,
+        0.3,
+        0.2
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_190.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 191,
+      "case_seed": 1770330965,
+      "rates": [
+        0.3,
+        0.0,
+        0.3,
+        0.5
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_191.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 192,
+      "case_seed": 884289890,
+      "rates": [
+        0.4,
+        0.4,
+        0.2,
+        0.2
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_192.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 193,
+      "case_seed": 1423134103,
+      "rates": [
+        0.5,
+        0.3,
+        0.2,
+        0.5
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_193.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 194,
+      "case_seed": 400998799,
+      "rates": [
+        0.0,
+        0.4,
+        0.2,
+        0.1
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_194.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 195,
+      "case_seed": 117198830,
+      "rates": [
+        0.4,
+        0.1,
+        0.2,
+        0.3
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_195.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 196,
+      "case_seed": 945781699,
+      "rates": [
+        0.1,
+        0.2,
+        0.3,
+        0.4
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_196.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 197,
+      "case_seed": 315180742,
+      "rates": [
+        0.3,
+        0.4,
+        0.4,
+        0.1
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_197.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 198,
+      "case_seed": 1771142188,
+      "rates": [
+        0.2,
+        0.5,
+        0.0,
+        0.2
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_198.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 199,
+      "case_seed": 1430437287,
+      "rates": [
+        0.3,
+        0.3,
+        0.4,
+        0.4
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_199.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 200,
+      "case_seed": 532641161,
+      "rates": [
+        0.0,
+        0.1,
+        0.0,
+        0.2
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_200.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 201,
+      "case_seed": 125524185,
+      "rates": [
+        0.3,
+        0.1,
+        0.2,
+        0.3
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_201.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 202,
+      "case_seed": 98132406,
+      "rates": [
+        0.0,
+        0.1,
+        0.3,
+        0.3
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_202.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 203,
+      "case_seed": 2073349863,
+      "rates": [
+        0.0,
+        0.1,
+        0.1,
+        0.2
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_203.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 204,
+      "case_seed": 1953654833,
+      "rates": [
+        0.5,
+        0.5,
+        0.3,
+        0.0
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_204.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 205,
+      "case_seed": 944533731,
+      "rates": [
+        0.3,
+        0.4,
+        0.2,
+        0.3
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_205.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 206,
+      "case_seed": 897216353,
+      "rates": [
+        0.2,
+        0.0,
+        0.3,
+        0.3
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_206.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 207,
+      "case_seed": 1989193003,
+      "rates": [
+        0.4,
+        0.5,
+        0.2,
+        0.0
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_207.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 208,
+      "case_seed": 1598690147,
+      "rates": [
+        0.3,
+        0.2,
+        0.1,
+        0.5
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_208.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 209,
+      "case_seed": 1929500583,
+      "rates": [
+        0.3,
+        0.1,
+        0.1,
+        0.2
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_209.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 210,
+      "case_seed": 1444329264,
+      "rates": [
+        0.1,
+        0.0,
+        0.0,
+        0.1
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_210.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 211,
+      "case_seed": 1878700962,
+      "rates": [
+        0.5,
+        0.0,
+        0.0,
+        0.1
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_211.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 212,
+      "case_seed": 1066721399,
+      "rates": [
+        0.4,
+        0.3,
+        0.0,
+        0.1
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_212.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 213,
+      "case_seed": 1510995415,
+      "rates": [
+        0.3,
+        0.2,
+        0.3,
+        0.0
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_213.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 214,
+      "case_seed": 789023123,
+      "rates": [
+        0.4,
+        0.5,
+        0.4,
+        0.2
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_214.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 215,
+      "case_seed": 1447492442,
+      "rates": [
+        0.3,
+        0.1,
+        0.0,
+        0.0
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_215.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 216,
+      "case_seed": 1707444787,
+      "rates": [
+        0.5,
+        0.0,
+        0.2,
+        0.1
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_216.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 217,
+      "case_seed": 1087007184,
+      "rates": [
+        0.1,
+        0.0,
+        0.2,
+        0.2
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_217.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 218,
+      "case_seed": 2016971247,
+      "rates": [
+        0.2,
+        0.1,
+        0.1,
+        0.2
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_218.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 219,
+      "case_seed": 981490044,
+      "rates": [
+        0.2,
+        0.1,
+        0.1,
+        0.5
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_219.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 220,
+      "case_seed": 297533107,
+      "rates": [
+        0.5,
+        0.2,
+        0.1,
+        0.0
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_220.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 221,
+      "case_seed": 664342520,
+      "rates": [
+        0.0,
+        0.5,
+        0.5,
+        0.5
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_221.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 222,
+      "case_seed": 1765949824,
+      "rates": [
+        0.5,
+        0.4,
+        0.0,
+        0.5
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_222.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 223,
+      "case_seed": 692245099,
+      "rates": [
+        0.2,
+        0.4,
+        0.0,
+        0.2
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_223.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 224,
+      "case_seed": 1426997827,
+      "rates": [
+        0.2,
+        0.1,
+        0.0,
+        0.3
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_224.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 225,
+      "case_seed": 151751332,
+      "rates": [
+        0.0,
+        0.2,
+        0.2,
+        0.4
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_225.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 226,
+      "case_seed": 373296863,
+      "rates": [
+        0.2,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_226.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 227,
+      "case_seed": 1912196321,
+      "rates": [
+        0.5,
+        0.1,
+        0.2,
+        0.3
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_227.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 228,
+      "case_seed": 2018074467,
+      "rates": [
+        0.0,
+        0.0,
+        0.5,
+        0.4
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_228.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 229,
+      "case_seed": 2146173663,
+      "rates": [
+        0.4,
+        0.5,
+        0.1,
+        0.0
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_229.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 230,
+      "case_seed": 101983096,
+      "rates": [
+        0.2,
+        0.5,
+        0.2,
+        0.3
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_230.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 231,
+      "case_seed": 2094177155,
+      "rates": [
+        0.0,
+        0.2,
+        0.3,
+        0.5
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_231.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 232,
+      "case_seed": 2092800442,
+      "rates": [
+        0.5,
+        0.4,
+        0.2,
+        0.4
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_232.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 233,
+      "case_seed": 179222504,
+      "rates": [
+        0.0,
+        0.5,
+        0.2,
+        0.1
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_233.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 234,
+      "case_seed": 976628815,
+      "rates": [
+        0.2,
+        0.4,
+        0.3,
+        0.4
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_234.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 235,
+      "case_seed": 1925115637,
+      "rates": [
+        0.0,
+        0.0,
+        0.2,
+        0.3
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_235.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 236,
+      "case_seed": 2091169040,
+      "rates": [
+        0.0,
+        0.1,
+        0.4,
+        0.4
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_236.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 237,
+      "case_seed": 1653989826,
+      "rates": [
+        0.5,
+        0.4,
+        0.1,
+        0.0
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_237.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 238,
+      "case_seed": 1179308151,
+      "rates": [
+        0.1,
+        0.2,
+        0.5,
+        0.1
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_238.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 239,
+      "case_seed": 2065818931,
+      "rates": [
+        0.4,
+        0.2,
+        0.3,
+        0.4
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_239.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 240,
+      "case_seed": 2123879004,
+      "rates": [
+        0.0,
+        0.2,
+        0.5,
+        0.1
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_240.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 241,
+      "case_seed": 1035882335,
+      "rates": [
+        0.1,
+        0.0,
+        0.5,
+        0.3
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_241.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 242,
+      "case_seed": 1343885474,
+      "rates": [
+        0.5,
+        0.4,
+        0.2,
+        0.1
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_242.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 243,
+      "case_seed": 525587045,
+      "rates": [
+        0.3,
+        0.2,
+        0.3,
+        0.3
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_243.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 244,
+      "case_seed": 487988284,
+      "rates": [
+        0.1,
+        0.5,
+        0.0,
+        0.4
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_244.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 245,
+      "case_seed": 1016490232,
+      "rates": [
+        0.1,
+        0.3,
+        0.4,
+        0.1
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_245.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 246,
+      "case_seed": 1327604986,
+      "rates": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_246.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 247,
+      "case_seed": 1205281823,
+      "rates": [
+        0.5,
+        0.5,
+        0.0,
+        0.1
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_247.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 248,
+      "case_seed": 1709900435,
+      "rates": [
+        0.3,
+        0.1,
+        0.2,
+        0.2
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_248.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 249,
+      "case_seed": 255964901,
+      "rates": [
+        0.0,
+        0.0,
+        0.4,
+        0.1
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_249.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 250,
+      "case_seed": 215648089,
+      "rates": [
+        0.2,
+        0.1,
+        0.2,
+        0.4
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_250.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 251,
+      "case_seed": 2003672461,
+      "rates": [
+        0.5,
+        0.0,
+        0.4,
+        0.2
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_251.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 252,
+      "case_seed": 1655129243,
+      "rates": [
+        0.5,
+        0.4,
+        0.0,
+        0.4
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_252.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 253,
+      "case_seed": 147899189,
+      "rates": [
+        0.2,
+        0.2,
+        0.2,
+        0.4
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_253.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 254,
+      "case_seed": 1525952037,
+      "rates": [
+        0.4,
+        0.2,
+        0.4,
+        0.2
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_254.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    },
+    {
+      "run_id": 255,
+      "case_seed": 546082577,
+      "rates": [
+        0.4,
+        0.2,
+        0.3,
+        0.5
+      ],
+      "passed": true,
+      "returncode": 0,
+      "pass_sentinel": true,
+      "uvm_errors": 0,
+      "uvm_fatals": 0,
+      "log_path": "report/longrun_ext_260422_fixed/runs/run_255.log",
+      "trace_prefix": null,
+      "trace_log_path": null
+    }
+  ]
+}

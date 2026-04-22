@@ -23,9 +23,9 @@ Chief-architect-facing dashboard only. Per-case incremental coverage rows live u
 
 | status | bucket | cases_planned | cases_implemented | cases_evidenced | merged_after_bucket | trace |
 |:---:|---|---:|---:|---:|---|---|
-| ⚠️ | [BASIC](DV_BASIC.md) | 129 | 129 | 4 | pending | [`REPORT/buckets/BASIC.md`](REPORT/buckets/BASIC.md) |
+| ⚠️ | [BASIC](DV_BASIC.md) | 129 | 129 | 7 | pending | [`REPORT/buckets/BASIC.md`](REPORT/buckets/BASIC.md) |
 | ⚠️ | [EDGE](DV_EDGE.md) | 129 | 129 | 3 | pending | [`REPORT/buckets/EDGE.md`](REPORT/buckets/EDGE.md) |
-| ⚠️ | [PROF](DV_PROF.md) | 129 | 129 | 2 | pending | [`REPORT/buckets/PROF.md`](REPORT/buckets/PROF.md) |
+| ⚠️ | [PROF](DV_PROF.md) | 129 | 129 | 4 | pending | [`REPORT/buckets/PROF.md`](REPORT/buckets/PROF.md) |
 | ⚠️ | [ERROR](DV_ERROR.md) | 129 | 129 | 13 | pending | [`REPORT/buckets/ERROR.md`](REPORT/buckets/ERROR.md) |
 
 ## Execution-mode baselines
@@ -53,7 +53,7 @@ Chief-architect-facing dashboard only. Per-case incremental coverage rows live u
 |:---:|---|---|---|
 | ⚠️ | total merged code coverage | `stmt=68.02, branch=60.13, cond=21.27, expr=45.42, fsm_state=54.44, fsm_trans=25.42, toggle=18.17` | per-metric targets above |
 | ⚠️ | total final functional coverage | `47.81` | 100.0 bins saturated |
-| ✅ | per-case evidence rows | `516 / 516` implemented, `22` evidenced | all catalog cases rendered |
+| ✅ | per-case evidence rows | `516 / 516` implemented, `27` evidenced | all catalog cases rendered |
 
 ## Regenerate
 

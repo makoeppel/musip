@@ -65,7 +65,7 @@
       ],
       "cases_planned": 129,
       "cases_implemented": 129,
-      "cases_evidenced": 4,
+      "cases_evidenced": 7,
       "status": "implemented_evidence_pending",
       "trace": "REPORT/buckets/BASIC.md"
     },
@@ -91,7 +91,7 @@
       ],
       "cases_planned": 129,
       "cases_implemented": 129,
-      "cases_evidenced": 2,
+      "cases_evidenced": 4,
       "status": "implemented_evidence_pending",
       "trace": "REPORT/buckets/PROF.md"
     },
@@ -537,7 +537,7 @@
   },
   "implementation_summary": {
     "implemented_case_pages": 516,
-    "evidenced_case_pages": 22,
+    "evidenced_case_pages": 27,
     "implemented_cross_pages": 129,
     "evidenced_cross_pages": 0,
     "implemented_txn_growth_pages": 129,
