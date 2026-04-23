@@ -248,7 +248,8 @@ int frontend_exit_user() {
     return SUCCESS;
 }
 
-int create_midas_events(uint32_t* dmaBuffer, uint32_t dmaBufSize, int rbh) {
+int create_midas_events(uint32_t* dmaBuffer, uint32_t dmaBufSize, int rbh)
+{
     // dmaBufSize is passed as maxidx, so the valid number of uint32_t words is dmaBufSize + 1
     const uint32_t n_u32 = dmaBufSize + 1;
 
@@ -262,8 +263,9 @@ int create_midas_events(uint32_t* dmaBuffer, uint32_t dmaBufSize, int rbh) {
     if (n_u64 == 0)
         return SUCCESS;
 
-    static constexpr uint64_t kTimestampMask = (1ULL << 39) - 1ULL;  // bits 0..38
-    static constexpr uint64_t kFrameTicks = 2000ULL;                 // 16 us / 8 ns
+    static constexpr uint64_t kTimestampMask = (1ULL << 37) - 1ULL; // bits 0..36
+    static constexpr uint64_t kFrameTicks    = 2000ULL;             // 16 us / 8 ns
+    static constexpr uint32_t kMaxBanksPerEvent = 1000;             // H000..H999
 
     struct HitWord {
         uint64_t word;
@@ -278,9 +280,10 @@ int create_midas_events(uint32_t* dmaBuffer, uint32_t dmaBufSize, int rbh) {
     // Assumption: dmaBuffer[0]=low32, dmaBuffer[1]=high32
     for (uint32_t i = 0; i < n_u32_even; i += 2) {
         uint64_t word =
-            static_cast<uint64_t>(dmaBuffer[i]) | (static_cast<uint64_t>(dmaBuffer[i + 1]) << 32);
+            static_cast<uint64_t>(dmaBuffer[i]) |
+            (static_cast<uint64_t>(dmaBuffer[i + 1]) << 32);
 
-        uint64_t ts = word & kTimestampMask;
+        uint64_t ts    = word & kTimestampMask;
         uint64_t frame = ts / kFrameTicks;
 
         hits.push_back({word, ts, frame});
@@ -290,43 +293,67 @@ int create_midas_events(uint32_t* dmaBuffer, uint32_t dmaBufSize, int rbh) {
     std::sort(hits.begin(), hits.end(),
               [](const HitWord& a, const HitWord& b) { return a.ts < b.ts; });
 
-    // Reserve ONE MIDAS event
-    void* p = nullptr;
-    int status = rb_get_wp(rbh, &p, 10);
-    if (status == DB_TIMEOUT)
-        return DB_TIMEOUT;
-    if (status != DB_SUCCESS) {
-        cm_msg(MERROR, "create_midas_events", "rb_get_wp failed with status %d", status);
-        return status;
-    }
-
-    char* event = reinterpret_cast<char*>(p);
-
-    auto eventHeader = reinterpret_cast<EVENT_HEADER*>(event);
-    bm_compose_event_threadsafe(eventHeader, eventID_data, 0, 0, &equipment[0].serial_number);
-
-    auto bankHeader = reinterpret_cast<BANK_HEADER*>(eventHeader + 1);
-    bk_init32a(bankHeader);
-
-    // Walk frame-by-frame and create one bank per 16us frame
-    size_t i = 0;
+    char* event = nullptr;
+    EVENT_HEADER* eventHeader = nullptr;
+    BANK_HEADER* bankHeader = nullptr;
     uint32_t bank_idx = 0;
+    bool event_open = false;
 
+    auto open_event = [&]() -> int {
+        void* p = nullptr;
+        int status = rb_get_wp(rbh, &p, 10);
+        if (status == DB_TIMEOUT)
+            return DB_TIMEOUT;
+        if (status != DB_SUCCESS) {
+            cm_msg(MERROR, "create_midas_events", "rb_get_wp failed with status %d", status);
+            return status;
+        }
+
+        event = reinterpret_cast<char*>(p);
+        eventHeader = reinterpret_cast<EVENT_HEADER*>(event);
+
+        bm_compose_event_threadsafe(eventHeader, eventID_data, 0, 0,
+                                    &equipment[0].serial_number);
+
+        bankHeader = reinterpret_cast<BANK_HEADER*>(eventHeader + 1);
+        bk_init32a(bankHeader);
+
+        bank_idx = 0;
+        event_open = true;
+        return DB_SUCCESS;
+    };
+
+    auto close_event = [&]() {
+        if (!event_open)
+            return;
+
+        eventHeader->data_size = bk_size(bankHeader);
+        rb_increment_wp(rbh, sizeof(EVENT_HEADER) + eventHeader->data_size);
+        event_open = false;
+    };
+
+    int status = open_event();
+    if (status != DB_SUCCESS)
+        return status;
+
+    size_t i = 0;
     while (i < hits.size()) {
         const uint64_t frame_id = hits[i].frame;
 
         size_t j = i + 1;
-        while (j < hits.size() && hits[j].frame == frame_id) ++j;
+        while (j < hits.size() && hits[j].frame == frame_id)
+            ++j;
 
         const size_t frame_nhits = j - i;
 
-        // Need unique 4-char bank name
-        // Supports up to 1000 banks in one event: H000..H999
-        if (bank_idx > 999) {
-            cm_msg(MERROR, "create_midas_events",
-                   "Too many 16us frames in one event (%u). Max supported with H000..H999 is 1000.",
-                   bank_idx);
-            break;
+        // If this MIDAS event already used all available bank names,
+        // close it and start a new MIDAS event.
+        if (bank_idx >= kMaxBanksPerEvent) {
+            close_event();
+
+            status = open_event();
+            if (status != DB_SUCCESS)
+                return status;
         }
 
         char bank_name[5];
@@ -338,7 +365,7 @@ int create_midas_events(uint32_t* dmaBuffer, uint32_t dmaBufSize, int rbh) {
         // Store 64-bit words as two uint32_t words: low32, high32
         for (size_t k = 0; k < frame_nhits; ++k) {
             const uint64_t w = hits[i + k].word;
-            data[2 * k] = static_cast<uint32_t>(w & 0xFFFFFFFFULL);
+            data[2 * k]     = static_cast<uint32_t>(w & 0xFFFFFFFFULL);
             data[2 * k + 1] = static_cast<uint32_t>((w >> 32) & 0xFFFFFFFFULL);
         }
 
@@ -348,9 +375,7 @@ int create_midas_events(uint32_t* dmaBuffer, uint32_t dmaBufSize, int rbh) {
         i = j;
     }
 
-    eventHeader->data_size = bk_size(bankHeader);
-    rb_increment_wp(rbh, sizeof(EVENT_HEADER) + eventHeader->data_size);
-
+    close_event();
     return SUCCESS;
 }
 
@@ -487,7 +512,7 @@ int read_stream_thread(void*) {
         }
 
         // create MIDAS events
-        create_midas_events(dma_buf_local, maxidx, rbh);
+        create_midas_events(dma_buf_local, mu.last_endofevent_addr(), rbh);
 
         end = std::chrono::steady_clock::now();
         std::cout << "Time difference (EVENT) = "

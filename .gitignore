@@ -2,3 +2,4 @@ build/
 install/
 quartus-build*/
 __pycache__/
+online/

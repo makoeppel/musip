@@ -230,102 +230,156 @@ int quad_loop() { return SUCCESS; }
 void sc_settings_changed(midas::odb o) {
     std::string name = o.get_name();
 
-    if (!o) return;
+    std::vector<std::string> names{
+        "MupixConfig",
+        "InitFEBs",
+        "ResetASICs",
+        "ADC Continuous Readout",
+        "Run Cycle FEB",
+        "MupixTDACConfig",
+        "Configure injection",
+        "Trigger injection loop",
+        "Full chip Injection",
+        "init_tmb",
+        "override_power_moduleid",
+        "module_power_mask",
+        "module_power",
+        "MutrigConfig",
+        "DataGenEnable",
+        "DataGenDisable"
+    };
 
-    cm_msg(MINFO, "sc_settings_changed", "Setting changed (%s)", name.c_str());
+    bool found = (std::find(names.begin(), names.end(), name) != names.end());
 
-    if (name == "MupixConfig" && o) {
-        ConfigureASICs(*feb_sc, m_settings, bitpattern_mupix);
+    if (o && found){
+
+        cm_msg(MINFO, "sc_settings_changed", "Setting changed (%s)", name.c_str());
+
+        if (name == "MupixConfig" && o) {
+            ConfigureASICs(*feb_sc, m_settings, bitpattern_mupix);
+        }
+
+        // TODO: this can be done in the frontend loop all the time
+        if (name == "InitFEBs" && o) {
+            InitFEBs(*feb_sc, m_settings);
+        }
+
+        if (name == "ResetASICs" && o) {
+            resetASICs(*feb_sc, m_settings);
+        }
+
+        if (name == "ADC Continuous Readout" && o) {
+            adcContinuousReadout(*feb_sc, m_settings);
+        }
+
+        if (name == "Run Cycle FEB" && o) {
+            // send run start
+            write_command_by_name("Abort Run");
+            usleep(500000);  // we sleep here to wait until the command is processed
+            write_command_by_name("Stop Reset");
+            usleep(500000);  // we sleep here to wait until the command is processed
+            write_command_by_name("Run Prepare", run_number);
+            usleep(500000);  // we sleep here to wait until the command is processed
+            write_command_by_name("Sync");
+            usleep(500000);  // we sleep here to wait until the command is processed
+            write_command_by_name("Start Run");
+        }
+
+        if (name == "MupixTDACConfig" && o) {
+            ConfigureTDACs(*feb_sc, m_settings);
+        }
+
+        if (name == "Configure injection" && o) {
+            const std::vector<uint8_t> columns = m_settings["DAQ"]["Commands"]["Injection columns"];
+            const std::vector<uint8_t> rows = m_settings["DAQ"]["Commands"]["Injection rows"];
+            if (ConfigureInjectASICs(*feb_sc, columns, rows) != FE_SUCCESS)
+                cm_msg(MERROR, "on_settings_changed", "injection configuration failed!");
+        }
+
+        if (name == "Trigger injection" && o) {
+            const uint32_t injection_pulse_duration =
+                m_settings["DAQ"]["Commands"]["Injection pulse duration"];
+            if (InjectASICs(*feb_sc, injection_pulse_duration) != FE_SUCCESS)
+                cm_msg(MERROR, "on_settings_changed", "injection trigger failed!");
+        }
+
+        if (name == "Trigger injection loop" && o) {
+            const uint32_t injection_pulse_duration =
+                m_settings["DAQ"]["Commands"]["Injection pulse duration"];
+            const uint32_t num_repetitions = m_settings["DAQ"]["Commands"]["Number of pulses"];
+            const uint32_t wait_between_pulses =
+                m_settings["DAQ"]["Commands"]["Wait time between pulses (ms)"];
+            if (InjectASICsInLoop(*feb_sc, injection_pulse_duration, num_repetitions,
+                                wait_between_pulses) != FE_SUCCESS)
+                cm_msg(MERROR, "on_settings_changed", "injection trigger loop failed!");
+        }
+
+        if (name == "Full chip Injection" && o) {
+            const uint8_t min_columns = m_settings["DAQ"]["Commands"]["Injection min column"];
+            const uint8_t max_columns = m_settings["DAQ"]["Commands"]["Injection max column"];
+            const uint8_t min_rows = m_settings["DAQ"]["Commands"]["Injection min rows"];
+            const uint8_t max_rows = m_settings["DAQ"]["Commands"]["Injection max rows"];
+            const uint32_t injection_pulse_duration =
+                m_settings["DAQ"]["Commands"]["Injection pulse duration"];
+            const uint32_t num_repetitions = m_settings["DAQ"]["Commands"]["Number of pulses"];
+            const uint32_t wait_between_pulses =
+                m_settings["DAQ"]["Commands"]["Wait time between pulses (ms)"];
+            if (FullChipInjection(*feb_sc, m_settings, min_columns, max_columns, min_rows, max_rows,
+                                injection_pulse_duration, num_repetitions,
+                                wait_between_pulses) != FE_SUCCESS)
+                cm_msg(MERROR, "on_settings_changed", "injection configuration failed!");
+        }
+
+        if(name == "init_tmb" && o){
+            TMBinit(*feb_sc, m_settings);
+        }
+
+        if( name == "override_power_moduleid" && o){
+            UpdatePowerOverride(*feb_sc, m_settings);
+        }
+
+        if( (name == "module_power_mask" || name == "module_power") && o){
+            UpdatePower(*feb_sc, m_settings);
+        }
+
+        if ( name == "MutrigConfig" && o) {
+            ConfigureMuTRiGASICs(*feb_sc, m_settings, bitpattern_mutrig);
+        }
+
+        if (name == "DataGenEnable" && o) {
+            midas::odb commands = m_settings["DAQ"]["Commands"];
+            for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
+                bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
+                bool FEBsIsQuads = m_settings["DAQ"]["Links"]["FEBsQuads"][febIDx];
+                if (FEBActive && FEBsIsQuads) {
+                    uint32_t datagensetting =   0x1 << 31 | // data generator generates hits
+                                                0x1 << 17 | // data generator before the sorter
+                                                0x1 << 16 | // use hits from generator
+                                                (bool) commands["DataGenSync"] << 5 | // all FEBs have same start
+                                                (bool) commands["DataGenFullSteam"] << 4 | \
+                                                ((uint8_t) commands["DataGenRate"] & 0xF);
+                    //std::cout << std::hex << datagensetting << std::endl;
+                    feb_sc->FEB_write(febIDx, MP_DATA_GEN_CONTROL_REGISTER_W, datagensetting);
+                }
+            }
+
+            cm_msg(MINFO, "on_settings_changed()" , "enable data generator on the FPGA");
+        }
+
+        if (name == "DataGenDisable" && o) {
+            for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
+                bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
+                bool FEBsIsQuads = m_settings["DAQ"]["Links"]["FEBsQuads"][febIDx];
+                if (FEBActive && FEBsIsQuads)
+                    feb_sc->FEB_write(febIDx, MP_DATA_GEN_CONTROL_REGISTER_W, 0x0);
+            }
+
+            cm_msg(MINFO, "on_settings_changed()" , "disable data generator on the FPGA");
+
+        }
+
+        o = false;
     }
-
-    // TODO: this can be done in the frontend loop all the time
-    if (name == "InitFEBs" && o) {
-        InitFEBs(*feb_sc, m_settings);
-    }
-
-    if (name == "ResetASICs" && o) {
-        resetASICs(*feb_sc, m_settings);
-    }
-
-    if (name == "ADC Continuous Readout" && o) {
-        adcContinuousReadout(*feb_sc, m_settings);
-    }
-
-    if (name == "Run Cycle FEB" && o) {
-        // send run start
-        write_command_by_name("Abort Run");
-        usleep(500000);  // we sleep here to wait until the command is processed
-        write_command_by_name("Stop Reset");
-        usleep(500000);  // we sleep here to wait until the command is processed
-        write_command_by_name("Run Prepare", run_number);
-        usleep(500000);  // we sleep here to wait until the command is processed
-        write_command_by_name("Sync");
-        usleep(500000);  // we sleep here to wait until the command is processed
-        write_command_by_name("Start Run");
-    }
-
-    if (name == "MupixTDACConfig" && o) {
-        ConfigureTDACs(*feb_sc, m_settings);
-    }
-
-    if (name == "Configure injection" && o) {
-        const std::vector<uint8_t> columns = m_settings["DAQ"]["Commands"]["Injection columns"];
-        const std::vector<uint8_t> rows = m_settings["DAQ"]["Commands"]["Injection rows"];
-        if (ConfigureInjectASICs(*feb_sc, columns, rows) != FE_SUCCESS)
-            cm_msg(MERROR, "on_settings_changed", "injection configuration failed!");
-    }
-
-    if (name == "Trigger injection" && o) {
-        const uint32_t injection_pulse_duration =
-            m_settings["DAQ"]["Commands"]["Injection pulse duration"];
-        if (InjectASICs(*feb_sc, injection_pulse_duration) != FE_SUCCESS)
-            cm_msg(MERROR, "on_settings_changed", "injection trigger failed!");
-    }
-
-    if (name == "Trigger injection loop" && o) {
-        const uint32_t injection_pulse_duration =
-            m_settings["DAQ"]["Commands"]["Injection pulse duration"];
-        const uint32_t num_repetitions = m_settings["DAQ"]["Commands"]["Number of pulses"];
-        const uint32_t wait_between_pulses =
-            m_settings["DAQ"]["Commands"]["Wait time between pulses (ms)"];
-        if (InjectASICsInLoop(*feb_sc, injection_pulse_duration, num_repetitions,
-                              wait_between_pulses) != FE_SUCCESS)
-            cm_msg(MERROR, "on_settings_changed", "injection trigger loop failed!");
-    }
-
-    if (name == "Full chip Injection" && o) {
-        const uint8_t min_columns = m_settings["DAQ"]["Commands"]["Injection min column"];
-        const uint8_t max_columns = m_settings["DAQ"]["Commands"]["Injection max column"];
-        const uint8_t min_rows = m_settings["DAQ"]["Commands"]["Injection min rows"];
-        const uint8_t max_rows = m_settings["DAQ"]["Commands"]["Injection max rows"];
-        const uint32_t injection_pulse_duration =
-            m_settings["DAQ"]["Commands"]["Injection pulse duration"];
-        const uint32_t num_repetitions = m_settings["DAQ"]["Commands"]["Number of pulses"];
-        const uint32_t wait_between_pulses =
-            m_settings["DAQ"]["Commands"]["Wait time between pulses (ms)"];
-        if (FullChipInjection(*feb_sc, m_settings, min_columns, max_columns, min_rows, max_rows,
-                              injection_pulse_duration, num_repetitions,
-                              wait_between_pulses) != FE_SUCCESS)
-            cm_msg(MERROR, "on_settings_changed", "injection configuration failed!");
-    }
-
-    if(name == "init_tmb" && o){
-        TMBinit(*feb_sc, m_settings);
-    }
-
-    if( name == "override_power_moduleid" && o){
-        UpdatePowerOverride(*feb_sc, m_settings);
-    }
-
-    if( (name == "module_power_mask" || name == "module_power") && o){
-        UpdatePower(*feb_sc, m_settings);
-    }
-
-    if ( name == "MutrigConfig" && o) {
-        ConfigureMuTRiGASICs(*feb_sc, m_settings, bitpattern_mutrig);
-    }
-
-    o = false;
 
 }
 
@@ -492,6 +546,7 @@ int read_sc_event(char* pevent, int off) {
     counters_XXCF.clear();
     counters_XXCE.clear();
     counters_XXCR.clear();
+    counters_XXCP.clear();
     for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
         bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
         bool FEBsIsMutrig = m_settings["DAQ"]["Links"]["FEBsMutrig"][febIDx];
@@ -539,8 +594,10 @@ int read_sc_event(char* pevent, int off) {
     for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
         bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
         bool FEBsIsMutrig = m_settings["DAQ"]["Links"]["FEBsMutrig"][febIDx];
-        auto rpc_ret = feb_sc->FEBsc_NiosRPC(febIDx, CMD_TILE_TEMPERATURES_READ, {});
-        if (FEBActive && FEBsIsMutrig && rpc_ret != -17) {
+        int rpc_ret = -17;
+        if (FEBsIsMutrig)
+            rpc_ret = feb_sc->FEBsc_NiosRPC(febIDx, CMD_TILE_TEMPERATURES_READ, {});
+        if (FEBActive && rpc_ret != -17) {
             feb_sc->FEB_read(febIDx, FEBSlowcontrolInterface::OFFSETS::FEBsc_RPC_DATAOFFSET, rval);
 
             // store and scale temperatures
@@ -563,8 +620,10 @@ int read_sc_event(char* pevent, int off) {
     for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
         bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
         bool FEBsIsMutrig = m_settings["DAQ"]["Links"]["FEBsMutrig"][febIDx];
-        auto rpc_ret = feb_sc->FEBsc_NiosRPC(febIDx, CMD_TILE_TMB_STATUS, {});
-        if (FEBActive && FEBsIsMutrig && rpc_ret != -17) {
+        int rpc_ret = -17;
+        if (FEBsIsMutrig)
+            rpc_ret = feb_sc->FEBsc_NiosRPC(febIDx, CMD_TILE_TMB_STATUS, {});
+        if (FEBActive && rpc_ret != -17) {
             feb_sc->FEB_read(febIDx, FEBSlowcontrolInterface::OFFSETS::FEBsc_RPC_DATAOFFSET, rval_SM);
             values_XXSM.push_back(rval_SM[0]);
             values_XXSM.push_back(rval_SM[1]);
