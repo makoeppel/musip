@@ -2,16 +2,11 @@
 
 HitVectorFlowEvent::HitVectorFlowEvent(
     TAFlowEvent* flow,
-    eventheader& _header,
-    uint64_t* pixelstart,
-    uint32_t npixel,
-    uint64_t* mutrigstart,
-    uint32_t nmutrig
+    uint64_t* hitstart,
+    uint32_t nhits
 )
     : TAFlowEvent(flow)
-    , header(_header)
-    , pixelhits(pixelstart, pixelstart + npixel)
-    , mutrighits(mutrigstart, mutrigstart + nmutrig)
+    , hits(hitstart, hitstart + nhits)
     // Note that this does perform copies. In place construction would mess up ownership, so C++ does not really allow it.
     // Advantage: We can do type conversion to our structs as we go along
 {
@@ -19,13 +14,9 @@ HitVectorFlowEvent::HitVectorFlowEvent(
 
 HitVectorFlowEvent::HitVectorFlowEvent(
     TAFlowEvent* flow,
-    eventheader& _header,
-    std::vector<pixelhit>&& pixelhits,
-    std::vector<mutrighit>&& mutrighits
+    std::vector<hit>&& hits
 )
     : TAFlowEvent(flow)
-    , header(_header)
-    , pixelhits(std::move(pixelhits))
-    , mutrighits(std::move(mutrighits))
+    , hits(std::move(hits))
 {
 }

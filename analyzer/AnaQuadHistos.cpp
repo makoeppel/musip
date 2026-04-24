@@ -257,10 +257,14 @@ TAFlowEvent* AnaQuadHistos::AnalyzeFlowEvent(TARunInfo*, TAFlags* flags, TAFlowE
     HitVectorFlowEvent* hitevent = flow->Find<HitVectorFlowEvent>();
     if(!hitevent) return flow;
 
-    for ( auto& hit : hitevent->pixelhits ) {
+    for ( auto& cur_hit : hitevent->hits ) {
+
+        if (!cur_hit.is_pixel()) continue;
+
+        auto hit = cur_hit.as_pixel();
         chipID->Fill(hit.chipid());
 
-        if (hit.chipid() > 16) continue;
+        if (hit.chipid() >= 16) continue;
 
         // fill hitmap histograms
         uint32_t col, row;

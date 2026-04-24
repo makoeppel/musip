@@ -5,50 +5,97 @@
 #include <cstdio>
 
 struct pixelhit {
-    pixelhit(uint64_t h) noexcept:hitdata(h){};
+    pixelhit() noexcept : hitdata(0x0) {}
+    pixelhit(uint64_t h) noexcept : hitdata(h) {}
+
     uint64_t hitdata;
-    [[nodiscard]] uint8_t overflowFlags() const { return (hitdata >> 62) & 0x3; }
-    [[nodiscard]] uint32_t chipid() const {return (hitdata >> 48) & 0x3FFF; }
-    [[nodiscard]] uint8_t col() const {return (hitdata >> 40) & 0xFF;}
-    [[nodiscard]] uint8_t row() const {return (hitdata >> 32) & 0xFF;}
-    [[nodiscard]] uint8_t tot() const {return (hitdata >> 27) & 0x1F;}
-    [[nodiscard]] uint8_t t2() const {return (hitdata >> 27) & 0x1F;}
-    [[nodiscard]] uint32_t time() const {return hitdata & 0x7FFFFFF;}
-    [[nodiscard]] uint8_t layer() const {return -1;}
 
-    void Print(){
-        printf("x64:%llx chipid:%2.2x col:%u row:%u tot:%u t2:%u time:%8.8x\n", hitdata, chipid(), col(), row(), tot(), t2(), time());
+    [[nodiscard]] bool is_pixel() const { return ((hitdata >> 63) & 0x1) == 0; }
+    [[nodiscard]] uint8_t chipid() const { return (hitdata >> 58) & 0x1F; }
+    [[nodiscard]] uint8_t col() const { return (hitdata >> 50) & 0xFF; }
+    [[nodiscard]] uint8_t row() const { return (hitdata >> 42) & 0xFF; }
+    [[nodiscard]] uint8_t tot() const { return (hitdata >> 37) & 0x1F; }
+    [[nodiscard]] uint8_t t2() const { return tot(); }
+    [[nodiscard]] uint32_t ts_high() const { return (hitdata >> 16) & 0x1FFFFF; }
+    [[nodiscard]] uint8_t ts_low() const { return (hitdata >> 11) & 0x1F; }
+    [[nodiscard]] uint8_t subheader_time() const { return (hitdata >> 4) & 0x7F; }
+    [[nodiscard]] uint8_t ts_sorterhit() const { return hitdata & 0xF; }
+    [[nodiscard]] uint64_t time() const { return hitdata & 0x1FFFFFFFFFULL; }
+
+    void Print() const {
+        std::printf(
+            "x64:%016llx chipid:%02x col:%u row:%u tot:%u time:%010llx\n",
+            (unsigned long long)hitdata,
+            chipid(),
+            col(),
+            row(),
+            tot(),
+            (unsigned long long)time()
+        );
     }
-
-    // Implement less than operator so that we can put in std::set etc.
-    bool operator<(const pixelhit& other) const { return hitdata < other.hitdata; }
 };
-
 
 struct mutrighit {
-    mutrighit() noexcept:hitdata(0x00){};
-    mutrighit(uint64_t h) noexcept:hitdata(h){};
+    mutrighit() noexcept : hitdata(0x0) {}
+    mutrighit(uint64_t h) noexcept : hitdata(h) {}
+
     uint64_t hitdata;
-    [[nodiscard]] uint8_t  overflowFlags()   const {return (hitdata >> 62) & 0x3; }
-    [[nodiscard]] bool     had_overflow()    const {return (hitdata >> 63) & 0x1;}
-    [[nodiscard]] bool     had_suboverflow() const {return (hitdata >> 62) & 0x1;}
 
-    [[nodiscard]] uint16_t channel()         const {return (hitdata >> 48) & 0x3fff;}
-    [[nodiscard]] uint16_t asic()            const {return (hitdata >> 48) & 0x1f;}
+    [[nodiscard]] bool is_mutrig() const { return ((hitdata >> 63) & 0x1) == 1; }
+    [[nodiscard]] uint8_t chipid() const { return (hitdata >> 61) & 0x3; }
+    [[nodiscard]] uint8_t asic() const { return chipid(); }
+    [[nodiscard]] uint8_t channel() const { return (hitdata >> 56) & 0x1F; }
+    [[nodiscard]] uint16_t et() const { return (hitdata >> 47) & 0x1FF; }
+    [[nodiscard]] bool eflag() const { return et() == 0x1FF; }
+    [[nodiscard]] uint16_t tot() const { return et(); }
+    [[nodiscard]] uint8_t time_remainder() const { return (hitdata >> 44) & 0x7; }
+    [[nodiscard]] uint8_t fine_time() const { return (hitdata >> 39) & 0x1F; }
+    [[nodiscard]] uint32_t ts_high() const { return (hitdata >> 16) & 0x7FFFFF; }
+    [[nodiscard]] uint8_t ts_low() const { return (hitdata >> 12) & 0xF; }
+    [[nodiscard]] uint8_t subheader_time() const { return (hitdata >> 4) & 0xFF; }
+    [[nodiscard]] uint8_t ts_sorterhit() const { return hitdata & 0xF; }
+    [[nodiscard]] uint64_t time() const { return hitdata & 0x7FFFFFFFFFULL; }
 
-    [[nodiscard]] bool     eflag()           const {return (hitdata >> 47) & 0x1;}
-    [[nodiscard]] uint16_t tot()             const {return (hitdata >> 32) & 0x1FF;}
-
-    [[nodiscard]] uint8_t finetime_extended() const{return (hitdata >>  0) & 0xFF;}
-    [[nodiscard]] uint32_t time8ns()         const {return (hitdata >> 8) & 0xFFFFFF;}
-    [[nodiscard]] int64_t timestamp()        const {return time8ns()*160 + finetime_extended();} //returns time in units of 50ps
-    [[nodiscard]] int64_t time()             const {return timestamp()*50e-3;} //returns time in ns
-
-    void Print(){
-        printf("x64:%llx channel:%2.2x tot:%u t:%lld time:%8.8llx\n", hitdata, channel(), tot(), timestamp(), time());
+    void Print() const {
+        std::printf(
+            "x64:%016llx chipid:%u channel:%u et:%u rem:%u fine:%u time:%010llx\n",
+            (unsigned long long)hitdata,
+            chipid(),
+            channel(),
+            et(),
+            time_remainder(),
+            fine_time(),
+            (unsigned long long)time()
+        );
     }
+
 };
 
+struct hit {
+    hit() noexcept : hitdata(0x0) {}
+    explicit hit(uint64_t h) noexcept : hitdata(h) {}
+
+    uint64_t hitdata;
+
+    // Common discriminator
+    [[nodiscard]] bool is_pixel() const  { return ((hitdata >> 63) & 0x1) == 0; }
+    [[nodiscard]] bool is_mutrig() const { return ((hitdata >> 63) & 0x1) == 1; }
+
+    // Convert to typed views
+    [[nodiscard]] pixelhit as_pixel() const { return pixelhit(hitdata); }
+    [[nodiscard]] mutrighit as_mutrig() const { return mutrighit(hitdata); }
+
+    // helper
+    [[nodiscard]] uint64_t raw() const { return hitdata; }
+
+    void Print() const {
+        if(is_pixel()) {
+            as_pixel().Print();
+        } else {
+            as_mutrig().Print();
+        }
+    }
+};
 
 struct febdata {
     uint32_t header;

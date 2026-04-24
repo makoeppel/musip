@@ -58,89 +58,39 @@ TAFlowEvent* AnaFillHits::Analyze(TARunInfo* runinfo, TMEvent* event, TAFlags* f
         return flow;
     }
 
+    // Only process readout events
     if(event->event_id != 301) return flow;
 
-    eventheader h;
-    h.event_id = event->event_id;
-    h.trigger_mask = event->trigger_mask;
-    h.serial_number = event->serial_number;
-    h.midas_time_stamp = event->time_stamp;
-    h.data_size = event->data_size;
+    // ----------------------------------------
+    // Scan MIDAS banks
+    // ----------------------------------------
+    event->FindAllBanks();
 
-    uint32_t sr_num = 0;
-    sr_num = h.serial_number;
-    SrNo->Fill(static_cast<double>(sr_num));
+    std::vector<hit> hits_;
 
-    event->FindAllBanks(); // Scan for all banks. This call is required to make event->banks valid.
-    // Loop over all banks and check the names to see if we should process them
     for(const auto& bank : event->banks) {
-        //
-        // Multiple "events" can now be put into one, but with bank names with an index
-        // in it (since 1 Midas event must have unique bank names).
-        // We also need to support the old bank names though, so there are a lot of checks on
-        // bank names here, but the data is in the same format.
-        //
-
-        // Check if we have one of these banks with an index in it like PSxx where xx is 00->99
-        // in ASCII. So we check if the third and fourth characters are in the ASCII range 48 to 57.
-        const bool isIndexedName = (bank.name[2] >= 48 && bank.name[2] <= 57) && (bank.name[3] >= 48 && bank.name[3] <= 57);
-        std::string firstTwoChars = bank.name.substr(0, 2);
-        // TODO: here we sometimes have a value which is not DS or PS
-        // std::cout << firstTwoChars << '\n';
-
+        const std::string firstTwoChars = bank.name.substr(0, 1);
         const char* rawData = event->GetBankData(&bank);
 
-        // First check for DSIN slow control banks. Old name was DSIN, new name is DS00-DS99.
-        // We just want to pull out the timestamp.
-        uint32_t sr_num = 0;
-        if(firstTwoChars == "DS") {
-            const febdata* febData = reinterpret_cast<const febdata*>(rawData);
-            sr_num = h.serial_number;
-            timestampFromDSIN = (uint64_t(febData->ts_high) << 16) | febData->ts_low;
-            SrNo->Fill(static_cast<double>(sr_num));
-            timestamp->Fill(static_cast<double>(timestampFromDSIN));
-            SrNo_ts->Fill(static_cast<double>(sr_num), static_cast<double>(timestampFromDSIN));
+        // ----------------------------------------
+        // HTxx bank: mixed hit bank
+        // ----------------------------------------
+        if(firstTwoChars == "H") {
+            const hit* dataStart = reinterpret_cast<const hit*>(rawData);
+            const hit* dataEnd   = reinterpret_cast<const hit*>(rawData + bank.data_size);
+
+            hits_.reserve(hits_.size() + (dataEnd - dataStart));
+
+            for(const hit* current = dataStart; current != dataEnd; ++current) {
+                hits_.emplace_back(*current);
+            }
         }
-        // Old pixel bank name is PHIT, or DHPS for debug hits from the switching board.
-        // New name is PS00-PS99.
-        else if(firstTwoChars == "PS") {
-            const pixelhit* dataStart = reinterpret_cast<const pixelhit*>(rawData);
-            const pixelhit* dataEnd = reinterpret_cast<const pixelhit*>(rawData + bank.data_size);
+    }
 
-            pixelHits_.reserve(pixelHits_.size() + (dataEnd - dataStart));
-            for(const pixelhit* current = dataStart; current != dataEnd; ++current) {
-                // If we got this far through the loop, we passed all checks and we want the hit
-                pixelHits_.emplace_back(*current);
-            } // end of loop over all pixelhits
-            timestampFromLastPixelDSIN = timestampFromDSIN;
-        }
-        // Mutrig bank names are DHTD (for switching board debug hits).
-        // New name is TD00-TD99
-        else if(firstTwoChars == "TD") {
-            const mutrighit* dataStart = reinterpret_cast<const mutrighit*>(rawData);
-            const mutrighit* dataEnd = reinterpret_cast<const mutrighit*>(rawData + bank.data_size);
-            // Add all of these hits to the end
-            mutrigHits_.insert(mutrigHits_.end(), dataStart, dataEnd);
-
-            SrNo_ts_mutrig->Fill(static_cast<double>(sr_num), static_cast<double>(timestampFromDSIN));
-            timestampFromLastMutrigDSIN = timestampFromDSIN;
-        }
-
-        // if (timestampFromLastPixelDSIN == 0 || timestampFromLastMutrigDSIN == 0) continue;
-        // else timePixelvsMutrig->Fill(timestampFromLastPixelDSIN-timestampFromLastMutrigDSIN);
-
-    } // end of loop over all Midas banks
-
-    // for (auto pixel : pixelHits_)
-    //     for (auto mutrig : mutrigHits_)
-    //         if (mutrig.channel() == 32 && (pixel.time() - mutrig.time8ns()) < 2048 && pixel.chipid() / 4 == 2)
-    //             timePixelvsMutrig->Fill(pixel.time() - mutrig.time8ns());
-
-    flow = new HitVectorFlowEvent(flow, h, std::move(pixelHits_), std::move(mutrigHits_));
+    flow = new HitVectorFlowEvent(flow, std::move(hits_));
     // After a std::move, objects are in an undefined state. So we
     // reset as default constructed vectors.
-    pixelHits_ = std::vector<pixelhit>();
-    mutrigHits_ = std::vector<mutrighit>();
+    hits_ = std::vector<hit>();
 
     return flow;
 }

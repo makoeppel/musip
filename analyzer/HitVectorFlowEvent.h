@@ -12,11 +12,8 @@ public:
 
     HitVectorFlowEvent(
         TAFlowEvent* flow,
-        eventheader& header,
-        uint64_t* pixelstart,
-        uint32_t npixel,
-        uint64_t* mutrigstart,
-        uint32_t nmutrig
+        uint64_t* hitstart,
+        uint32_t nhits
     );
 
     // Constructor using move semantics for the vectors. If your data is already in typed vectors and you
@@ -24,14 +21,11 @@ public:
     // the other constructor because it makes a copy of the data.
     HitVectorFlowEvent(
         TAFlowEvent* flow,
-        eventheader& header,
-        std::vector<pixelhit>&& pixelhits,
-        std::vector<mutrighit>&& mutrighits
+        std::vector<hit>&& hits
     );
 
     eventheader header;
-    std::vector<pixelhit> pixelhits;
-    std::vector<mutrighit> mutrighits;
+    std::vector<hit> hits;
 };
 
 #endif

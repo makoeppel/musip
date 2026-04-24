@@ -28,8 +28,7 @@ public:
     // We might be asked to do some sorting and merging. To do this we need to
     // store the various hits between events, so that they can all be put into
     // a HitVectorFlowEvent all at the same time.
-    std::vector<pixelhit>  pixelHits_;
-    std::vector<mutrighit> mutrigHits_;
+    std::vector<hit>  hits_;
 
 protected:
     // Copy pasted from AnaPixelHistos.h
