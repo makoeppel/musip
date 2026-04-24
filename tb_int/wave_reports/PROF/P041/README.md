@@ -3,23 +3,29 @@
 - **bucket:** `PROF`
 - **profile:** `P041_dma_half_full_75`
 - **same-axis VCD:** `sim/P041.vcd`
-- **sim args:** `+SWB_PROFILE_NAME=P041_dma_half_full_75 +SWB_FRAMES=2 +SWB_CASE_SEED=5151 +SWB_SAT0=0.20 +SWB_SAT1=0.20 +SWB_SAT2=0.20 +SWB_SAT3=0.20 +SWB_DMA_HALF_FULL_PCT=75`
+- **shared-axis HTML:** `packet_analyzer/index.html`
+- **bundled SVD:** `opq.svd`
+- **sim args:** `+SWB_PROFILE_NAME=P041_dma_half_full_75 +SWB_FRAMES=3 +SWB_FRAME_SLOT_CYCLES=4096 +SWB_CASE_SEED=5151 +SWB_SAT0=0.20 +SWB_SAT1=0.20 +SWB_SAT2=0.20 +SWB_SAT3=0.20 +SWB_DMA_HALF_FULL_PCT=75 +SWB_LANE0_SKEW_CYC=0 +SWB_LANE1_SKEW_CYC=0 +SWB_LANE2_SKEW_CYC=0 +SWB_LANE3_SKEW_CYC=0`
+- **frame cadence:** `SWB_FRAME_SLOT_CYCLES=4096` is the physical `N_SHD=128` SOP spacing at `250 MHz`; smaller values are visualization-only compression.
+- **timestamp contract:** frame-header `ts[47:0]` is the time-slice origin in `8 ns` units, starts at `0`, advances by `0x0800` per frame at `N_SHD=128` (`0x1000` at `N_SHD=256`), keeps the lower slice bits zero, and `debug1` is the later live dispatch timestamp rather than a copy of the frame origin.
 
 ## Captured summary
 
-- **start:** `# Start time: 19:37:59 on Apr 22,2026`
-- **case:** `# UVM_INFO /home/yifeng/packages/musip_2604/tb_int/cases/basic/uvm/sv/swb_basic_test.sv(163) @ 66000: uvm_test_top [CASE] Basic case: frames=2 sat=[0.20 0.20 0.20 0.20] mask=0xf hit_mode=poisson raw_total_hits=1638 padding_hits_added=2 total_hits=1640 expected_words=410 use_merge=1 dma_half_full_pct=75 case_seed=5151`
-- **opq:** `# UVM_INFO /home/yifeng/packages/musip_2604/tb_int/cases/basic/uvm/sv/swb_scoreboard.sv(590) @ 51498000: uvm_test_top.env.scoreboard [HIT_STAGE_SUMMARY] opq expected=1640 actual=1640 ghosts=0 missing=0`
-- **dma:** `# UVM_INFO /home/yifeng/packages/musip_2604/tb_int/cases/basic/uvm/sv/swb_scoreboard.sv(590) @ 51498000: uvm_test_top.env.scoreboard [HIT_STAGE_SUMMARY] dma expected=1640 actual=1640 ghosts=0 missing=0`
-- **dma_summary:** `# UVM_INFO /home/yifeng/packages/musip_2604/tb_int/cases/basic/uvm/sv/swb_scoreboard.sv(734) @ 51498000: uvm_test_top.env.scoreboard [DMA_SUMMARY] Compared 410 payload words, ignored 128 trailing padding words, ingress_hits=1640 opq_hits=1640 dma_hits=1640 parse_errors=0`
-- **pass:** `# UVM_INFO /home/yifeng/packages/musip_2604/tb_int/cases/basic/uvm/sv/swb_scoreboard.sv(783) @ 51498000: uvm_test_top.env.scoreboard [SWB_CHECK_PASS] profile=P041_dma_half_full_75 case_seed=5151 payload_words=410 padding_words=128 ingress_hits=1640 opq_hits=1640 dma_hits=1640`
-- **end:** `# End time: 19:38:06 on Apr 22,2026, Elapsed time: 0:00:07`
+- **start:** `# Start time: 09:03:49 on Apr 24,2026`
+- **case:** `# UVM_INFO /home/yifeng/packages/musip_2604/tb_int/cases/basic/uvm/sv/swb_basic_test.sv(171) @ 70000: uvm_test_top [CASE] Basic case: frames=3 sat=[0.20 0.20 0.20 0.20] mask=0xf hit_mode=poisson raw_total_hits=1245 padding_hits_added=3 total_hits=1248 expected_words=312 use_merge=1 dma_half_full_pct=75 case_seed=5151 lane_skew0=[0,0,0,0] lane_skew_max=0 lane_skew_mode=  fixed`
+- **opq:** `# UVM_INFO /home/yifeng/packages/musip_2604/tb_int/cases/basic/uvm/sv/swb_scoreboard.sv(673) @ 49226000: uvm_test_top.env.scoreboard [HIT_STAGE_SUMMARY] opq expected=1248 actual=1248 ghosts=0 missing=0`
+- **dma:** `# UVM_INFO /home/yifeng/packages/musip_2604/tb_int/cases/basic/uvm/sv/swb_scoreboard.sv(673) @ 49226000: uvm_test_top.env.scoreboard [HIT_STAGE_SUMMARY] dma expected=1248 actual=1248 ghosts=0 missing=0`
+- **dma_summary:** `# UVM_INFO /home/yifeng/packages/musip_2604/tb_int/cases/basic/uvm/sv/swb_scoreboard.sv(821) @ 49226000: uvm_test_top.env.scoreboard [DMA_SUMMARY] Compared 312 payload words, ignored 128 trailing padding words, ingress_hits=1248 opq_hits=1248 dma_hits=1248 parse_errors=0`
+- **pass:** `# UVM_INFO /home/yifeng/packages/musip_2604/tb_int/cases/basic/uvm/sv/swb_scoreboard.sv(874) @ 49226000: uvm_test_top.env.scoreboard [SWB_CHECK_PASS] profile=P041_dma_half_full_75 case_seed=5151 payload_words=312 padding_words=128 ingress_hits=1248 opq_hits=1248 dma_hits=1248`
+- **end:** `# End time: 09:03:52 on Apr 24,2026, Elapsed time: 0:00:03`
 
 ## Notes
 
 - The recorded VCD keeps `feb_if0..3`, `opq_if`, `dma_if`, and `ctrl_if` on the same clock/time axis.
-- The packet analyzer bundle decodes ingress packets from the same VCD; use GTKWave or Questa on the VCD when you want to correlate those ingress packets against `opq_if` and `dma_if` cycle-by-cycle.
+- `bundle.json` names those interface roles explicitly so downstream tools can identify ingress, merged OPQ egress, DMA, and control signals without guessing from the raw VCD.
+- When present, `opq.svd` is the register-map snapshot that belongs to the same evidence bundle.
+- `packet_analyzer/` is the local shared-axis WaveDrom report generated from `tb_int/`. It is the human-readable ingress/egress/DMA correlation view for the exact same capture.
 
 ## Serve
 
-`python3 external/mu3e-ip-cores/tools/packet_transaction_traffic_analyzer/scripts/serve_packet_analyzer.py --dir tb_int/wave_reports/PROF/P041/packet_analyzer --port 8765`
+`python3 /home/yifeng/packages/mu3e_ip_dev/mu3e-ip-cores/tools/packet_transaction_traffic_analyzer/scripts/serve_packet_analyzer.py --dir tb_int/wave_reports/PROF/P041/packet_analyzer --port 8765`

@@ -1,0 +1,654 @@
+        <?xml version="1.0" encoding="utf-8"?>
+        <device schemaVersion="1.3" xmlns:xs="http://www.w3.org/2001/XMLSchema-instance" xs:noNamespaceSchemaLocation="CMSIS-SVD.xsd">
+          <name>OPQ_MONOLITHIC_4LANE_MERGE</name>
+          <version>26.3.6</version>
+          <description>Ordered priority queue runtime CSR aperture for the MuSiP SWB integration.</description>
+          <addressUnitBits>8</addressUnitBits>
+          <width>32</width>
+          <peripherals>
+            <peripheral>
+              <name>OPQ</name>
+              <description>Ordered priority queue CSR window</description>
+              <baseAddress>0x00000000</baseAddress>
+              <addressBlock>
+                <offset>0x0</offset>
+                <size>0x400</size>
+                <usage>registers</usage>
+              </addressBlock>
+              <registers>
+        <register>
+  <name>UID</name>
+  <description>IP identity word</description>
+  <addressOffset>0x000</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>META</name>
+  <description>Version/date/git/instance selector window</description>
+  <addressOffset>0x004</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE_MASK</name>
+  <description>Runtime lane mask</description>
+  <addressOffset>0x008</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>CTRL</name>
+  <description>Control/status selector</description>
+  <addressOffset>0x00C</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>STATUS</name>
+  <description>Aggregated status</description>
+  <addressOffset>0x010</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>CAP</name>
+  <description>Capability word</description>
+  <addressOffset>0x014</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>FT_WR_HDR</name>
+  <description>Frame-table written headers</description>
+  <addressOffset>0x020</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>FT_WR_SHD</name>
+  <description>Frame-table written subheaders</description>
+  <addressOffset>0x024</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>FT_WR_HIT</name>
+  <description>Frame-table written hits</description>
+  <addressOffset>0x028</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>FT_RD_HDR</name>
+  <description>Frame-table read headers</description>
+  <addressOffset>0x02C</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>FT_RD_SHD</name>
+  <description>Frame-table read subheaders</description>
+  <addressOffset>0x030</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>FT_RD_HIT</name>
+  <description>Frame-table read hits</description>
+  <addressOffset>0x034</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>FT_DROP_HDR</name>
+  <description>Frame-table dropped headers</description>
+  <addressOffset>0x038</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>FT_DROP_SHD</name>
+  <description>Frame-table dropped subheaders</description>
+  <addressOffset>0x03C</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>FT_DROP_HIT</name>
+  <description>Frame-table dropped hits</description>
+  <addressOffset>0x040</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE0_WR_HDR_CNT</name>
+  <description>Per-lane written headers</description>
+  <addressOffset>0x100</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE0_WR_SHD_CNT</name>
+  <description>Per-lane written subheaders</description>
+  <addressOffset>0x104</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE0_WR_HIT_CNT</name>
+  <description>Per-lane written hits</description>
+  <addressOffset>0x108</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE0_RD_HDR_CNT</name>
+  <description>Per-lane read headers</description>
+  <addressOffset>0x10C</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE0_RD_SHD_CNT</name>
+  <description>Per-lane read subheaders</description>
+  <addressOffset>0x110</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE0_RD_HIT_CNT</name>
+  <description>Per-lane read hits</description>
+  <addressOffset>0x114</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE0_DROP_HDR_CNT</name>
+  <description>Per-lane dropped headers</description>
+  <addressOffset>0x118</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE0_DROP_SHD_CNT</name>
+  <description>Per-lane dropped subheaders</description>
+  <addressOffset>0x11C</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE0_DROP_HIT_CNT</name>
+  <description>Per-lane dropped hits</description>
+  <addressOffset>0x120</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE0_LANE_CREDIT</name>
+  <description>Per-lane lane-FIFO credit</description>
+  <addressOffset>0x124</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE0_TICKET_CREDIT</name>
+  <description>Per-lane ticket credit</description>
+  <addressOffset>0x128</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE0_DRR_ALLOWANCE</name>
+  <description>Configured DRR allowance</description>
+  <addressOffset>0x12C</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE0_DRR_QUANTUM</name>
+  <description>Current DRR quantum</description>
+  <addressOffset>0x130</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE0_DRR_GRANT_CNT</name>
+  <description>Grant counter</description>
+  <addressOffset>0x134</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE0_DRR_BEAT_CNT</name>
+  <description>Granted beat counter</description>
+  <addressOffset>0x138</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE0_DRR_DEFER_CNT</name>
+  <description>Deferred grant counter</description>
+  <addressOffset>0x13C</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE1_WR_HDR_CNT</name>
+  <description>Per-lane written headers</description>
+  <addressOffset>0x140</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE1_WR_SHD_CNT</name>
+  <description>Per-lane written subheaders</description>
+  <addressOffset>0x144</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE1_WR_HIT_CNT</name>
+  <description>Per-lane written hits</description>
+  <addressOffset>0x148</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE1_RD_HDR_CNT</name>
+  <description>Per-lane read headers</description>
+  <addressOffset>0x14C</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE1_RD_SHD_CNT</name>
+  <description>Per-lane read subheaders</description>
+  <addressOffset>0x150</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE1_RD_HIT_CNT</name>
+  <description>Per-lane read hits</description>
+  <addressOffset>0x154</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE1_DROP_HDR_CNT</name>
+  <description>Per-lane dropped headers</description>
+  <addressOffset>0x158</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE1_DROP_SHD_CNT</name>
+  <description>Per-lane dropped subheaders</description>
+  <addressOffset>0x15C</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE1_DROP_HIT_CNT</name>
+  <description>Per-lane dropped hits</description>
+  <addressOffset>0x160</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE1_LANE_CREDIT</name>
+  <description>Per-lane lane-FIFO credit</description>
+  <addressOffset>0x164</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE1_TICKET_CREDIT</name>
+  <description>Per-lane ticket credit</description>
+  <addressOffset>0x168</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE1_DRR_ALLOWANCE</name>
+  <description>Configured DRR allowance</description>
+  <addressOffset>0x16C</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE1_DRR_QUANTUM</name>
+  <description>Current DRR quantum</description>
+  <addressOffset>0x170</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE1_DRR_GRANT_CNT</name>
+  <description>Grant counter</description>
+  <addressOffset>0x174</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE1_DRR_BEAT_CNT</name>
+  <description>Granted beat counter</description>
+  <addressOffset>0x178</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE1_DRR_DEFER_CNT</name>
+  <description>Deferred grant counter</description>
+  <addressOffset>0x17C</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE2_WR_HDR_CNT</name>
+  <description>Per-lane written headers</description>
+  <addressOffset>0x180</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE2_WR_SHD_CNT</name>
+  <description>Per-lane written subheaders</description>
+  <addressOffset>0x184</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE2_WR_HIT_CNT</name>
+  <description>Per-lane written hits</description>
+  <addressOffset>0x188</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE2_RD_HDR_CNT</name>
+  <description>Per-lane read headers</description>
+  <addressOffset>0x18C</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE2_RD_SHD_CNT</name>
+  <description>Per-lane read subheaders</description>
+  <addressOffset>0x190</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE2_RD_HIT_CNT</name>
+  <description>Per-lane read hits</description>
+  <addressOffset>0x194</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE2_DROP_HDR_CNT</name>
+  <description>Per-lane dropped headers</description>
+  <addressOffset>0x198</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE2_DROP_SHD_CNT</name>
+  <description>Per-lane dropped subheaders</description>
+  <addressOffset>0x19C</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE2_DROP_HIT_CNT</name>
+  <description>Per-lane dropped hits</description>
+  <addressOffset>0x1A0</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE2_LANE_CREDIT</name>
+  <description>Per-lane lane-FIFO credit</description>
+  <addressOffset>0x1A4</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE2_TICKET_CREDIT</name>
+  <description>Per-lane ticket credit</description>
+  <addressOffset>0x1A8</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE2_DRR_ALLOWANCE</name>
+  <description>Configured DRR allowance</description>
+  <addressOffset>0x1AC</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE2_DRR_QUANTUM</name>
+  <description>Current DRR quantum</description>
+  <addressOffset>0x1B0</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE2_DRR_GRANT_CNT</name>
+  <description>Grant counter</description>
+  <addressOffset>0x1B4</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE2_DRR_BEAT_CNT</name>
+  <description>Granted beat counter</description>
+  <addressOffset>0x1B8</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE2_DRR_DEFER_CNT</name>
+  <description>Deferred grant counter</description>
+  <addressOffset>0x1BC</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE3_WR_HDR_CNT</name>
+  <description>Per-lane written headers</description>
+  <addressOffset>0x1C0</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE3_WR_SHD_CNT</name>
+  <description>Per-lane written subheaders</description>
+  <addressOffset>0x1C4</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE3_WR_HIT_CNT</name>
+  <description>Per-lane written hits</description>
+  <addressOffset>0x1C8</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE3_RD_HDR_CNT</name>
+  <description>Per-lane read headers</description>
+  <addressOffset>0x1CC</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE3_RD_SHD_CNT</name>
+  <description>Per-lane read subheaders</description>
+  <addressOffset>0x1D0</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE3_RD_HIT_CNT</name>
+  <description>Per-lane read hits</description>
+  <addressOffset>0x1D4</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE3_DROP_HDR_CNT</name>
+  <description>Per-lane dropped headers</description>
+  <addressOffset>0x1D8</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE3_DROP_SHD_CNT</name>
+  <description>Per-lane dropped subheaders</description>
+  <addressOffset>0x1DC</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE3_DROP_HIT_CNT</name>
+  <description>Per-lane dropped hits</description>
+  <addressOffset>0x1E0</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE3_LANE_CREDIT</name>
+  <description>Per-lane lane-FIFO credit</description>
+  <addressOffset>0x1E4</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE3_TICKET_CREDIT</name>
+  <description>Per-lane ticket credit</description>
+  <addressOffset>0x1E8</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE3_DRR_ALLOWANCE</name>
+  <description>Configured DRR allowance</description>
+  <addressOffset>0x1EC</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE3_DRR_QUANTUM</name>
+  <description>Current DRR quantum</description>
+  <addressOffset>0x1F0</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE3_DRR_GRANT_CNT</name>
+  <description>Grant counter</description>
+  <addressOffset>0x1F4</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE3_DRR_BEAT_CNT</name>
+  <description>Granted beat counter</description>
+  <addressOffset>0x1F8</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+<register>
+  <name>LANE3_DRR_DEFER_CNT</name>
+  <description>Deferred grant counter</description>
+  <addressOffset>0x1FC</addressOffset>
+  <size>32</size>
+  <access>read-write</access>
+</register>
+
+              </registers>
+            </peripheral>
+          </peripherals>
+        </device>

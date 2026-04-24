@@ -1,0 +1,32 @@
+{
+  "seed": 4242,
+  "lane_saturation": "0.20, 0.40, 0.60, 0.80",
+  "frames_per_lane": 3,
+  "total_hits": 1040,
+  "frame_slot_cycles": 4096,
+  "vcd_path": "/home/yifeng/packages/musip_2604/tb_int/wave_reports/BASIC/B049/sim/B049.vcd",
+  "ref_dir": "/home/yifeng/packages/musip_2604/tb_int/wave_reports/BASIC/B049/ref",
+  "url": "",
+  "ingress_span": [
+    18,
+    8734
+  ],
+  "egress_spans": [
+    [
+      3890,
+      4371
+    ],
+    [
+      9654,
+      10146
+    ],
+    [
+      13499,
+      14018
+    ]
+  ],
+  "dma_span": [
+    3905,
+    13931
+  ]
+}

@@ -2,8 +2,10 @@
   "bucket": "PROF",
   "case_id": "P041",
   "profile_name": "P041_dma_half_full_75",
-  "frames": 2,
+  "frames": 3,
   "seed": 5151,
+  "hit_mode": "poisson",
+  "frame_slot_cycles": 4096,
   "lane_saturation": [
     0.2,
     0.2,
@@ -12,23 +14,93 @@
   ],
   "feb_enable_mask": "0xf",
   "dma_half_full_pct": 75,
+  "lane_skew": {
+    "fixed_cycles": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "varying": false,
+    "max_cyc": 0
+  },
   "frame_window": {
     "frame_start": 0,
-    "frame_count": 2
+    "frame_count": 3
+  },
+  "timestamp_contract": {
+    "unit": "8ns",
+    "frame_origin_role": "time-slice origin carried by the frame header",
+    "frame_origin_start": 0,
+    "frame_stride_units_nshd128": 2048,
+    "frame_stride_hex_nshd128": "0x0800",
+    "frame_stride_hex_nshd256": "0x1000",
+    "frame_low_bits_rule": "lower slice bits are zero in the frame header timestamp",
+    "debug1_role": "dispatch timestamp sampled from the live global counter",
+    "debug1_relation": "ingress debug1 is later than or equal to the frame origin and OPQ may delay it further"
+  },
+  "signal_roles": {
+    "clock": {
+      "role": "clock",
+      "path": "tb_top.clk"
+    },
+    "interfaces": [
+      {
+        "role": "ingress",
+        "lane": 0,
+        "path": "tb_top.feb_if0",
+        "kind": "feb_ingress_if"
+      },
+      {
+        "role": "ingress",
+        "lane": 1,
+        "path": "tb_top.feb_if1",
+        "kind": "feb_ingress_if"
+      },
+      {
+        "role": "ingress",
+        "lane": 2,
+        "path": "tb_top.feb_if2",
+        "kind": "feb_ingress_if"
+      },
+      {
+        "role": "ingress",
+        "lane": 3,
+        "path": "tb_top.feb_if3",
+        "kind": "feb_ingress_if"
+      },
+      {
+        "role": "egress",
+        "path": "tb_top.opq_if",
+        "kind": "opq_egress_if"
+      },
+      {
+        "role": "dma",
+        "path": "tb_top.dma_if",
+        "kind": "dma_sink_if"
+      },
+      {
+        "role": "control",
+        "path": "tb_top.ctrl_if",
+        "kind": "swb_ctrl_if"
+      }
+    ]
   },
   "artifacts": {
     "vcd": "sim/P041.vcd",
     "run_log": "sim/run_vcd.log",
     "ref_dir": "ref",
-    "packet_analyzer": "packet_analyzer"
+    "packet_analyzer": "packet_analyzer",
+    "shared_axis": "packet_analyzer/index.html",
+    "svd": "opq.svd"
   },
   "summary_lines": {
-    "start_time": "# Start time: 19:37:59 on Apr 22,2026",
-    "case": "# UVM_INFO /home/yifeng/packages/musip_2604/tb_int/cases/basic/uvm/sv/swb_basic_test.sv(163) @ 66000: uvm_test_top [CASE] Basic case: frames=2 sat=[0.20 0.20 0.20 0.20] mask=0xf hit_mode=poisson raw_total_hits=1638 padding_hits_added=2 total_hits=1640 expected_words=410 use_merge=1 dma_half_full_pct=75 case_seed=5151",
-    "opq": "# UVM_INFO /home/yifeng/packages/musip_2604/tb_int/cases/basic/uvm/sv/swb_scoreboard.sv(590) @ 51498000: uvm_test_top.env.scoreboard [HIT_STAGE_SUMMARY] opq expected=1640 actual=1640 ghosts=0 missing=0",
-    "dma": "# UVM_INFO /home/yifeng/packages/musip_2604/tb_int/cases/basic/uvm/sv/swb_scoreboard.sv(590) @ 51498000: uvm_test_top.env.scoreboard [HIT_STAGE_SUMMARY] dma expected=1640 actual=1640 ghosts=0 missing=0",
-    "dma_summary": "# UVM_INFO /home/yifeng/packages/musip_2604/tb_int/cases/basic/uvm/sv/swb_scoreboard.sv(734) @ 51498000: uvm_test_top.env.scoreboard [DMA_SUMMARY] Compared 410 payload words, ignored 128 trailing padding words, ingress_hits=1640 opq_hits=1640 dma_hits=1640 parse_errors=0",
-    "pass": "# UVM_INFO /home/yifeng/packages/musip_2604/tb_int/cases/basic/uvm/sv/swb_scoreboard.sv(783) @ 51498000: uvm_test_top.env.scoreboard [SWB_CHECK_PASS] profile=P041_dma_half_full_75 case_seed=5151 payload_words=410 padding_words=128 ingress_hits=1640 opq_hits=1640 dma_hits=1640",
-    "end_time": "# End time: 19:38:06 on Apr 22,2026, Elapsed time: 0:00:07"
+    "start_time": "# Start time: 09:03:49 on Apr 24,2026",
+    "case": "# UVM_INFO /home/yifeng/packages/musip_2604/tb_int/cases/basic/uvm/sv/swb_basic_test.sv(171) @ 70000: uvm_test_top [CASE] Basic case: frames=3 sat=[0.20 0.20 0.20 0.20] mask=0xf hit_mode=poisson raw_total_hits=1245 padding_hits_added=3 total_hits=1248 expected_words=312 use_merge=1 dma_half_full_pct=75 case_seed=5151 lane_skew0=[0,0,0,0] lane_skew_max=0 lane_skew_mode=  fixed",
+    "opq": "# UVM_INFO /home/yifeng/packages/musip_2604/tb_int/cases/basic/uvm/sv/swb_scoreboard.sv(673) @ 49226000: uvm_test_top.env.scoreboard [HIT_STAGE_SUMMARY] opq expected=1248 actual=1248 ghosts=0 missing=0",
+    "dma": "# UVM_INFO /home/yifeng/packages/musip_2604/tb_int/cases/basic/uvm/sv/swb_scoreboard.sv(673) @ 49226000: uvm_test_top.env.scoreboard [HIT_STAGE_SUMMARY] dma expected=1248 actual=1248 ghosts=0 missing=0",
+    "dma_summary": "# UVM_INFO /home/yifeng/packages/musip_2604/tb_int/cases/basic/uvm/sv/swb_scoreboard.sv(821) @ 49226000: uvm_test_top.env.scoreboard [DMA_SUMMARY] Compared 312 payload words, ignored 128 trailing padding words, ingress_hits=1248 opq_hits=1248 dma_hits=1248 parse_errors=0",
+    "pass": "# UVM_INFO /home/yifeng/packages/musip_2604/tb_int/cases/basic/uvm/sv/swb_scoreboard.sv(874) @ 49226000: uvm_test_top.env.scoreboard [SWB_CHECK_PASS] profile=P041_dma_half_full_75 case_seed=5151 payload_words=312 padding_words=128 ingress_hits=1248 opq_hits=1248 dma_hits=1248",
+    "end_time": "# End time: 09:03:52 on Apr 24,2026, Elapsed time: 0:00:03"
   }
 }

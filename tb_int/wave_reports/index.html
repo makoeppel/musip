@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MuSiP Wave Reports</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f3f1eb;
+      --panel: #fffdf7;
+      --ink: #16202b;
+      --muted: #596878;
+      --line: #d7d0c3;
+      --accent: #005b7f;
+      --accent-soft: #dceff8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top right, #efe2c4 0, transparent 28rem),
+        linear-gradient(180deg, #faf7f1 0%, var(--bg) 100%);
+      color: var(--ink);
+    }
+    main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem 1.25rem 3rem;
+    }
+    h1, h2 {
+      margin: 0;
+      font-family: "IBM Plex Serif", Georgia, serif;
+      font-weight: 600;
+    }
+    p {
+      margin: 0;
+      line-height: 1.5;
+      color: var(--muted);
+    }
+    .hero {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 1.5rem;
+      box-shadow: 0 10px 30px rgba(22, 32, 43, 0.07);
+    }
+    .hero h1 {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+    .hero p + p {
+      margin-top: 0.65rem;
+    }
+    .bucket-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+    .bucket {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 1.1rem;
+      box-shadow: 0 8px 24px rgba(22, 32, 43, 0.05);
+    }
+    .bucket h2 {
+      font-size: 1.2rem;
+      margin-bottom: 0.2rem;
+    }
+    .bucket p {
+      margin-bottom: 0.8rem;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    li + li {
+      margin-top: 0.55rem;
+    }
+    a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    .links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem 0.8rem;
+      margin-top: 0.15rem;
+    }
+    .chip {
+      display: inline-block;
+      padding: 0.12rem 0.5rem;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+    .foot {
+      margin-top: 1.5rem;
+      padding: 1rem 1.1rem;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: rgba(255, 253, 247, 0.72);
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="hero">
+      <span class="chip">29 promoted bundles · 3-frame windows</span>
+      <h1>MuSiP traffic analyzer wave reports</h1>
+      <p>
+        This root serves every promoted waveform bundle in <code>tb_int/wave_reports/</code>.
+        Each case has a checked-in VCD, an <code>opq.svd</code> snapshot, bundle metadata, and a local
+        packet analyzer page that correlates ingress, merged OPQ egress, and DMA across a 3-frame display window.
+      </p>
+      <p>
+        The masked-lane BASIC cases intentionally keep all four ingress lanes visible in the VCD.
+        The single surviving lane is identified by the case contract, while the analyzer still shows
+        the pre-mask traffic on every captured lane for correlation.
+      </p>
+      <p>
+        Long profile captures keep the full simulation depth in <code>bundle.json</code> and display the middle
+        three frames by default; P123 and P124 currently serve F6..F8 from their 16-frame runs.
+      </p>
+    </section>
+
+    <section class="bucket-grid">
+      <article class="bucket">
+        <h2>BASIC</h2>
+        <p>Lane-mask closure and representative longrun campaign evidence.</p>
+        <ul>
+          <li><a href="BASIC/B046/packet_analyzer/">B046 analyzer</a> <span class="links"><a href="BASIC/B046/">bundle</a></span></li>
+          <li><a href="BASIC/B047/packet_analyzer/">B047 analyzer</a> <span class="links"><a href="BASIC/B047/">bundle</a></span></li>
+          <li><a href="BASIC/B048/packet_analyzer/">B048 analyzer</a> <span class="links"><a href="BASIC/B048/">bundle</a></span></li>
+          <li><a href="BASIC/B049/packet_analyzer/">B049 analyzer</a> <span class="links"><a href="BASIC/B049/">bundle</a></span></li>
+          <li><a href="BASIC/B101/packet_analyzer/">B101 analyzer</a> <span class="links"><a href="BASIC/B101/">bundle</a></span></li>
+          <li><a href="BASIC/B102/packet_analyzer/">B102 analyzer</a> <span class="links"><a href="BASIC/B102/">bundle</a></span></li>
+          <li><a href="BASIC/B103/packet_analyzer/">B103 analyzer</a> <span class="links"><a href="BASIC/B103/">bundle</a></span></li>
+        </ul>
+      </article>
+
+      <article class="bucket">
+        <h2>EDGE</h2>
+        <p>Zero-hit, single-hit, and max-hit edge conditions.</p>
+        <ul>
+          <li><a href="EDGE/E025/packet_analyzer/">E025 analyzer</a> <span class="links"><a href="EDGE/E025/">bundle</a></span></li>
+          <li><a href="EDGE/E026/packet_analyzer/">E026 analyzer</a> <span class="links"><a href="EDGE/E026/">bundle</a></span></li>
+          <li><a href="EDGE/E027/packet_analyzer/">E027 analyzer</a> <span class="links"><a href="EDGE/E027/">bundle</a></span></li>
+        </ul>
+      </article>
+
+      <article class="bucket">
+        <h2>PROF</h2>
+        <p>Representative longrun profiles, DMA backpressure, and lane skew evidence.</p>
+        <ul>
+          <li><a href="PROF/P001/packet_analyzer/">P001 analyzer</a> <span class="links"><a href="PROF/P001/">bundle</a></span></li>
+          <li><a href="PROF/P002/packet_analyzer/">P002 analyzer</a> <span class="links"><a href="PROF/P002/">bundle</a></span></li>
+          <li><a href="PROF/P040/packet_analyzer/">P040 analyzer</a> <span class="links"><a href="PROF/P040/">bundle</a></span></li>
+          <li><a href="PROF/P041/packet_analyzer/">P041 analyzer</a> <span class="links"><a href="PROF/P041/">bundle</a></span></li>
+          <li><a href="PROF/P123/packet_analyzer/">P123 analyzer</a> <span class="links"><a href="PROF/P123/">bundle</a></span></li>
+          <li><a href="PROF/P124/packet_analyzer/">P124 analyzer</a> <span class="links"><a href="PROF/P124/">bundle</a></span></li>
+        </ul>
+      </article>
+
+      <article class="bucket">
+        <h2>ERROR</h2>
+        <p>Replay, zero-payload, DMA semantic, and dual-harness regression evidence.</p>
+        <ul>
+          <li><a href="ERROR/X111/packet_analyzer/">X111 analyzer</a> <span class="links"><a href="ERROR/X111/">bundle</a></span></li>
+          <li><a href="ERROR/X112/packet_analyzer/">X112 analyzer</a> <span class="links"><a href="ERROR/X112/">bundle</a></span></li>
+          <li><a href="ERROR/X113/packet_analyzer/">X113 analyzer</a> <span class="links"><a href="ERROR/X113/">bundle</a></span></li>
+          <li><a href="ERROR/X116/packet_analyzer/">X116 analyzer</a> <span class="links"><a href="ERROR/X116/">bundle</a></span></li>
+          <li><a href="ERROR/X117/packet_analyzer/">X117 analyzer</a> <span class="links"><a href="ERROR/X117/">bundle</a></span></li>
+          <li><a href="ERROR/X118/packet_analyzer/">X118 analyzer</a> <span class="links"><a href="ERROR/X118/">bundle</a></span></li>
+          <li><a href="ERROR/X119/packet_analyzer/">X119 analyzer</a> <span class="links"><a href="ERROR/X119/">bundle</a></span></li>
+          <li><a href="ERROR/X120/packet_analyzer/">X120 analyzer</a> <span class="links"><a href="ERROR/X120/">bundle</a></span></li>
+          <li><a href="ERROR/X121/packet_analyzer/">X121 analyzer</a> <span class="links"><a href="ERROR/X121/">bundle</a></span></li>
+          <li><a href="ERROR/X122/packet_analyzer/">X122 analyzer</a> <span class="links"><a href="ERROR/X122/">bundle</a></span></li>
+          <li><a href="ERROR/X123/packet_analyzer/">X123 analyzer</a> <span class="links"><a href="ERROR/X123/">bundle</a></span></li>
+          <li><a href="ERROR/X124/packet_analyzer/">X124 analyzer</a> <span class="links"><a href="ERROR/X124/">bundle</a></span></li>
+          <li>
+            X125 dual harness
+            <span class="links">
+              <a href="ERROR/X125/plain/packet_analyzer/">plain analyzer</a>
+              <a href="ERROR/X125/twoenv/packet_analyzer/">twoenv analyzer</a>
+              <a href="ERROR/X125/">bundle</a>
+            </span>
+          </li>
+        </ul>
+      </article>
+    </section>
+
+    <section class="foot">
+      <p>
+        Bundle metadata lives in each case-local <code>bundle.json</code>. The top-level
+        <a href="README.md">README.md</a> records the authored bundle contract, contents, and serve notes.
+      </p>
+    </section>
+  </main>
+</body>
+</html>
