@@ -118,6 +118,20 @@ static void print_swb_counters(mudaq::DmaMudaqDevice& mu) {
     printf("DMA FIFO full: %i \n", mu.read_register_ro(BUFFER_STATUS_REGISTER_R));  // fifo full cnt
 }
 
+uint64_t generate_random_pixel_hit_swb(bool print) {
+    uint8_t tot = rand() % 32;   // 0 to 31
+    uint8_t chipID = rand() % 16;// 0 to 15
+    uint8_t col = rand() % 256;  // 0 to 255
+    uint8_t row = rand() % 250;  // 0 to 249
+    uint32_t time = rand();
+    uint64_t hit =
+        ((uint64_t)(0 & 0x1) << 63) |
+        ((uint64_t)(chipID & 0x3) << 61) |
+        (uint64_t)time;
+
+    return hit;
+}
+
 int init_mudaq(mudaq::MudaqDevice& mu) {
 #ifdef NO_A10_BOARD
 #else
@@ -250,132 +264,53 @@ int frontend_exit_user() {
 
 int create_midas_events(uint32_t* dmaBuffer, uint32_t dmaBufSize, int rbh)
 {
-    // dmaBufSize is passed as maxidx, so the valid number of uint32_t words is dmaBufSize + 1
-    const uint32_t n_u32 = dmaBufSize + 1;
+    if (!dmaBuffer)
+        return -1;
 
-    if (dmaBuffer == nullptr || n_u32 < 2)
-        return SUCCESS;
+    if (dmaBufSize < 2)
+        return -1;
 
-    // Need pairs of uint32_t to form one uint64_t
-    const uint32_t n_u32_even = n_u32 & ~1U;
-    const uint32_t n_u64 = n_u32_even / 2;
+    // one hit = two uint32_t words
+    uint32_t nHits = dmaBufSize / 2;
 
-    if (n_u64 == 0)
-        return SUCCESS;
+    static constexpr uint32_t kMaxBanks = 1000;
 
-    static constexpr uint64_t kTimestampMask = (1ULL << 37) - 1ULL; // bits 0..36
-    static constexpr uint64_t kFrameTicks    = 2000ULL;             // 16 us / 8 ns
-    static constexpr uint32_t kMaxBanksPerEvent = 1000;             // H000..H999
+    uint32_t nBanks = std::min(kMaxBanks, nHits);
 
-    struct HitWord {
-        uint64_t word;
-        uint64_t ts;
-        uint64_t frame;
-    };
+    // printf("%i %i\n", nBanks, dmaBufSize);
 
-    std::vector<HitWord> hits;
-    hits.reserve(n_u64);
-
-    // Rebuild 64-bit words from DMA buffer
-    // Assumption: dmaBuffer[0]=low32, dmaBuffer[1]=high32
-    for (uint32_t i = 0; i < n_u32_even; i += 2) {
-        uint64_t word =
-            static_cast<uint64_t>(dmaBuffer[i]) |
-            (static_cast<uint64_t>(dmaBuffer[i + 1]) << 32);
-
-        uint64_t ts    = word & kTimestampMask;
-        uint64_t frame = ts / kFrameTicks;
-
-        hits.push_back({word, ts, frame});
+    // create MIDAS event
+    void* event = nullptr;
+    int status = 0;
+    do {
+        if(!is_readout_thread_enabled()) return -1;
+        if(!readout_enabled()) {
+            cm_msg(MERROR, "create_midas_events()", "we are not running");
+            return -1;
+        }
+        status = rb_get_wp(rbh, &event, 0);
+        if(status == DB_TIMEOUT) { ss_sleep(10); }
+        else if(status != DB_SUCCESS) return -1;
+    } while(status == DB_TIMEOUT);
+    if(!event) {
+        cm_msg(MERROR, "create_midas_events", "unexpected nullptr from rb_get_wp\n");
+        return -1;
     }
+    auto eventHeader = reinterpret_cast<EVENT_HEADER*>(event);
+    bm_compose_event_threadsafe(eventHeader, eventID_data, 0, 0, &equipment[0].serial_number);
+    auto bankHeader = reinterpret_cast<BANK_HEADER*>(eventHeader + 1);
+    bk_init32a(bankHeader); // create MIDAS bank
 
-    // Sort by timestamp
-    std::sort(hits.begin(), hits.end(),
-              [](const HitWord& a, const HitWord& b) { return a.ts < b.ts; });
+    char* data = nullptr;
+    std::string bank_name = "H000";
+    bk_create(bankHeader, bank_name.c_str(), TID_UINT32, reinterpret_cast<void**>(&data));
+    memcpy(data, dmaBuffer, dmaBufSize * sizeof(uint32_t));
+    data += dmaBufSize * sizeof(uint32_t);
+    bk_close(bankHeader, data);
 
-    char* event = nullptr;
-    EVENT_HEADER* eventHeader = nullptr;
-    BANK_HEADER* bankHeader = nullptr;
-    uint32_t bank_idx = 0;
-    bool event_open = false;
+    eventHeader->data_size = bk_size(bankHeader);
+    rb_increment_wp(rbh, sizeof(EVENT_HEADER) + eventHeader->data_size);
 
-    auto open_event = [&]() -> int {
-        void* p = nullptr;
-        int status = rb_get_wp(rbh, &p, 10);
-        if (status == DB_TIMEOUT)
-            return DB_TIMEOUT;
-        if (status != DB_SUCCESS) {
-            cm_msg(MERROR, "create_midas_events", "rb_get_wp failed with status %d", status);
-            return status;
-        }
-
-        event = reinterpret_cast<char*>(p);
-        eventHeader = reinterpret_cast<EVENT_HEADER*>(event);
-
-        bm_compose_event_threadsafe(eventHeader, eventID_data, 0, 0,
-                                    &equipment[0].serial_number);
-
-        bankHeader = reinterpret_cast<BANK_HEADER*>(eventHeader + 1);
-        bk_init32a(bankHeader);
-
-        bank_idx = 0;
-        event_open = true;
-        return DB_SUCCESS;
-    };
-
-    auto close_event = [&]() {
-        if (!event_open)
-            return;
-
-        eventHeader->data_size = bk_size(bankHeader);
-        rb_increment_wp(rbh, sizeof(EVENT_HEADER) + eventHeader->data_size);
-        event_open = false;
-    };
-
-    int status = open_event();
-    if (status != DB_SUCCESS)
-        return status;
-
-    size_t i = 0;
-    while (i < hits.size()) {
-        const uint64_t frame_id = hits[i].frame;
-
-        size_t j = i + 1;
-        while (j < hits.size() && hits[j].frame == frame_id)
-            ++j;
-
-        const size_t frame_nhits = j - i;
-
-        // If this MIDAS event already used all available bank names,
-        // close it and start a new MIDAS event.
-        if (bank_idx >= kMaxBanksPerEvent) {
-            close_event();
-
-            status = open_event();
-            if (status != DB_SUCCESS)
-                return status;
-        }
-
-        char bank_name[5];
-        std::snprintf(bank_name, sizeof(bank_name), "H%03u", bank_idx);
-
-        uint32_t* data = nullptr;
-        bk_create(bankHeader, bank_name, TID_UINT32, reinterpret_cast<void**>(&data));
-
-        // Store 64-bit words as two uint32_t words: low32, high32
-        for (size_t k = 0; k < frame_nhits; ++k) {
-            const uint64_t w = hits[i + k].word;
-            data[2 * k]     = static_cast<uint32_t>(w & 0xFFFFFFFFULL);
-            data[2 * k + 1] = static_cast<uint32_t>((w >> 32) & 0xFFFFFFFFULL);
-        }
-
-        bk_close(bankHeader, data + 2 * frame_nhits);
-
-        ++bank_idx;
-        i = j;
-    }
-
-    close_event();
     return SUCCESS;
 }
 
@@ -390,17 +325,13 @@ int read_stream_thread(void*) {
     int rbh = get_event_rbh(0);
     int status;
 
-    // serial number on the FPGA
-    uint32_t serial_number = 0;
-
     // timeout for DMA
     bool timeout = false;
 
     // dummy buffer for test data
-    int nEvents = 5000;
-    size_t eventSize = 32;                                             // in 4-byte words
-    size_t dmaBufSize_dummy = nEvents * eventSize * sizeof(uint32_t);  // buffer size in bytes
-    std::unique_ptr<uint32_t[]> dma_buf_dummy(static_cast<uint32_t*>(malloc(dmaBufSize_dummy)));
+    int nHits = 5000;
+    std::vector<uint32_t> dma_buf_dummy32;
+    std::vector<uint64_t> dma_buf_dummy64;
 
     // actuall readout loop
     while (is_readout_thread_enabled()) {
@@ -408,11 +339,36 @@ int read_stream_thread(void*) {
 
         // don't readout events if we are not running
         if (!readout_enabled()) {
-            // we start from zero again
-            serial_number = 0;
             // printf("Not running!\n");
             //  do not produce events when run is stopped
             ss_sleep(10);  // don't eat all CPU
+            continue;
+        }
+
+        // we generate the events in software
+        if (use_software_dummy) {
+
+            // create dummy hits
+            uint64_t first_hit = generate_random_pixel_hit_swb(true);
+            dma_buf_dummy64.push_back(first_hit);
+
+            for (int i = 0; i < nHits; i++)
+                dma_buf_dummy64.push_back(generate_random_pixel_hit_swb(false));
+
+            // Convert 64-bit words to two 32-bit words each
+            dma_buf_dummy32.reserve(dma_buf_dummy64.size() * 2);
+            for (uint64_t word : dma_buf_dummy64) {
+                dma_buf_dummy32.push_back(static_cast<uint32_t>(word & 0xFFFFFFFF));        // lower 32 bits
+                dma_buf_dummy32.push_back(static_cast<uint32_t>((word >> 32) & 0xFFFFFFFF)); // upper 32 bits
+            }
+
+            // printf("hit64:hit32: %llx %x %x\n", dma_buf_dummy64[0], dma_buf_dummy32[0], dma_buf_dummy32.data()[0]);
+
+            // create MIDAS events
+            create_midas_events(dma_buf_dummy32.data(), dma_buf_dummy32.size(), rbh);
+            dma_buf_dummy64.clear();
+            dma_buf_dummy32.clear();
+            ss_sleep(300); // limit data rate
             continue;
         }
 
