@@ -35,7 +35,7 @@ end entity;
 architecture rtl of swb_datapath_2env_wrapper is
 
     constant LINK_COUNT_CONST     : positive := 4;
-    constant MASK_N_CONST         : std_logic_vector(LINK_COUNT_CONST - 1 downto 0) := (others => '1');
+    constant MASK_N_CONST         : std_logic_vector(LINK_COUNT_CONST - 1 downto 0) := (0 => '1', others => '0');
 
     signal lane_rx              : work.mu3e.link32_array_t(LINK_COUNT_CONST - 1 downto 0) := (others => work.mu3e.LINK32_IDLE);
     signal hits_256             : std_logic_vector(255 downto 0);
@@ -54,11 +54,6 @@ architecture rtl of swb_datapath_2env_wrapper is
 begin
 
     lane_rx(0) <= work.mu3e.to_link(opq_data, opq_datak) when opq_valid = '1' else work.mu3e.LINK32_IDLE;
-
-    gen_idle_lanes : for lane in 1 to LINK_COUNT_CONST - 1 generate
-    begin
-        lane_rx(lane) <= work.mu3e.LINK32_IDLE;
-    end generate;
 
     dut_mux : entity work.musip_mux_4_1
     generic map (

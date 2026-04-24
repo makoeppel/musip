@@ -15,7 +15,7 @@
 All cases below address specific fields or beats defined in the stimulus field map in [`DV_BASIC.md`](DV_BASIC.md#stimulus-field-map-per-frame-per-lane). Shorthand used in the scenario column:
 
 - `K28.5=0xBC`, `K28.4=0x9C`, `K23.7=0xF7` — the three K-chars emitted by `feb_frame_assembly.vhd`
-- `gts_8n[47:0]` — 48-bit global timestamp; split into `gts[47:16]` (header0), `gts[15:0]` (header1 high), and `gts[30:0]` (debug1). Also split at SWB into `frame_ts = gts[47:12]`, `shd_ts = gts[11:4]`, `hit_ts = gts[3:0]`.
+- `gts_8n[47:0]` — 48-bit global timestamp in `8 ns` units; the frame header carries the time-slice origin with masked low bits, while `debug1` carries the later live dispatch timestamp. At SWB this is split into `frame_ts = gts[47:12]`, `shd_ts = gts[11:4]`, and `hit_ts = gts[3:0]`.
 - `pkg_cnt[15:0]` — frame counter at header1 low
 - `subheader_cnt[14:0]` — debug0 high, `hit_cnt[15:0]` — debug0 low (frame totals)
 - `shd_ts[11:4]` — subheader beat high byte · `sub_hit_cnt[7:0]` — subheader beat mid byte

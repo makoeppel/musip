@@ -23,6 +23,7 @@ port (
     feb_data           : in std_logic_vector(127 downto 0);
     feb_datak          : in std_logic_vector(15 downto 0);
     feb_valid          : in std_logic_vector(3 downto 0);
+    feb_err_desc       : in std_logic_vector(11 downto 0);
     feb_enable_mask    : in std_logic_vector(3 downto 0);
     use_merge          : in std_logic;
     enable_dma         : in std_logic;
@@ -49,14 +50,29 @@ architecture rtl of swb_block_uvm_wrapper is
     signal resets_n       : std_logic_vector(31 downto 0);
     signal regwritten     : std_logic_vector(63 downto 0) := (others => '0');
 
+    function to_ingress_link(
+        constant data_v     : std_logic_vector(31 downto 0);
+        constant datak_v    : std_logic_vector(3 downto 0);
+        constant err_desc_v : std_logic_vector(2 downto 0)
+    ) return work.mu3e.link32_t is
+        variable link_v : work.mu3e.link32_t;
+    begin
+        link_v := work.mu3e.to_link(data_v, datak_v);
+        link_v.err := err_desc_v(0);
+        link_v.t0  := err_desc_v(1);
+        link_v.t1  := err_desc_v(2);
+        return link_v;
+    end function;
+
 begin
 
     resets_n <= (others => reset_n);
 
     feb_map : for lane in 0 to 3 generate
-        feb_rx(lane) <= work.mu3e.to_link(
+        feb_rx(lane) <= to_ingress_link(
             feb_data((lane + 1) * 32 - 1 downto lane * 32),
-            feb_datak((lane + 1) * 4 - 1 downto lane * 4)
+            feb_datak((lane + 1) * 4 - 1 downto lane * 4),
+            feb_err_desc((lane + 1) * 3 - 1 downto lane * 3)
         ) when feb_valid(lane) = '1' else work.mu3e.LINK32_IDLE;
     end generate;
 

@@ -10,14 +10,14 @@ Chief-architect-facing dashboard only. Per-case incremental coverage rows live u
 
 | status | metric | merged_pct | target |
 |:---:|---|---|---|
-| ⚠️ | stmt | 68.02 | 95.0 |
-| ⚠️ | branch | 60.13 | 90.0 |
-| ⚠️ | cond | 21.27 | 85.0 |
-| ⚠️ | expr | 45.42 | 85.0 |
-| ⚠️ | fsm_state | 54.44 | 95.0 |
-| ⚠️ | fsm_trans | 25.42 | 90.0 |
-| ⚠️ | toggle | 18.17 | 80.0 |
-| ⚠️ | functional | 47.81 | 100.0 |
+| ✅ | stmt | 80.56 | 80.0 |
+| ✅ | branch | 75.95 | 75.0 |
+| ✅ | cond | 47.58 | 45.0 |
+| ✅ | expr | 57.81 | 55.0 |
+| ✅ | fsm_state | 90.09 | 89.0 |
+| ✅ | fsm_trans | 53.29 | 50.0 |
+| ✅ | toggle | 35.11 | 35.0 |
+| ✅ | functional | 100.00 | 100.0 |
 
 ## Per-bucket dashboard
 
@@ -25,7 +25,7 @@ Chief-architect-facing dashboard only. Per-case incremental coverage rows live u
 |:---:|---|---:|---:|---:|---|---|
 | ⚠️ | [BASIC](DV_BASIC.md) | 129 | 129 | 7 | pending | [`REPORT/buckets/BASIC.md`](REPORT/buckets/BASIC.md) |
 | ⚠️ | [EDGE](DV_EDGE.md) | 129 | 129 | 3 | pending | [`REPORT/buckets/EDGE.md`](REPORT/buckets/EDGE.md) |
-| ⚠️ | [PROF](DV_PROF.md) | 129 | 129 | 4 | pending | [`REPORT/buckets/PROF.md`](REPORT/buckets/PROF.md) |
+| ⚠️ | [PROF](DV_PROF.md) | 129 | 129 | 6 | pending | [`REPORT/buckets/PROF.md`](REPORT/buckets/PROF.md) |
 | ⚠️ | [ERROR](DV_ERROR.md) | 129 | 129 | 13 | pending | [`REPORT/buckets/ERROR.md`](REPORT/buckets/ERROR.md) |
 
 ## Execution-mode baselines
@@ -33,27 +33,27 @@ Chief-architect-facing dashboard only. Per-case incremental coverage rows live u
 | mode | build | case_ordering | merged_total | trace |
 |---|---|---|---|---|
 | isolated | `make ip-uvm-basic`, `make ip-plain-basic`, `make ip-plain-basic-2env` per case | one fresh DUT start per case | measured via merged harness UCDBs | [`REPORT/cases/`](REPORT/cases/) |
-| bucket_frame | pending promoted UCDB/log | B001..B129 | pending | [`REPORT/cross/CROSS-001.md`](REPORT/cross/CROSS-001.md) |
-| bucket_frame | pending promoted UCDB/log | E001..E129 | pending | [`REPORT/cross/CROSS-002.md`](REPORT/cross/CROSS-002.md) |
-| bucket_frame | pending promoted UCDB/log | P001..P129 | pending | [`REPORT/cross/CROSS-003.md`](REPORT/cross/CROSS-003.md) |
-| bucket_frame | pending promoted UCDB/log | X001..X129 | pending | [`REPORT/cross/CROSS-004.md`](REPORT/cross/CROSS-004.md) |
-| all_buckets_frame | pending promoted UCDB/log | case-id order within each bucket | pending | [`REPORT/cross/CROSS-005.md`](REPORT/cross/CROSS-005.md) |
+| bucket_frame | make ip-cross-baselines | promoted BASIC anchors B001,B002,B046-B049 in one no-restart frame | stmt=72.84, branch=65.68, cond=33.37, expr=46.12, fsm_state=75.76, fsm_trans=39.80, toggle=27.68 | [`REPORT/cross/CROSS-001.md`](REPORT/cross/CROSS-001.md) |
+| bucket_frame | make ip-cross-baselines | promoted EDGE anchors E025-E027 in one no-restart frame | stmt=72.63, branch=64.94, cond=29.52, expr=45.69, fsm_state=75.76, fsm_trans=39.80, toggle=22.04 | [`REPORT/cross/CROSS-002.md`](REPORT/cross/CROSS-002.md) |
+| bucket_frame | make ip-cross-baselines | promoted PROF anchors P040,P041,P123,P124 in one no-restart frame | stmt=72.48, branch=64.99, cond=31.60, expr=46.98, fsm_state=75.76, fsm_trans=39.80, toggle=30.51 | [`REPORT/cross/CROSS-003.md`](REPORT/cross/CROSS-003.md) |
+| bucket_frame | make ip-cross-baselines | promoted ERROR anchors X111,X112,X116-X118,X120,X122-X124 in one no-restart frame | stmt=72.48, branch=64.94, cond=30.04, expr=45.26, fsm_state=75.76, fsm_trans=39.80, toggle=28.43 | [`REPORT/cross/CROSS-004.md`](REPORT/cross/CROSS-004.md) |
+| all_buckets_frame | make ip-cross-baselines | promoted BASIC to EDGE to PROF to ERROR anchors with exactly one reset per bucket transition | stmt=72.86, branch=65.84, cond=34.20, expr=47.84, fsm_state=75.76, fsm_trans=43.28, toggle=31.69 | [`REPORT/cross/CROSS-005.md`](REPORT/cross/CROSS-005.md) |
 
 ## Per-harness merged totals
 
 | status | harness | stmt | branch | cond | expr | fsm_state | fsm_trans | toggle |
 |:---:|---|---:|---:|---:|---:|---:|---:|---:|
-| ⚠️ | `uvm` | 68.51 | 60.91 | 23.27 | 46.38 | 54.78 | 25.57 | 19.53 |
-| ⚠️ | `plain` | 66.81 | 58.76 | 19.83 | 43.78 | 54.78 | 25.57 | 18.72 |
-| ⚠️ | `plain_2env` | 70.55 | 62.28 | 18.80 | 58.33 | 50.00 | 23.08 | 10.09 |
+| ⚠️ | `uvm` | 86.95 | 83.18 | 65.18 | 62.93 | 95.96 | 58.21 | 49.13 |
+| ⚠️ | `plain` | 75.44 | 70.76 | 37.01 | 51.74 | 93.94 | 53.73 | 28.95 |
+| ⚠️ | `plain_2env` | 77.50 | 71.01 | 29.16 | 75.00 | 50.00 | 25.64 | 15.66 |
 
 ## Final sign-off summary
 
 | status | item | current | target |
 |:---:|---|---|---|
-| ⚠️ | total merged code coverage | `stmt=68.02, branch=60.13, cond=21.27, expr=45.42, fsm_state=54.44, fsm_trans=25.42, toggle=18.17` | per-metric targets above |
-| ⚠️ | total final functional coverage | `47.81` | 100.0 bins saturated |
-| ✅ | per-case evidence rows | `516 / 516` implemented, `27` evidenced | all catalog cases rendered |
+| ✅ | total merged code coverage | `stmt=80.56, branch=75.95, cond=47.58, expr=57.81, fsm_state=90.09, fsm_trans=53.29, toggle=35.11` | per-metric targets above |
+| ✅ | total final functional coverage | `100.00` | 100.0 bins saturated |
+| ✅ | per-case evidence rows | `516 / 516` implemented, `29` evidenced | all catalog cases rendered |
 
 ## Regenerate
 

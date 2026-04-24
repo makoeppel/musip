@@ -31,8 +31,12 @@ Helpful overrides:
 - `make run SIM_ARGS='+SWB_REPLAY_DIR=/absolute/path/to/tb_int/cases/basic/ref/out'` loads `lane*_ingress.mem` and `expected_dma_words.mem` exported by the reference flow.
 - `make run SIM_ARGS='+SWB_FRAMES=2 +SWB_CASE_SEED=12345 +SWB_SAT0=0.10 +SWB_SAT1=0.20 +SWB_SAT2=0.30 +SWB_SAT3=0.40'` reruns a specific random case exactly.
 - `make run SIM_ARGS='+SWB_FRAMES=2 +SWB_CASE_SEED=12345 +SWB_SAT0=0.10 +SWB_SAT1=0.20 +SWB_SAT2=0.30 +SWB_SAT3=0.40 +SWB_HIT_TRACE_PREFIX=/absolute/path/prefix'` exports ingress, OPQ, and DMA hit ledgers plus a summary file.
+- `make run SIM_ARGS='+SWB_FRAMES=16 +SWB_CASE_SEED=123 +SWB_SAT0=0.25 +SWB_SAT1=0.25 +SWB_SAT2=0.25 +SWB_SAT3=0.25 +SWB_LANE0_SKEW_CYC=0 +SWB_LANE1_SKEW_CYC=512 +SWB_LANE2_SKEW_CYC=1024 +SWB_LANE3_SKEW_CYC=2048'` applies a fixed half-frame lane-skew profile directly in UVM.
+- `make run SIM_ARGS='+SWB_FRAMES=16 +SWB_CASE_SEED=124 +SWB_SAT0=0.25 +SWB_SAT1=0.25 +SWB_SAT2=0.25 +SWB_SAT3=0.25 +SWB_LANE_SKEW_VARYING=1 +SWB_LANE_SKEW_MAX_CYC=2048'` redraws lane 1..3 skew per frame from `[0,2048]`.
 - `make longrun LONGRUN_ARGS='--runs 128 --frames 2 --campaign-seed 260421'` runs the promoted default cross-random screen.
 - `make longrun LONGRUN_ARGS='--runs 256 --frames 2 --campaign-seed 260422 --out-dir report/longrun_ext_260422_fixed'` recreates the historical stronger 256-run archive. The promoted nightly-style signoff screen remains the default 128-run campaign.
+- `make longrun LONGRUN_ARGS='--runs 1 --frames 16 --rate-min 0.25 --rate-max 0.25 --rate-step 0.25 --lane-skew-fixed 0,512,1024,2048 --out-dir report/p123_fixed_lane_skew'` runs the fixed-skew PROF profile through the campaign wrapper.
+- `make longrun LONGRUN_ARGS='--runs 1 --frames 16 --rate-min 0.25 --rate-max 0.25 --rate-step 0.25 --lane-skew-varying --lane-skew-max-cyc 2048 --out-dir report/p124_varying_lane_skew'` runs the varying-skew PROF profile through the same wrapper.
 - `make run QUESTA_HOME=/data1/questaone_sim/questasim` points the harness at the installed full Questa runtime.
 - `make run SALT_LICENSE_SERVER=8161@lic-mentor.ethz.ch` forces the ETH floating server explicitly.
 

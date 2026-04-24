@@ -27,6 +27,8 @@ Every case in this bucket drives lanes through this exact 36-bit AvST grammar. T
 
 K-char table (8b/10b): `K28.5 = 0xBC` (preamble), `K28.4 = 0x9C` (trailer), `K23.7 = 0xF7` (subheader marker).
 
+Timestamp prior for promoted evidence: `ts[47:0]` is in `8 ns` units. The frame header timestamp is the time-slice origin, so it starts at `0`, advances by the exact frame separation, and keeps the lower slice bits masked to zero. On the promoted integrated path that means `+0x0800` per frame for `N_SHD=128`; variant `N_SHD=256` uses `+0x1000`. `debug1` is the live dispatch timestamp and is therefore expected to be later than the frame-origin timestamp.
+
 ## Catalog
 
 <!-- columns:
@@ -50,7 +52,7 @@ K-char table (8b/10b): `K28.5 = 0xBC` (preamble), `K28.4 = 0x9C` (trailer), `K23
 | B008 | D | live UVM | single-lane only, single frame, `N_SHD` subheaders all empty (no hits) | OPQ egress emits zero hits, payload `0`, case falls back to zero-payload path (BUG-008-H guard) | I/O |
 | B009 | D | live UVM | single-lane, two subheaders each carrying 4 hits (`hit_cnt=4`) | 8 normalized hits pass through OPQ; `shd_ts` mapping preserved end-to-end | I/O/D |
 | B010 | D | live UVM | 4-lane, 1 frame, 1 subheader per lane with `hit_cnt=4` | 16 normalized hits sorted by `abs_ts` at DMA, 4 DMA beats of 4 hits each | I/O/D/E |
-| B011 | D | live UVM | 4-lane, 2 frames, smoke shape repeated | frame `package_cnt` increments `{0,1}`, `gts_8n[47:16]` rolls by 1 per frame; DMA ordered by `abs_ts` across both frames | I/O/D/E |
+| B011 | D | live UVM | 4-lane, 2 frames, smoke shape repeated | frame `package_cnt` increments `{0,1}`, frame-origin `gts_8n` advances by one exact slice per frame (`+0x0800` at `N_SHD=128`) with masked low bits held at zero, and DMA is ordered by `abs_ts` across both frames | I/O/D/E |
 | B012 | D | live UVM | K28.5 preamble at SOP validated (parser contract) | `datak=0x1` on SOP, `data[7:0]==0xBC`; any deviation raises parser error | I |
 | B013 | D | live UVM | K28.4 trailer at EOP validated | `datak=0x1` on trailer, `data[7:0]==0x9C` on EOP; assert no extra beats after EOP | I |
 | B014 | D | live UVM | K23.7 subheader marker validated | every subheader beat has `data[7:0]==0xF7` and `datak=0x1`; parser emits subheader event | I |

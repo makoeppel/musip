@@ -58,12 +58,12 @@ module swb_opq_boundary_formal_top;
 
       GEN_TS_HIGH: begin
         valid = 1'b1;
-        data = 32'h1200_0000;
+        data = 32'h0000_0000;
       end
 
       GEN_TS_LOW_PKG: begin
         valid = 1'b1;
-        data = 32'hA000_0000;
+        data = 32'h0000_0000;
       end
 
       GEN_DEBUG0: begin
@@ -73,7 +73,7 @@ module swb_opq_boundary_formal_top;
 
       GEN_DEBUG1: begin
         valid = 1'b1;
-        data = 32'h0000_0000;
+        data = 32'h0000_0800;
       end
 
       GEN_ZERO_SUBHEADER: begin

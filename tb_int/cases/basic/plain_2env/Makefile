@@ -29,6 +29,7 @@ COV_UCDB ?= $(REPORT_DIR)/plain_basic_2env.ucdb
 COV_UCDB_SMOKE ?= $(REPORT_DIR)/plain_basic_2env_smoke.ucdb
 COV_UCDB_ABS := $(abspath $(COV_UCDB))
 COV_UCDB_SMOKE_ABS := $(abspath $(COV_UCDB_SMOKE))
+RUN_DO ?= run -all; quit -f
 
 export SALT_LICENSE_SERVER ?= $(ETH_MENTOR_SERVER)
 export MGLS_LICENSE_FILE ?= $(ETH_MENTOR_SERVER)
@@ -101,26 +102,26 @@ $(BUILD_DIR)/.compile-stamp: $(VHDL_SOURCES) $(SV_SOURCES) $(SV_INCLUDE_SOURCES)
 run: compile
 	mkdir -p $(REPORT_DIR)
 	cd $(BUILD_DIR) && set -o pipefail; \
-	QSIM_INI=$(QUESTA_INI) $(QUESTA_RUNNER) $(VSIM) $(VSIM_FLAGS) $(UVM_DPI_LIB_OPT) -sv_lib $(SV_LIB) tb_top_2env +SWB_REPLAY_DIR=$(REPLAY_DIR) -do "run -all; quit -f" $(SIM_ARGS) | tee "$(RUN_LOG)"
+	QSIM_INI=$(QUESTA_INI) $(QUESTA_RUNNER) $(VSIM) $(VSIM_FLAGS) $(UVM_DPI_LIB_OPT) -sv_lib $(SV_LIB) tb_top_2env +SWB_REPLAY_DIR=$(REPLAY_DIR) -do "$(RUN_DO)" $(SIM_ARGS) | tee "$(RUN_LOG)"
 
 run-smoke: compile
 	mkdir -p $(REPORT_DIR)
 	cd $(BUILD_DIR) && set -o pipefail; \
-	QSIM_INI=$(QUESTA_INI) $(QUESTA_RUNNER) $(VSIM) $(VSIM_FLAGS) $(UVM_DPI_LIB_OPT) -sv_lib $(SV_LIB) tb_top_2env +SWB_REPLAY_DIR=$(SMOKE_REPLAY_DIR) -do "run -all; quit -f" $(SIM_ARGS) | tee "$(RUN_LOG_SMOKE)"
+	QSIM_INI=$(QUESTA_INI) $(QUESTA_RUNNER) $(VSIM) $(VSIM_FLAGS) $(UVM_DPI_LIB_OPT) -sv_lib $(SV_LIB) tb_top_2env +SWB_REPLAY_DIR=$(SMOKE_REPLAY_DIR) -do "$(RUN_DO)" $(SIM_ARGS) | tee "$(RUN_LOG_SMOKE)"
 
 run_cov: compile
 	mkdir -p $(REPORT_DIR)
 	mkdir -p $(dir $(COV_UCDB_ABS))
 	rm -f $(COV_UCDB_ABS)
 	cd $(BUILD_DIR) && set -o pipefail; \
-	QSIM_INI=$(QUESTA_INI) $(QUESTA_RUNNER) $(VSIM) $(VSIM_FLAGS) $(UVM_DPI_LIB_OPT) -sv_lib $(SV_LIB) tb_top_2env +SWB_REPLAY_DIR=$(REPLAY_DIR) -do "coverage save -onexit $(COV_UCDB_ABS); run -all; quit -f" $(SIM_ARGS) | tee "$(RUN_LOG)"
+	QSIM_INI=$(QUESTA_INI) $(QUESTA_RUNNER) $(VSIM) $(VSIM_FLAGS) $(UVM_DPI_LIB_OPT) -sv_lib $(SV_LIB) tb_top_2env +SWB_REPLAY_DIR=$(REPLAY_DIR) -do "coverage save -onexit $(COV_UCDB_ABS); $(RUN_DO)" $(SIM_ARGS) | tee "$(RUN_LOG)"
 
 run_cov_smoke: compile
 	mkdir -p $(REPORT_DIR)
 	mkdir -p $(dir $(COV_UCDB_SMOKE_ABS))
 	rm -f $(COV_UCDB_SMOKE_ABS)
 	cd $(BUILD_DIR) && set -o pipefail; \
-	QSIM_INI=$(QUESTA_INI) $(QUESTA_RUNNER) $(VSIM) $(VSIM_FLAGS) $(UVM_DPI_LIB_OPT) -sv_lib $(SV_LIB) tb_top_2env +SWB_REPLAY_DIR=$(SMOKE_REPLAY_DIR) -do "coverage save -onexit $(COV_UCDB_SMOKE_ABS); run -all; quit -f" $(SIM_ARGS) | tee "$(RUN_LOG_SMOKE)"
+	QSIM_INI=$(QUESTA_INI) $(QUESTA_RUNNER) $(VSIM) $(VSIM_FLAGS) $(UVM_DPI_LIB_OPT) -sv_lib $(SV_LIB) tb_top_2env +SWB_REPLAY_DIR=$(SMOKE_REPLAY_DIR) -do "coverage save -onexit $(COV_UCDB_SMOKE_ABS); $(RUN_DO)" $(SIM_ARGS) | tee "$(RUN_LOG_SMOKE)"
 
 coverage_report:
 	@if [ -z "$(VCOVER)" ]; then \

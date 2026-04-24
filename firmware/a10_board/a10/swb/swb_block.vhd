@@ -135,7 +135,7 @@ begin
     --! sc => slow control packages
     --! rc => runcontrol packages
     g_demerge: FOR i in g_NLINKS_FEB_TOTL-1 downto 0 GENERATE
-        feb_rx(i) <= work.mu3e.to_link(i_feb_rx(i).data, i_feb_rx(i).datak);
+        feb_rx(i) <= i_feb_rx(i);
         e_data_demerge : entity work.swb_data_demerger
         port map (
             i_aligned           => '1',
@@ -296,9 +296,9 @@ begin
             rx_data_sim(i) <= work.mu3e.LINK32_IDLE;
         elsif rising_edge(i_clk) then
             if ( i_writeregs(SWB_READOUT_STATE_REGISTER_W)(USE_BIT_GEN_LINK) = '1' ) then
-                rx_data_sim(i) <= work.mu3e.to_link(gen_link.data, gen_link.datak);
+                rx_data_sim(i) <= gen_link;
             else
-                rx_data_sim(i) <= work.mu3e.to_link(rx_data(i).data, rx_data(i).datak);
+                rx_data_sim(i) <= rx_data(i);
             end if;
         end if;
         end process;

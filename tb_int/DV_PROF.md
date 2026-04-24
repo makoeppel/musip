@@ -155,8 +155,8 @@ Each `R` case names the axes it varies. The axis table is shared with [`DV_CROSS
 | P120 | R | live UVM | variant `USE_BIT_STREAM=1, USE_BIT_GENERIC=0` long run | alternative merge internal selected | M/O (variant) |
 | P121 | R | live UVM | variant `USE_BIT_GENERIC=1` long run | generic merge internal selected | M/O (variant) |
 | P122 | R | live UVM | combined variant: `SWB_N_SUBHEADERS=256, MAX_HITS=8` long run on dense shape | highest per-lane hit density; peak OPQ stress | I/O (variant) |
-| P123 | R | live UVM | profile with alternating `feb_type` per lane across 256 frames | `feb_type`-per-lane routing stability | I/M |
-| P124 | R | live UVM | profile with `feb_id` drawn from a 256-entry pool per lane | `feb_id` routing stress; OPQ tag table coverage | I/O |
+| P123 | R | live UVM | fixed per-lane skew profile: lane skew `[0,512,1024,2048]` cycles across 16 frames at `λ=0.25` | half-frame stagger is absorbed; DMA sort and OPQ allocator remain stable under fixed skew | I/M/O |
+| P124 | R | live UVM | varying per-lane skew profile: lane 1..3 skew drawn uniform from `[0,2048]` each frame across 16 frames at `λ=0.25` | half-frame varying skew is absorbed; DMA sort and OPQ allocator remain stable under time-varying skew | I/M/O |
 | P125 | R | live UVM | profile replaying the 64-frame trace exported from P100 | reproducible replay; scoreboard matches saved trace | I/O/D |
 | P126 | R | live UVM | replay with recorded seed from P095 and explicit `SWB_HIT_TRACE_PREFIX` | per-hit trace byte-matches the P095 original | I/O/D |
 | P127 | R | live UVM | replay with recorded seed from P107 — verify pass holds | long-soak reproducibility | all |

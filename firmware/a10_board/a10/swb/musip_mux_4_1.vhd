@@ -258,7 +258,7 @@ begin
     -- subheader merger
     e_subtime_merger : entity work.subtime_merger
     generic map (
-        g_LINK_N => 4,
+        g_LINK_N => g_LINK_N,
         g_FIFO_ADDR_WIDTH => 8,
         g_N_SUBTIME_BITS => 3,
         g_DATA_WIDTH => 64--,

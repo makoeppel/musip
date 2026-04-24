@@ -52,6 +52,7 @@ Historical formal note:
 | [BUG-010-R](#bug-010-r-feb_enable_mask-did-not-gate-opq-ingress-so-masked-lanes-still-entered-the-merged-datapath) | R | soft error | `directed-only (directed exact repro)` | fixed | `make ip-uvm-basic` with `B046_lane0_only` | `pending` | `feb_enable_mask` did not gate the OPQ ingress bridge, so masked FEB lanes still entered the merged datapath and corrupted the per-hit expectation ledger. |
 | [BUG-011-R](#bug-011-r-auth-qsys-opq-egress-seam-did-not-reconstruct-canonical-mu3e-framing-so-merged-opq-traffic-failed-to-parse) | R | hard stuck error | `common (any merge-enabled auth-wrapper traffic on the broken seam)` | fixed | `make ip-uvm-basic` with `B047_lane1_only` on the current auth-wrapper state | `39a6a83` | The musip-owned auth-wrapper seam forwarded raw Qsys egress words without reconstructing canonical Mu3e SOP/EOP semantics, so merged OPQ traffic accumulated parse errors and DMA stayed empty. |
 | [BUG-012-R](#bug-012-r-merged-opq-egress-was-still-remasked-by-raw-feb-lane-enables-so-non-lane0-mask-cases-blackholed-valid-dma-traffic) | R | soft error | `corner-only (merged path with lane0 masked off)` | fixed | `make ip-uvm-basic` with `B047_lane1_only` after `BUG-011-R` seam repair | `39a6a83` | The merged OPQ egress always emerged on logical lane0, but the downstream mux still used the raw FEB lane mask, so lane1/2/3-only cases blackholed valid merged traffic before DMA packing. |
+| [BUG-013-R](#bug-013-r-half-frame-lane-skew-bring-up-exposed-a-seeded-merge-path-stall-that-also-reproduces-at-skew-0) | R | hard stuck error | `corner-only (seeded symmetric 4-lane random profile; skew stress exposed it immediately)` | fixed | `make ip-uvm-basic` with `P123_fixed_lane_skew_0_2048` | `pending` | Half-frame skew closure initially exposed a promoted merge-enabled stall, but the blocker is now fixed locally: the vendored Qsys OPQ wrapper now forwards `OPQ_N_HIT=2047` and the monolithic page allocator now waits a full `N_SHD * 16` frame-join window, so both `P123` and `P124` retire cleanly. |
 
 ## 2026-04-21
 
@@ -254,6 +255,44 @@ Historical formal note:
     - clean result: `SWB_CHECK_PASS`, `UVM_ERROR : 0`, `payload_words=0`, `ingress/opq/dma hits = 0/0/0`
     - extended rerun closure: `tb_int/cases/basic/uvm/report/longrun_ext_260422_fixed/summary.json` with `pass_count=256 fail_count=0`, including `run_246 case_seed=1327604986`
   - BUG-004-R now closes the underlying event-builder cleanup. This harness fix remains necessary because the legal zero-payload contract is still "no launch" rather than a synthetic empty DMA transaction.
+- Commit:
+  - `pending`
+
+### BUG-013-R: Half-frame lane skew bring-up exposed a seeded merge-path stall that also reproduces at skew 0
+- First seen in:
+  - `make ip-uvm-basic SIM_ARGS='+SWB_PROFILE_NAME=P123_fixed_lane_skew_0_2048 +SWB_FRAMES=16 +SWB_CASE_SEED=123 +SWB_SAT0=0.25 +SWB_SAT1=0.25 +SWB_SAT2=0.25 +SWB_SAT3=0.25 +SWB_FRAME_SLOT_CYCLES=4096 +SWB_LANE0_SKEW_CYC=0 +SWB_LANE1_SKEW_CYC=512 +SWB_LANE2_SKEW_CYC=1024 +SWB_LANE3_SKEW_CYC=2048 +SWB_HIT_TRACE_PREFIX=$(pwd)/tb_int/cases/basic/uvm/report/P123_fixed_lane_skew_0_2048'`
+- Symptom:
+  - the intended half-frame skew profile timed out before `dma_done` with `expected_payload_words=2040`, `observed_payload_words=770`, `opq_hits=3081`, `dma_hits=3080`, and no trailing padding words or end-of-event marker
+  - a non-skew discriminant using the same seeded symmetric profile also timed out: `tb_int/cases/basic/uvm/report/no_slot_baseline_4lane_f2_summary.txt` reports `expected_payload_words=252`, `observed_payload_words=127`, `opq_hits=510`, and `dma_hits=508`
+- Root cause:
+  - the musip-local vendored native-SV wrapper `firmware/a10_board/a10/merger/qsys/opq_upstream_4lane_native_sv/generated/ordered_priority_queue_native_sv_fixed4_264221/synth/external/mu3e-ip-cores/packet_scheduler/syn/quartus/opq_native_sv_4lane_signoff/src_compat/ordered_priority_queue_dut_sv.sv` silently kept `MAX_PKT_LENGTH_CONST=255` and never forwarded the compile-time `OPQ_N_HIT=2047` override into `ordered_priority_queue_monolithic_sv`, so seeded multi-frame profiles truncated the active payload contract long before the promoted `N_HIT=2047` budget
+  - the same vendored OPQ snapshot also kept `FRAME_JOIN_WAIT_CYCLES=64` in `firmware/a10_board/a10/merger/qsys/opq_upstream_4lane_native_sv/generated/ordered_priority_queue_native_sv_fixed4_264221/synth/external/mu3e-ip-cores/packet_scheduler/rtl/sv_ver/ordered_priority_queue/monolithic_sv/ordered_priority_queue_monolithic_page_allocator.sv`, which is far shorter than the promoted half-frame skew budget (`N_SHD * 16 = 2048` cycles at `N_SHD=128`), so late lanes were dropped from live skewed frames
+  - this remains recorded as a musip-local generated-wrapper / vendored-snapshot repair; it has not been independently reproduced as a standalone upstream `packet_scheduler` issue
+- Fix status:
+  - state: fixed locally; the promoted UVM skew cases now pass and the skew-0 discriminant is clean again
+  - files/modules:
+    - `firmware/a10_board/a10/merger/qsys/opq_upstream_4lane_native_sv/generated/ordered_priority_queue_native_sv_fixed4_264221/synth/external/mu3e-ip-cores/packet_scheduler/syn/quartus/opq_native_sv_4lane_signoff/src_compat/ordered_priority_queue_dut_sv.sv`
+    - `firmware/a10_board/a10/merger/qsys/opq_upstream_4lane_native_sv/generated/ordered_priority_queue_native_sv_fixed4_264221/synth/external/mu3e-ip-cores/packet_scheduler/rtl/sv_ver/ordered_priority_queue/monolithic_sv/ordered_priority_queue_monolithic_page_allocator.sv`
+  - mechanism:
+    - the vendored native-SV wrapper now forwards `OPQ_N_HIT=2047` into `ordered_priority_queue_monolithic_sv` and derives `MAX_PKT_LENGTH_CONST` from that same override instead of hard-wiring `255`
+    - the monolithic page allocator now uses `FRAME_JOIN_WAIT_CYCLES = N_SHD * 16`, matching the promoted half-frame join budget used by `P123` and `P124`
+  - before_fix_outcome: the fixed-skew P123 run and the matching non-skew discriminant both terminate with `TIMEOUT`, no `dma_done`, no `o_endofevent`, no 128-word padding tail, and hundreds of missing hits at both OPQ and DMA
+  - after_fix_outcome:
+    - `tb_int/cases/basic/uvm/report/no_slot_baseline_4lane_f2_fixcheck_summary.txt` now passes with `expected_payload_words=252`, `observed_payload_words=252`, `padding_words=128`, `ingress_hits=1008`, `opq_hits=1008`, and `dma_hits=1008`
+    - `tb_int/cases/basic/uvm/report/P123_fixed_lane_skew_0_2048_summary.txt` now passes with `expected_payload_words=2040`, `observed_payload_words=2040`, `padding_words=128`, `ingress_hits=8160`, `opq_hits=8160`, and `dma_hits=8160`
+    - `tb_int/cases/basic/uvm/report/P124_varying_lane_skew_0_2048_summary.txt` now passes with `expected_payload_words=2064`, `observed_payload_words=2064`, `padding_words=128`, `ingress_hits=8256`, `opq_hits=8256`, and `dma_hits=8256`
+  - potential_hazard: medium; the repair is real for this workspace, but it currently lives in the musip-local vendored Qsys-generated OPQ snapshot and must be preserved if that wrapper is regenerated
+  - attribution note: do not reclassify this as a standalone `packet_scheduler` issue until it is reproduced outside the musip wrapper/integration environment
+  - Claude Opus 4.7 xhigh review decision: pending / not run
+- Runtime / coverage context:
+  - promoted passing evidence:
+    - `tb_int/cases/basic/uvm/report/no_slot_baseline_4lane_f2_fixcheck_summary.txt`
+    - `tb_int/cases/basic/uvm/report/P123_fixed_lane_skew_0_2048_summary.txt`
+    - `tb_int/cases/basic/uvm/report/P123_fixed_lane_skew_0_2048.log`
+    - `tb_int/cases/basic/uvm/report/P124_varying_lane_skew_0_2048_summary.txt`
+    - `tb_int/cases/basic/uvm/report/P124_varying_lane_skew_0_2048.log`
+  - closure takeaway:
+    - the lane-skew plusargs remain part of the promoted UVM workflow and the half-frame fixed and varying skew targets now close cleanly on the musip-local promoted path
 - Commit:
   - `pending`
 

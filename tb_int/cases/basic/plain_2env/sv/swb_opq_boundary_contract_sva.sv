@@ -20,6 +20,7 @@ module swb_opq_boundary_contract_sva #(
   localparam logic [7:0] SWB_K285_CONST = 8'hBC;
   localparam logic [7:0] SWB_K284_CONST = 8'h9C;
   localparam logic [7:0] SWB_K237_CONST = 8'hF7;
+  localparam int HEADER_TS_MASK_BITS = 11;
 
   typedef enum logic [2:0] {
     IDLING,
@@ -57,7 +58,7 @@ module swb_opq_boundary_contract_sva #(
         end
 
         TS_LOW_PKG: begin
-          assert (datak == 4'b0000);
+          assert ((datak == 4'b0000) && (data[16 + HEADER_TS_MASK_BITS - 1:16] == '0));
           phase_q <= DEBUG0;
         end
 
@@ -67,7 +68,7 @@ module swb_opq_boundary_contract_sva #(
         end
 
         DEBUG1: begin
-          assert ((datak == 4'b0000) && (data == 32'h0000_0000));
+          assert ((datak == 4'b0000) && (data[31] == 1'b0));
           phase_q <= SUBHEADER_OR_EOP;
         end
 

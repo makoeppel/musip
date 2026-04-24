@@ -89,8 +89,20 @@ class swb_opq_ingress_driver extends uvm_driver #(swb_frame_item);
     swb_opq_2env_push_ingress(lane_id, valid, data, datak);
   endtask
 
-  function int unsigned frame_slot_cycles_used(swb_frame_item frame);
+  task drive_idle_cycles(int unsigned idle_cycles);
+  begin
+    repeat (idle_cycles) begin
+      drive_cycle(1'b0, '0, '0);
+    end
+  end
+  endtask
+
+  function int unsigned frame_transfer_cycles_used(swb_frame_item frame);
     return 7 + frame.subheader_count() + frame.hit_count();
+  endfunction
+
+  function int unsigned frame_slot_cycles_used(swb_frame_item frame);
+    return frame.pre_sop_cycles + frame_transfer_cycles_used(frame);
   endfunction
 
   task pad_to_frame_slot(swb_frame_item frame);
@@ -116,20 +128,21 @@ class swb_opq_ingress_driver extends uvm_driver #(swb_frame_item);
     end
 
     pad_cycles = frame_slot_cycles - used_cycles;
-    repeat (pad_cycles) begin
-      drive_cycle(1'b0, '0, '0);
-    end
+    drive_idle_cycles(pad_cycles);
   end
   endtask
 
   task drive_frame(swb_frame_item frame);
     bit [31:0] data_word;
   begin
-    drive_cycle(1'b1, {SWB_MUPIX_HEADER_ID, 2'b00, frame.feb_id, SWB_K285}, 4'b0001);
+    if (frame.pre_sop_cycles != 0) begin
+      drive_idle_cycles(frame.pre_sop_cycles);
+    end
+    drive_cycle(1'b1, {frame.header_id, 2'b00, frame.feb_id, SWB_K285}, 4'b0001);
     drive_cycle(1'b1, frame.ts_high_word, 4'b0000);
     drive_cycle(1'b1, {frame.ts_low_word, frame.pkg_cnt}, 4'b0000);
     drive_cycle(1'b1, swb_make_debug_header0(frame), 4'b0000);
-    drive_cycle(1'b1, 32'h0, 4'b0000);
+    drive_cycle(1'b1, {1'b0, frame.debug1_word}, 4'b0000);
 
     foreach (frame.subheaders[idx]) begin
       data_word = swb_make_subheader_word(frame.subheaders[idx]);
@@ -153,10 +166,13 @@ class swb_opq_ingress_driver extends uvm_driver #(swb_frame_item);
       `uvm_info(
         "OPQ_DRV",
         $sformatf(
-          "Lane %0d driving frame %0d with %0d hits%s",
+          "Lane %0d driving frame %0d with %0d hits%s%s",
           lane_id,
           req.frame_id,
           req.hit_count(),
+          (req.pre_sop_cycles != 0)
+            ? $sformatf(" (skew=%0d cyc)", req.pre_sop_cycles)
+            : "",
           (frame_slot_cycles != 0)
             ? $sformatf(" (slot=%0d cyc, used=%0d cyc)", frame_slot_cycles, frame_slot_cycles_used(req))
             : ""

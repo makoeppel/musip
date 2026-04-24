@@ -13,6 +13,7 @@ use ieee.numeric_std.all;
 
 use work.mudaq.all;
 use work.mu3e.all;
+use work.util_slv.all;
 
 entity ingress_egress_adaptor is
 port (
@@ -32,6 +33,7 @@ architecture rtl of ingress_egress_adaptor is
     signal aso_egress_error          : std_logic_vector(2 downto 0);
     signal ingress_startofpacket     : std_logic_vector(3 downto 0)    := (others    => '0');
     signal ingress_endofpacket       : std_logic_vector(3 downto 0)    := (others    => '0');
+    signal ingress_error             : slv3_array_t(3 downto 0) := (others => (others => '0'));
 
 begin
 
@@ -39,6 +41,9 @@ begin
     begin
         ingress_startofpacket(lane)    <= enable and rx_ingress(lane).sop and not rx_ingress(lane).idle;
         ingress_endofpacket(lane)      <= enable and rx_ingress(lane).eop and not rx_ingress(lane).idle;
+        ingress_error(lane)(0)         <= rx_ingress(lane).err;
+        ingress_error(lane)(1)         <= rx_ingress(lane).t0;
+        ingress_error(lane)(2)         <= rx_ingress(lane).t1;
     end generate;
 
     e_opq_upstream_4lane : entity work.opq_upstream_4lane
@@ -63,25 +68,25 @@ begin
         ingress_0_endofpacket      => ingress_endofpacket(0),
         ingress_0_data             => rx_ingress(0).datak & rx_ingress(0).data,
         ingress_0_valid            => (not rx_ingress(0).idle) and enable,
-        ingress_0_error            => "000",
+        ingress_0_error            => ingress_error(0),
         ingress_1_channel          => "01",
         ingress_1_startofpacket    => ingress_startofpacket(1),
         ingress_1_endofpacket      => ingress_endofpacket(1),
         ingress_1_data             => rx_ingress(1).datak & rx_ingress(1).data,
         ingress_1_valid            => (not rx_ingress(1).idle) and enable,
-        ingress_1_error            => "000",
+        ingress_1_error            => ingress_error(1),
         ingress_2_channel          => "10",
         ingress_2_startofpacket    => ingress_startofpacket(2),
         ingress_2_endofpacket      => ingress_endofpacket(2),
         ingress_2_data             => rx_ingress(2).datak & rx_ingress(2).data,
         ingress_2_valid            => (not rx_ingress(2).idle) and enable,
-        ingress_2_error            => "000",
+        ingress_2_error            => ingress_error(2),
         ingress_3_channel          => "11",
         ingress_3_startofpacket    => ingress_startofpacket(3),
         ingress_3_endofpacket      => ingress_endofpacket(3),
         ingress_3_data             => rx_ingress(3).datak & rx_ingress(3).data,
         ingress_3_valid            => (not rx_ingress(3).idle) and enable,
-        ingress_3_error            => "000",
+        ingress_3_error            => ingress_error(3),
         reset_reset                => not reset_n
     );
 

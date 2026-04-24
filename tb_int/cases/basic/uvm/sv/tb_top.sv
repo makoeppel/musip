@@ -37,6 +37,7 @@ module tb_top;
       feb_if1.valid,
       feb_if0.valid
     }),
+    .feb_err_desc    (12'h000),
     .feb_enable_mask (ctrl_if.feb_enable_mask),
     .use_merge       (ctrl_if.use_merge),
     .enable_dma      (ctrl_if.enable_dma),

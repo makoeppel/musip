@@ -45,10 +45,13 @@ endclass
 class swb_frame_item extends uvm_sequence_item;
   int unsigned lane_id;
   int unsigned frame_id;
+  int unsigned pre_sop_cycles;
   bit [31:0]   ts_high_word;
   bit [15:0]   ts_low_word;
+  bit [30:0]   debug1_word;
   bit [15:0]   pkg_cnt;
   bit [15:0]   feb_id;
+  bit [5:0]    header_id;
   swb_subheader_desc subheaders[$];
 
   `uvm_object_utils(swb_frame_item)
@@ -57,10 +60,13 @@ class swb_frame_item extends uvm_sequence_item;
     super.new(name);
     lane_id      = 0;
     frame_id     = 0;
+    pre_sop_cycles = 0;
     ts_high_word = '0;
     ts_low_word  = '0;
+    debug1_word  = '0;
     pkg_cnt      = '0;
     feb_id       = '0;
+    header_id    = SWB_MUPIX_HEADER_ID;
   endfunction
 
   function int unsigned subheader_count();
@@ -81,10 +87,13 @@ class swb_frame_item extends uvm_sequence_item;
     copy = swb_frame_item::type_id::create("copy");
     copy.lane_id      = lane_id;
     copy.frame_id     = frame_id;
+    copy.pre_sop_cycles = pre_sop_cycles;
     copy.ts_high_word = ts_high_word;
     copy.ts_low_word  = ts_low_word;
+    copy.debug1_word  = debug1_word;
     copy.pkg_cnt      = pkg_cnt;
     copy.feb_id       = feb_id;
+    copy.header_id    = header_id;
     foreach (subheaders[idx]) begin
       copy.subheaders.push_back(subheaders[idx].copy_item());
     end
@@ -144,9 +153,11 @@ class swb_case_plan extends uvm_object;
   int unsigned padding_hits_added;
   int unsigned frame_count;
   int unsigned case_seed;
+  int unsigned subheader_count;
   int unsigned dma_half_full_pct;
   int unsigned hit_mode_id;
   bit [3:0]  feb_enable_mask;
+  bit [31:0] lookup_ctrl_word;
   bit        use_merge;
   real lane_saturation[SWB_N_LANES];
   string profile_name;
@@ -167,9 +178,11 @@ class swb_case_plan extends uvm_object;
     padding_hits_added  = 0;
     frame_count         = 0;
     case_seed           = 0;
+    subheader_count     = SWB_N_SUBHEADERS;
     dma_half_full_pct   = 0;
     hit_mode_id         = 0;
     feb_enable_mask     = 4'hf;
+    lookup_ctrl_word    = '0;
     use_merge           = 1'b0;
     profile_name        = "";
     hit_mode_name       = "poisson";
@@ -177,6 +190,60 @@ class swb_case_plan extends uvm_object;
       frames_by_lane[lane].delete();
       lane_saturation[lane] = 0.0;
     end
+  endfunction
+
+  function int unsigned max_lane_skew_cycles();
+    int unsigned max_cycles;
+  begin
+    max_cycles = 0;
+    foreach (frames_by_lane[lane, frame_idx]) begin
+      if (frames_by_lane[lane][frame_idx].pre_sop_cycles > max_cycles) begin
+        max_cycles = frames_by_lane[lane][frame_idx].pre_sop_cycles;
+      end
+    end
+    return max_cycles;
+  end
+  endfunction
+
+  function bit lane_skew_varies_by_frame();
+    int unsigned first_cycles[SWB_N_LANES];
+    bit          initialized[SWB_N_LANES];
+  begin
+    foreach (initialized[lane]) begin
+      initialized[lane] = 1'b0;
+      first_cycles[lane] = 0;
+    end
+
+    foreach (frames_by_lane[lane, frame_idx]) begin
+      if (!initialized[lane]) begin
+        initialized[lane] = 1'b1;
+        first_cycles[lane] = frames_by_lane[lane][frame_idx].pre_sop_cycles;
+      end else if (frames_by_lane[lane][frame_idx].pre_sop_cycles != first_cycles[lane]) begin
+        return 1'b1;
+      end
+    end
+    return 1'b0;
+  end
+  endfunction
+
+  function string first_frame_lane_skew_summary();
+    string summary;
+    int unsigned skew_cycles;
+  begin
+    summary = "[";
+    for (int lane = 0; lane < SWB_N_LANES; lane++) begin
+      skew_cycles = 0;
+      if (frames_by_lane[lane].size() != 0) begin
+        skew_cycles = frames_by_lane[lane][0].pre_sop_cycles;
+      end
+      if (lane != 0) begin
+        summary = {summary, ","};
+      end
+      summary = {summary, $sformatf("%0d", skew_cycles)};
+    end
+    summary = {summary, "]"};
+    return summary;
+  end
   endfunction
 endclass
 
@@ -289,6 +356,33 @@ begin
 end
 endfunction
 
+function automatic longint unsigned swb_frame_ts_stride_8ns(int unsigned subheader_count);
+begin
+  return longint'(subheader_count) << 4;
+end
+endfunction
+
+function automatic longint unsigned swb_frame_base_ts_8ns(
+  int unsigned frame_idx,
+  int unsigned subheader_count
+);
+begin
+  return longint'(frame_idx) * swb_frame_ts_stride_8ns(subheader_count);
+end
+endfunction
+
+function automatic bit [30:0] swb_make_dispatch_debug1_word(
+  int unsigned frame_idx,
+  int unsigned subheader_count
+);
+  longint unsigned dispatch_ts;
+begin
+  dispatch_ts = swb_frame_base_ts_8ns(frame_idx, subheader_count) +
+                swb_frame_ts_stride_8ns(subheader_count);
+  return dispatch_ts[30:0];
+end
+endfunction
+
 function automatic bit [31:0] swb_make_subheader_word(swb_subheader_desc shd);
   bit [31:0] data_word;
 begin
@@ -297,6 +391,14 @@ begin
   data_word[15:8]  = shd.hit_count()[7:0];
   data_word[7:0]   = SWB_K237;
   return data_word;
+end
+endfunction
+
+function automatic bit swb_is_supported_header_id(bit [5:0] header_id);
+begin
+  return (header_id == SWB_MUPIX_HEADER_ID) ||
+         (header_id == SWB_TILE_HEADER_ID) ||
+         (header_id == SWB_SCIFI_HEADER_ID);
 end
 endfunction
 
@@ -321,6 +423,46 @@ begin
     hit_word[31:28]
   };
   return data_word;
+end
+endfunction
+
+function automatic bit [63:0] swb_make_expected_mutrig_hit(
+  bit [31:0] ts_high_word,
+  bit [15:0] ts_low_word,
+  bit [7:0]  shd_ts,
+  bit [31:0] hit_word
+);
+  bit [63:0] data_word;
+begin
+  data_word            = '0;
+  data_word[63]        = 1'b1;
+  data_word[62:61]     = 2'b00;
+  data_word[60:56]     = hit_word[21:17];
+  data_word[55:47]     = hit_word[8:0];
+  data_word[46:44]     = hit_word[16:14];
+  data_word[43:39]     = hit_word[13:9];
+  data_word[38:0]      = {
+    ts_high_word[22:0],
+    ts_low_word[15:12],
+    shd_ts[7:0],
+    hit_word[31:28]
+  };
+  return data_word;
+end
+endfunction
+
+function automatic bit [63:0] swb_make_expected_hit(
+  bit [5:0]  header_id,
+  bit [31:0] ts_high_word,
+  bit [15:0] ts_low_word,
+  bit [7:0]  shd_ts,
+  bit [31:0] hit_word
+);
+begin
+  if (header_id == SWB_MUPIX_HEADER_ID) begin
+    return swb_make_expected_mupix_hit(ts_high_word, ts_low_word, shd_ts, hit_word);
+  end
+  return swb_make_expected_mutrig_hit(ts_high_word, ts_low_word, shd_ts, hit_word);
 end
 endfunction
 
@@ -426,7 +568,13 @@ class swb_case_builder extends uvm_object;
         foreach (shd.hits[hit_idx]) begin
           payload_word = shd.hits[hit_idx].payload_word;
           record.abs_ts = swb_make_abs_ts(frame.ts_high_word, frame.ts_low_word, shd.shd_ts, payload_word);
-          record.hit_word = swb_make_expected_mupix_hit(frame.ts_high_word, frame.ts_low_word, shd.shd_ts, payload_word);
+          record.hit_word = swb_make_expected_hit(
+            frame.header_id,
+            frame.ts_high_word,
+            frame.ts_low_word,
+            shd.shd_ts,
+            payload_word
+          );
           records.push_back(record);
           plan.total_hits++;
         end
@@ -503,7 +651,7 @@ class swb_case_builder extends uvm_object;
       swb_frame_item frame;
 
       beat = beats[idx];
-      if (!(beat.datak == 4'b0001 && beat.data[7:0] == SWB_K285 && beat.data[31:26] == SWB_MUPIX_HEADER_ID)) begin
+      if (!(beat.datak == 4'b0001 && beat.data[7:0] == SWB_K285 && swb_is_supported_header_id(beat.data[31:26]))) begin
         `uvm_fatal(
           "REPLAY",
           $sformatf("Lane %0d replay is missing SOP at beat %0d, got data=%08h datak=%1h", lane_id, idx, beat.data, beat.datak)
@@ -517,8 +665,10 @@ class swb_case_builder extends uvm_object;
       frame.lane_id      = lane_id;
       frame.frame_id     = frame_id;
       frame.feb_id       = beat.data[23:8];
+      frame.header_id    = beat.data[31:26];
       frame.ts_high_word = beats[idx + 1].data;
       frame.ts_low_word  = beats[idx + 2].data[31:16];
+      frame.debug1_word  = beats[idx + 4].data[30:0];
       frame.pkg_cnt      = beats[idx + 2].data[15:0];
       idx += 5;
 
@@ -629,6 +779,9 @@ class swb_case_builder extends uvm_object;
       $sformatf("%s/expected_dma_words.mem", replay_dir)
     );
     plan.frame_count = plan.frames_by_lane[0].size();
+    if ((SWB_N_LANES != 0) && (plan.frames_by_lane[0].size() != 0)) begin
+      plan.subheader_count = plan.frames_by_lane[0][0].subheaders.size();
+    end
     plan.total_hits = swb_case_builder::count_total_hits(plan);
     plan.raw_total_hits_before_padding = plan.total_hits;
     plan.padding_hits_added = 0;
@@ -742,15 +895,79 @@ class swb_case_builder extends uvm_object;
   end
   endfunction
 
+  static function void retime_replay_case(
+    ref swb_case_plan plan,
+    input int unsigned frame_id_offset
+  );
+    int unsigned new_frame_id;
+    longint unsigned frame_base_ts;
+  begin
+    if (plan == null) begin
+      return;
+    end
+
+    foreach (plan.frames_by_lane[lane, frame_idx]) begin
+      new_frame_id = plan.frames_by_lane[lane][frame_idx].frame_id + frame_id_offset;
+      frame_base_ts = swb_frame_base_ts_8ns(new_frame_id, plan.subheader_count);
+      plan.frames_by_lane[lane][frame_idx].frame_id = new_frame_id;
+      plan.frames_by_lane[lane][frame_idx].ts_high_word = frame_base_ts[47:16];
+      plan.frames_by_lane[lane][frame_idx].ts_low_word = frame_base_ts[15:0];
+      plan.frames_by_lane[lane][frame_idx].debug1_word = swb_make_dispatch_debug1_word(
+        new_frame_id,
+        plan.subheader_count
+      );
+      plan.frames_by_lane[lane][frame_idx].pkg_cnt = new_frame_id[15:0];
+    end
+
+    plan.raw_total_hits_before_padding = swb_case_builder::count_total_hits(plan);
+    plan.padding_hits_added = 0;
+    swb_case_builder::pack_expected_words(plan);
+  end
+  endfunction
+
+  static function void apply_fixed_lane_skew(
+    ref swb_case_plan plan,
+    input int unsigned lane_skew_cycles[SWB_N_LANES]
+  );
+  begin
+    if (plan == null) begin
+      return;
+    end
+    foreach (plan.frames_by_lane[lane, frame_idx]) begin
+      plan.frames_by_lane[lane][frame_idx].pre_sop_cycles = lane_skew_cycles[lane];
+    end
+  end
+  endfunction
+
+  static function void apply_varying_lane_skew(
+    ref swb_case_plan plan,
+    input int unsigned lane_skew_max_cyc
+  );
+    int unsigned skew_cycles;
+  begin
+    if (plan == null) begin
+      return;
+    end
+    foreach (plan.frames_by_lane[lane, frame_idx]) begin
+      if (lane == 0) begin
+        skew_cycles = 0;
+      end else begin
+        skew_cycles = $urandom_range(0, lane_skew_max_cyc);
+      end
+      plan.frames_by_lane[lane][frame_idx].pre_sop_cycles = skew_cycles;
+    end
+  end
+  endfunction
+
   static function void build_basic_case(
     ref swb_case_plan plan,
     int unsigned frame_count,
     real lane_saturation[SWB_N_LANES],
+    int unsigned subheader_count,
     bit [3:0] feb_enable_mask,
     swb_hit_mode_e hit_mode
   );
     int unsigned frame_idx;
-    int unsigned frame_ts_stride;
     int unsigned lane_id;
     int unsigned shd_idx;
     int unsigned hit_target;
@@ -763,9 +980,20 @@ class swb_case_builder extends uvm_object;
     if (plan == null) begin
       plan = swb_case_plan::type_id::create("case_plan");
     end
+    if ((subheader_count == 0) || (subheader_count > SWB_N_SUBHEADERS)) begin
+      `uvm_fatal(
+        "CASE",
+        $sformatf(
+          "SWB_SUBHEADERS=%0d is outside the supported range 1..%0d",
+          subheader_count,
+          SWB_N_SUBHEADERS
+        )
+      )
+    end
     plan.clear();
     plan.feb_enable_mask = feb_enable_mask;
     plan.frame_count = frame_count;
+    plan.subheader_count = subheader_count;
     plan.profile_name = "basic_random";
     case (hit_mode)
       SWB_HIT_MODE_ZERO: begin
@@ -790,14 +1018,14 @@ class swb_case_builder extends uvm_object;
       plan.lane_saturation[lane_id] = lane_saturation[lane_id];
     end
 
-    frame_ts_stride = (SWB_N_SUBHEADERS << 4);
-
     for (frame_idx = 0; frame_idx < frame_count; frame_idx++) begin
+      longint unsigned frame_base_ts;
       bit [31:0] ts_high_word;
       bit [15:0] ts_low_word;
 
-      ts_high_word = 32'h1200_0000 + frame_idx;
-      ts_low_word  = 16'hA000 + (frame_idx * frame_ts_stride);
+      frame_base_ts = swb_frame_base_ts_8ns(frame_idx, subheader_count);
+      ts_high_word  = frame_base_ts[47:16];
+      ts_low_word   = frame_base_ts[15:0];
 
       for (lane_id = 0; lane_id < SWB_N_LANES; lane_id++) begin
         swb_frame_item frame;
@@ -806,10 +1034,11 @@ class swb_case_builder extends uvm_object;
         frame.frame_id     = frame_idx;
         frame.ts_high_word = ts_high_word;
         frame.ts_low_word  = ts_low_word;
+        frame.debug1_word  = swb_make_dispatch_debug1_word(frame_idx, subheader_count);
         frame.pkg_cnt      = frame_idx[15:0];
         frame.feb_id       = lane_id[15:0];
 
-        for (shd_idx = 0; shd_idx < SWB_N_SUBHEADERS; shd_idx++) begin
+        for (shd_idx = 0; shd_idx < subheader_count; shd_idx++) begin
           swb_subheader_desc shd;
           shd = swb_subheader_desc::type_id::create($sformatf("shd_l%0d_f%0d_s%0d", lane_id, frame_idx, shd_idx));
           shd.shd_ts = shd_idx[7:0];

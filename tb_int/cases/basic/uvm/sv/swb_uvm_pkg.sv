@@ -6,6 +6,8 @@ package swb_uvm_pkg;
   localparam int SWB_N_SUBHEADERS           = 128;
   localparam int SWB_MAX_HITS_PER_SUBHEADER = 4;
   localparam bit [5:0] SWB_MUPIX_HEADER_ID  = 6'b111010;
+  localparam bit [5:0] SWB_TILE_HEADER_ID   = 6'b110100;
+  localparam bit [5:0] SWB_SCIFI_HEADER_ID  = 6'b111000;
   localparam bit [7:0] SWB_K285             = 8'hBC;
   localparam bit [7:0] SWB_K284             = 8'h9C;
   localparam bit [7:0] SWB_K237             = 8'hF7;

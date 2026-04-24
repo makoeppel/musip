@@ -4,9 +4,9 @@
 
 - **bucket:** `PROF` — [`../../DV_PROF.md`](../../DV_PROF.md)
 - **range:** `P001` .. `P129` — **129 cases**
-- **default method:** `r` (randomised (N txn / case))
+- **default method:** `d` (directed (1 txn / case))
 - **execution mode:** `isolated`
-- **status:** ⚠️ partial — promoted spot-check evidence exists for `P040`, but UCDB save/merge is not yet wired into the promoted build. Coverage columns remain placeholders until `dv_report_gen.py` renders actual UCDB output. See [`../../DV_REPORT.md`](../../DV_REPORT.md) §Remaining work.
+- **status:** ⚠️ partial — promoted isolated evidence exists for `6` of `129` cases; coverage columns remain placeholders until ordered UCDB save/merge is promoted
 
 ## Merged totals (this bucket)
 
@@ -41,8 +41,8 @@
 
 | status | case_id | type (d/r) | coverage_by_this_case | executed random txn | coverage_incr_per_txn |
 |:---:|---|:---:|---|---:|---|
-| ❓ | [P001](../cases/P001.md) | r | pending | pending | pending |
-| ❓ | [P002](../cases/P002.md) | r | pending | pending | pending |
+| ✅ | [P001](../cases/P001.md) | d | pending | 0 | pending |
+| ✅ | [P002](../cases/P002.md) | d | pending | 0 | pending |
 | ❓ | [P003](../cases/P003.md) | r | pending | pending | pending |
 | ❓ | [P004](../cases/P004.md) | r | pending | pending | pending |
 | ❓ | [P005](../cases/P005.md) | r | pending | pending | pending |
@@ -81,7 +81,7 @@
 | ❓ | [P038](../cases/P038.md) | r | pending | pending | pending |
 | ❓ | [P039](../cases/P039.md) | r | pending | pending | pending |
 | ✅ | [P040](../cases/P040.md) | r | pending | 1 | pending |
-| ❓ | [P041](../cases/P041.md) | r | pending | pending | pending |
+| ✅ | [P041](../cases/P041.md) | r | pending | 1 | pending |
 | ❓ | [P042](../cases/P042.md) | r | pending | pending | pending |
 | ❓ | [P043](../cases/P043.md) | r | pending | pending | pending |
 | ❓ | [P044](../cases/P044.md) | r | pending | pending | pending |
@@ -163,8 +163,8 @@
 | ❓ | [P120](../cases/P120.md) | r | pending | pending | pending |
 | ❓ | [P121](../cases/P121.md) | r | pending | pending | pending |
 | ❓ | [P122](../cases/P122.md) | r | pending | pending | pending |
-| ❓ | [P123](../cases/P123.md) | r | pending | pending | pending |
-| ❓ | [P124](../cases/P124.md) | r | pending | pending | pending |
+| ✅ | [P123](../cases/P123.md) | r | pending | 16 | pending |
+| ✅ | [P124](../cases/P124.md) | r | pending | 16 | pending |
 | ❓ | [P125](../cases/P125.md) | r | pending | pending | pending |
 | ❓ | [P126](../cases/P126.md) | r | pending | pending | pending |
 | ❓ | [P127](../cases/P127.md) | r | pending | pending | pending |
@@ -189,8 +189,8 @@ columns:
 
 | status | after_case_id | merged_stmt | merged_branch | merged_cond | merged_expr | merged_fsm_state | merged_fsm_trans | merged_toggle |
 |:---:|---|---:|---:|---:|---:|---:|---:|---:|
-| ❓ | P001 | pending | pending | pending | pending | pending | pending | pending |
-| ❓ | P002 | pending | pending | pending | pending | pending | pending | pending |
+| ✅ | P001 | pending | pending | pending | pending | pending | pending | pending |
+| ✅ | P002 | pending | pending | pending | pending | pending | pending | pending |
 | ❓ | P003 | pending | pending | pending | pending | pending | pending | pending |
 | ❓ | P004 | pending | pending | pending | pending | pending | pending | pending |
 | ❓ | P005 | pending | pending | pending | pending | pending | pending | pending |
@@ -229,7 +229,7 @@ columns:
 | ❓ | P038 | pending | pending | pending | pending | pending | pending | pending |
 | ❓ | P039 | pending | pending | pending | pending | pending | pending | pending |
 | ✅ | P040 | pending | pending | pending | pending | pending | pending | pending |
-| ❓ | P041 | pending | pending | pending | pending | pending | pending | pending |
+| ✅ | P041 | pending | pending | pending | pending | pending | pending | pending |
 | ❓ | P042 | pending | pending | pending | pending | pending | pending | pending |
 | ❓ | P043 | pending | pending | pending | pending | pending | pending | pending |
 | ❓ | P044 | pending | pending | pending | pending | pending | pending | pending |
@@ -311,17 +311,10 @@ columns:
 | ❓ | P120 | pending | pending | pending | pending | pending | pending | pending |
 | ❓ | P121 | pending | pending | pending | pending | pending | pending | pending |
 | ❓ | P122 | pending | pending | pending | pending | pending | pending | pending |
-| ❓ | P123 | pending | pending | pending | pending | pending | pending | pending |
-| ❓ | P124 | pending | pending | pending | pending | pending | pending | pending |
+| ✅ | P123 | pending | pending | pending | pending | pending | pending | pending |
+| ✅ | P124 | pending | pending | pending | pending | pending | pending | pending |
 | ❓ | P125 | pending | pending | pending | pending | pending | pending | pending |
 | ❓ | P126 | pending | pending | pending | pending | pending | pending | pending |
 | ❓ | P127 | pending | pending | pending | pending | pending | pending | pending |
 | ❓ | P128 | pending | pending | pending | pending | pending | pending | pending |
 | ❓ | P129 | pending | pending | pending | pending | pending | pending | pending |
-
-## Bucket-level checks
-
-- Row count above matches planned catalog size (`129`).
-- Case-id ordering matches the canonical order in [`../../DV_PROF.md`](../../DV_PROF.md).
-- `bucket_frame` continuous-frame baseline for this bucket: [`CROSS-003`](../cross/CROSS-003.md).
-- Bug regression anchors touching this bucket: [`../../BUG_HISTORY.md`](../../BUG_HISTORY.md).

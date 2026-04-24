@@ -104,6 +104,21 @@ def keep_existing(path: Path) -> bool:
     return not is_generated_stub(text)
 
 
+def evidenced_page(path: Path) -> bool:
+    if not path.exists():
+        return False
+    return not is_generated_stub(read_text(path))
+
+
+def load_json(path: Path) -> dict:
+    if not path.exists():
+        return {}
+    try:
+        return json.loads(read_text(path))
+    except json.JSONDecodeError:
+        return {}
+
+
 def parse_case_catalog(doc_path: Path, bucket: str) -> list[dict[str, str]]:
     rows: list[dict[str, str]] = []
     prefix = bucket_short(bucket)
@@ -212,6 +227,232 @@ def case_placeholder(row: dict[str, str]) -> str:
 """
 
 
+def parse_summary(path: Path) -> dict[str, str]:
+    if not path.is_file():
+        return {}
+    data: dict[str, str] = {}
+    for line in read_text(path).splitlines():
+        if "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        data[key.strip()] = value.strip()
+    return data
+
+
+def md_rel_link(relpath: str, label: str | None = None) -> str:
+    target = Path("../../") / Path(relpath)
+    text = label or relpath
+    return f"[`{text}`]({target.as_posix()})"
+
+
+def summary_outcome(summary: dict[str, str]) -> str:
+    if summary.get("scoreboard_pass") == "1":
+        return PASS_EMOJI
+    if summary:
+        return FAIL_EMOJI
+    return WARN_EMOJI
+
+
+def ghost_missing_text(summary: dict[str, str]) -> str:
+    og = summary.get("opq_ghost_count")
+    om = summary.get("opq_missing_count")
+    dg = summary.get("dma_ghost_count")
+    dm = summary.get("dma_missing_count")
+    if {og, om, dg, dm} == {"0"}:
+        return "`ghost=0, missing=0`"
+    if None not in (og, om, dg, dm):
+        return f"`opq g/m={og}/{om}; dma g/m={dg}/{dm}`"
+    return "pending"
+
+
+def render_case_evidence(tb: Path, row: dict[str, str], evidence: dict[str, object]) -> str:
+    case_id = row["case_id"]
+    bucket = row["bucket"]
+    method = row["method"]
+    scenario = row["scenario"]
+    stage = stage_pretty(row["stage"])
+    contract_anchor = str(evidence.get("contract_anchor") or row["primary_checks"])
+    harness = str(evidence.get("harness") or row["implementation"])
+    make_target = str(evidence.get("make_target") or "implemented via catalog-declared harness")
+    plusargs = str(evidence.get("plusargs") or "pending")
+    seed = str(evidence.get("seed") or ("pending" if method.upper() == "R" else "n/a"))
+    sim_time = str(evidence.get("sim_time") or "pending")
+    txn_count = str(evidence.get("txn_count") or "pending")
+    summary_rel = str(evidence.get("summary") or "")
+    log_rel = str(evidence.get("log") or "")
+    ucdb_path = str(evidence.get("ucdb_path") or "pending")
+    notes_raw = evidence.get("notes") or []
+    ledger_paths = evidence.get("ledger_paths") or []
+    summary = parse_summary(tb / summary_rel) if summary_rel else {}
+    outcome = summary_outcome(summary)
+
+    if isinstance(notes_raw, list):
+        notes = [str(note) for note in notes_raw if str(note).strip()]
+    else:
+        notes = [str(notes_raw)] if str(notes_raw).strip() else []
+    if isinstance(ledger_paths, list):
+        ledgers = [str(path) for path in ledger_paths if str(path).strip()]
+    else:
+        ledgers = []
+
+    summary_link = md_rel_link(summary_rel, summary_rel) if summary_rel else "pending"
+    payload_words = summary.get("observed_payload_words", "pending")
+    padding_words = summary.get("padding_words", "pending")
+    ingress_hits = summary.get("ingress_hits", "pending")
+    opq_hits = summary.get("opq_hits", "pending")
+    dma_hits = summary.get("dma_hits", "pending")
+
+    lines = [
+        f"# `{case_id}.md` — per-case evidence",
+        "",
+        f"- **case_id:** `{case_id}`",
+        f"- **bucket:** `{bucket}`",
+        f"- **scenario:** {scenario}",
+        f"- **contract anchor:** {contract_anchor}",
+        f"- **stage taps:** `{stage}`",
+        f"- **status:** `{outcome}`",
+        "",
+        "## Execution method",
+        "",
+        "| method | harness | make_target | plusargs | seed |",
+        "|:---:|---|---|---|---|",
+        f"| {method} | `{harness}` | `{make_target}` | `{plusargs}` | `{seed}` |",
+        "",
+        "## Execution evidence",
+        "",
+        "| outcome | sim_time | txn_count | ingress_hits | opq_hits | dma_hits | payload_words | padding_words | ghost_missing | log_path | ucdb_path |",
+        "|:---:|---|---:|---:|---:|---:|---:|---:|---|---|---|",
+        f"| {outcome} | `{sim_time}` | {txn_count} | {ingress_hits} | {opq_hits} | {dma_hits} | {payload_words} | {padding_words} | {ghost_missing_text(summary)} | {summary_link} | {ucdb_path} |",
+    ]
+
+    if notes or summary_rel or log_rel or ledgers:
+        lines.extend(["", "## Notes", ""])
+        for note in notes:
+            lines.append(f"- {note}")
+        if summary_rel:
+            lines.append(f"- Summary: {md_rel_link(summary_rel, summary_rel)}")
+        if log_rel:
+            lines.append(f"- Log: {md_rel_link(log_rel, log_rel)}")
+        if ledgers:
+            ledger_links = ", ".join(md_rel_link(path, path) for path in ledgers)
+            lines.append(f"- Hit ledgers: {ledger_links}")
+
+    return "\n".join(lines) + "\n"
+
+
+def bucket_default_method(rows: list[dict[str, str]]) -> tuple[str, str]:
+    method = rows[0]["method"].strip().upper() if rows else "R"
+    if method == "D":
+        return "d", "directed (1 txn / case)"
+    return "r", "randomised (N txn / case)"
+
+
+def executed_txn_count(row: dict[str, str], evidence: dict[str, dict[str, object]]) -> str:
+    case_id = row["case_id"]
+    if case_id not in evidence:
+        return "1" if row["method"].strip().upper() == "R" else "0"
+    value = evidence[case_id].get("txn_count")
+    return str(value) if value is not None else ("1" if row["method"].strip().upper() == "R" else "0")
+
+
+def render_bucket_trace(
+    bucket: str,
+    rows: list[dict[str, str]],
+    evidenced_case_ids: set[str],
+    promoted_case_evidence: dict[str, dict[str, object]],
+) -> str:
+    method_short, method_desc = bucket_default_method(rows)
+    bucket_doc = f"../../{CASE_DOCS[bucket]}"
+    evidenced_in_bucket = [row["case_id"] for row in rows if row["case_id"] in evidenced_case_ids]
+    bucket_status = PASS_EMOJI if len(evidenced_in_bucket) == len(rows) and rows else WARN_EMOJI
+
+    lines = [
+        f"# `REPORT/buckets/{bucket}.md` — ordered-merge trace",
+        "",
+        "> **Audience:** chief architect. This page is the per-bucket audit trail required by `~/.codex/skills/dv-workflow/SKILL.md` §Coverage rule 9. Every row below is one case, in the canonical case-id order declared in "
+        f"[`{bucket_doc}`]({bucket_doc}). Rows follow the skill's strict column contract. This file is generated — hand edits are overwritten.",
+        "",
+        f"- **bucket:** `{bucket}` — [`{bucket_doc}`]({bucket_doc})",
+        f"- **range:** `{rows[0]['case_id']}` .. `{rows[-1]['case_id']}` — **{len(rows)} cases**",
+        f"- **default method:** `{method_short}` ({method_desc})",
+        "- **execution mode:** `isolated`",
+        f"- **status:** {bucket_status} partial — promoted isolated evidence exists for `{len(evidenced_in_bucket)}` of `{len(rows)}` cases; coverage columns remain placeholders until ordered UCDB save/merge is promoted",
+        "",
+        "## Merged totals (this bucket)",
+        "",
+        "<!-- columns:",
+        "  status      = bucket-level emoji per skill legend",
+        "  metric      = coverage category from skill §Coverage rule 6",
+        "  merged_pct  = union UCDB across all evidenced cases in this bucket",
+        "  target      = per-skill category target",
+        "-->",
+        "",
+        "| status | metric | merged_pct | target |",
+        "|:---:|---|---:|---:|",
+        "| ❓ | stmt      | pending | 95.0 |",
+        "| ❓ | branch    | pending | 90.0 |",
+        "| ❓ | cond      | pending | 85.0 |",
+        "| ❓ | expr      | pending | 85.0 |",
+        "| ❓ | fsm_state | pending | 95.0 |",
+        "| ❓ | fsm_trans | pending | 90.0 |",
+        "| ❓ | toggle    | pending | 80.0 |",
+        "| ❓ | functional (bucket crosspoints) | pending | 100.0 bins saturated |",
+        "",
+        "## Per-case rows (strict 5-column contract)",
+        "",
+        "<!-- columns (strict, per skill §Coverage rule 3):",
+        "  status                 = case-level emoji per skill legend",
+        "  case_id                = planned canonical id from DV_PROF.md",
+        "  type (d/r)             = d = directed (1 deterministic txn), r = randomised (N txn)",
+        "  coverage_by_this_case  = ordered incremental code-coverage gain added by this case vs. the previously merged baseline for this bucket's ordered merge; explicit vector `stmt=.., branch=.., cond=.., expr=.., fsm_state=.., fsm_trans=.., toggle=..`",
+        "  executed random txn    = observed txn count (r); `0` for d",
+        "  coverage_incr_per_txn  = per-transaction incremental gain, same vector layout (mirrors coverage_by_this_case for d)",
+        "-->",
+        "",
+        "| status | case_id | type (d/r) | coverage_by_this_case | executed random txn | coverage_incr_per_txn |",
+        "|:---:|---|:---:|---|---:|---|",
+    ]
+    for row in rows:
+        case_id = row["case_id"]
+        status = PASS_EMOJI if case_id in evidenced_case_ids else PEND_EMOJI
+        executed = executed_txn_count(row, promoted_case_evidence) if case_id in evidenced_case_ids else "pending"
+        lines.append(
+            f"| {status} | [{case_id}](../cases/{case_id}.md) | {row['method'].lower()} | pending | {executed} | pending |"
+        )
+
+    lines.extend(
+        [
+            "",
+            "## Ordered merged-total trace (after each case added)",
+            "",
+            "<!-- Per skill §Coverage rule 9, the ordered merged-total trace must follow the per-case rows so every per-case delta is auditable against the running bucket baseline.",
+            "",
+            "columns:",
+            "  status            = bucket-running emoji after this case joined the merge",
+            "  after_case_id     = case that was most recently added to the ordered merge",
+            "  merged_stmt       = bucket merged statement %  after this case",
+            "  merged_branch     = bucket merged branch %     after this case",
+            "  merged_cond       = bucket merged condition %  after this case",
+            "  merged_expr       = bucket merged expression % after this case",
+            "  merged_fsm_state  = bucket merged FSM state %  after this case",
+            "  merged_fsm_trans  = bucket merged FSM trans %  after this case",
+            "  merged_toggle     = bucket merged toggle %     after this case",
+            "-->",
+            "",
+            "| status | after_case_id | merged_stmt | merged_branch | merged_cond | merged_expr | merged_fsm_state | merged_fsm_trans | merged_toggle |",
+            "|:---:|---|---:|---:|---:|---:|---:|---:|---:|",
+        ]
+    )
+    for row in rows:
+        case_id = row["case_id"]
+        status = PASS_EMOJI if case_id in evidenced_case_ids else PEND_EMOJI
+        lines.append(
+            f"| {status} | {case_id} | pending | pending | pending | pending | pending | pending | pending |"
+        )
+
+    return "\n".join(lines) + "\n"
+
+
 def cross_placeholder(row: dict[str, str]) -> str:
     run_id = row["run_id"]
     mode = row["mode"]
@@ -253,6 +494,91 @@ def cross_placeholder(row: dict[str, str]) -> str:
 - This page is a generated implemented stub. The run id is declared in [`../../DV_CROSS.md`](../../DV_CROSS.md) and indexed from [`README.md`](README.md).
 - Replace pending fields with promoted evidence through the generator input, not by hand.
 """
+
+
+def cov_vector(payload: dict[str, object] | None) -> str:
+    if not isinstance(payload, dict):
+        return "pending"
+    cov = payload.get("coverage")
+    if not isinstance(cov, dict):
+        return "pending"
+    parts = []
+    for metric in ("stmt", "branch", "cond", "expr", "fsm_state", "fsm_trans", "toggle"):
+        parts.append(f"{metric}={fmt_pct(cov.get(metric))}")
+    return ", ".join(parts)
+
+
+def render_cross_evidence(tb: Path, row: dict[str, str], evidence: dict[str, object]) -> str:
+    run_id = row["run_id"]
+    mode = str(evidence.get("mode") or row["mode"])
+    scope = str(evidence.get("scope") or row["scope"])
+    notes = str(evidence.get("notes") or row["notes"])
+    status = status_emoji(str(evidence.get("status", "pending")))
+    manifest = str(evidence.get("manifest") or "")
+    log = str(evidence.get("log") or "")
+    driver_log = str(evidence.get("driver_log") or "")
+    ucdb = str(evidence.get("ucdb") or "")
+    build = str(evidence.get("build") or "make ip-cross-baselines")
+    sim_time = str(evidence.get("sim_time") or "pending")
+    functional = fmt_pct(evidence.get("functional_pct_bins_saturated"))
+    segments = evidence.get("segments") if isinstance(evidence.get("segments"), list) else []
+
+    lines = [
+        f"# `{run_id}.md` — continuous-frame signoff run",
+        "",
+        f"- **run_id:** `{run_id}`",
+        f"- **mode:** `{mode}`",
+        f"- **scope:** {scope}",
+        f"- **status:** `{status}`",
+        "",
+        "## Execution evidence",
+        "",
+        "| field | value |",
+        "|---|---|",
+        f"| build | `{build}` |",
+        f"| manifest | {md_rel_link(manifest, manifest) if manifest else 'pending'} |",
+        f"| log | {md_rel_link(log, log) if log else 'pending'} |",
+        f"| driver_log | {md_rel_link(driver_log, driver_log) if driver_log else 'pending'} |",
+        f"| ucdb | {md_rel_link(ucdb, ucdb) if ucdb else 'pending'} |",
+        f"| sim_time | `{sim_time}` |",
+        f"| segment_count | `{evidence.get('segment_count', 'pending')}` |",
+        f"| reset_count | `{evidence.get('reset_count', 'pending')}` |",
+        f"| segment_pass_count | `{evidence.get('segment_pass_count', 'pending')}` |",
+        f"| check_pass_count | `{evidence.get('check_pass_count', 'pending')}` |",
+        f"| UVM errors / fatals | `{evidence.get('uvm_errors', 'pending')} / {evidence.get('uvm_fatals', 'pending')}` |",
+        f"| payload / padding words | `{evidence.get('payload_words', 'pending')} / {evidence.get('padding_words', 'pending')}` |",
+        f"| ingress / OPQ / DMA hits | `{evidence.get('ingress_hits', 'pending')} / {evidence.get('opq_hits', 'pending')} / {evidence.get('dma_hits', 'pending')}` |",
+        f"| code coverage | `{cov_vector(evidence)}` |",
+        f"| functional cross pct | `{functional}` |",
+        "",
+        "## Segment manifest",
+        "",
+        "| idx | case_id | bucket | replay_dir | mask | merge | dma_half_full_pct | seed | reset_before |",
+        "|---:|---|---|---|---:|---:|---:|---:|---:|",
+    ]
+    for idx, segment in enumerate(segments):
+        if not isinstance(segment, dict):
+            continue
+        replay_dir = str(segment.get("replay_dir") or "")
+        lines.append(
+            f"| {idx} | `{segment.get('case_id', 'pending')}` | `{segment.get('bucket', 'pending')}` | "
+            f"{md_rel_link(replay_dir, replay_dir) if replay_dir else 'pending'} | "
+            f"`{segment.get('feb_enable_mask', 'pending')}` | `{segment.get('use_merge', 'pending')}` | "
+            f"`{segment.get('dma_half_full_pct', 'pending')}` | `{segment.get('case_seed', 'pending')}` | "
+            f"`{int(bool(segment.get('reset_before')))}` |"
+        )
+
+    lines.extend(
+        [
+            "",
+            "## Notes",
+            "",
+            f"- {notes}",
+            "- This evidence is generated from `tb_int/sim_runs/cross/summary.json`; hand edits to this page are overwritten.",
+            "- The promoted baseline uses the legal anchor segment set currently implemented by the UVM segment-manifest runner. The broader 129-row cross catalog remains the planning space for future exact case-id expansion.",
+        ]
+    )
+    return "\n".join(lines) + "\n"
 
 
 def txn_growth_placeholder(row: dict[str, str]) -> str:
@@ -366,7 +692,7 @@ def health_rows(data: dict) -> list[tuple[str, str, str]]:
             ),
             (
                 "implemented_cross_runs",
-                f"all `{impl.get('implemented_cross_pages', 0)}` continuous-frame run-shape pages are rendered",
+                f"`{impl.get('evidenced_cross_pages', 0)}` / `{impl.get('implemented_cross_pages', 0)}` cross pages have promoted evidence; required CROSS-001..005 baselines are tracked in Signoff Runs",
             ),
             (
                 "event_builder_contract_cleanup",
@@ -430,31 +756,44 @@ def bucket_summary_rows(data: dict) -> list[dict[str, object]]:
 def signoff_run_rows(data: dict) -> list[dict[str, str]]:
     rows: list[dict[str, str]] = []
     execution_modes = data.get("execution_modes", {})
+    cross_evidence = data.get("cross_run_evidence", {})
+    if not isinstance(cross_evidence, dict):
+        cross_evidence = {}
     bucket_frame = execution_modes.get("bucket_frame", {})
     for baseline in bucket_frame.get("baselines", []) or []:
         bucket = baseline.get("bucket", "?")
+        run_id = baseline.get("cross_id", "pending")
+        evidence = cross_evidence.get(run_id, {})
+        if not isinstance(evidence, dict):
+            evidence = {}
         rows.append(
             {
-                "status": WARN_EMOJI,
-                "run_id": baseline.get("cross_id", "pending"),
+                "status": status_emoji(str(evidence.get("status", "partial"))),
+                "run_id": run_id,
                 "kind": "bucket_frame",
-                "build": "pending promoted UCDB/log",
-                "seq": baseline.get("case_ordering", f"{bucket} case-id order"),
-                "txns": "pending",
-                "cross_pct": "pending",
+                "build": str(evidence.get("build") or "pending promoted UCDB/log"),
+                "seq": str(evidence.get("scope") or baseline.get("case_ordering", f"{bucket} case-id order")),
+                "txns": str(evidence.get("segment_count") or "pending"),
+                "cross_pct": fmt_pct(evidence.get("functional_pct_bins_saturated")),
+                "merged_total": cov_vector(evidence),
             }
         )
     all_buckets = execution_modes.get("all_buckets_frame", {}).get("baseline")
     if isinstance(all_buckets, dict):
+        run_id = all_buckets.get("cross_id", "pending")
+        evidence = cross_evidence.get(run_id, {})
+        if not isinstance(evidence, dict):
+            evidence = {}
         rows.append(
             {
-                "status": WARN_EMOJI,
-                "run_id": all_buckets.get("cross_id", "pending"),
+                "status": status_emoji(str(evidence.get("status", "partial"))),
+                "run_id": run_id,
                 "kind": "all_buckets_frame",
-                "build": "pending promoted UCDB/log",
-                "seq": all_buckets.get("case_ordering", "bucket order"),
-                "txns": "pending",
-                "cross_pct": "pending",
+                "build": str(evidence.get("build") or "pending promoted UCDB/log"),
+                "seq": str(evidence.get("scope") or all_buckets.get("case_ordering", "bucket order")),
+                "txns": str(evidence.get("segment_count") or "pending"),
+                "cross_pct": fmt_pct(evidence.get("functional_pct_bins_saturated")),
+                "merged_total": cov_vector(evidence),
             }
         )
     rows.append(
@@ -471,6 +810,7 @@ def signoff_run_rows(data: dict) -> list[dict[str, str]]:
             "seq": "default 128-run rate grid",
             "txns": "128",
             "cross_pct": "pending",
+            "merged_total": "pending",
         }
     )
     return rows
@@ -528,6 +868,7 @@ def render_dashboard(data: dict) -> str:
         "",
         "- External upstream `packet_scheduler` `signoff_4lane` alignment remains informational and is not part of the musip-local signoff gate in this repo.",
         "- The catalog is structurally complete, but only the promoted anchor cases currently carry isolated rerun evidence; the remaining pages are explicit implemented placeholders.",
+        "- CROSS-001..005 are promoted anchor-segment continuous-frame baselines, not an exhaustive execution of every planned or variant-only catalog row.",
         "",
         "## Bucket Summary",
         "",
@@ -670,7 +1011,7 @@ def render_cov_summary(data: dict) -> str:
         if row["run_id"] == "ip-uvm-longrun":
             continue
         lines.append(
-            f"| {row['kind']} | {row['build']} | {row['seq']} | pending | [`REPORT/cross/{row['run_id']}.md`](REPORT/cross/{row['run_id']}.md) |"
+            f"| {row['kind']} | {row['build']} | {row['seq']} | {row.get('merged_total', 'pending')} | [`REPORT/cross/{row['run_id']}.md`](REPORT/cross/{row['run_id']}.md) |"
         )
 
     lines += [
@@ -751,6 +1092,14 @@ def main() -> int:
         print(f"error: tb directory not found: {tb}", file=sys.stderr)
         return 2
 
+    data = load_json(tb / "DV_REPORT.json")
+    promoted_case_evidence = data.get("promoted_case_evidence", {})
+    if not isinstance(promoted_case_evidence, dict):
+        promoted_case_evidence = {}
+    cross_run_evidence = data.get("cross_run_evidence", {})
+    if not isinstance(cross_run_evidence, dict):
+        cross_run_evidence = {}
+
     if BUG_HISTORY_FORMAT_LINTER.is_file():
         run_linter(
             ["python3", str(BUG_HISTORY_FORMAT_LINTER), str(tb / "BUG_HISTORY.md"), "--quiet"],
@@ -759,12 +1108,16 @@ def main() -> int:
 
     report = tb / "REPORT"
     (report / "cases").mkdir(parents=True, exist_ok=True)
+    (report / "buckets").mkdir(parents=True, exist_ok=True)
     (report / "cross").mkdir(parents=True, exist_ok=True)
     (report / "txn_growth").mkdir(parents=True, exist_ok=True)
 
     case_rows: list[dict[str, str]] = []
+    bucket_rows: OrderedDict[str, list[dict[str, str]]] = OrderedDict()
     for bucket, filename in CASE_DOCS.items():
-        case_rows.extend(parse_case_catalog(tb / filename, bucket))
+        rows = parse_case_catalog(tb / filename, bucket)
+        bucket_rows[bucket] = rows
+        case_rows.extend(rows)
 
     cross_rows = parse_cross_catalog(tb / "DV_CROSS.md")
 
@@ -772,16 +1125,40 @@ def main() -> int:
     preserved_cases = 0
     for row in case_rows:
         path = report / "cases" / f"{row['case_id']}.md"
+        evidence = promoted_case_evidence.get(row["case_id"])
+        if isinstance(evidence, dict):
+            write_text(path, render_case_evidence(tb, row, evidence))
+            created_cases += 1
+            continue
         if keep_existing(path):
             preserved_cases += 1
             continue
         write_text(path, case_placeholder(row))
         created_cases += 1
 
+    evidenced_case_ids = {
+        row["case_id"]
+        for row in case_rows
+        if evidenced_page(report / "cases" / f"{row['case_id']}.md")
+    }
+
+    created_buckets = 0
+    for bucket, rows in bucket_rows.items():
+        write_text(
+            report / "buckets" / f"{bucket}.md",
+            render_bucket_trace(bucket, rows, evidenced_case_ids, promoted_case_evidence),
+        )
+        created_buckets += 1
+
     created_cross = 0
     preserved_cross = 0
     for row in cross_rows:
         path = report / "cross" / f"{row['run_id']}.md"
+        evidence = cross_run_evidence.get(row["run_id"])
+        if isinstance(evidence, dict):
+            write_text(path, render_cross_evidence(tb, row, evidence))
+            created_cross += 1
+            continue
         if keep_existing(path):
             preserved_cross += 1
             continue
@@ -800,9 +1177,7 @@ def main() -> int:
         write_text(path, txn_growth_placeholder(row))
         created_growth += 1
 
-    json_path = tb / "DV_REPORT.json"
-    if json_path.exists():
-        data = json.loads(read_text(json_path))
+    if data:
         write_text(tb / "DV_REPORT.md", render_dashboard(data))
         write_text(tb / "DV_COV.md", render_cov_summary(data))
         if DV_REPORT_FORMAT_LINTER.is_file():
@@ -814,6 +1189,7 @@ def main() -> int:
     print(
         "generated report stubs: "
         f"cases created={created_cases} preserved={preserved_cases}; "
+        f"buckets created={created_buckets}; "
         f"cross created={created_cross} preserved={preserved_cross}; "
         f"txn_growth created={created_growth} preserved={preserved_growth}"
     )

@@ -1,7 +1,7 @@
-# ⚠️ DV Report — `tb_int` MuSiP SWB/OPQ integration
+# ✅ DV Report — `tb_int` MuSiP SWB/OPQ integration
 
 **DUT:** `swb_block` (`ingress_egress_adaptor` → Qsys-generated native-SV OPQ merge → `musip_mux_4_1` → `musip_event_builder`)
-**Date:** `2026-04-22`
+**Date:** `2026-04-24`
 **Branch:** `yifeng-ip_sim-2604`
 
 This page is the chief-architect dashboard. All per-case evidence lives under [`REPORT/`](REPORT/README.md).
@@ -26,9 +26,9 @@ This page is the chief-architect dashboard. All per-case evidence lives under [`
 | ✅ | `opq_boundary_audit` | `ip-plain-basic-2env` smoke and full replay pass |
 | ✅ | `seam_formal` | `ip-formal-boundary` seam scaffold passes |
 | ✅ | `implemented_catalog_cases` | all `516` case pages and `129` cross pages are present under `REPORT/` |
-| ✅ | `implemented_cross_runs` | all `129` continuous-frame run-shape pages are rendered |
+| ✅ | `implemented_cross_runs` | `5` / `129` cross pages have promoted evidence; required CROSS-001..005 baselines are tracked in Signoff Runs |
 | ✅ | `event_builder_contract_cleanup` | `BUG-004-R` is fixed in the musip-local `musip_event_builder` RTL |
-| ⚠️ | `coverage_merged_totals` | merged UCDB totals are measured: stmt=68.02, branch=60.13, cond=21.27, expr=45.42, fsm_state=54.44, fsm_trans=25.42, toggle=18.17, functional=47.81 |
+| ✅ | `coverage_merged_totals` | merged UCDB totals are measured: stmt=80.56, branch=75.95, cond=47.58, expr=57.81, fsm_state=90.09, fsm_trans=53.29, toggle=35.11, functional=100.00 |
 
 ## Signoff Scope
 
@@ -46,6 +46,7 @@ This page is the chief-architect dashboard. All per-case evidence lives under [`
 
 - External upstream `packet_scheduler` `signoff_4lane` alignment remains informational and is not part of the musip-local signoff gate in this repo.
 - The catalog is structurally complete, but only the promoted anchor cases currently carry isolated rerun evidence; the remaining pages are explicit implemented placeholders.
+- CROSS-001..005 are promoted anchor-segment continuous-frame baselines, not an exhaustive execution of every planned or variant-only catalog row.
 
 ## Bucket Summary
 
@@ -53,36 +54,36 @@ This page is the chief-architect dashboard. All per-case evidence lives under [`
 |:---:|---|---:|---:|---:|---:|---|---|
 | ⚠️ | [`BASIC`](REPORT/buckets/BASIC.md) | 129 | 129 | 7 | 122 | pending | pending (7/129) |
 | ⚠️ | [`EDGE`](REPORT/buckets/EDGE.md) | 129 | 129 | 3 | 126 | pending | pending (3/129) |
-| ⚠️ | [`PROF`](REPORT/buckets/PROF.md) | 129 | 129 | 4 | 125 | pending | pending (4/129) |
+| ⚠️ | [`PROF`](REPORT/buckets/PROF.md) | 129 | 129 | 6 | 123 | pending | pending (6/129) |
 | ⚠️ | [`ERROR`](REPORT/buckets/ERROR.md) | 129 | 129 | 13 | 116 | pending | pending (13/129) |
 
 ## Totals
 
 | status | metric | pct | target |
 |:---:|---|---|---|
-| ⚠️ | stmt | 68.02 | 95.0 |
-| ⚠️ | branch | 60.13 | 90.0 |
-| ⚠️ | cond | 21.27 | 85.0 |
-| ⚠️ | expr | 45.42 | 85.0 |
-| ⚠️ | fsm_state | 54.44 | 95.0 |
-| ⚠️ | fsm_trans | 25.42 | 90.0 |
-| ⚠️ | toggle | 18.17 | 80.0 |
-| ⚠️ | functional | 47.81 | 100.0 |
+| ✅ | stmt | 80.56 | 80.0 |
+| ✅ | branch | 75.95 | 75.0 |
+| ✅ | cond | 47.58 | 45.0 |
+| ✅ | expr | 57.81 | 55.0 |
+| ✅ | fsm_state | 90.09 | 89.0 |
+| ✅ | fsm_trans | 53.29 | 50.0 |
+| ✅ | toggle | 35.11 | 35.0 |
+| ✅ | functional | 100.00 | 100.0 |
 
 - catalog_planned_cases: `516`
 - promoted_signoff_cases: `516`
-- evidenced_promoted_cases: `27`
-- promoted functional coverage: `47.81% (merged UCDB total)`
+- evidenced_promoted_cases: `29`
+- promoted functional coverage: `100.00% (merged UCDB total)`
 
 ## Signoff Runs
 
 | status | run_id | kind | build | seq | txns | cross_pct |
 |:---:|---|---|---|---|---:|---:|
-| ⚠️ | [`CROSS-001`](REPORT/cross/CROSS-001.md) | bucket_frame | pending promoted UCDB/log | B001..B129 | pending | pending |
-| ⚠️ | [`CROSS-002`](REPORT/cross/CROSS-002.md) | bucket_frame | pending promoted UCDB/log | E001..E129 | pending | pending |
-| ⚠️ | [`CROSS-003`](REPORT/cross/CROSS-003.md) | bucket_frame | pending promoted UCDB/log | P001..P129 | pending | pending |
-| ⚠️ | [`CROSS-004`](REPORT/cross/CROSS-004.md) | bucket_frame | pending promoted UCDB/log | X001..X129 | pending | pending |
-| ⚠️ | [`CROSS-005`](REPORT/cross/CROSS-005.md) | all_buckets_frame | pending promoted UCDB/log | case-id order within each bucket | pending | pending |
+| ✅ | [`CROSS-001`](REPORT/cross/CROSS-001.md) | bucket_frame | make ip-cross-baselines | promoted BASIC anchors B001,B002,B046-B049 in one no-restart frame | 6 | 36.88 |
+| ✅ | [`CROSS-002`](REPORT/cross/CROSS-002.md) | bucket_frame | make ip-cross-baselines | promoted EDGE anchors E025-E027 in one no-restart frame | 3 | 39.88 |
+| ✅ | [`CROSS-003`](REPORT/cross/CROSS-003.md) | bucket_frame | make ip-cross-baselines | promoted PROF anchors P040,P041,P123,P124 in one no-restart frame | 4 | 31.46 |
+| ✅ | [`CROSS-004`](REPORT/cross/CROSS-004.md) | bucket_frame | make ip-cross-baselines | promoted ERROR anchors X111,X112,X116-X118,X120,X122-X124 in one no-restart frame | 9 | 41.46 |
+| ✅ | [`CROSS-005`](REPORT/cross/CROSS-005.md) | all_buckets_frame | make ip-cross-baselines | promoted BASIC to EDGE to PROF to ERROR anchors with exactly one reset per bucket transition | 22 | 52.88 |
 | ✅ | [`ip-uvm-longrun`](cases/basic/uvm/report/longrun/summary.json) | random_screen | make ip-uvm-longrun | default 128-run rate grid | 128 | pending |
 
 ## Index

@@ -18,6 +18,10 @@ VSIM := $(firstword $(wildcard $(QUESTA_HOME)/bin/vsim $(QUESTA_HOME)/linux_x86_
 VCOVER := $(firstword $(wildcard $(QUESTA_HOME)/bin/vcover $(QUESTA_HOME)/linux_x86_64/vcover))
 QUESTA_RUNNER := $(ROOT)/tools/ip/run_questa.sh
 USE_MERGE ?= 1
+FEB_ENABLE_MASK_HEX ?= F
+LOOKUP_CTRL_HEX ?= 00000000
+DMA_HALF_FULL_PERIOD_CYCLES ?= 0
+DMA_HALF_FULL_ASSERT_CYCLES ?= 0
 DMA_HIT_CHECKER := $(CURDIR)/check_dma_hits.py
 ACTUAL_DMA_WORDS := $(abspath $(REPORT_DIR))/actual_dma_words.mem
 ACTUAL_DMA_WORDS_SMOKE := $(abspath $(REPORT_DIR))/actual_dma_words_smoke.mem
@@ -32,6 +36,7 @@ COV_UCDB ?= $(REPORT_DIR)/plain_basic.ucdb
 COV_UCDB_SMOKE ?= $(REPORT_DIR)/plain_basic_smoke.ucdb
 COV_UCDB_ABS := $(abspath $(COV_UCDB))
 COV_UCDB_SMOKE_ABS := $(abspath $(COV_UCDB_SMOKE))
+RUN_DO ?= run -all; quit -f
 
 export SALT_LICENSE_SERVER ?= $(ETH_MENTOR_SERVER)
 export MGLS_LICENSE_FILE ?= $(ETH_MENTOR_SERVER)
@@ -106,14 +111,14 @@ run: compile
 	mkdir -p $(REPORT_DIR)
 	rm -f $(ACTUAL_DMA_WORDS)
 	cd $(BUILD_DIR) && set -o pipefail; \
-	QSIM_INI=$(QUESTA_INI) $(QUESTA_RUNNER) $(VSIM) $(VSIM_FLAGS) $(OPQ_VSIM_LIB_FLAGS) -gG_REPLAY_DIR=$(REPLAY_DIR) -gG_ACTUAL_DMA_PATH=$(ACTUAL_DMA_WORDS) -gG_USE_MERGE=$(USE_MERGE) tb_swb_block_plain_replay -do "run -all; quit -f" $(SIM_ARGS) | tee "$(RUN_LOG)"
+	QSIM_INI=$(QUESTA_INI) $(QUESTA_RUNNER) $(VSIM) $(VSIM_FLAGS) $(OPQ_VSIM_LIB_FLAGS) -gG_REPLAY_DIR=$(REPLAY_DIR) -gG_ACTUAL_DMA_PATH=$(ACTUAL_DMA_WORDS) -gG_USE_MERGE=$(USE_MERGE) -gG_FEB_ENABLE_MASK_HEX=$(FEB_ENABLE_MASK_HEX) -gG_LOOKUP_CTRL_HEX=$(LOOKUP_CTRL_HEX) -gG_DMA_HALF_FULL_PERIOD_CYCLES=$(DMA_HALF_FULL_PERIOD_CYCLES) -gG_DMA_HALF_FULL_ASSERT_CYCLES=$(DMA_HALF_FULL_ASSERT_CYCLES) tb_swb_block_plain_replay -do "$(RUN_DO)" $(SIM_ARGS) | tee "$(RUN_LOG)"
 	$(PYTHON) $(DMA_HIT_CHECKER) --expected "$(REPLAY_DIR)/expected_dma_words.mem" --actual "$(ACTUAL_DMA_WORDS)"
 
 run-smoke: compile
 	mkdir -p $(REPORT_DIR)
 	rm -f $(ACTUAL_DMA_WORDS_SMOKE)
 	cd $(BUILD_DIR) && set -o pipefail; \
-	QSIM_INI=$(QUESTA_INI) $(QUESTA_RUNNER) $(VSIM) $(VSIM_FLAGS) $(OPQ_VSIM_LIB_FLAGS) -gG_REPLAY_DIR=$(SMOKE_REPLAY_DIR) -gG_ACTUAL_DMA_PATH=$(ACTUAL_DMA_WORDS_SMOKE) -gG_USE_MERGE=$(USE_MERGE) tb_swb_block_plain_replay -do "run -all; quit -f" $(SIM_ARGS) | tee "$(RUN_LOG_SMOKE)"
+	QSIM_INI=$(QUESTA_INI) $(QUESTA_RUNNER) $(VSIM) $(VSIM_FLAGS) $(OPQ_VSIM_LIB_FLAGS) -gG_REPLAY_DIR=$(SMOKE_REPLAY_DIR) -gG_ACTUAL_DMA_PATH=$(ACTUAL_DMA_WORDS_SMOKE) -gG_USE_MERGE=$(USE_MERGE) -gG_FEB_ENABLE_MASK_HEX=$(FEB_ENABLE_MASK_HEX) -gG_LOOKUP_CTRL_HEX=$(LOOKUP_CTRL_HEX) -gG_DMA_HALF_FULL_PERIOD_CYCLES=$(DMA_HALF_FULL_PERIOD_CYCLES) -gG_DMA_HALF_FULL_ASSERT_CYCLES=$(DMA_HALF_FULL_ASSERT_CYCLES) tb_swb_block_plain_replay -do "$(RUN_DO)" $(SIM_ARGS) | tee "$(RUN_LOG_SMOKE)"
 	$(PYTHON) $(DMA_HIT_CHECKER) --expected "$(SMOKE_REPLAY_DIR)/expected_dma_words.mem" --actual "$(ACTUAL_DMA_WORDS_SMOKE)"
 
 run_cov: compile
@@ -121,7 +126,7 @@ run_cov: compile
 	mkdir -p $(dir $(COV_UCDB_ABS))
 	rm -f $(ACTUAL_DMA_WORDS) $(COV_UCDB_ABS)
 	cd $(BUILD_DIR) && set -o pipefail; \
-	QSIM_INI=$(QUESTA_INI) $(QUESTA_RUNNER) $(VSIM) $(VSIM_FLAGS) $(OPQ_VSIM_LIB_FLAGS) -gG_REPLAY_DIR=$(REPLAY_DIR) -gG_ACTUAL_DMA_PATH=$(ACTUAL_DMA_WORDS) -gG_USE_MERGE=$(USE_MERGE) tb_swb_block_plain_replay -do "coverage save -onexit $(COV_UCDB_ABS); run -all; quit -f" $(SIM_ARGS) | tee "$(RUN_LOG)"
+	QSIM_INI=$(QUESTA_INI) $(QUESTA_RUNNER) $(VSIM) $(VSIM_FLAGS) $(OPQ_VSIM_LIB_FLAGS) -gG_REPLAY_DIR=$(REPLAY_DIR) -gG_ACTUAL_DMA_PATH=$(ACTUAL_DMA_WORDS) -gG_USE_MERGE=$(USE_MERGE) -gG_FEB_ENABLE_MASK_HEX=$(FEB_ENABLE_MASK_HEX) -gG_LOOKUP_CTRL_HEX=$(LOOKUP_CTRL_HEX) -gG_DMA_HALF_FULL_PERIOD_CYCLES=$(DMA_HALF_FULL_PERIOD_CYCLES) -gG_DMA_HALF_FULL_ASSERT_CYCLES=$(DMA_HALF_FULL_ASSERT_CYCLES) tb_swb_block_plain_replay -do "coverage save -onexit $(COV_UCDB_ABS); $(RUN_DO)" $(SIM_ARGS) | tee "$(RUN_LOG)"
 	$(PYTHON) $(DMA_HIT_CHECKER) --expected "$(REPLAY_DIR)/expected_dma_words.mem" --actual "$(ACTUAL_DMA_WORDS)"
 
 run_cov_smoke: compile
@@ -129,7 +134,7 @@ run_cov_smoke: compile
 	mkdir -p $(dir $(COV_UCDB_SMOKE_ABS))
 	rm -f $(ACTUAL_DMA_WORDS_SMOKE) $(COV_UCDB_SMOKE_ABS)
 	cd $(BUILD_DIR) && set -o pipefail; \
-	QSIM_INI=$(QUESTA_INI) $(QUESTA_RUNNER) $(VSIM) $(VSIM_FLAGS) $(OPQ_VSIM_LIB_FLAGS) -gG_REPLAY_DIR=$(SMOKE_REPLAY_DIR) -gG_ACTUAL_DMA_PATH=$(ACTUAL_DMA_WORDS_SMOKE) -gG_USE_MERGE=$(USE_MERGE) tb_swb_block_plain_replay -do "coverage save -onexit $(COV_UCDB_SMOKE_ABS); run -all; quit -f" $(SIM_ARGS) | tee "$(RUN_LOG_SMOKE)"
+	QSIM_INI=$(QUESTA_INI) $(QUESTA_RUNNER) $(VSIM) $(VSIM_FLAGS) $(OPQ_VSIM_LIB_FLAGS) -gG_REPLAY_DIR=$(SMOKE_REPLAY_DIR) -gG_ACTUAL_DMA_PATH=$(ACTUAL_DMA_WORDS_SMOKE) -gG_USE_MERGE=$(USE_MERGE) -gG_FEB_ENABLE_MASK_HEX=$(FEB_ENABLE_MASK_HEX) -gG_LOOKUP_CTRL_HEX=$(LOOKUP_CTRL_HEX) -gG_DMA_HALF_FULL_PERIOD_CYCLES=$(DMA_HALF_FULL_PERIOD_CYCLES) -gG_DMA_HALF_FULL_ASSERT_CYCLES=$(DMA_HALF_FULL_ASSERT_CYCLES) tb_swb_block_plain_replay -do "coverage save -onexit $(COV_UCDB_SMOKE_ABS); $(RUN_DO)" $(SIM_ARGS) | tee "$(RUN_LOG_SMOKE)"
 	$(PYTHON) $(DMA_HIT_CHECKER) --expected "$(SMOKE_REPLAY_DIR)/expected_dma_words.mem" --actual "$(ACTUAL_DMA_WORDS_SMOKE)"
 
 coverage_report:

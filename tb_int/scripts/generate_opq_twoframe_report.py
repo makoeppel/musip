@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""Generate a WaveDrom HTML report for a selected OPQ two-frame window.
+"""Generate a WaveDrom HTML report for a selected OPQ frame window.
 
 This script consumes:
 - a seam-only replay VCD from the UVM wrapper (`tb_top.*_if`)
 - the replay reference bundle emitted by `tb_int/cases/basic/ref/run_basic_ref.py`
 
 It publishes a static HTML page with three WaveDrom panels:
-- 4-lane ingress window for the selected non-initial frame pair
-- merged OPQ egress window for the same frame pair
+-- 4-lane ingress window for the selected frame window
+-- merged OPQ egress window for the same frame window
 - 256-bit PCIe app payload words covering those frames
 
 The page is intended to be served from the existing local web server.
@@ -103,10 +103,21 @@ def exact_signal_id(vcd: Any, full_path: str) -> str:
     raise KeyError(f"Signal not found in VCD: {full_path}")
 
 
-def extract_stream(vcd: Any, edges: list[int], prefix: str) -> list[dict[str, int]]:
-    valid_id = exact_signal_id(vcd, f"tb_top.{prefix}.valid")
-    data_id = exact_signal_id(vcd, f"tb_top.{prefix}.data")
-    datak_id = exact_signal_id(vcd, f"tb_top.{prefix}.datak")
+def matching_signal_ids(vcd: Any, full_path: str) -> list[str]:
+    matches = [sid for sid, sig in vcd.signals.items() if sig.full_path == full_path]
+    if not matches:
+        raise KeyError(f"Signal not found in VCD: {full_path}")
+    return matches
+
+
+def signal_bits_at(vcd: Any, signal_ids: list[str], time_vcd: int) -> str:
+    return "".join(vcd.get_value_at(signal_id, time_vcd) for signal_id in signal_ids)
+
+
+def _extract_interface_stream(vcd: Any, edges: list[int], top_scope: str, prefix: str) -> list[dict[str, int]]:
+    valid_id = exact_signal_id(vcd, f"{top_scope}.{prefix}.valid")
+    data_id = exact_signal_id(vcd, f"{top_scope}.{prefix}.data")
+    datak_id = exact_signal_id(vcd, f"{top_scope}.{prefix}.datak")
 
     rows: list[dict[str, int]] = []
     for cycle, time_vcd in enumerate(edges):
@@ -127,17 +138,99 @@ def extract_stream(vcd: Any, edges: list[int], prefix: str) -> list[dict[str, in
     return rows
 
 
-def extract_dma(vcd: Any, edges: list[int]) -> list[dict[str, int]]:
-    wren_id = exact_signal_id(vcd, "tb_top.dma_if.wren")
-    data_id = exact_signal_id(vcd, "tb_top.dma_if.data")
-    eoe_id = exact_signal_id(vcd, "tb_top.dma_if.end_of_event")
+def _extract_plain_ingress_stream(vcd: Any, edges: list[int], top_scope: str, lane: int) -> list[dict[str, int]]:
+    valid_ids = matching_signal_ids(vcd, f"{top_scope}.feb_valid")
+    data_ids = matching_signal_ids(vcd, f"{top_scope}.feb_data")
+    datak_ids = matching_signal_ids(vcd, f"{top_scope}.feb_datak")
 
     rows: list[dict[str, int]] = []
     for cycle, time_vcd in enumerate(edges):
-        wren = bits_to_int(vcd.get_value_at(wren_id, time_vcd))
+        valid_word = bits_to_int(signal_bits_at(vcd, valid_ids, time_vcd))
+        data_word = bits_to_int(signal_bits_at(vcd, data_ids, time_vcd))
+        datak_word = bits_to_int(signal_bits_at(vcd, datak_ids, time_vcd))
+        if valid_word is None or data_word is None or datak_word is None:
+            raise ValueError(f"Plain ingress produced X/Z at cycle {cycle}")
+        if ((valid_word >> lane) & 0x1) == 1:
+            rows.append(
+                {
+                    "cycle": cycle,
+                    "time_ps": int(round(time_vcd * vcd.timescale_ps)),
+                    "data": (data_word >> (lane * 32)) & 0xFFFF_FFFF,
+                    "datak": (datak_word >> (lane * 4)) & 0xF,
+                }
+            )
+    return rows
+
+
+def _extract_plain_opq_stream(vcd: Any, edges: list[int], top_scope: str) -> list[dict[str, int]]:
+    valid_ids = matching_signal_ids(vcd, f"{top_scope}.opq_valid")
+    data_ids = matching_signal_ids(vcd, f"{top_scope}.opq_data")
+    datak_ids = matching_signal_ids(vcd, f"{top_scope}.opq_datak")
+
+    rows: list[dict[str, int]] = []
+    for cycle, time_vcd in enumerate(edges):
+        valid = bits_to_int(signal_bits_at(vcd, valid_ids, time_vcd))
+        if valid == 1:
+            data = bits_to_int(signal_bits_at(vcd, data_ids, time_vcd))
+            datak = bits_to_int(signal_bits_at(vcd, datak_ids, time_vcd))
+            if data is None or datak is None:
+                raise ValueError(f"Plain OPQ stream produced X/Z at cycle {cycle}")
+            rows.append(
+                {
+                    "cycle": cycle,
+                    "time_ps": int(round(time_vcd * vcd.timescale_ps)),
+                    "data": data,
+                    "datak": datak,
+                }
+            )
+    return rows
+
+
+def extract_stream(
+    vcd: Any,
+    edges: list[int],
+    top_scope: str,
+    prefix: str,
+    signal_layout: str = "interface",
+    lane: int | None = None,
+) -> list[dict[str, int]]:
+    if signal_layout == "interface":
+        return _extract_interface_stream(vcd, edges, top_scope, prefix)
+    if signal_layout == "plain":
+        if prefix.startswith("feb_if"):
+            if lane is None:
+                raise ValueError("plain signal layout requires an explicit ingress lane index")
+            return _extract_plain_ingress_stream(vcd, edges, top_scope, lane)
+        if prefix == "opq_if":
+            return _extract_plain_opq_stream(vcd, edges, top_scope)
+    raise ValueError(f"Unsupported signal layout {signal_layout!r} for prefix {prefix!r}")
+
+
+def extract_dma(vcd: Any, edges: list[int], top_scope: str, signal_layout: str = "interface") -> list[dict[str, int]]:
+    if signal_layout == "interface":
+        wren_id = exact_signal_id(vcd, f"{top_scope}.dma_if.wren")
+        data_id = exact_signal_id(vcd, f"{top_scope}.dma_if.data")
+        eoe_id = exact_signal_id(vcd, f"{top_scope}.dma_if.end_of_event")
+    elif signal_layout == "plain":
+        wren_ids = matching_signal_ids(vcd, f"{top_scope}.dma_wren")
+        data_ids = matching_signal_ids(vcd, f"{top_scope}.dma_data")
+        eoe_ids = matching_signal_ids(vcd, f"{top_scope}.end_of_event")
+    else:
+        raise ValueError(f"Unsupported signal layout {signal_layout!r} for DMA extraction")
+
+    rows: list[dict[str, int]] = []
+    for cycle, time_vcd in enumerate(edges):
+        if signal_layout == "interface":
+            wren = bits_to_int(vcd.get_value_at(wren_id, time_vcd))
+        else:
+            wren = bits_to_int(signal_bits_at(vcd, wren_ids, time_vcd))
         if wren == 1:
-            data = bits_to_int(vcd.get_value_at(data_id, time_vcd))
-            eoe = bits_to_int(vcd.get_value_at(eoe_id, time_vcd))
+            if signal_layout == "interface":
+                data = bits_to_int(vcd.get_value_at(data_id, time_vcd))
+                eoe = bits_to_int(vcd.get_value_at(eoe_id, time_vcd))
+            else:
+                data = bits_to_int(signal_bits_at(vcd, data_ids, time_vcd))
+                eoe = bits_to_int(signal_bits_at(vcd, eoe_ids, time_vcd))
             if data is None or eoe is None:
                 raise ValueError(f"dma_if produced X/Z during wren at cycle {cycle}")
             rows.append(
@@ -585,7 +678,7 @@ def build_ingress_panel(
         base_hscale=3,
         title="Ingress Window",
         subtitle=(
-            "4 FEB lanes into the OPQ; frame pair F1/F2. "
+            "4 FEB lanes into the OPQ; selected frame window. "
             "Only the current chunk is rendered. Scroll the timeline strip to move through the full window."
         ),
         extra_class="ingress",
@@ -662,22 +755,24 @@ def build_egress_panel(
         )
         chunk_records.append(chunk_record(chunk_src, slot_start, slot_stop, axis_slice))
 
+    segment_labels = [
+        f"seg{idx} {2 + 4 * start:.3f}..{2 + 4 * stop:.3f} ns"
+        for idx, (start, stop) in enumerate(segments)
+    ]
+
     bundle = PanelBundle(
         panel_id="egress",
         render_index=1,
         base_hscale=3,
         title="Merged OPQ Egress",
         subtitle=(
-            "Merged OPQ output for the same frame pair. "
+            "Merged OPQ output for the selected frame window. "
             "The long idle region remains represented by // markers, but only the visible chunk is rendered."
         ),
         extra_class="egress",
         chunks=chunk_records,
         ledger_html=ledger_placeholder(f"Decoded ledger ({len(table_rows)} rows)", egress_src),
-        full_detail=(
-            f"Absolute axis: seg0 {2 + 4 * segments[0][0]:.3f}..{2 + 4 * segments[0][1]:.3f} ns, "
-            f"seg1 {2 + 4 * segments[1][0]:.3f}..{2 + 4 * segments[1][1]:.3f} ns"
-        ),
+        full_detail=f"Absolute axis: {', '.join(segment_labels)}",
     )
     return (bundle, segments)
 
@@ -737,6 +832,58 @@ def build_dma_panel(
     selected_words = [
         pack for pack in expected_packs if any(slot["frame_id"] in selected_frames for slot in pack["slots"])
     ]
+    if not selected_words:
+        table_html = html_table(
+            ["word", "cycle", "time", "eoe", "raw256", "decoded slots"],
+            [],
+        )
+        dma_src = write_text(out_dir / f"{stem}.ledger.dma.html", table_html)
+        empty_chunk = {
+            "signal": [
+                {"name": "clk250", "wave": "P"},
+                {},
+                [
+                    "PCIe App 256-bit Payload",
+                    {"name": "wren", "wave": "0"},
+                    {"name": "end_of_event", "wave": "0"},
+                    {"name": "data[255:0]", "wave": "x", "data": ["no payload words in selected frames"]},
+                ],
+            ],
+            "config": {"hscale": 4},
+            "head": {
+                "text": "PCIe app payload chunk 1/1: selected frames carry zero payload words",
+                "tick": 0,
+            },
+            "foot": {
+                "text": "No DMA payload words are expected; only the fixed padding tail exists and is intentionally excluded.",
+            },
+        }
+        chunk_src = write_json(
+            out_dir / f"{stem}.panel.dma.chunk000.json",
+            empty_chunk,
+        )
+        bundle = PanelBundle(
+            panel_id="dma",
+            render_index=2,
+            base_hscale=4,
+            title="PCIe App Payload",
+            subtitle="Selected frames carry zero DMA payload words on the shared axis.",
+            extra_class="dma",
+            chunks=[
+                {
+                    "src": chunk_src,
+                    "label": "S0",
+                    "detail": "selected frames carry zero payload words",
+                }
+            ],
+            ledger_html=ledger_placeholder("Decoded ledger (0 rows)", dma_src),
+            full_detail=(
+                "Selected frames carry zero payload words. The fixed 128-word DMA padding tail is present "
+                "in the simulation but is intentionally excluded from the payload correlation panel."
+            ),
+        )
+        return (bundle, (0, 0))
+
     first_idx = selected_words[0]["word_idx"]
     last_idx = selected_words[-1]["word_idx"]
 
@@ -863,7 +1010,7 @@ def build_dma_panel(
         base_hscale=4,
         title="PCIe App Payload",
         subtitle=(
-            "256-bit PCIe app payload words covering the same frame pair. "
+            "256-bit PCIe app payload words covering the same frame window. "
             "Only the visible chunk is rendered so the browser does not build the full million-pixel-wide SVG."
         ),
         extra_class="dma",
@@ -962,7 +1109,7 @@ def render_page(
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>MuSiP OPQ Two-Frame Wave Report</title>
+  <title>MuSiP OPQ Frame-Window Wave Report</title>
   <script src="./default.js"></script>
   <script src="./wavedrom.min.js"></script>
   <style>
@@ -1268,13 +1415,14 @@ def render_page(
 <body>
 <main>
   <section class="hero">
-    <h1>MuSiP OPQ Two-Frame Wave Report</h1>
-    <p>Selected pair: non-initial merged frames F1/F2 from a 4-lane replay generated with iid Poisson traffic at 30% saturation per lane.</p>
+    <h1>MuSiP OPQ Frame-Window Wave Report</h1>
+    <p>Selected window: frames F{summary["frame_start"]}..F{summary["frame_start"] + summary["frame_count"] - 1} from the captured 4-lane replay.</p>
     <p>Clock basis: 250 MHz, one cycle = 4 ns, with C0 defined as the first rising edge of <code>tb_top.clk</code> at 2.000 ns.{frame_slot_note}</p>
     <div class="meta">
       <div><strong>Replay Seed</strong>{summary["seed"]}</div>
       <div><strong>Lane Sat</strong>{summary["lane_saturation"]}</div>
       <div><strong>Frames/Lane</strong>{summary["frames_per_lane"]}</div>
+      <div><strong>Displayed Window</strong>F{summary["frame_start"]}..F{summary["frame_start"] + summary["frame_count"] - 1}</div>
       <div><strong>Total Hits</strong>{summary["total_hits"]}</div>
       <div><strong>Frame Slot</strong>{summary.get("frame_slot_cycles", "free-run")}</div>
       <div><strong>VCD</strong>{html.escape(summary["vcd_path"])}</div>
@@ -1550,12 +1698,19 @@ window.addEventListener('load', function () {{
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Generate the OPQ two-frame WaveDrom HTML report.")
+    parser = argparse.ArgumentParser(description="Generate the OPQ frame-window WaveDrom HTML report.")
     parser.add_argument("--vcd", required=True, help="Replay-mode VCD path")
     parser.add_argument("--ref-dir", required=True, help="Reference replay bundle directory")
     parser.add_argument("--out-html", required=True, help="Output HTML file")
+    parser.add_argument("--top-scope", default="tb_top", help="Top scope that owns clk/feb_if*/opq_if/dma_if (default: tb_top)")
+    parser.add_argument(
+        "--signal-layout",
+        choices=("interface", "plain"),
+        default="interface",
+        help="Signal naming/layout convention: interface-style tb_top.*_if or plain raw-signal harness",
+    )
     parser.add_argument("--frame-start", type=int, default=1, help="First merged frame to report (default: 1)")
-    parser.add_argument("--frame-count", type=int, default=2, help="Number of merged frames to report (default: 2)")
+    parser.add_argument("--frame-count", type=int, default=3, help="Number of merged frames to report (default: 3)")
     parser.add_argument("--frame-slot-cycles", type=int, default=0, help="Optional fixed SOP-to-SOP slot used for aligned waveform captures")
     parser.add_argument("--url", default="", help="Served URL for the report")
     args = parser.parse_args()
@@ -1567,23 +1722,40 @@ def main() -> int:
 
     vcd_module = load_vcd_module()
     vcd = vcd_module.VCDParser().parse(str(vcd_file))
-    clock_id = vcd.match_clock("tb_top.clk")
+    clock_id = vcd.match_clock(f"{args.top_scope}.clk")
     if clock_id is None:
-        raise ValueError("Clock tb_top.clk not found in VCD")
+        raise ValueError(f"Clock {args.top_scope}.clk not found in VCD")
     edges = vcd.find_rising_edges(clock_id, 0, vcd.max_time)
 
     ingress_frames: dict[int, list[list[Beat]]] = {}
     for lane in range(4):
-        parsed = parse_framed_stream(extract_stream(vcd, edges, f"feb_if{lane}"))
+        parsed = parse_framed_stream(
+            extract_stream(
+                vcd,
+                edges,
+                args.top_scope,
+                f"feb_if{lane}",
+                signal_layout=args.signal_layout,
+                lane=lane,
+            )
+        )
         ingress_frames[lane] = parsed[args.frame_start : args.frame_start + args.frame_count]
 
-    opq_frames = parse_framed_stream(extract_stream(vcd, edges, "opq_if"))
+    opq_frames = parse_framed_stream(
+        extract_stream(
+            vcd,
+            edges,
+            args.top_scope,
+            "opq_if",
+            signal_layout=args.signal_layout,
+        )
+    )
     selected_opq = opq_frames[args.frame_start : args.frame_start + args.frame_count]
 
     plan_json = json.loads((ref_dir / "plan.json").read_text())
     summary_json = json.loads((ref_dir / "summary.json").read_text())
     frame_prefix_map = build_frame_prefix_map(plan_json)
-    actual_dma = extract_dma(vcd, edges)
+    actual_dma = extract_dma(vcd, edges, args.top_scope, signal_layout=args.signal_layout)
 
     ingress_panel, ingress_span = build_ingress_panel(
         ingress_frames,
@@ -1608,6 +1780,8 @@ def main() -> int:
         "seed": summary_json["seed"],
         "lane_saturation": ", ".join(f"{value:.2f}" for value in summary_json["lane_saturation"]),
         "frames_per_lane": summary_json["frames_per_lane"],
+        "frame_start": args.frame_start,
+        "frame_count": args.frame_count,
         "total_hits": summary_json["total_hits"],
         "frame_slot_cycles": args.frame_slot_cycles,
         "vcd_path": str(vcd_file),

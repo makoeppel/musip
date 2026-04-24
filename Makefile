@@ -17,7 +17,7 @@ export MGLS_LICENSE_FILE ?= $(ETH_LIC_SERVER)
 export LM_LICENSE_FILE ?= $(ETH_LIC_SERVER)
 export QSIM_INI ?= $(QUESTA_HOME)/modelsim.ini
 
-.PHONY: help ip-init ip-sync-opq ip-svd ip-check-license ip-compile-basic ip-compile-basic-cov ip-compile-plain ip-compile-plain-cov ip-compile-plain-2env ip-compile-plain-2env-cov ip-uvm-basic ip-uvm-basic-cov ip-uvm-longrun ip-tlm-basic ip-tlm-basic-smoke ip-plain-basic ip-plain-basic-smoke ip-plain-basic-cov ip-plain-basic-cov-smoke ip-plain-basic-2env ip-plain-basic-2env-smoke ip-plain-basic-2env-cov ip-plain-basic-2env-cov-smoke ip-formal-boundary ip-cov-closure ip-e2e ip-e2e-ref ip-e2e-plain ip-e2e-plain-2env ip-clean ip-lint-rtl
+.PHONY: help ip-init ip-sync-opq ip-svd ip-check-license ip-compile-basic ip-compile-basic-cov ip-compile-plain ip-compile-plain-cov ip-compile-plain-2env ip-compile-plain-2env-cov ip-uvm-basic ip-uvm-basic-cov ip-uvm-longrun ip-tlm-basic ip-tlm-basic-smoke ip-plain-basic ip-plain-basic-smoke ip-plain-basic-cov ip-plain-basic-cov-smoke ip-plain-basic-2env ip-plain-basic-2env-smoke ip-plain-basic-2env-cov ip-plain-basic-2env-cov-smoke ip-formal-boundary ip-cov-closure ip-cross-baselines ip-e2e ip-e2e-ref ip-e2e-plain ip-e2e-plain-2env ip-clean ip-lint-rtl
 
 help:
 	@printf '%s\n' \
@@ -47,6 +47,7 @@ help:
 	  '  make ip-plain-basic-2env-cov-smoke # run the split 2-env smoke harness and save a UCDB' \
 	  '  make ip-formal-boundary # run the OPQ-boundary formal scaffold' \
 	  '  make ip-cov-closure   # run the promoted UCDB closure bundle and regenerate the DV report' \
+	  '  make ip-cross-baselines # run promoted CROSS-001..005 continuous-frame baseline evidence' \
 	  '  make ip-e2e           # alias for the basic end-to-end UVM case' \
 	  '  make ip-e2e-ref       # alias for the simulatorless basic reference case' \
 	  '  make ip-e2e-plain     # alias for the plain mixed-language replay bench' \
@@ -135,6 +136,9 @@ ip-formal-boundary:
 
 ip-cov-closure:
 	bash tb_int/scripts/run_cov_closure.sh
+
+ip-cross-baselines:
+	python3 tb_int/scripts/run_cross_baselines.py --tb tb_int
 
 ip-e2e: ip-uvm-basic
 

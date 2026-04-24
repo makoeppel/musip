@@ -69,6 +69,7 @@ class swb_stream_parser_state;
   int unsigned             observed_hits;
   bit [31:0]               ts_high_word;
   bit [15:0]               ts_low_word;
+  bit [5:0]                header_id;
   bit [7:0]                current_shd_ts;
   int unsigned             hits_remaining;
   int unsigned             hit_idx_in_subheader;
@@ -89,6 +90,7 @@ class swb_stream_parser_state;
     observed_hits = 0;
     ts_high_word = '0;
     ts_low_word = '0;
+    header_id = SWB_MUPIX_HEADER_ID;
     current_shd_ts = '0;
     hits_remaining = 0;
     hit_idx_in_subheader = 0;
@@ -136,6 +138,10 @@ class swb_scoreboard extends uvm_component;
   int unsigned            dma_missing_count;
   bit                     emit_hit_trace;
   string                  hit_trace_prefix;
+  bit                     auto_check_enabled;
+  bit                     allow_deferred_plan;
+  bit                     enable_case_contract_cov;
+  bit                     case_started;
 
   covergroup case_contract_cg with function sample(
     int unsigned expected_word_count_i,
@@ -143,8 +149,10 @@ class swb_scoreboard extends uvm_component;
     int unsigned active_lanes_i,
     int unsigned frame_count_i,
     int unsigned dma_half_full_pct_i,
+    int unsigned lane_skew_max_i,
     bit          use_merge_i,
     int unsigned hit_mode_id_i,
+    bit          lane_skew_varying_i,
     bit          saw_end_of_event_i,
     int unsigned padding_words_i
   );
@@ -187,6 +195,15 @@ class swb_scoreboard extends uvm_component;
       bins dma_backpressure_heavy = {[51:100]};
     }
 
+    cp_lane_skew_max: coverpoint lane_skew_max_i {
+      bins skew_none = {0};
+      bins skew_short = {[1:64]};
+      bins skew_medium = {[65:512]};
+      bins skew_large = {[513:1024]};
+      bins skew_half_frame = {[1025:2048]};
+      bins skew_over_half_frame = {[2049:$]};
+    }
+
     cp_use_merge: coverpoint use_merge_i {
       bins merge_bypass = {0};
       bins merge_enabled = {1};
@@ -199,6 +216,11 @@ class swb_scoreboard extends uvm_component;
       bins hit_mode_max = {3};
     }
 
+    cp_lane_skew_mode: coverpoint lane_skew_varying_i {
+      bins lane_skew_fixed = {0};
+      bins lane_skew_varying = {1};
+    }
+
     cp_end_of_event: coverpoint saw_end_of_event_i {
       bins eoe_elided = {0};
       bins eoe_asserted = {1};
@@ -207,12 +229,17 @@ class swb_scoreboard extends uvm_component;
     cp_padding_words: coverpoint padding_words_i {
       bins padding_none = {0};
       bins padding_fixed_128 = {128};
-      bins padding_other = default;
+      illegal_bins padding_other = default;
     }
 
     cx_payload_merge: cross cp_payload_words, cp_use_merge;
     cx_lane_mode: cross cp_active_lanes, cp_hit_mode;
     cx_backpressure_payload: cross cp_dma_half_full, cp_payload_words;
+    cx_lane_skew_mode: cross cp_lane_skew_max, cp_lane_skew_mode {
+      ignore_bins varying_none =
+        binsof(cp_lane_skew_max.skew_none) &&
+        binsof(cp_lane_skew_mode.lane_skew_varying);
+    }
   endgroup
 
   `uvm_component_utils(swb_scoreboard)
@@ -236,6 +263,10 @@ class swb_scoreboard extends uvm_component;
     dma_missing_count = 0;
     emit_hit_trace = 1'b0;
     hit_trace_prefix = "";
+    auto_check_enabled = 1'b1;
+    allow_deferred_plan = 1'b0;
+    enable_case_contract_cov = 1'b1;
+    case_started = 1'b0;
     case_contract_cg = new();
   endfunction
 
@@ -254,8 +285,12 @@ class swb_scoreboard extends uvm_component;
 
   function void build_phase(uvm_phase phase);
     super.build_phase(phase);
+    void'(uvm_config_db#(bit)::get(this, "", "allow_deferred_plan", allow_deferred_plan));
+    void'(uvm_config_db#(bit)::get(this, "", "enable_case_contract_cov", enable_case_contract_cov));
     if (!uvm_config_db#(swb_case_plan)::get(this, "", "case_plan", plan)) begin
-      `uvm_fatal("NOPLAN", "swb_case_plan missing from config_db")
+      if (!allow_deferred_plan) begin
+        `uvm_fatal("NOPLAN", "swb_case_plan missing from config_db")
+      end
     end
     if (!uvm_config_db#(bit)::get(this, "", "expect_opq_merged", expect_opq_merged)) begin
       expect_opq_merged = 1'b0;
@@ -267,6 +302,47 @@ class swb_scoreboard extends uvm_component;
       ingress_parsers[lane] = new($sformatf("lane%0d_ingress", lane), lane);
     end
     opq_parser = new("opq_egress", 0);
+    if (plan != null) begin
+      case_started = 1'b1;
+    end
+    reset_case_state();
+  endfunction
+
+  function void reset_case_state();
+  begin
+    ingress_hits.delete();
+    opq_hits.delete();
+    dma_hits.delete();
+    recv_words = 0;
+    padding_words = 0;
+    saw_end_of_event = 1'b0;
+    parse_errors = 0;
+    opq_recv_beats = 0;
+    opq_ghost_count = 0;
+    opq_missing_count = 0;
+    dma_ghost_count = 0;
+    dma_missing_count = 0;
+    foreach (ingress_parsers[lane]) begin
+      if (ingress_parsers[lane] != null) begin
+        ingress_parsers[lane].reset();
+      end
+    end
+    if (opq_parser != null) begin
+      opq_parser.reset();
+    end
+  end
+  endfunction
+
+  function void begin_case(
+    swb_case_plan case_plan_i,
+    bit           expect_opq_merged_i
+  );
+  begin
+    plan = case_plan_i;
+    expect_opq_merged = expect_opq_merged_i;
+    case_started = 1'b1;
+    reset_case_state();
+  end
   endfunction
 
   function void note_parse_error(string id, string msg);
@@ -320,7 +396,7 @@ class swb_scoreboard extends uvm_component;
   begin
     case (parser.state)
       SWB_PARSE_EXPECT_SOP: begin
-        if (!(beat.datak === 4'b0001 && beat.data[7:0] === SWB_K285 && beat.data[31:26] === SWB_MUPIX_HEADER_ID)) begin
+        if (!(beat.datak === 4'b0001 && beat.data[7:0] === SWB_K285 && swb_is_supported_header_id(beat.data[31:26]))) begin
           note_parse_error(
             "STREAM_PARSE",
             $sformatf(
@@ -332,6 +408,7 @@ class swb_scoreboard extends uvm_component;
           );
           return;
         end
+        parser.header_id = beat.data[31:26];
         parser.subheader_idx = 0;
         parser.state = SWB_PARSE_EXPECT_TS_HIGH;
       end
@@ -398,7 +475,13 @@ class swb_scoreboard extends uvm_component;
             parser.frame_idx,
             parser.subheader_idx,
             parser.hit_idx_in_subheader,
-            swb_make_expected_mupix_hit(parser.ts_high_word, parser.ts_low_word, parser.current_shd_ts, beat.data)
+            swb_make_expected_hit(
+              parser.header_id,
+              parser.ts_high_word,
+              parser.ts_low_word,
+              parser.current_shd_ts,
+              beat.data
+            )
           );
           parser.hits_remaining--;
           parser.hit_idx_in_subheader++;
@@ -649,7 +732,7 @@ class swb_scoreboard extends uvm_component;
     parse_dma_hits(item);
   endfunction
 
-  function void check_phase(uvm_phase phase);
+  function bit check_current_case();
     swb_stage_hit expected_merged_hits[$];
     bit           ingress_complete;
     bit           opq_complete;
@@ -657,7 +740,11 @@ class swb_scoreboard extends uvm_component;
     bit           require_dma_completion;
     bit           padding_contract_ok;
   begin
-    super.check_phase(phase);
+    if ((plan == null) || !case_started) begin
+      `uvm_error("NOCASE", "check_current_case called before any active case was loaded")
+      return 1'b0;
+    end
+
     ingress_complete = 1'b1;
     opq_complete = 1'b1;
     require_dma_completion = (plan.expected_dma_words.size() != 0);
@@ -756,17 +843,21 @@ class swb_scoreboard extends uvm_component;
       (dma_missing_count == 0) &&
       (!expect_opq_merged || ((opq_ghost_count == 0) && (opq_missing_count == 0)));
 
-    case_contract_cg.sample(
-      plan.expected_word_count,
-      plan.total_hits,
-      count_active_lanes(plan.feb_enable_mask),
-      plan.frame_count,
-      plan.dma_half_full_pct,
-      plan.use_merge,
-      plan.hit_mode_id,
-      saw_end_of_event,
-      padding_words
-    );
+    if (case_contract_cg != null) begin
+      case_contract_cg.sample(
+        plan.expected_word_count,
+        plan.total_hits,
+        count_active_lanes(plan.feb_enable_mask),
+        plan.frame_count,
+        plan.dma_half_full_pct,
+        plan.max_lane_skew_cycles(),
+        plan.use_merge,
+        plan.hit_mode_id,
+        plan.lane_skew_varies_by_frame(),
+        saw_end_of_event,
+        padding_words
+      );
+    end
 
     if (emit_hit_trace) begin
       dump_stage_hits({hit_trace_prefix, "_expected_hits.tsv"}, expected_merged_hits);
@@ -795,6 +886,20 @@ class swb_scoreboard extends uvm_component;
         UVM_NONE
       )
     end
+    return scoreboard_pass;
+  end
+  endfunction
+
+  function void check_phase(uvm_phase phase);
+  begin
+    super.check_phase(phase);
+    if (!auto_check_enabled) begin
+      return;
+    end
+    if ((plan == null) || !case_started) begin
+      return;
+    end
+    void'(check_current_case());
   end
   endfunction
 endclass
