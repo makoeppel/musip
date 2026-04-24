@@ -270,15 +270,6 @@ int create_midas_events(uint32_t* dmaBuffer, uint32_t dmaBufSize, int rbh)
     if (dmaBufSize < 2)
         return -1;
 
-    // one hit = two uint32_t words
-    uint32_t nHits = dmaBufSize / 2;
-
-    static constexpr uint32_t kMaxBanks = 1000;
-
-    uint32_t nBanks = std::min(kMaxBanks, nHits);
-
-    // printf("%i %i\n", nBanks, dmaBufSize);
-
     // create MIDAS event
     void* event = nullptr;
     int status = 0;
@@ -304,8 +295,10 @@ int create_midas_events(uint32_t* dmaBuffer, uint32_t dmaBufSize, int rbh)
     char* data = nullptr;
     std::string bank_name = "H000";
     bk_create(bankHeader, bank_name.c_str(), TID_UINT32, reinterpret_cast<void**>(&data));
-    memcpy(data, dmaBuffer, dmaBufSize * sizeof(uint32_t));
-    data += dmaBufSize * sizeof(uint32_t);
+    // memcpy(data, dmaBuffer, dmaBufSize * sizeof(uint32_t));
+    // data += dmaBufSize * sizeof(uint32_t);
+    memcpy(data, dmaBuffer, 10000 * sizeof(uint32_t));
+    data += 10000 * sizeof(uint32_t);
     bk_close(bankHeader, data);
 
     eventHeader->data_size = bk_size(bankHeader);
