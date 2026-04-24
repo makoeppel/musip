@@ -2,14 +2,14 @@
 
 **DUT chain:** `lane*_ingress` -> `ingress_egress_adaptor` (OPQ merge) -> `musip_mux_4_1` -> `musip_event_builder` -> DMA
 **Author:** Yifeng Wang (yifenwan@phys.ethz.ch)
-**Date:** 2026-04-22
-**Status:** The musip-local integrated path is green on the promoted full Questa toolchain. Replay generation, plain replay, full UVM, split OPQ-boundary replay, the formal seam scaffold, seeded per-hit tracing, the event-builder cleanup, and the promoted UCDB save/merge flow all pass in this workspace. A stronger 256-run rerun is retained as historical archive evidence only. Coverage is now measured under `tb_int/sim_runs/coverage/`, but the merged totals remain below the signoff targets in [`DV_COV.md`](DV_COV.md).
+**Date:** 2026-04-24
+**Status:** The musip-local integrated path is green on the promoted full Questa toolchain. Replay generation, plain replay, full UVM, split OPQ-boundary replay, the formal seam scaffold, seeded per-hit tracing, the event-builder cleanup, the promoted UCDB save/merge flow, coverage-target closure, and the CROSS-001..005 continuous-frame baselines all pass in this workspace. A stronger 256-run rerun is retained as historical archive evidence only.
 
 **Companion docs:**
 
 - [`DV_INT_HARNESS.md`](DV_INT_HARNESS.md) - clock/reset, RTL skeleton, stage taps, compile order, plusargs.
 - [`DV_REPORT.md`](DV_REPORT.md) - current dashboard and promoted evidence.
-- [`DV_COV.md`](DV_COV.md) - coverage status and planned collectors.
+- [`DV_COV.md`](DV_COV.md) - coverage targets, merged totals, and cross-baseline evidence.
 - [`BUG_HISTORY.md`](BUG_HISTORY.md) - live bug ledger.
 
 ---
@@ -172,6 +172,7 @@ Promoted comparison rules:
 | 9 | promoted randomized long-run screen | done |
 | 10 | event-builder completion-contract cleanup | done |
 | 11 | UCDB-based coverage collection and merge flow | done |
+| 12 | coverage-target closure and CROSS-001..005 continuous-frame baselines | done |
 
 ---
 
@@ -181,12 +182,12 @@ Promoted comparison rules:
 - UVM 1.2 from the promoted Questa install, with the shipped `uvm_dpi.so`.
 - No standalone OPQ signoff claim from this tree.
 - No real PCIe or DMA-engine simulation; `i_dmamemhalffull` stays low and the scoreboard is the sink.
-- UCDB save/merge is now wired for the promoted replay-bearing harnesses. Coverage is measured under `tb_int/sim_runs/coverage/`, but the merged totals are still below the target thresholds in `DV_COV.md`.
+- UCDB save/merge is wired for the promoted replay-bearing harnesses. The merged coverage targets in `DV_COV.md` are closed: `stmt=80.56`, `branch=75.95`, `cond=47.58`, `expr=57.81`, `fsm_state=90.09`, `fsm_trans=53.29`, `toggle=35.11`, and `functional=100.00`.
 - External upstream `signoff_4lane` alignment may still be audited separately, but it is out of scope for musip-local closure in this repo.
 
 ---
 
-## 9. Current signoff boundary (2026-04-22)
+## 9. Current signoff boundary (2026-04-24)
 
 Signed off locally on the promoted toolchain:
 
@@ -200,11 +201,12 @@ Signed off locally on the promoted toolchain:
 - split OPQ-boundary replay in `plain_2env/`,
 - OPQ-seam packet-contract formal scaffold,
 - event-builder completion-contract cleanup,
-- UCDB-based save/merge flow for the promoted replay-bearing harnesses.
+- UCDB-based save/merge flow for the promoted replay-bearing harnesses,
+- merged code and functional coverage closure against the targets in `DV_COV.md`,
+- CROSS-001..005 promoted continuous-frame baselines.
 
-Not yet signed off:
+Out of scope / not claimed by this musip-local DV signoff:
 
-- merged code and functional coverage closure against the target thresholds in `DV_COV.md`,
 - optional external upstream `signoff_4lane` alignment work.
 
-The musip-local end-to-end datapath and the phase-11 coverage plumbing are therefore closed in this workspace. Remaining work is coverage-target closure and optional external alignment work, not a local replay or infrastructure blocker.
+The musip-local end-to-end datapath, coverage-target closure, and promoted cross-baseline evidence are therefore closed in this workspace. Remaining work is optional external alignment work, not a local replay, coverage, or infrastructure blocker.

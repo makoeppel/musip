@@ -80,13 +80,15 @@ make serve_mkdocs
 
 The OPQ/SWB integration flow added in this workspace uses root-level `make` targets.
 
-Current validation status on April 21, 2026:
+Current validation status on April 24, 2026:
 
 - the full Siemens Questa install at `/data1/questaone_sim/questasim` is the only supported simulator on this host,
 - `mu3e-ip-cores` is now tracked in-repo as the `external/mu3e-ip-cores` git submodule and is the default upstream owner for OPQ packaging and sync,
 - the replay generator, the integrated `plain/` and `uvm/` benches, the split OPQ-boundary harness, and the formal seam scaffold all pass on that toolchain,
 - the real integrated OPQ merge path is the promoted default in this repo; the former direct-path bypass workaround is retired,
 - the promoted randomized screen is the default `make ip-uvm-longrun` 128-case per-lane `0.0..0.5` saturation wrapper, and the current stronger evidence set also includes a clean 256-case rerun in `tb_int/cases/basic/uvm/report/longrun_ext_260422_fixed/summary.json`,
+- `make ip-cross-baselines` promotes CROSS-001..005 continuous-frame evidence, including the 22-segment all-buckets frame,
+- `CLOSURE_RESUME=1 make ip-cov-closure` closes the merged coverage targets reported in `tb_int/DV_COV.md`,
 - Intel FE/FSE `vsim` remains unsupported for this flow; all simulation evidence in `tb_int/` is from the full Questa install above.
 
 ### Upstream Mu3e IP Signoff Index
@@ -111,6 +113,8 @@ If you just want the shortest safe path:
 7. Run `make ip-plain-basic`
 8. Run `make ip-plain-basic-2env`
 9. Run `make ip-uvm-longrun`
+10. Run `make ip-cross-baselines`
+11. Run `CLOSURE_RESUME=1 make ip-cov-closure`
 
 Important:
 

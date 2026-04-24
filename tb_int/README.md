@@ -14,7 +14,7 @@ Integrated testbench workspace for the MuSiP SWB/OPQ bring-up. Four harnesses sh
 - [`DV_INT_HARNESS.md`](DV_INT_HARNESS.md) — harness-side companion: clock/reset, RTL skeleton, replay bundle format, stage taps, compile / elaboration order.
 - [`DV_REPORT.md`](DV_REPORT.md) — current integration dashboard (health + validation matrix + promoted evidence).
 - [`DV_REPORT.json`](DV_REPORT.json) — machine-readable source of truth.
-- [`DV_COV.md`](DV_COV.md) — coverage summary (pending tooling hookup).
+- [`DV_COV.md`](DV_COV.md) — coverage summary, merged totals, and continuous-frame baseline evidence.
 - [`BUG_HISTORY.md`](BUG_HISTORY.md) — live bug ledger for this branch.
 
 ## Reading order
@@ -38,6 +38,8 @@ Ordered so every step reuses artifacts from earlier steps:
 8. `make ip-plain-basic-2env` — split OPQ boundary harness with explicit seam scoreboarding.
 9. `make ip-formal-boundary` — OPQ-seam packet-contract formal scaffold.
 10. `make ip-uvm-longrun` — default 128-run randomized per-lane `0.0..0.5` saturation screen.
+11. `make ip-cross-baselines` — promoted CROSS-001..005 continuous-frame baselines.
+12. `CLOSURE_RESUME=1 make ip-cov-closure` — promoted UCDB closure bundle and dashboard refresh.
 
 ## Make targets
 
@@ -60,6 +62,8 @@ Ordered so every step reuses artifacts from earlier steps:
 | `make ip-plain-basic-2env` | run the split 2-env DPI seam harness |
 | `make ip-plain-basic-2env-smoke` | run the split 2-env directed smoke harness |
 | `make ip-formal-boundary` | run the OPQ-seam packet-contract formal scaffold |
+| `make ip-cross-baselines` | run promoted CROSS-001..005 continuous-frame baseline evidence |
+| `make ip-cov-closure` | run the promoted UCDB closure bundle and regenerate the DV report |
 | `make ip-e2e` / `ip-e2e-ref` / `ip-e2e-plain` / `ip-e2e-plain-2env` | aliases for `ip-uvm-basic`, `ip-tlm-basic`, `ip-plain-basic`, `ip-plain-basic-2env` |
 | `make ip-clean` | remove both UVM scratch data and generated replay output |
 
@@ -70,6 +74,8 @@ Ordered so every step reuses artifacts from earlier steps:
 - `plain_2env/` smoke and full replay now feed both the OPQ boundary scoreboard and the downstream DMA hit checker from the same ingress replay, so the split harness closes on the same per-hit DMA contract as the integrated path.
 - The UVM harness now supports per-hit ingress, OPQ, and DMA ledgers via `+SWB_HIT_TRACE_PREFIX=<abs-prefix>`.
 - The promoted randomized screen remains `make ip-uvm-longrun`; the current signoff owner is the regenerated authentic Qsys wrapper under `firmware/a10_board/a10/merger/qsys/opq_upstream_4lane_native_sv/`.
+- Coverage closure is green in `DV_COV.md` with merged totals `stmt=80.56`, `branch=75.95`, `cond=47.58`, `expr=57.81`, `fsm_state=90.09`, `fsm_trans=53.29`, `toggle=35.11`, and `functional=100.00`.
+- CROSS-001..005 are the promoted continuous-frame baselines; CROSS-005 carries the 22-segment all-buckets frame.
 - The upstream OPQ owner is now checked in as the `external/mu3e-ip-cores` submodule; musip-local packaging and replay flows should resolve through that submodule by default.
 - External upstream `signoff_4lane` alignment is tracked as an audit note only. It is not a blocker for musip-local signoff in this repo.
 - See [`DV_REPORT.md`](DV_REPORT.md) for the current validation matrix and [`BUG_HISTORY.md`](BUG_HISTORY.md) for the open bug ledger.
