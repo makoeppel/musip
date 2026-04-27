@@ -26,25 +26,27 @@ architecture rtl of word_rate is
 
 begin
 
-    process(i_clk, i_reset_n)
+    process(i_clk)
     begin
-    if ( i_reset_n /= '1' ) then
-        o_rate <= (others => '0');
-        counter <= (others => '0');
-        time_counter <= (others => '0');
-        en <= '0';
-        --
-    elsif rising_edge(i_clk) then
-        en <= i_valid;
-        if ( time_counter = integer(g_CLK_MHZ*1000000.0) ) then
-            o_rate <= counter;
+    if rising_edge(i_clk) then
+        if ( i_reset_n /= '1' ) then
+            o_rate <= (others => '0');
             counter <= (others => '0');
             time_counter <= (others => '0');
+            en <= '0';
+            --
         else
-            if ( en = '1' ) then
-                counter <= counter + '1';
+            en <= i_valid;
+            if ( time_counter = integer(g_CLK_MHZ*1000000.0) ) then
+                o_rate <= counter;
+                counter <= (others => '0');
+                time_counter <= (others => '0');
+            else
+                if ( en = '1' ) then
+                    counter <= counter + '1';
+                end if;
+                time_counter <= time_counter + '1';
             end if;
-            time_counter <= time_counter + '1';
         end if;
     end if;
     end process;

@@ -35,8 +35,8 @@ architecture arch of fifo_reg is
     signal wfull : std_logic;
 
     type rdata_array_t is array (natural range <>) of std_logic_vector(o_rdata'range);
-    signal rdata : rdata_array_t(0 to g_N);
-    signal rvalid : std_logic_vector(0 to g_N);
+    signal rdata : rdata_array_t(0 to g_N) := (others => (others => '-'));
+    signal rvalid : std_logic_vector(0 to g_N) := (others => '0');
 
     -- do not infer ram
     attribute RAMSTYLE : string;
@@ -56,43 +56,45 @@ begin
     o_rempty <= not rvalid(0);
     o_rempty_n <= rvalid(0);
 
-    process(i_clk, i_reset_n)
+    process(i_clk)
     begin
-    if ( i_reset_n /= '1' ) then
-        rdata <= (others => (others => '-'));
-        rvalid <= (others => '0');
-        --
-    elsif rising_edge(i_clk) then
-        -- read
-        if ( i_rack = '1' and rvalid(0) = '1' ) then
-            -- shift left
-            rdata(0 to g_N-1) <= rdata(1 to g_N);
-            rdata(g_N) <= (others => '-');
-            rvalid(0 to g_N-1) <= rvalid(1 to g_N);
-            rvalid(g_N) <= '0';
-        end if;
-
-        -- write
-        if ( i_rack = '1' and rvalid(0) = '1' ) then
-            -- write during read
-            -- copy wdata into last valid rdata
-            for i in 0 to g_N loop
-                -- NOTE: wfull = '1' when rvalid(g_N) = '1'
-                if ( -- ( i = g_N and rvalid(g_N) = '1' ) or
-                     ( i < g_N and rvalid(i to i+1) = "10" ) ) then
-                    rdata(i) <= wdata;
-                    rvalid(i) <= we;
-                end if;
-            end loop;
+    if rising_edge(i_clk) then
+        if ( i_reset_n /= '1' ) then
+            rdata <= (others => (others => '-'));
+            rvalid <= (others => '0');
+            --
         else
-            -- copy wdata into first empty rdata
-            for i in 0 to g_N loop
-                if ( (i = 0 and rvalid(0) = '0') or
-                     (i > 0 and rvalid(i-1 to i) = "10") ) then
-                    rdata(i) <= wdata;
-                    rvalid(i) <= we;
-                end if;
-            end loop;
+            -- read
+            if ( i_rack = '1' and rvalid(0) = '1' ) then
+                -- shift left
+                rdata(0 to g_N-1) <= rdata(1 to g_N);
+                rdata(g_N) <= (others => '-');
+                rvalid(0 to g_N-1) <= rvalid(1 to g_N);
+                rvalid(g_N) <= '0';
+            end if;
+
+            -- write
+            if ( i_rack = '1' and rvalid(0) = '1' ) then
+                -- write during read
+                -- copy wdata into last valid rdata
+                for i in 0 to g_N loop
+                    -- NOTE: wfull = '1' when rvalid(g_N) = '1'
+                    if ( -- ( i = g_N and rvalid(g_N) = '1' ) or
+                         ( i < g_N and rvalid(i to i+1) = "10" ) ) then
+                        rdata(i) <= wdata;
+                        rvalid(i) <= we;
+                    end if;
+                end loop;
+            else
+                -- copy wdata into first empty rdata
+                for i in 0 to g_N loop
+                    if ( (i = 0 and rvalid(0) = '0') or
+                         (i > 0 and rvalid(i-1 to i) = "10") ) then
+                        rdata(i) <= wdata;
+                        rvalid(i) <= we;
+                    end if;
+                end loop;
+            end if;
         end if;
     end if;
     end process;

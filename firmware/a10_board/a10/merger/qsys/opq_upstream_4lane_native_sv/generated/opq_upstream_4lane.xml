@@ -1,0 +1,401 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<deploy
+ date="2026.04.27.19:43:36"
+ outputDirectory="/home/yifeng/packages/musip_2604/firmware/a10_board/a10/merger/qsys/opq_upstream_4lane_native_sv/generated/">
+ <perimeter>
+  <parameter
+     name="AUTO_GENERATION_ID"
+     type="Integer"
+     defaultValue="0"
+     onHdl="0"
+     affectsHdl="1" />
+  <parameter
+     name="AUTO_UNIQUE_ID"
+     type="String"
+     defaultValue=""
+     onHdl="0"
+     affectsHdl="1" />
+  <parameter
+     name="AUTO_DEVICE_FAMILY"
+     type="String"
+     defaultValue="Arria 10"
+     onHdl="0"
+     affectsHdl="1" />
+  <parameter
+     name="AUTO_DEVICE"
+     type="String"
+     defaultValue="10AS066H1F34E1SG"
+     onHdl="0"
+     affectsHdl="1" />
+  <parameter
+     name="AUTO_DEVICE_SPEEDGRADE"
+     type="String"
+     defaultValue="1"
+     onHdl="0"
+     affectsHdl="1" />
+  <parameter
+     name="AUTO_CLK_CLOCK_RATE"
+     type="Long"
+     defaultValue="-1"
+     onHdl="0"
+     affectsHdl="1" />
+  <parameter
+     name="AUTO_CLK_CLOCK_DOMAIN"
+     type="Integer"
+     defaultValue="-1"
+     onHdl="0"
+     affectsHdl="1" />
+  <parameter
+     name="AUTO_CLK_RESET_DOMAIN"
+     type="Integer"
+     defaultValue="-1"
+     onHdl="0"
+     affectsHdl="1" />
+  <interface name="clk" kind="clock" start="0">
+   <property name="clockRate" value="0" />
+   <property name="externallyDriven" value="false" />
+   <property name="ptfSchematicName" value="" />
+   <port name="clk_clk" direction="input" role="clk" width="1" />
+  </interface>
+  <interface name="csr" kind="avalon" start="0">
+   <property name="addressAlignment" value="DYNAMIC" />
+   <property name="addressGroup" value="0" />
+   <property name="addressSpan" value="2048" />
+   <property name="addressUnits" value="WORDS" />
+   <property name="alwaysBurstMaxBurst" value="false" />
+   <property name="associatedClock" value="clk" />
+   <property name="associatedReset" value="reset" />
+   <property name="bitsPerSymbol" value="8" />
+   <property name="bridgedAddressOffset" value="0" />
+   <property name="bridgesToMaster" value="" />
+   <property name="burstOnBurstBoundariesOnly" value="false" />
+   <property name="burstcountUnits" value="WORDS" />
+   <property name="constantBurstBehavior" value="false" />
+   <property name="explicitAddressSpan" value="0" />
+   <property name="holdTime" value="0" />
+   <property name="interleaveBursts" value="false" />
+   <property name="isBigEndian" value="false" />
+   <property name="isFlash" value="false" />
+   <property name="isMemoryDevice" value="false" />
+   <property name="isNonVolatileStorage" value="false" />
+   <property name="linewrapBursts" value="false" />
+   <property name="maximumPendingReadTransactions" value="1" />
+   <property name="maximumPendingWriteTransactions" value="0" />
+   <property name="minimumUninterruptedRunLength" value="1" />
+   <property name="printableDevice" value="false" />
+   <property name="readLatency" value="0" />
+   <property name="readWaitStates" value="1" />
+   <property name="readWaitTime" value="1" />
+   <property name="registerIncomingSignals" value="false" />
+   <property name="registerOutgoingSignals" value="false" />
+   <property name="setupTime" value="0" />
+   <property name="timingUnits" value="Cycles" />
+   <property name="transparentBridge" value="false" />
+   <property name="wellBehavedWaitrequest" value="false" />
+   <property name="writeLatency" value="0" />
+   <property name="writeWaitStates" value="0" />
+   <property name="writeWaitTime" value="0" />
+   <port name="csr_address" direction="input" role="address" width="9" />
+   <port name="csr_read" direction="input" role="read" width="1" />
+   <port name="csr_write" direction="input" role="write" width="1" />
+   <port name="csr_writedata" direction="input" role="writedata" width="32" />
+   <port name="csr_readdata" direction="output" role="readdata" width="32" />
+   <port
+       name="csr_readdatavalid"
+       direction="output"
+       role="readdatavalid"
+       width="1" />
+   <port
+       name="csr_waitrequest"
+       direction="output"
+       role="waitrequest"
+       width="1" />
+   <port name="csr_burstcount" direction="input" role="burstcount" width="1" />
+  </interface>
+  <interface name="egress" kind="avalon_streaming" start="1">
+   <property name="associatedClock" value="clk" />
+   <property name="associatedReset" value="reset" />
+   <property name="beatsPerCycle" value="1" />
+   <property name="dataBitsPerSymbol" value="36" />
+   <property name="emptyWithinPacket" value="false" />
+   <property name="errorDescriptor" value="hit_err,shd_err,hdr_err" />
+   <property name="firstSymbolInHighOrderBits" value="true" />
+   <property name="highOrderSymbolAtMSB" value="false" />
+   <property name="maxChannel" value="0" />
+   <property name="packetDescription" value="" />
+   <property name="readyLatency" value="0" />
+   <property name="symbolsPerBeat" value="1" />
+   <port
+       name="egress_startofpacket"
+       direction="output"
+       role="startofpacket"
+       width="1" />
+   <port
+       name="egress_endofpacket"
+       direction="output"
+       role="endofpacket"
+       width="1" />
+   <port name="egress_valid" direction="output" role="valid" width="1" />
+   <port name="egress_ready" direction="input" role="ready" width="1" />
+   <port name="egress_error" direction="output" role="error" width="3" />
+   <port name="egress_data" direction="output" role="data" width="36" />
+  </interface>
+  <interface name="ingress_0" kind="avalon_streaming" start="0">
+   <property name="associatedClock" value="clk" />
+   <property name="associatedReset" value="reset" />
+   <property name="beatsPerCycle" value="1" />
+   <property name="dataBitsPerSymbol" value="36" />
+   <property name="emptyWithinPacket" value="false" />
+   <property name="errorDescriptor" value="hit_err,shd_err,hdr_err" />
+   <property name="firstSymbolInHighOrderBits" value="true" />
+   <property name="highOrderSymbolAtMSB" value="false" />
+   <property name="maxChannel" value="3" />
+   <property name="packetDescription" value="" />
+   <property name="readyLatency" value="0" />
+   <property name="symbolsPerBeat" value="1" />
+   <port name="ingress_0_channel" direction="input" role="channel" width="2" />
+   <port
+       name="ingress_0_startofpacket"
+       direction="input"
+       role="startofpacket"
+       width="1" />
+   <port
+       name="ingress_0_endofpacket"
+       direction="input"
+       role="endofpacket"
+       width="1" />
+   <port name="ingress_0_data" direction="input" role="data" width="36" />
+   <port name="ingress_0_valid" direction="input" role="valid" width="1" />
+   <port name="ingress_0_error" direction="input" role="error" width="3" />
+  </interface>
+  <interface name="ingress_1" kind="avalon_streaming" start="0">
+   <property name="associatedClock" value="clk" />
+   <property name="associatedReset" value="reset" />
+   <property name="beatsPerCycle" value="1" />
+   <property name="dataBitsPerSymbol" value="36" />
+   <property name="emptyWithinPacket" value="false" />
+   <property name="errorDescriptor" value="hit_err,shd_err,hdr_err" />
+   <property name="firstSymbolInHighOrderBits" value="true" />
+   <property name="highOrderSymbolAtMSB" value="false" />
+   <property name="maxChannel" value="3" />
+   <property name="packetDescription" value="" />
+   <property name="readyLatency" value="0" />
+   <property name="symbolsPerBeat" value="1" />
+   <port name="ingress_1_channel" direction="input" role="channel" width="2" />
+   <port
+       name="ingress_1_startofpacket"
+       direction="input"
+       role="startofpacket"
+       width="1" />
+   <port
+       name="ingress_1_endofpacket"
+       direction="input"
+       role="endofpacket"
+       width="1" />
+   <port name="ingress_1_data" direction="input" role="data" width="36" />
+   <port name="ingress_1_valid" direction="input" role="valid" width="1" />
+   <port name="ingress_1_error" direction="input" role="error" width="3" />
+  </interface>
+  <interface name="ingress_2" kind="avalon_streaming" start="0">
+   <property name="associatedClock" value="clk" />
+   <property name="associatedReset" value="reset" />
+   <property name="beatsPerCycle" value="1" />
+   <property name="dataBitsPerSymbol" value="36" />
+   <property name="emptyWithinPacket" value="false" />
+   <property name="errorDescriptor" value="hit_err,shd_err,hdr_err" />
+   <property name="firstSymbolInHighOrderBits" value="true" />
+   <property name="highOrderSymbolAtMSB" value="false" />
+   <property name="maxChannel" value="3" />
+   <property name="packetDescription" value="" />
+   <property name="readyLatency" value="0" />
+   <property name="symbolsPerBeat" value="1" />
+   <port name="ingress_2_channel" direction="input" role="channel" width="2" />
+   <port
+       name="ingress_2_startofpacket"
+       direction="input"
+       role="startofpacket"
+       width="1" />
+   <port
+       name="ingress_2_endofpacket"
+       direction="input"
+       role="endofpacket"
+       width="1" />
+   <port name="ingress_2_data" direction="input" role="data" width="36" />
+   <port name="ingress_2_valid" direction="input" role="valid" width="1" />
+   <port name="ingress_2_error" direction="input" role="error" width="3" />
+  </interface>
+  <interface name="ingress_3" kind="avalon_streaming" start="0">
+   <property name="associatedClock" value="clk" />
+   <property name="associatedReset" value="reset" />
+   <property name="beatsPerCycle" value="1" />
+   <property name="dataBitsPerSymbol" value="36" />
+   <property name="emptyWithinPacket" value="false" />
+   <property name="errorDescriptor" value="hit_err,shd_err,hdr_err" />
+   <property name="firstSymbolInHighOrderBits" value="true" />
+   <property name="highOrderSymbolAtMSB" value="false" />
+   <property name="maxChannel" value="3" />
+   <property name="packetDescription" value="" />
+   <property name="readyLatency" value="0" />
+   <property name="symbolsPerBeat" value="1" />
+   <port name="ingress_3_channel" direction="input" role="channel" width="2" />
+   <port
+       name="ingress_3_startofpacket"
+       direction="input"
+       role="startofpacket"
+       width="1" />
+   <port
+       name="ingress_3_endofpacket"
+       direction="input"
+       role="endofpacket"
+       width="1" />
+   <port name="ingress_3_data" direction="input" role="data" width="36" />
+   <port name="ingress_3_valid" direction="input" role="valid" width="1" />
+   <port name="ingress_3_error" direction="input" role="error" width="3" />
+  </interface>
+  <interface name="reset" kind="reset" start="0">
+   <property name="associatedClock" value="clk" />
+   <property name="synchronousEdges" value="BOTH" />
+   <port name="reset_reset" direction="input" role="reset" width="1" />
+  </interface>
+ </perimeter>
+ <entity kind="opq_upstream_4lane" version="1.0" name="opq_upstream_4lane">
+  <parameter name="AUTO_CLK_CLOCK_RATE" value="-1" />
+  <parameter name="AUTO_GENERATION_ID" value="1777311816" />
+  <parameter name="AUTO_DEVICE" value="10AS066H1F34E1SG" />
+  <parameter name="AUTO_DEVICE_FAMILY" value="Arria 10" />
+  <parameter name="AUTO_CLK_RESET_DOMAIN" value="-1" />
+  <parameter name="AUTO_CLK_CLOCK_DOMAIN" value="-1" />
+  <parameter name="AUTO_UNIQUE_ID" value="" />
+  <parameter name="AUTO_DEVICE_SPEEDGRADE" value="1" />
+  <generatedFiles>
+   <file
+       path="/home/yifeng/packages/musip_2604/firmware/a10_board/a10/merger/qsys/opq_upstream_4lane_native_sv/generated/ordered_priority_queue_native_sv_fixed4_26411427/synth/opq_upstream_4lane_pkg.vhd"
+       attributes="IS_CONFIGURATION_PACKAGE" />
+   <file
+       path="/home/yifeng/packages/musip_2604/firmware/a10_board/a10/merger/qsys/opq_upstream_4lane_native_sv/generated/synth/opq_upstream_4lane.vhd"
+       attributes="CONTAINS_INLINE_CONFIGURATION" />
+  </generatedFiles>
+  <childGeneratedFiles>
+   <file
+       path="/home/yifeng/packages/musip_2604/firmware/a10_board/a10/merger/qsys/opq_upstream_4lane_native_sv/generated/ordered_priority_queue_native_sv_fixed4_26411427/synth/opq_upstream_4lane_pkg.vhd"
+       attributes="IS_CONFIGURATION_PACKAGE" />
+   <file
+       path="/home/yifeng/packages/musip_2604/firmware/a10_board/a10/merger/qsys/opq_upstream_4lane_native_sv/generated/synth/opq_upstream_4lane.vhd"
+       attributes="CONTAINS_INLINE_CONFIGURATION" />
+  </childGeneratedFiles>
+  <sourceFiles>
+   <file
+       path="/home/yifeng/packages/musip_2604/firmware/a10_board/a10/merger/qsys/opq_upstream_4lane_native_sv/opq_upstream_4lane.qsys" />
+  </sourceFiles>
+  <childSourceFiles>
+   <file
+       path="/home/yifeng/packages/musip_2604/firmware/a10_board/a10/merger/qsys/opq_upstream_4lane_native_sv/ordered_priority_queue_native_sv_fixed4_hw.tcl" />
+  </childSourceFiles>
+  <messages>
+   <message level="Info" culprit="opq_upstream_4lane">"Generating: opq_upstream_4lane"</message>
+   <message level="Info" culprit="opq_upstream_4lane">"Generating: ordered_priority_queue_dut_sv"</message>
+  </messages>
+ </entity>
+ <entity
+   kind="ordered_priority_queue_native_sv_fixed4"
+   version="26.4.11.427"
+   name="ordered_priority_queue_dut_sv">
+  <generatedFiles>
+   <file
+       path="/home/yifeng/packages/musip_2604/firmware/a10_board/a10/merger/qsys/opq_upstream_4lane_native_sv/generated/ordered_priority_queue_native_sv_fixed4_26411427/synth/external/mu3e-ip-cores/packet_scheduler/syn/quartus/opq_native_sv_4lane_signoff/src_compat/ordered_priority_queue_dut_sv.sv"
+       attributes="" />
+   <file
+       path="/home/yifeng/packages/musip_2604/firmware/a10_board/a10/merger/qsys/opq_upstream_4lane_native_sv/generated/ordered_priority_queue_native_sv_fixed4_26411427/synth/external/mu3e-ip-cores/packet_scheduler/syn/quartus/opq_native_sv_4lane_signoff/src_compat/ordered_priority_queue_monolithic.sv"
+       attributes="" />
+   <file
+       path="/home/yifeng/packages/musip_2604/firmware/a10_board/a10/merger/qsys/opq_upstream_4lane_native_sv/generated/ordered_priority_queue_native_sv_fixed4_26411427/synth/external/mu3e-ip-cores/packet_scheduler/syn/quartus/opq_native_sv_4lane_signoff/src_compat/ordered_priority_queue_monolithic_block_path.sv"
+       attributes="" />
+   <file
+       path="/home/yifeng/packages/musip_2604/firmware/a10_board/a10/merger/qsys/opq_upstream_4lane_native_sv/generated/ordered_priority_queue_native_sv_fixed4_26411427/synth/external/mu3e-ip-cores/packet_scheduler/syn/quartus/opq_native_sv_4lane_signoff/src_compat/ordered_priority_queue_monolithic_frame_table_presenter.sv"
+       attributes="" />
+   <file
+       path="/home/yifeng/packages/musip_2604/firmware/a10_board/a10/merger/qsys/opq_upstream_4lane_native_sv/generated/ordered_priority_queue_native_sv_fixed4_26411427/synth/external/mu3e-ip-cores/packet_scheduler/rtl/sv_ver/ordered_priority_queue/monolithic_sv/ordered_priority_queue_monolithic_basic_presenter.sv"
+       attributes="" />
+   <file
+       path="/home/yifeng/packages/musip_2604/firmware/a10_board/a10/merger/qsys/opq_upstream_4lane_native_sv/generated/ordered_priority_queue_native_sv_fixed4_26411427/synth/external/mu3e-ip-cores/packet_scheduler/rtl/sv_ver/ordered_priority_queue/monolithic_sv/ordered_priority_queue_monolithic_frame_table_tracker.sv"
+       attributes="" />
+   <file
+       path="/home/yifeng/packages/musip_2604/firmware/a10_board/a10/merger/qsys/opq_upstream_4lane_native_sv/generated/ordered_priority_queue_native_sv_fixed4_26411427/synth/external/mu3e-ip-cores/packet_scheduler/rtl/sv_ver/ordered_priority_queue/monolithic_sv/ordered_priority_queue_monolithic_ingress_parser.sv"
+       attributes="" />
+   <file
+       path="/home/yifeng/packages/musip_2604/firmware/a10_board/a10/merger/qsys/opq_upstream_4lane_native_sv/generated/ordered_priority_queue_native_sv_fixed4_26411427/synth/external/mu3e-ip-cores/packet_scheduler/rtl/sv_ver/ordered_priority_queue/monolithic_sv/ordered_priority_queue_monolithic_page_allocator.sv"
+       attributes="" />
+   <file
+       path="/home/yifeng/packages/musip_2604/firmware/a10_board/a10/merger/qsys/opq_upstream_4lane_native_sv/generated/ordered_priority_queue_native_sv_fixed4_26411427/synth/external/mu3e-ip-cores/packet_scheduler/syn/quartus/opq_native_sv_4lane_signoff/src_compat/handle_fifo.v"
+       attributes="" />
+   <file
+       path="/home/yifeng/packages/musip_2604/firmware/a10_board/a10/merger/qsys/opq_upstream_4lane_native_sv/generated/ordered_priority_queue_native_sv_fixed4_26411427/synth/external/mu3e-ip-cores/packet_scheduler/syn/quartus/opq_native_sv_4lane_signoff/src_compat/lane_fifo.v"
+       attributes="" />
+   <file
+       path="/home/yifeng/packages/musip_2604/firmware/a10_board/a10/merger/qsys/opq_upstream_4lane_native_sv/generated/ordered_priority_queue_native_sv_fixed4_26411427/synth/external/mu3e-ip-cores/packet_scheduler/syn/quartus/opq_native_sv_4lane_signoff/src_compat/page_ram.v"
+       attributes="" />
+   <file
+       path="/home/yifeng/packages/musip_2604/firmware/a10_board/a10/merger/qsys/opq_upstream_4lane_native_sv/generated/ordered_priority_queue_native_sv_fixed4_26411427/synth/external/mu3e-ip-cores/packet_scheduler/syn/quartus/opq_native_sv_4lane_signoff/src_compat/ticket_fifo.v"
+       attributes="" />
+   <file
+       path="/home/yifeng/packages/musip_2604/firmware/a10_board/a10/merger/qsys/opq_upstream_4lane_native_sv/generated/ordered_priority_queue_native_sv_fixed4_26411427/synth/external/mu3e-ip-cores/packet_scheduler/rtl/sv_ver/vendor/alt_ram/frame_table.v"
+       attributes="" />
+   <file
+       path="/home/yifeng/packages/musip_2604/firmware/a10_board/a10/merger/qsys/opq_upstream_4lane_native_sv/generated/ordered_priority_queue_native_sv_fixed4_26411427/synth/external/mu3e-ip-cores/packet_scheduler/rtl/sv_ver/vendor/alt_ram/tile_fifo.v"
+       attributes="" />
+  </generatedFiles>
+  <childGeneratedFiles>
+   <file
+       path="/home/yifeng/packages/musip_2604/firmware/a10_board/a10/merger/qsys/opq_upstream_4lane_native_sv/generated/ordered_priority_queue_native_sv_fixed4_26411427/synth/external/mu3e-ip-cores/packet_scheduler/syn/quartus/opq_native_sv_4lane_signoff/src_compat/ordered_priority_queue_dut_sv.sv"
+       attributes="" />
+   <file
+       path="/home/yifeng/packages/musip_2604/firmware/a10_board/a10/merger/qsys/opq_upstream_4lane_native_sv/generated/ordered_priority_queue_native_sv_fixed4_26411427/synth/external/mu3e-ip-cores/packet_scheduler/syn/quartus/opq_native_sv_4lane_signoff/src_compat/ordered_priority_queue_monolithic.sv"
+       attributes="" />
+   <file
+       path="/home/yifeng/packages/musip_2604/firmware/a10_board/a10/merger/qsys/opq_upstream_4lane_native_sv/generated/ordered_priority_queue_native_sv_fixed4_26411427/synth/external/mu3e-ip-cores/packet_scheduler/syn/quartus/opq_native_sv_4lane_signoff/src_compat/ordered_priority_queue_monolithic_block_path.sv"
+       attributes="" />
+   <file
+       path="/home/yifeng/packages/musip_2604/firmware/a10_board/a10/merger/qsys/opq_upstream_4lane_native_sv/generated/ordered_priority_queue_native_sv_fixed4_26411427/synth/external/mu3e-ip-cores/packet_scheduler/syn/quartus/opq_native_sv_4lane_signoff/src_compat/ordered_priority_queue_monolithic_frame_table_presenter.sv"
+       attributes="" />
+   <file
+       path="/home/yifeng/packages/musip_2604/firmware/a10_board/a10/merger/qsys/opq_upstream_4lane_native_sv/generated/ordered_priority_queue_native_sv_fixed4_26411427/synth/external/mu3e-ip-cores/packet_scheduler/rtl/sv_ver/ordered_priority_queue/monolithic_sv/ordered_priority_queue_monolithic_basic_presenter.sv"
+       attributes="" />
+   <file
+       path="/home/yifeng/packages/musip_2604/firmware/a10_board/a10/merger/qsys/opq_upstream_4lane_native_sv/generated/ordered_priority_queue_native_sv_fixed4_26411427/synth/external/mu3e-ip-cores/packet_scheduler/rtl/sv_ver/ordered_priority_queue/monolithic_sv/ordered_priority_queue_monolithic_frame_table_tracker.sv"
+       attributes="" />
+   <file
+       path="/home/yifeng/packages/musip_2604/firmware/a10_board/a10/merger/qsys/opq_upstream_4lane_native_sv/generated/ordered_priority_queue_native_sv_fixed4_26411427/synth/external/mu3e-ip-cores/packet_scheduler/rtl/sv_ver/ordered_priority_queue/monolithic_sv/ordered_priority_queue_monolithic_ingress_parser.sv"
+       attributes="" />
+   <file
+       path="/home/yifeng/packages/musip_2604/firmware/a10_board/a10/merger/qsys/opq_upstream_4lane_native_sv/generated/ordered_priority_queue_native_sv_fixed4_26411427/synth/external/mu3e-ip-cores/packet_scheduler/rtl/sv_ver/ordered_priority_queue/monolithic_sv/ordered_priority_queue_monolithic_page_allocator.sv"
+       attributes="" />
+   <file
+       path="/home/yifeng/packages/musip_2604/firmware/a10_board/a10/merger/qsys/opq_upstream_4lane_native_sv/generated/ordered_priority_queue_native_sv_fixed4_26411427/synth/external/mu3e-ip-cores/packet_scheduler/syn/quartus/opq_native_sv_4lane_signoff/src_compat/handle_fifo.v"
+       attributes="" />
+   <file
+       path="/home/yifeng/packages/musip_2604/firmware/a10_board/a10/merger/qsys/opq_upstream_4lane_native_sv/generated/ordered_priority_queue_native_sv_fixed4_26411427/synth/external/mu3e-ip-cores/packet_scheduler/syn/quartus/opq_native_sv_4lane_signoff/src_compat/lane_fifo.v"
+       attributes="" />
+   <file
+       path="/home/yifeng/packages/musip_2604/firmware/a10_board/a10/merger/qsys/opq_upstream_4lane_native_sv/generated/ordered_priority_queue_native_sv_fixed4_26411427/synth/external/mu3e-ip-cores/packet_scheduler/syn/quartus/opq_native_sv_4lane_signoff/src_compat/page_ram.v"
+       attributes="" />
+   <file
+       path="/home/yifeng/packages/musip_2604/firmware/a10_board/a10/merger/qsys/opq_upstream_4lane_native_sv/generated/ordered_priority_queue_native_sv_fixed4_26411427/synth/external/mu3e-ip-cores/packet_scheduler/syn/quartus/opq_native_sv_4lane_signoff/src_compat/ticket_fifo.v"
+       attributes="" />
+   <file
+       path="/home/yifeng/packages/musip_2604/firmware/a10_board/a10/merger/qsys/opq_upstream_4lane_native_sv/generated/ordered_priority_queue_native_sv_fixed4_26411427/synth/external/mu3e-ip-cores/packet_scheduler/rtl/sv_ver/vendor/alt_ram/frame_table.v"
+       attributes="" />
+   <file
+       path="/home/yifeng/packages/musip_2604/firmware/a10_board/a10/merger/qsys/opq_upstream_4lane_native_sv/generated/ordered_priority_queue_native_sv_fixed4_26411427/synth/external/mu3e-ip-cores/packet_scheduler/rtl/sv_ver/vendor/alt_ram/tile_fifo.v"
+       attributes="" />
+  </childGeneratedFiles>
+  <sourceFiles>
+   <file
+       path="/home/yifeng/packages/musip_2604/firmware/a10_board/a10/merger/qsys/opq_upstream_4lane_native_sv/ordered_priority_queue_native_sv_fixed4_hw.tcl" />
+  </sourceFiles>
+  <childSourceFiles/>
+  <instantiator instantiator="opq_upstream_4lane" as="opq_0" />
+  <messages>
+   <message level="Info" culprit="opq_upstream_4lane">"Generating: ordered_priority_queue_dut_sv"</message>
+  </messages>
+ </entity>
+</deploy>

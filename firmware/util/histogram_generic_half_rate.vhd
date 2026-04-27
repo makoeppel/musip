@@ -42,14 +42,14 @@ end entity;
 
 architecture RTL of histogram_generic_half_rate is
 
-    signal waddr, waddr_r, waddr_delay : std_logic_vector(g_ADDR_WIDTH-1 downto 0);
-    signal wdata, q, wdata_delay : std_logic_vector(g_DATA_WIDTH-1 downto 0);
-    signal we, we_delay, valid_2, zero_done, add_1 : std_logic;
+    signal waddr, waddr_r, waddr_delay : std_logic_vector(g_ADDR_WIDTH-1 downto 0) := (others => '0');
+    signal wdata, q, wdata_delay : std_logic_vector(g_DATA_WIDTH-1 downto 0) := (others => '0');
+    signal we, we_delay, valid_2, zero_done, add_1 : std_logic := '0';
 
     type state_type is (
         zeroing, waiting, enabled, readwaiting, writing
     );
-    signal state : state_type;
+    signal state : state_type := waiting;
 
 begin
 
@@ -82,6 +82,9 @@ begin
         valid_2 <= '0'; -- 2nd request during read wait
         zero_done <= '0';
         add_1 <= '0';
+        waddr <= (others => '0');
+        waddr_r <= (others => '0');
+        wdata <= (others => '0');
         we_delay  <= '0';
         wdata_delay <= (others => '0');
         waddr_delay <= (others => '0');

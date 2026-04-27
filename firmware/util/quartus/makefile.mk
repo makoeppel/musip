@@ -112,6 +112,7 @@ $(QSF) : $(MAKEFILE_LIST) $(PREFIX)/include.qip
 	set_global_assignment -name PRE_FLOW_SCRIPT_FILE "quartus_sh:$(shell realpath -s --relative-to="$(BUILD_DIR)" util/quartus/pre_flow.tcl)"
 	set_global_assignment -name SEED "$(SEED)"
 	EOF
+	$(foreach macro,$(VERILOG_MACROS),echo 'set_global_assignment -name VERILOG_MACRO "$(macro)"' >> "$@";)
 
 all : $(QPF) $(QSF)
 
@@ -184,7 +185,7 @@ flow :: all
 
 .PHONY : flow_map
 flow_map : all
-	quartus_map top
+	( cd "$(BUILD_DIR)" && quartus_map top )
 
 .PHONY : post_flow
 post_flow :

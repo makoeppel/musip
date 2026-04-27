@@ -76,8 +76,8 @@ end entity;
 --! scifi, down and up stream pixel/tiles)
 architecture arch of swb_block is
 
-    --! masking signals
-    signal mask_n : std_logic_vector(63 downto 0);
+    --! data path control signals
+    signal mask_n : std_logic_vector(63 downto 0) := (others => '0');
 
     --! feb links
     signal feb_rx : work.mu3e.link32_array_t(g_NLINKS_FEB_TOTL-1 downto 0) := (others => work.mu3e.LINK32_IDLE);
@@ -91,7 +91,10 @@ architecture arch of swb_block is
     signal rx_rc : work.mu3e.link32_array_t(g_NLINKS_FEB_TOTL-1 downto 0)   := (others => work.mu3e.LINK32_IDLE);
     signal gen_link : work.mu3e.link32_t;
 
-    signal use_opq_merge : std_logic;
+    signal use_opq_merge : std_logic := '0';
+    signal lookup_ctrl : std_logic_vector(31 downto 0) := (others => '0');
+    signal get_n_dma_words : std_logic_vector(31 downto 0) := (others => '0');
+    signal dma_enable : std_logic := '0';
 
     --! counters
     signal rate_mux : slv32_array_t(3*4 downto 0) := (others => (others => '0'));
@@ -104,6 +107,9 @@ architecture arch of swb_block is
     signal histo_rx_selected   : work.mu3e.link32_t;
 
     signal data_path_reset_n : std_logic;
+    signal opq_reset_n : std_logic;
+    signal mux_reset_n : std_logic;
+    signal event_builder_reset_n : std_logic;
 
     --! dma
     signal hits_256 : std_logic_vector(255 downto 0);
@@ -258,15 +264,28 @@ begin
     --! ------------------------------------------------------------------------
     --! ------------------------------------------------------------------------
     --! ------------------------------------------------------------------------
-    -- mask_n
-    mask_n <= x"00000000" & i_writeregs(SWB_GENERIC_MASK_REGISTER_W);
-
     process(i_clk, i_reset_n)
     begin
     if ( i_reset_n /= '1' ) then
         data_path_reset_n <= '0';
+        opq_reset_n <= '0';
+        mux_reset_n <= '0';
+        event_builder_reset_n <= '0';
+        mask_n <= (others => '0');
+        use_opq_merge <= '0';
+        lookup_ctrl <= (others => '0');
+        get_n_dma_words <= (others => '0');
+        dma_enable <= '0';
     elsif rising_edge(i_clk) then
         data_path_reset_n <= i_resets_n(RESET_BIT_DATA_PATH);
+        opq_reset_n <= data_path_reset_n;
+        mux_reset_n <= data_path_reset_n;
+        event_builder_reset_n <= data_path_reset_n;
+        mask_n <= x"00000000" & i_writeregs(SWB_GENERIC_MASK_REGISTER_W);
+        use_opq_merge <= i_writeregs(SWB_READOUT_STATE_REGISTER_W)(USE_BIT_MERGER);
+        lookup_ctrl <= i_writeregs(SWB_LOOKUP_CTRL_REGISTER_W);
+        get_n_dma_words <= i_writeregs(GET_N_DMA_WORDS_REGISTER_W);
+        dma_enable <= i_writeregs(DMA_REGISTER_W)(DMA_BIT_ENABLE);
     end if;
     end process;
 
@@ -305,8 +324,6 @@ begin
 
     END GENERATE;
 
-    use_opq_merge <= i_writeregs(SWB_READOUT_STATE_REGISTER_W)(USE_BIT_MERGER);
-
     g_opq_ingress_mask : for i in 0 to 3 generate
     begin
         rx_data_sim_opq(i) <= rx_data_sim(i) when mask_n(i) = '1' else work.mu3e.LINK32_IDLE;
@@ -317,7 +334,7 @@ begin
         enable      => use_opq_merge,
         rx_ingress  => rx_data_sim_opq,
         rx_egress   => rx_data_sim_merged,
-        reset_n     => data_path_reset_n,
+        reset_n     => opq_reset_n,
         clk         => i_clk--,
     );
 
@@ -335,7 +352,7 @@ begin
         i_rmask_n       => rx_data_sim_merged_mask,
         i_use_direct_mux=> use_opq_merge,
 
-        i_lookup_ctrl   => i_writeregs(SWB_LOOKUP_CTRL_REGISTER_W),
+        i_lookup_ctrl   => lookup_ctrl,
 
         o_subh_cnt      => counter_mux(3 downto 0),
         o_hit_cnt       => counter_mux(7 downto 4),
@@ -350,7 +367,7 @@ begin
         o_data          => hits_256,
         o_valid         => hits_256_valid,
 
-        i_reset_n      => data_path_reset_n,
+        i_reset_n      => mux_reset_n,
         i_clk           => i_clk--,
     );
 
@@ -367,9 +384,9 @@ begin
         i_rx                => hits_256,
         i_valid             => hits_256_valid,
 
-        i_get_n_words       => i_writeregs(GET_N_DMA_WORDS_REGISTER_W),
+        i_get_n_words       => get_n_dma_words,
         i_dmamemhalffull    => i_dmamemhalffull,
-        i_wen               => i_writeregs(DMA_REGISTER_W)(DMA_BIT_ENABLE),
+        i_wen               => dma_enable,
 
         o_data              => o_dma_data,
         o_wen               => o_dma_wren,
@@ -383,7 +400,7 @@ begin
         o_full_cnt => full_cnt,
         o_hit_rate => o_readregs(EVENT_BUILD_TAG_FIFO_FULL_R),
 
-        i_reset_n           => data_path_reset_n,
+        i_reset_n           => event_builder_reset_n,
         i_clk               => i_clk--,
     );
 

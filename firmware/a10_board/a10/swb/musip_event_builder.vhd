@@ -121,78 +121,80 @@ begin
     );
 
     -- dma end of events, count events and write control
-    process(i_clk, i_reset_n)
+    process(i_clk)
     begin
-    if ( i_reset_n = '0' ) then
-        done <= '0';
-        event_builder_state <= waiting;
-        hit_cnt <= (others => '0');
-        hit_drop_cnt <= (others => '0');
-        full_cnt <= (others => '0');
-        payload_words_remaining <= (others => '0');
-        padding_words_sent <= (others => '0');
-        --
-    elsif rising_edge(i_clk) then
-
-        if ( drop_hit = '1' ) then
-            hit_drop_cnt <= std_logic_vector(unsigned(hit_drop_cnt) + 1);
-        end if;
-
-        if ( i_wen = '0' ) then
+    if rising_edge(i_clk) then
+        if ( i_reset_n = '0' ) then
             done <= '0';
+            event_builder_state <= waiting;
+            hit_cnt <= (others => '0');
+            hit_drop_cnt <= (others => '0');
+            full_cnt <= (others => '0');
+            payload_words_remaining <= (others => '0');
+            padding_words_sent <= (others => '0');
+            --
+        else
+
+            if ( drop_hit = '1' ) then
+                hit_drop_cnt <= std_logic_vector(unsigned(hit_drop_cnt) + 1);
+            end if;
+
+            if ( i_wen = '0' ) then
+                done <= '0';
+            end if;
+
+            if ( fifo_full = '1' ) then
+                full_cnt <= std_logic_vector(unsigned(full_cnt) + 1);
+            end if;
+
+            case event_builder_state is
+                when waiting =>
+                    -- A zero-word request is treated as "no launch" because this block
+                    -- has no independent event-start strobe. The completion latch stays
+                    -- low until a non-zero request is armed and retired.
+                    if ( launch_request = '1' ) then
+                        payload_words_remaining <= unsigned(i_get_n_words);
+                        if ( unsigned(i_get_n_words) = to_unsigned(1, i_get_n_words'length) ) then
+                            event_builder_state <= write_last_payload;
+                        else
+                            event_builder_state <= write_payload;
+                        end if;
+                    end if;
+
+                when write_payload =>
+                    if ( payload_write_fire = '1' ) then
+                        hit_cnt <= std_logic_vector(unsigned(hit_cnt) + 1);
+                        if ( payload_words_remaining = to_unsigned(2, payload_words_remaining'length) ) then
+                            payload_words_remaining <= to_unsigned(1, payload_words_remaining'length);
+                            event_builder_state <= write_last_payload;
+                        elsif ( payload_words_remaining > to_unsigned(2, payload_words_remaining'length) ) then
+                            payload_words_remaining <= payload_words_remaining - 1;
+                        end if;
+                    end if;
+
+                when write_last_payload =>
+                    if ( payload_write_fire = '1' ) then
+                        payload_words_remaining <= (others => '0');
+                        padding_words_sent <= (others => '0');
+                        event_builder_state <= write_4kb_padding;
+                        hit_cnt <= std_logic_vector(unsigned(hit_cnt) + 1);
+                    end if;
+
+                when write_4kb_padding =>
+                    if ( padding_write_fire = '1' ) then
+                        if ( padding_words_sent = PAD_WORD_LAST_IDX_C ) then
+                            done <= '1';
+                            event_builder_state <= waiting;
+                        else
+                            padding_words_sent <= padding_words_sent + 1;
+                        end if;
+                    end if;
+
+                when others =>
+                    event_builder_state <= waiting;
+
+            end case;
         end if;
-
-        if ( fifo_full = '1' ) then
-            full_cnt <= std_logic_vector(unsigned(full_cnt) + 1);
-        end if;
-
-        case event_builder_state is
-            when waiting =>
-                -- A zero-word request is treated as "no launch" because this block
-                -- has no independent event-start strobe. The completion latch stays
-                -- low until a non-zero request is armed and retired.
-                if ( launch_request = '1' ) then
-                    payload_words_remaining <= unsigned(i_get_n_words);
-                    if ( unsigned(i_get_n_words) = to_unsigned(1, i_get_n_words'length) ) then
-                        event_builder_state <= write_last_payload;
-                    else
-                        event_builder_state <= write_payload;
-                    end if;
-                end if;
-
-            when write_payload =>
-                if ( payload_write_fire = '1' ) then
-                    hit_cnt <= std_logic_vector(unsigned(hit_cnt) + 1);
-                    if ( payload_words_remaining = to_unsigned(2, payload_words_remaining'length) ) then
-                        payload_words_remaining <= to_unsigned(1, payload_words_remaining'length);
-                        event_builder_state <= write_last_payload;
-                    elsif ( payload_words_remaining > to_unsigned(2, payload_words_remaining'length) ) then
-                        payload_words_remaining <= payload_words_remaining - 1;
-                    end if;
-                end if;
-
-            when write_last_payload =>
-                if ( payload_write_fire = '1' ) then
-                    payload_words_remaining <= (others => '0');
-                    padding_words_sent <= (others => '0');
-                    event_builder_state <= write_4kb_padding;
-                    hit_cnt <= std_logic_vector(unsigned(hit_cnt) + 1);
-                end if;
-
-            when write_4kb_padding =>
-                if ( padding_write_fire = '1' ) then
-                    if ( padding_words_sent = PAD_WORD_LAST_IDX_C ) then
-                        done <= '1';
-                        event_builder_state <= waiting;
-                    else
-                        padding_words_sent <= padding_words_sent + 1;
-                    end if;
-                end if;
-
-            when others =>
-                event_builder_state <= waiting;
-
-        end case;
 
     end if;
     end process;

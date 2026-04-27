@@ -77,6 +77,9 @@ architecture rtl of subtime_merger is
 
   signal word_cnt_u      : unsigned(63 downto 0) := (others => '0');
   signal fifo_full_cnt_u : unsigned(31 downto 0) := (others => '0');
+  signal state_reset_n   : std_logic := '0';
+  signal compactor_reset_n : std_logic := '0';
+  signal fifo_reset_n    : sl_fifo_array_t := (others => (others => '0'));
 
 begin
 
@@ -97,6 +100,21 @@ begin
   gen_unpack_subtime : for i in 0 to g_LINK_N-1 generate
     cur_subtime_ext(i) <= i_cur_subtime(i)(g_N_SUBTIME_BITS-1 downto 0);
   end generate;
+
+  p_reset_pipe : process(i_clk)
+  begin
+    if rising_edge(i_clk) then
+      if i_reset_n /= '1' then
+        state_reset_n <= '0';
+        compactor_reset_n <= '0';
+        fifo_reset_n <= (others => (others => '0'));
+      else
+        state_reset_n <= '1';
+        compactor_reset_n <= '1';
+        fifo_reset_n <= (others => (others => '1'));
+      end if;
+    end if;
+  end process;
 
   ----------------------------------------------------------------------------
   -- Write side: one write per lane per cycle into fifo(subtime, lane)
@@ -204,7 +222,7 @@ begin
   ----------------------------------------------------------------------------
   -- Sequential state update
   ----------------------------------------------------------------------------
-  p_read_seq : process(i_clk, i_reset_n)
+  p_read_seq : process(i_clk)
     variable old_sub_v          : integer range 0 to c_N_WINDOWS-1;
     variable new_sub_v          : integer range 0 to c_N_WINDOWS-1;
     variable cur_rd_v           : integer range 0 to c_N_WINDOWS-1;
@@ -212,80 +230,82 @@ begin
     variable wr_accept_v        : std_logic;
     variable rd_accept_v        : std_logic;
   begin
-    if i_reset_n /= '1' then
-      out_data_arr_r          <= (others => c_INVALID_HIT);
-      out_valid_r             <= '0';
-      cur_subtime_reading_win <= (others => '0');
-      last_cur_subtime        <= (others => (others => '0'));
-      subtime_changed         <= (others => (others => '0'));
-      fifo_count              <= (others => (others => (others => '0')));
-      word_cnt_u              <= (others => '0');
-      fifo_full_cnt_u         <= (others => '0');
+    if rising_edge(i_clk) then
+      if state_reset_n /= '1' then
+        out_data_arr_r          <= (others => c_INVALID_HIT);
+        out_valid_r             <= '0';
+        cur_subtime_reading_win <= (others => '0');
+        last_cur_subtime        <= (others => (others => '0'));
+        subtime_changed         <= (others => (others => '0'));
+        fifo_count              <= (others => (others => (others => '0')));
+        word_cnt_u              <= (others => '0');
+        fifo_full_cnt_u         <= (others => '0');
 
-    elsif rising_edge(i_clk) then
-      out_data_arr_r <= out_data_arr_next;
-      out_valid_r    <= out_valid_next;
+      else
+        out_data_arr_r <= out_data_arr_next;
+        out_valid_r    <= out_valid_next;
 
-      if o_valid_s = '1' then
-        word_cnt_u <= word_cnt_u + 1;
-      end if;
+        if o_valid_s = '1' then
+          word_cnt_u <= word_cnt_u + 1;
+        end if;
 
-      -- Update local FIFO occupancy counters using accepted writes/reads.
-      for s in 0 to c_N_WINDOWS-1 loop
-        for l in 0 to g_LINK_N-1 loop
-          wr_accept_v := fifo_wr_en(s, l) and (not fifo_full(s, l));
-          rd_accept_v := fifo_rd_en(s, l) and (not fifo_empty(s, l));
+        -- Update local FIFO occupancy counters using accepted writes/reads.
+        for s in 0 to c_N_WINDOWS-1 loop
+          for l in 0 to g_LINK_N-1 loop
+            wr_accept_v := fifo_wr_en(s, l) and (not fifo_full(s, l));
+            rd_accept_v := fifo_rd_en(s, l) and (not fifo_empty(s, l));
 
-          if (wr_accept_v = '1') and (rd_accept_v = '0') then
-            fifo_count(s, l) <= fifo_count(s, l) + 1;
-          elsif (wr_accept_v = '0') and (rd_accept_v = '1') then
-            fifo_count(s, l) <= fifo_count(s, l) - 1;
-          else
-            fifo_count(s, l) <= fifo_count(s, l);
+            if (wr_accept_v = '1') and (rd_accept_v = '0') then
+              fifo_count(s, l) <= fifo_count(s, l) + 1;
+            elsif (wr_accept_v = '0') and (rd_accept_v = '1') then
+              fifo_count(s, l) <= fifo_count(s, l) - 1;
+            else
+              fifo_count(s, l) <= fifo_count(s, l);
+            end if;
+          end loop;
+        end loop;
+
+        -- Count writes attempted into full FIFOs.
+        for lane in 0 to g_LINK_N-1 loop
+          if i_valid(lane) = '1' then
+            new_sub_v := to_integer(unsigned(hit_subtime(lane)));
+            if fifo_full(new_sub_v, lane) = '1' then
+              fifo_full_cnt_u <= fifo_full_cnt_u + 1;
+            end if;
           end if;
         end loop;
-      end loop;
 
-      -- Count writes attempted into full FIFOs.
-      for lane in 0 to g_LINK_N-1 loop
-        if i_valid(lane) = '1' then
-          new_sub_v := to_integer(unsigned(hit_subtime(lane)));
-          if fifo_full(new_sub_v, lane) = '1' then
-            fifo_full_cnt_u <= fifo_full_cnt_u + 1;
+        -- Track external lane subtime progression independently of hits.
+        for lane in 0 to g_LINK_N-1 loop
+          if i_mask_n(lane) = '1' then
+            old_sub_v := to_integer(unsigned(last_cur_subtime(lane)));
+            new_sub_v := to_integer(unsigned(cur_subtime_ext(lane)));
+
+            if last_cur_subtime(lane) /= cur_subtime_ext(lane) then
+              -- Mark the OLD window complete for this lane.
+              subtime_changed(old_sub_v)(lane) <= '1';
+            end if;
+
+            last_cur_subtime(lane) <= cur_subtime_ext(lane);
           end if;
-        end if;
-      end loop;
+        end loop;
 
-      -- Track external lane subtime progression independently of hits.
-      for lane in 0 to g_LINK_N-1 loop
-        if i_mask_n(lane) = '1' then
-          old_sub_v := to_integer(unsigned(last_cur_subtime(lane)));
-          new_sub_v := to_integer(unsigned(cur_subtime_ext(lane)));
+        -- Advance the current read window only when:
+        --   1) all enabled lanes have completed it, and
+        --   2) read comb decided there is nothing left after this beat
+        cur_rd_v := to_integer(cur_subtime_reading_win);
+        for lane in 0 to g_LINK_N-1 loop
+          cur_win_complete_v(lane) := subtime_changed(cur_rd_v)(lane) or (not i_mask_n(lane));
+        end loop;
 
-          if last_cur_subtime(lane) /= cur_subtime_ext(lane) then
-            -- Mark the OLD window complete for this lane.
-            subtime_changed(old_sub_v)(lane) <= '1';
+        if (and_reduce(cur_win_complete_v) = '1') and (advance_window_next = '1') then
+          subtime_changed(cur_rd_v) <= (others => '0');
+
+          if cur_subtime_reading_win = to_unsigned(c_N_WINDOWS-1, g_N_SUBTIME_BITS) then
+            cur_subtime_reading_win <= (others => '0');
+          else
+            cur_subtime_reading_win <= cur_subtime_reading_win + 1;
           end if;
-
-          last_cur_subtime(lane) <= cur_subtime_ext(lane);
-        end if;
-      end loop;
-
-      -- Advance the current read window only when:
-      --   1) all enabled lanes have completed it, and
-      --   2) read comb decided there is nothing left after this beat
-      cur_rd_v := to_integer(cur_subtime_reading_win);
-      for lane in 0 to g_LINK_N-1 loop
-        cur_win_complete_v(lane) := subtime_changed(cur_rd_v)(lane) or (not i_mask_n(lane));
-      end loop;
-
-      if (and_reduce(cur_win_complete_v) = '1') and (advance_window_next = '1') then
-        subtime_changed(cur_rd_v) <= (others => '0');
-
-        if cur_subtime_reading_win = to_unsigned(c_N_WINDOWS-1, g_N_SUBTIME_BITS) then
-          cur_subtime_reading_win <= (others => '0');
-        else
-          cur_subtime_reading_win <= cur_subtime_reading_win + 1;
         end if;
       end if;
     end if;
@@ -315,7 +335,7 @@ begin
     o_data    => o_data,
     o_valid   => o_valid_s,
 
-    i_reset_n => i_reset_n,
+    i_reset_n => compactor_reset_n,
     i_clk     => i_clk--,
   );
 
@@ -340,7 +360,7 @@ begin
           o_rempty  => fifo_empty(s, l),
 
           i_clk     => i_clk,
-          i_reset_n => i_reset_n
+          i_reset_n => fifo_reset_n(s, l)
         );
     end generate;
   end generate;

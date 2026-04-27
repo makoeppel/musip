@@ -1,0 +1,24 @@
+Info: Starting: Create HDL design files for synthesis
+Info: qsys-generate /home/yifeng/packages/musip_2604/firmware/a10_board/a10/merger/qsys/opq_upstream_4lane_native_sv/opq_upstream_4lane.qsys --synthesis=VHDL --output-directory=/home/yifeng/packages/musip_2604/firmware/a10_board/a10/merger/qsys/opq_upstream_4lane_native_sv/generated --family="Arria 10" --part=10AS066H1F34E1SG
+Progress: Loading opq_upstream_4lane_native_sv/opq_upstream_4lane.qsys
+Progress: Reading input file
+Progress: Adding opq_0 [ordered_priority_queue_native_sv_fixed4 26.4.11.427]
+Progress: Parameterizing module opq_0
+Progress: Building connections
+Progress: Parameterizing connections
+Progress: Validating
+Progress: Done reading input file
+Info: opq_upstream_4lane: "Transforming system: opq_upstream_4lane"
+Info: opq_upstream_4lane: Running transform generation_view_transform
+Info: opq_upstream_4lane: Running transform generation_view_transform took 0.000s
+Info: opq_0: Running transform generation_view_transform
+Info: opq_0: Running transform generation_view_transform took 0.000s
+Info: opq_upstream_4lane: Running transform merlin_avalon_transform
+Info: opq_upstream_4lane: Running transform merlin_avalon_transform took 0.020s
+Info: opq_upstream_4lane: "Naming system components in system: opq_upstream_4lane"
+Info: opq_upstream_4lane: "Processing generation queue"
+Info: opq_upstream_4lane: "Generating: opq_upstream_4lane"
+Info: opq_upstream_4lane: "Generating: ordered_priority_queue_dut_sv"
+Info: opq_upstream_4lane: Done "opq_upstream_4lane" with 2 modules, 16 files
+Info: qsys-generate succeeded.
+Info: Finished: Create HDL design files for synthesis

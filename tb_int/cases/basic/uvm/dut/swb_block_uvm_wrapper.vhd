@@ -1,11 +1,12 @@
 -- -----------------------------------------------------------------------------
 -- File      : swb_block_uvm_wrapper.vhd
 -- Author    : Yifeng Wang (yifenwan@phys.ethz.ch)
--- Version   : 26.3.6
+-- Version   : 26.3.7
 -- Date      : 20260421
 -- Change    : Expose a narrow UVM-facing seam for the SWB OPQ datapath: 4 FEB
 --             ingress lanes, merged OPQ egress debug, DMA egress, and the
---             minimal readout controls.
+--             minimal readout controls. Drive unused QC histogram controls to
+--             known values so long OPQ regressions do not flood RAM X warnings.
 -- -----------------------------------------------------------------------------
 
 library ieee;
@@ -84,6 +85,10 @@ begin
     writeregs(SWB_READOUT_STATE_REGISTER_W)(USE_BIT_STREAM)     <= '1';
     writeregs(SWB_READOUT_STATE_REGISTER_W)(USE_BIT_MERGER)     <= use_merge;
     writeregs(SWB_READOUT_STATE_REGISTER_W)(USE_BIT_GENERIC)    <= '1';
+    writeregs(SWB_ZERO_HISTOS_REGISTER_W)                       <= (others => '0');
+    writeregs(SWB_HISTO_ADDR_REGISTER_W)                        <= (others => '0');
+    writeregs(SWB_HISTO_CHIP_SELECT_REGISTER_W)                 <= (others => '0');
+    writeregs(SWB_HISTO_LINK_SELECT_REGISTER_W)                 <= (others => '0');
 
     dma_done <= readregs(EVENT_BUILD_STATUS_REGISTER_R)(EVENT_BUILD_DONE);
 

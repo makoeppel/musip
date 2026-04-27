@@ -8,6 +8,7 @@
 -- -----------------------------------------------------------------------------
 
 library ieee;
+library opq_upstream_4lane;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
@@ -46,7 +47,7 @@ begin
         ingress_error(lane)(2)         <= rx_ingress(lane).t1;
     end generate;
 
-    e_opq_upstream_4lane : entity work.opq_upstream_4lane
+    e_opq_upstream_4lane : entity opq_upstream_4lane.opq_upstream_4lane
     port map (
         clk_clk                    => clk,
         csr_address                => (others => '0'),
@@ -111,7 +112,11 @@ begin
                 else
                     egress_link.eop := aso_egress_endofpacket;
                 end if;
-                egress_link.err  := '1' when aso_egress_error /= "000" else '0';
+                if aso_egress_error /= "000" then
+                    egress_link.err := '1';
+                else
+                    egress_link.err := '0';
+                end if;
                 rx_egress(0) <= egress_link;
             end if;
         end if;

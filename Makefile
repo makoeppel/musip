@@ -23,7 +23,7 @@ help:
 	@printf '%s\n' \
 	  'Available targets:' \
 	  '  make ip-init          # init submodules and generate the upstream packaged OPQ Qsys wrapper for musip' \
-	  '  make ip-sync-opq      # regenerate and validate the musip-local upstream OPQ Qsys wrapper' \
+	  '  make ip-sync-opq      # materialize and validate the musip-local upstream OPQ Qsys wrapper' \
 	  '  make ip-svd           # generate a basic OPQ CSR SVD under build/ip/' \
 	  '  make ip-check-license # verify ETH Questa features for the UVM flow' \
 	  '  make ip-compile-basic # compile the mixed-language basic UVM harness' \
