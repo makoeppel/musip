@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Export a reproducible per-case waveform/analyzer bundle under tb_int/wave_reports."""
+"""Export a reproducible per-case waveform/analyzer bundle under tb_int/report/wave."""
 
 from __future__ import annotations
 
@@ -106,7 +106,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--out-root",
         type=Path,
-        default=Path("tb_int/wave_reports"),
+        default=Path("tb_int/report/wave"),
         help="Output root that will receive <bucket>/<case-id>/...",
     )
     parser.add_argument(
@@ -239,7 +239,7 @@ def write_bundle_readme(
     svd_rel: str | None,
     serve_script: Path,
 ) -> None:
-    serve_cmd = f"python3 {serve_script} --dir tb_int/wave_reports/{bucket}/{case_id}/packet_analyzer --port 8765"
+    serve_cmd = f"python3 {serve_script} --dir tb_int/report/wave/{bucket}/{case_id}/packet_analyzer --port 8765"
     path.write_text(
         "\n".join(
             [

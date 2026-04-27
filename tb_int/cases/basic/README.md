@@ -45,3 +45,5 @@ Promoted current evidence:
 - full replay closes in both `plain/` and `uvm/`,
 - a seeded trace run with `+SWB_HIT_TRACE_PREFIX` closes with zero ghost or missing hits at ingress, OPQ, and DMA,
 - the promoted default `make ip-uvm-longrun` campaign closes `128/128` runs on the authentic-wrapper owner, and a historical stronger `256/256` rerun archive remains available in `uvm/report/longrun_ext_260422_fixed/summary.json`.
+
+Implemented anchors currently counted for this bucket are `B046`, `B047`, `B048`, `B049`, `B101`, `B102`, and `B103`. The remaining planned `B001..B129` catalog rows stay explicit missing/pending evidence in [`../../report/signoff/DV_SIGNOFF.md`](../../report/signoff/DV_SIGNOFF.md).

@@ -61,7 +61,7 @@ def main() -> int:
         default=-1,
         help="First displayed frame. Use -1 to select the middle window when the capture is deeper than frame-count.",
     )
-    parser.add_argument("--out-root", type=Path, default=Path("tb_int/wave_reports"))
+    parser.add_argument("--out-root", type=Path, default=Path("tb_int/report/wave"))
     args = parser.parse_args()
 
     root = repo_root()

@@ -8,11 +8,16 @@ If you are new here:
 2. Run the replay/reference flow first, not the full SWB-integrated UVM flow.
 3. Only move to the RTL/UVM run after the proper Mentor/Questa runtime is available.
 
-- `basic/` is the first promoted case family.
-- Future replay or capture-derived scenarios can live alongside it without changing the harness root.
+- `basic/` owns smoke, lane-mask, active-lane, and randomized-screen anchors.
+- `edge/` indexes boundary/corner cases implemented through the shared UVM/basic harness.
+- `prof/` indexes profile, long-run, backpressure, skew, and analyzer-stress cases.
+- `error/` indexes fault/recovery/regression anchors.
+- `cross/` indexes continuous-frame signoff runs.
 
 Current direction:
 
 - keep the first case focused on MuPix-format FEB ingress,
 - keep the OPQ boundary explicitly checkable even though the fully integrated `swb_block` path is now green in this repo,
 - compare the first `GET_N_DMA_WORDS` payload words and ignore the event-builder padding tail.
+
+Functional coverage status and the implemented/missing list live in [`../report/signoff/DV_SIGNOFF.md`](../report/signoff/DV_SIGNOFF.md).

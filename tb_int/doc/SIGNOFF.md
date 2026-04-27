@@ -3,7 +3,7 @@
 **DUT:** `swb_block` &nbsp; **Date:** `2026-04-24` &nbsp;
 **Release under check:** `tb-int-dv-signoff-v2026.04.24` &nbsp; **Git base:** `yifeng-ip_sim-2604`
 
-This page is the master integrated signoff dashboard for the musip-owned SWB datapath around the authentic Qsys-generated OPQ wrapper. Detailed DV evidence lives in [`../DV_REPORT.md`](../DV_REPORT.md), the live bug ledger lives in [`../BUG_HISTORY.md`](../BUG_HISTORY.md), and the machine-readable dashboard lives in [`../DV_REPORT.json`](../DV_REPORT.json).
+This page is the master integrated signoff dashboard for the musip-owned SWB datapath around the authentic Qsys-generated OPQ wrapper. Detailed DV evidence lives in [`DV_REPORT.md`](DV_REPORT.md), the live bug ledger lives in [`BUG_HISTORY.md`](BUG_HISTORY.md), and the machine-readable dashboard lives in [`DV_REPORT.json`](DV_REPORT.json).
 
 ## Legend
 
@@ -21,7 +21,7 @@ This page is the master integrated signoff dashboard for the musip-owned SWB dat
 | ✅ | directed_bucket_spot_checks | `B046-B049`, `E025-E027`, `P040-P041`, `P123-P124`, and promoted `X` regression anchors have in-repo evidence |
 | ✅ | promoted_random_screen | `ip-uvm-longrun` is the promoted randomized screen for the default `0.0..0.5` per-lane rate matrix |
 | ✅ | rtl_hygiene | `make ip-lint-rtl` passes on the current musip-owned integration code |
-| ✅ | coverage_dashboard | merged UCDB totals are published and pass the targets in [`../DV_COV.md`](../DV_COV.md) |
+| ✅ | coverage_dashboard | merged UCDB totals are published and pass the targets in [`DV_COV.md`](DV_COV.md) |
 | ✅ | continuous_frame_baselines | CROSS-001..005 pass as promoted bucket-frame and all-buckets-frame evidence |
 | ✅ | event_builder_cleanup | `BUG-004-R` is closed in the musip-local RTL; non-zero launch, last-payload retirement, and fixed padding behavior are now explicit |
 
@@ -29,14 +29,14 @@ This page is the master integrated signoff dashboard for the musip-owned SWB dat
 
 | status | area | result | source |
 |:---:|---|---|---|
-| ✅ | replay closure | `make ip-tlm-basic-smoke`, `make ip-tlm-basic`, `make ip-plain-basic-smoke`, and `make ip-plain-basic` pass on the promoted owner | [`../DV_REPORT.md`](../DV_REPORT.md) |
-| ✅ | integrated UVM closure | default `make ip-uvm-basic` passes with merge enabled and zero ghost/missing hits | [`../DV_REPORT.md`](../DV_REPORT.md) |
-| ✅ | lane masking | `B046_lane0_only` now passes after the musip-local ingress-mask repair in `swb_block.vhd` | [`../BUG_HISTORY.md`](../BUG_HISTORY.md), [`../REPORT/cases/B046.md`](../REPORT/cases/B046.md) |
-| ✅ | edge spot checks | `E025`, `E026`, and legal bounded `E027` each pass on the integrated UVM path | [`../REPORT/cases/E025.md`](../REPORT/cases/E025.md), [`../REPORT/cases/E026.md`](../REPORT/cases/E026.md), [`../REPORT/cases/E027.md`](../REPORT/cases/E027.md) |
-| ✅ | backpressure spot check | `P040_dma_half_full_50` passes with zero ghost/missing hits and correct DMA payload accounting | [`../REPORT/cases/P040.md`](../REPORT/cases/P040.md) |
-| ✅ | boundary audit | `make ip-plain-basic-2env-smoke`, `make ip-plain-basic-2env`, and `make ip-formal-boundary` pass | [`../DV_REPORT.md`](../DV_REPORT.md) |
-| ✅ | merged coverage closure | `make ip-cov-closure` emits and merges UCDBs; current totals are `stmt=80.56`, `branch=75.95`, `cond=47.58`, `expr=57.81`, `fsm_state=90.09`, `fsm_trans=53.29`, `toggle=35.11`, `functional=100.00` | [`../DV_COV.md`](../DV_COV.md) |
-| ✅ | continuous-frame closure | `make ip-cross-baselines` promotes CROSS-001..005; CROSS-005 carries the 22-segment all-buckets frame | [`../DV_REPORT.md`](../DV_REPORT.md), [`../REPORT/cross/CROSS-005.md`](../REPORT/cross/CROSS-005.md) |
+| ✅ | replay closure | `make ip-tlm-basic-smoke`, `make ip-tlm-basic`, `make ip-plain-basic-smoke`, and `make ip-plain-basic` pass on the promoted owner | [`DV_REPORT.md`](DV_REPORT.md) |
+| ✅ | integrated UVM closure | default `make ip-uvm-basic` passes with merge enabled and zero ghost/missing hits | [`DV_REPORT.md`](DV_REPORT.md) |
+| ✅ | lane masking | `B046_lane0_only` now passes after the musip-local ingress-mask repair in `swb_block.vhd` | [`BUG_HISTORY.md`](BUG_HISTORY.md), [`../report/signoff/cases/B046.md`](../report/signoff/cases/B046.md) |
+| ✅ | edge spot checks | `E025`, `E026`, and legal bounded `E027` each pass on the integrated UVM path | [`../report/signoff/cases/E025.md`](../report/signoff/cases/E025.md), [`../report/signoff/cases/E026.md`](../report/signoff/cases/E026.md), [`../report/signoff/cases/E027.md`](../report/signoff/cases/E027.md) |
+| ✅ | backpressure spot check | `P040_dma_half_full_50` passes with zero ghost/missing hits and correct DMA payload accounting | [`../report/signoff/cases/P040.md`](../report/signoff/cases/P040.md) |
+| ✅ | boundary audit | `make ip-plain-basic-2env-smoke`, `make ip-plain-basic-2env`, and `make ip-formal-boundary` pass | [`DV_REPORT.md`](DV_REPORT.md) |
+| ✅ | merged coverage closure | `make ip-cov-closure` emits and merges UCDBs; current totals are `stmt=80.56`, `branch=75.95`, `cond=47.58`, `expr=57.81`, `fsm_state=90.09`, `fsm_trans=53.29`, `toggle=35.11`, `functional=100.00` | [`DV_COV.md`](DV_COV.md) |
+| ✅ | continuous-frame closure | `make ip-cross-baselines` promotes CROSS-001..005; CROSS-005 carries the 22-segment all-buckets frame | [`DV_REPORT.md`](DV_REPORT.md), [`../report/signoff/cross/CROSS-005.md`](../report/signoff/cross/CROSS-005.md) |
 
 ## Fixes In Scope
 
@@ -50,18 +50,18 @@ This page is the master integrated signoff dashboard for the musip-owned SWB dat
 
 ## Evidence Index
 
-- [`../DV_REPORT.md`](../DV_REPORT.md) — integrated DV dashboard
-- [`../DV_REPORT.json`](../DV_REPORT.json) — machine-readable integrated dashboard
-- [`../DV_COV.md`](../DV_COV.md) — merged coverage totals and target closure
-- [`../BUG_HISTORY.md`](../BUG_HISTORY.md) — integrated bug ledger
-- [`../REPORT/cases/B046.md`](../REPORT/cases/B046.md) — lane-mask evidence
-- [`../REPORT/cases/B047.md`](../REPORT/cases/B047.md), [`../REPORT/cases/B048.md`](../REPORT/cases/B048.md), [`../REPORT/cases/B049.md`](../REPORT/cases/B049.md) — active-lane promoted evidence
-- [`../REPORT/cases/E025.md`](../REPORT/cases/E025.md) — zero-hit subheader evidence
-- [`../REPORT/cases/E026.md`](../REPORT/cases/E026.md) — single-hit subheader evidence
-- [`../REPORT/cases/E027.md`](../REPORT/cases/E027.md) — bounded legal `MAX_HITS` evidence
-- [`../REPORT/cases/P040.md`](../REPORT/cases/P040.md), [`../REPORT/cases/P041.md`](../REPORT/cases/P041.md) — heavy backpressure evidence
-- [`../REPORT/cross/CROSS-001.md`](../REPORT/cross/CROSS-001.md), [`../REPORT/cross/CROSS-002.md`](../REPORT/cross/CROSS-002.md), [`../REPORT/cross/CROSS-003.md`](../REPORT/cross/CROSS-003.md), [`../REPORT/cross/CROSS-004.md`](../REPORT/cross/CROSS-004.md), [`../REPORT/cross/CROSS-005.md`](../REPORT/cross/CROSS-005.md) — promoted continuous-frame baselines
-- [`../wave_reports/BASIC/B047/packet_analyzer/index.html`](../wave_reports/BASIC/B047/packet_analyzer/index.html), [`../wave_reports/BASIC/B048/packet_analyzer/index.html`](../wave_reports/BASIC/B048/packet_analyzer/index.html), [`../wave_reports/BASIC/B049/packet_analyzer/index.html`](../wave_reports/BASIC/B049/packet_analyzer/index.html), [`../wave_reports/PROF/P041/packet_analyzer/index.html`](../wave_reports/PROF/P041/packet_analyzer/index.html) — checked-in traffic-analyzer wave evidence
+- [`DV_REPORT.md`](DV_REPORT.md) — integrated DV dashboard
+- [`DV_REPORT.json`](DV_REPORT.json) — machine-readable integrated dashboard
+- [`DV_COV.md`](DV_COV.md) — merged coverage totals and target closure
+- [`BUG_HISTORY.md`](BUG_HISTORY.md) — integrated bug ledger
+- [`../report/signoff/cases/B046.md`](../report/signoff/cases/B046.md) — lane-mask evidence
+- [`../report/signoff/cases/B047.md`](../report/signoff/cases/B047.md), [`../report/signoff/cases/B048.md`](../report/signoff/cases/B048.md), [`../report/signoff/cases/B049.md`](../report/signoff/cases/B049.md) — active-lane promoted evidence
+- [`../report/signoff/cases/E025.md`](../report/signoff/cases/E025.md) — zero-hit subheader evidence
+- [`../report/signoff/cases/E026.md`](../report/signoff/cases/E026.md) — single-hit subheader evidence
+- [`../report/signoff/cases/E027.md`](../report/signoff/cases/E027.md) — bounded legal `MAX_HITS` evidence
+- [`../report/signoff/cases/P040.md`](../report/signoff/cases/P040.md), [`../report/signoff/cases/P041.md`](../report/signoff/cases/P041.md) — heavy backpressure evidence
+- [`../report/signoff/cross/CROSS-001.md`](../report/signoff/cross/CROSS-001.md), [`../report/signoff/cross/CROSS-002.md`](../report/signoff/cross/CROSS-002.md), [`../report/signoff/cross/CROSS-003.md`](../report/signoff/cross/CROSS-003.md), [`../report/signoff/cross/CROSS-004.md`](../report/signoff/cross/CROSS-004.md), [`../report/signoff/cross/CROSS-005.md`](../report/signoff/cross/CROSS-005.md) — promoted continuous-frame baselines
+- [`../report/wave/BASIC/B047/packet_analyzer/index.html`](../report/wave/BASIC/B047/packet_analyzer/index.html), [`../report/wave/BASIC/B048/packet_analyzer/index.html`](../report/wave/BASIC/B048/packet_analyzer/index.html), [`../report/wave/BASIC/B049/packet_analyzer/index.html`](../report/wave/BASIC/B049/packet_analyzer/index.html), [`../report/wave/PROF/P041/packet_analyzer/index.html`](../report/wave/PROF/P041/packet_analyzer/index.html) — checked-in traffic-analyzer wave evidence
 
 ## Notes
 

@@ -322,16 +322,17 @@ def main() -> int:
         return 2
 
     repo_root = tb.parent
-    report_dir = tb / "REPORT"
+    doc_dir = tb / "doc"
+    report_dir = tb / "report" / "signoff"
     case_rows: list[dict[str, str]] = []
     bucket_rows: dict[str, list[dict[str, str]]] = {}
     for bucket, filename in CASE_DOCS.items():
-        rows = parse_case_catalog(tb / filename, bucket)
+        rows = parse_case_catalog(doc_dir / filename, bucket)
         bucket_rows[bucket] = rows
         case_rows.extend(rows)
 
-    cross_rows = parse_cross_catalog(tb / "DV_CROSS.md")
-    bug_status = parse_bug_status_table(tb / "BUG_HISTORY.md")
+    cross_rows = parse_cross_catalog(doc_dir / "DV_CROSS.md")
+    bug_status = parse_bug_status_table(doc_dir / "BUG_HISTORY.md")
 
     evidenced_case_ids = []
     for row in case_rows:
@@ -370,7 +371,7 @@ def main() -> int:
         }
 
     existing: dict[str, object] = {}
-    report_json_path = tb / "DV_REPORT.json"
+    report_json_path = doc_dir / "DV_REPORT.json"
     if report_json_path.exists():
         try:
             existing = json.loads(report_json_path.read_text(encoding="utf-8"))
@@ -413,7 +414,7 @@ def main() -> int:
                 "cases_implemented": len(rows),
                 "cases_evidenced": evidenced,
                 "status": "implemented" if evidenced == len(rows) else "implemented_evidence_pending",
-                "trace": f"REPORT/buckets/{bucket}.md",
+                "trace": f"report/signoff/buckets/{bucket}.md",
             }
         )
 
@@ -494,7 +495,7 @@ def main() -> int:
         if finding.get("id") == "dv_catalog_expanded":
             finding["detail"] = (
                 "The catalog contains 129 cases per bucket (B/E/P/X). "
-                "REPORT/ now carries a generated page for every case, cross run, and txn-growth slot, "
+                "report/signoff/ now carries a generated page for every case, cross run, and txn-growth slot, "
                 "while promoted isolated evidence remains attached to the executed anchor cases."
             )
         if finding.get("id") == "dma_done_contract" and bug_status.get("BUG-004-R", "").startswith("fixed"):

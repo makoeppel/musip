@@ -2,14 +2,14 @@
 """Render the tb_int report tree from the current planning docs and JSON summary.
 
 This local generator owns:
-- REPORT/cases/*.md, REPORT/cross/*.md, REPORT/txn_growth/*.md placeholder pages
-- DV_REPORT.md top-level chief-architect dashboard
-- DV_COV.md coverage summary dashboard
+- report/signoff/cases/*.md, report/signoff/cross/*.md, report/signoff/txn_growth/*.md placeholder pages
+- doc/DV_REPORT.md top-level chief-architect dashboard
+- doc/DV_COV.md coverage summary dashboard
 
 The source of truth for scenario text remains the planning markdown:
-  DV_BASIC.md, DV_EDGE.md, DV_PROF.md, DV_ERROR.md, DV_CROSS.md
+  doc/DV_BASIC.md, doc/DV_EDGE.md, doc/DV_PROF.md, doc/DV_ERROR.md, doc/DV_CROSS.md
 The source of truth for dashboard metrics is:
-  DV_REPORT.json
+  doc/DV_REPORT.json
 """
 
 from __future__ import annotations
@@ -173,7 +173,7 @@ def case_placeholder(row: dict[str, str]) -> str:
     scenario = row["scenario"]
     primary_checks = row["primary_checks"]
     stage = stage_pretty(row["stage"])
-    bucket_doc = f"../../DV_{bucket}.md"
+    bucket_doc = f"../../../doc/DV_{bucket}.md"
     bucket_page = f"../buckets/{bucket}.md"
     seed = "pending" if method.upper() == "R" else "n/a"
 
@@ -216,14 +216,14 @@ def case_placeholder(row: dict[str, str]) -> str:
 | fsm_state | pending | 95.0 | isolated UCDB not yet promoted |
 | fsm_trans | pending | 90.0 | isolated UCDB not yet promoted |
 | toggle | pending | 80.0 | isolated UCDB not yet promoted |
-| functional | pending | bucket-dependent | linked via [`../../DV_CROSS.md`](../../DV_CROSS.md) |
+| functional | pending | bucket-dependent | linked via [`../../../doc/DV_CROSS.md`](../../../doc/DV_CROSS.md) |
 
 ## Linked evidence
 
 - Planning row: [`{bucket_doc}`]({bucket_doc})
 - Bucket ordered-merge trace: [`{bucket_page}`]({bucket_page})
 - Continuous-frame baselines: [`../cross/README.md`](../cross/README.md)
-- Bug ledger: [`../../BUG_HISTORY.md`](../../BUG_HISTORY.md)
+- Bug ledger: [`../../../doc/BUG_HISTORY.md`](../../../doc/BUG_HISTORY.md)
 """
 
 
@@ -240,7 +240,7 @@ def parse_summary(path: Path) -> dict[str, str]:
 
 
 def md_rel_link(relpath: str, label: str | None = None) -> str:
-    target = Path("../../") / Path(relpath)
+    target = Path("../../../") / Path(relpath)
     text = label or relpath
     return f"[`{text}`]({target.as_posix()})"
 
@@ -362,12 +362,12 @@ def render_bucket_trace(
     promoted_case_evidence: dict[str, dict[str, object]],
 ) -> str:
     method_short, method_desc = bucket_default_method(rows)
-    bucket_doc = f"../../{CASE_DOCS[bucket]}"
+    bucket_doc = f"../../../doc/{CASE_DOCS[bucket]}"
     evidenced_in_bucket = [row["case_id"] for row in rows if row["case_id"] in evidenced_case_ids]
     bucket_status = PASS_EMOJI if len(evidenced_in_bucket) == len(rows) and rows else WARN_EMOJI
 
     lines = [
-        f"# `REPORT/buckets/{bucket}.md` — ordered-merge trace",
+        f"# `report/signoff/buckets/{bucket}.md` — ordered-merge trace",
         "",
         "> **Audience:** chief architect. This page is the per-bucket audit trail required by `~/.codex/skills/dv-workflow/SKILL.md` §Coverage rule 9. Every row below is one case, in the canonical case-id order declared in "
         f"[`{bucket_doc}`]({bucket_doc}). Rows follow the skill's strict column contract. This file is generated — hand edits are overwritten.",
@@ -491,7 +491,7 @@ def cross_placeholder(row: dict[str, str]) -> str:
 
 ## Notes
 
-- This page is a generated implemented stub. The run id is declared in [`../../DV_CROSS.md`](../../DV_CROSS.md) and indexed from [`README.md`](README.md).
+- This page is a generated implemented stub. The run id is declared in [`../../../doc/DV_CROSS.md`](../../../doc/DV_CROSS.md) and indexed from [`README.md`](README.md).
 - Replace pending fields with promoted evidence through the generator input, not by hand.
 """
 
@@ -584,7 +584,7 @@ def render_cross_evidence(tb: Path, row: dict[str, str], evidence: dict[str, obj
 def txn_growth_placeholder(row: dict[str, str]) -> str:
     case_id = row["case_id"]
     scenario = row["scenario"]
-    return f"""# `REPORT/txn_growth/{case_id}.md` — checkpoint coverage curve
+    return f"""# `report/signoff/txn_growth/{case_id}.md` — checkpoint coverage curve
 
 {GEN_MARK}
 
@@ -608,7 +608,7 @@ def txn_growth_placeholder(row: dict[str, str]) -> str:
 ## Notes
 
 - Implemented stub emitted because the checkpoint UCDB hook is not yet promoted for this random/soak case.
-- See [`README.md`](README.md) and [`../../DV_PROF.md`](../../DV_PROF.md) for the planned cadence and intended saturation analysis.
+- See [`README.md`](README.md) and [`../../../doc/DV_PROF.md`](../../../doc/DV_PROF.md) for the planned cadence and intended saturation analysis.
 """
 
 
@@ -688,7 +688,7 @@ def health_rows(data: dict) -> list[tuple[str, str, str]]:
             ("seam_formal", "`ip-formal-boundary` seam scaffold passes"),
             (
                 "implemented_catalog_cases",
-                f"all `{impl.get('implemented_case_pages', 0)}` case pages and `{impl.get('implemented_cross_pages', 0)}` cross pages are present under `REPORT/`",
+                f"all `{impl.get('implemented_case_pages', 0)}` case pages and `{impl.get('implemented_cross_pages', 0)}` cross pages are present under `report/signoff/`",
             ),
             (
                 "implemented_cross_runs",
@@ -818,8 +818,8 @@ def signoff_run_rows(data: dict) -> list[dict[str, str]]:
 
 def signoff_run_link(row: dict[str, str]) -> str:
     if row.get("run_id", "").startswith("CROSS-"):
-        return f"REPORT/cross/{row['run_id']}.md"
-    return "cases/basic/uvm/report/longrun/summary.json"
+        return f"../report/signoff/cross/{row['run_id']}.md"
+    return "../cases/basic/uvm/report/longrun/summary.json"
 
 
 def render_dashboard(data: dict) -> str:
@@ -838,7 +838,7 @@ def render_dashboard(data: dict) -> str:
         f"**Date:** `{data.get('date', 'unknown')}`",
         f"**Branch:** `{data.get('branch', 'unknown')}`",
         "",
-        "This page is the chief-architect dashboard. All per-case evidence lives under [`REPORT/`](REPORT/README.md).",
+        "This page is the chief-architect dashboard. All per-case evidence lives under [`report/signoff/`](../report/signoff/README.md).",
         "",
         "## Legend",
         "",
@@ -877,7 +877,7 @@ def render_dashboard(data: dict) -> str:
     ]
     for row in bucket_summary_rows(data):
         lines.append(
-            f"| {row['status']} | [`{row['bucket']}`](REPORT/buckets/{row['bucket']}.md) | "
+            f"| {row['status']} | [`{row['bucket']}`](../report/signoff/buckets/{row['bucket']}.md) | "
             f"{row['planned']} | {row['promoted']} | {row['evidenced']} | {row['backlog']} | "
             f"{row['merged']} | {row['functional']} |"
         )
@@ -931,14 +931,15 @@ def render_dashboard(data: dict) -> str:
         "",
         "## Index",
         "",
-        "- [`REPORT/README.md`](REPORT/README.md) — reviewer entry point",
-        "- [`REPORT/buckets/`](REPORT/buckets/) — ordered-merge trace per bucket",
-        "- [`REPORT/cases/`](REPORT/cases/) — one page per case",
-        "- [`REPORT/cross/`](REPORT/cross/) — one page per signoff run",
+        "- [`report/README.md`](../report/README.md) — evidence root entry point",
+        "- [`report/signoff/README.md`](../report/signoff/README.md) — reviewer signoff entry point",
+        "- [`report/signoff/buckets/`](../report/signoff/buckets/) — ordered-merge trace per bucket",
+        "- [`report/signoff/cases/`](../report/signoff/cases/) — one page per case",
+        "- [`report/signoff/cross/`](../report/signoff/cross/) — one page per signoff run",
         "- [`DV_COV.md`](DV_COV.md) — coverage totals, per-harness merges, and baseline scope",
         "- [`DV_REPORT.json`](DV_REPORT.json) — machine-readable source of truth",
         "- [`BUG_HISTORY.md`](BUG_HISTORY.md) — live bug ledger",
-        "- [`doc/SIGNOFF.md`](doc/SIGNOFF.md) — integrated signoff dashboard",
+        "- [`SIGNOFF.md`](SIGNOFF.md) — integrated signoff dashboard",
         "",
         "_This dashboard is generated by `python3 tb_int/scripts/dv_report_gen.py --tb tb_int`. Edits are overwritten; fix the JSON or the generator instead._",
     ]
@@ -954,7 +955,7 @@ def render_cov_summary(data: dict) -> str:
     lines = [
         "# DV Coverage Summary — `tb_int` MuSiP SWB/OPQ integration",
         "",
-        "Chief-architect-facing dashboard only. Per-case incremental coverage rows live under [`REPORT/cases/`](REPORT/cases/); per-bucket ordered-merge traces live under [`REPORT/buckets/`](REPORT/buckets/); continuous-frame signoff runs live under [`REPORT/cross/`](REPORT/cross/).",
+        "Chief-architect-facing dashboard only. Per-case incremental coverage rows live under [`report/signoff/cases/`](../report/signoff/cases/); per-bucket ordered-merge traces live under [`report/signoff/buckets/`](../report/signoff/buckets/); continuous-frame signoff runs live under [`report/signoff/cross/`](../report/signoff/cross/).",
         "",
         "## Legend",
         "",
@@ -996,7 +997,7 @@ def render_cov_summary(data: dict) -> str:
         lines.append(
             f"| {row['status']} | [{bucket}]({bucket_short(str(bucket)) and f'DV_{bucket}.md'}) | "
             f"{row['planned']} | {row['promoted']} | {row['evidenced']} | {row['merged']} | "
-            f"[`REPORT/buckets/{bucket}.md`](REPORT/buckets/{bucket}.md) |"
+            f"[`report/signoff/buckets/{bucket}.md`](../report/signoff/buckets/{bucket}.md) |"
         )
 
     lines += [
@@ -1005,13 +1006,13 @@ def render_cov_summary(data: dict) -> str:
         "",
         "| mode | build | case_ordering | merged_total | trace |",
         "|---|---|---|---|---|",
-        "| isolated | `make ip-uvm-basic`, `make ip-plain-basic`, `make ip-plain-basic-2env` per case | one fresh DUT start per case | measured via merged harness UCDBs | [`REPORT/cases/`](REPORT/cases/) |",
+        "| isolated | `make ip-uvm-basic`, `make ip-plain-basic`, `make ip-plain-basic-2env` per case | one fresh DUT start per case | measured via merged harness UCDBs | [`report/signoff/cases/`](../report/signoff/cases/) |",
     ]
     for row in signoff_run_rows(data):
         if row["run_id"] == "ip-uvm-longrun":
             continue
         lines.append(
-            f"| {row['kind']} | {row['build']} | {row['seq']} | {row.get('merged_total', 'pending')} | [`REPORT/cross/{row['run_id']}.md`](REPORT/cross/{row['run_id']}.md) |"
+            f"| {row['kind']} | {row['build']} | {row['seq']} | {row.get('merged_total', 'pending')} | [`report/signoff/cross/{row['run_id']}.md`](../report/signoff/cross/{row['run_id']}.md) |"
         )
 
     lines += [
@@ -1092,7 +1093,8 @@ def main() -> int:
         print(f"error: tb directory not found: {tb}", file=sys.stderr)
         return 2
 
-    data = load_json(tb / "DV_REPORT.json")
+    doc = tb / "doc"
+    data = load_json(doc / "DV_REPORT.json")
     promoted_case_evidence = data.get("promoted_case_evidence", {})
     if not isinstance(promoted_case_evidence, dict):
         promoted_case_evidence = {}
@@ -1102,11 +1104,11 @@ def main() -> int:
 
     if BUG_HISTORY_FORMAT_LINTER.is_file():
         run_linter(
-            ["python3", str(BUG_HISTORY_FORMAT_LINTER), str(tb / "BUG_HISTORY.md"), "--quiet"],
+            ["python3", str(BUG_HISTORY_FORMAT_LINTER), str(doc / "BUG_HISTORY.md"), "--quiet"],
             "error: BUG_HISTORY.md does not match the packet_scheduler canonical section/index format",
         )
 
-    report = tb / "REPORT"
+    report = tb / "report" / "signoff"
     (report / "cases").mkdir(parents=True, exist_ok=True)
     (report / "buckets").mkdir(parents=True, exist_ok=True)
     (report / "cross").mkdir(parents=True, exist_ok=True)
@@ -1115,11 +1117,11 @@ def main() -> int:
     case_rows: list[dict[str, str]] = []
     bucket_rows: OrderedDict[str, list[dict[str, str]]] = OrderedDict()
     for bucket, filename in CASE_DOCS.items():
-        rows = parse_case_catalog(tb / filename, bucket)
+        rows = parse_case_catalog(doc / filename, bucket)
         bucket_rows[bucket] = rows
         case_rows.extend(rows)
 
-    cross_rows = parse_cross_catalog(tb / "DV_CROSS.md")
+    cross_rows = parse_cross_catalog(doc / "DV_CROSS.md")
 
     created_cases = 0
     preserved_cases = 0
@@ -1178,11 +1180,11 @@ def main() -> int:
         created_growth += 1
 
     if data:
-        write_text(tb / "DV_REPORT.md", render_dashboard(data))
-        write_text(tb / "DV_COV.md", render_cov_summary(data))
+        write_text(doc / "DV_REPORT.md", render_dashboard(data))
+        write_text(doc / "DV_COV.md", render_cov_summary(data))
         if DV_REPORT_FORMAT_LINTER.is_file():
             run_linter(
-                ["python3", str(DV_REPORT_FORMAT_LINTER), str(tb / "DV_REPORT.md"), "--quiet"],
+                ["python3", str(DV_REPORT_FORMAT_LINTER), str(doc / "DV_REPORT.md"), "--quiet"],
                 "error: DV_REPORT.md does not match the packet_scheduler canonical dashboard format",
             )
 

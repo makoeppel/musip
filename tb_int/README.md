@@ -4,25 +4,29 @@ Integrated testbench workspace for the MuSiP SWB/OPQ bring-up. Four harnesses sh
 
 ## Structure
 
-- [`cases/`](cases/) — case inventory; current contents are the `basic/` bucket.
+- [`cases/`](cases/) — case inventory bucketed as `basic/`, `edge/`, `prof/`, `error/`, and `cross/`.
 - [`cases/basic/ref/`](cases/basic/ref/) — simulatorless replay generator (Python). Owns the shared replay bundle.
 - [`cases/basic/plain/`](cases/basic/plain/) — plain mixed-language VHDL replay bench around `swb_block_uvm_wrapper`.
 - [`cases/basic/plain_2env/`](cases/basic/plain_2env/) — split 2-env DPI seam harness. Promoted OPQ boundary audit owner.
 - [`cases/basic/plain_2env/formal/`](cases/basic/plain_2env/formal/) — OPQ-seam packet-contract formal scaffold.
 - [`cases/basic/uvm/`](cases/basic/uvm/) — mixed-language UVM harness around the full `swb_block`.
-- [`DV_INT_PLAN.md`](DV_INT_PLAN.md) — promoted integration plan: purpose, topology, locked decisions, stage contract, test list, phasing, non-goals.
-- [`DV_INT_HARNESS.md`](DV_INT_HARNESS.md) — harness-side companion: clock/reset, RTL skeleton, replay bundle format, stage taps, compile / elaboration order.
-- [`DV_REPORT.md`](DV_REPORT.md) — current integration dashboard (health + validation matrix + promoted evidence).
-- [`DV_REPORT.json`](DV_REPORT.json) — machine-readable source of truth.
-- [`DV_COV.md`](DV_COV.md) — coverage summary, merged totals, and continuous-frame baseline evidence.
-- [`BUG_HISTORY.md`](BUG_HISTORY.md) — live bug ledger for this branch.
+- [`doc/DV_INT_PLAN.md`](doc/DV_INT_PLAN.md) — promoted integration plan: purpose, topology, locked decisions, stage contract, test list, phasing, non-goals.
+- [`doc/DV_INT_HARNESS.md`](doc/DV_INT_HARNESS.md) — harness-side companion: clock/reset, RTL skeleton, replay bundle format, stage taps, compile / elaboration order.
+- [`doc/DV_REPORT.md`](doc/DV_REPORT.md) — current integration dashboard (health + validation matrix + promoted evidence).
+- [`doc/DV_REPORT.json`](doc/DV_REPORT.json) — machine-readable source of truth.
+- [`doc/DV_COV.md`](doc/DV_COV.md) — coverage summary, merged totals, and continuous-frame baseline evidence.
+- [`doc/BUG_HISTORY.md`](doc/BUG_HISTORY.md) — live bug ledger for this branch.
+- [`report/`](report/) — checked-in signoff evidence, waveform bundles, and server helper scripts.
+- [`report/signoff/DV_SIGNOFF.md`](report/signoff/DV_SIGNOFF.md) — functional coverage / missing-case dashboard for this base signoff.
+- [`report/wave/`](report/wave/) — static packet analyzer and waveform evidence bundles.
 
 ## Reading order
 
-1. [`DV_INT_PLAN.md`](DV_INT_PLAN.md) — what the workspace is for and which decisions are locked.
-2. [`DV_INT_HARNESS.md`](DV_INT_HARNESS.md) — how each harness is wired and what to compile in what order.
-3. [`DV_REPORT.md`](DV_REPORT.md) — current musip-local status, promoted evidence, and randomized-screen results.
-4. [`BUG_HISTORY.md`](BUG_HISTORY.md) — how the failing issues were closed and which follow-on items still remain.
+1. [`doc/DV_INT_PLAN.md`](doc/DV_INT_PLAN.md) — what the workspace is for and which decisions are locked.
+2. [`doc/DV_INT_HARNESS.md`](doc/DV_INT_HARNESS.md) — how each harness is wired and what to compile in what order.
+3. [`doc/DV_REPORT.md`](doc/DV_REPORT.md) — current musip-local status, promoted evidence, and randomized-screen results.
+4. [`report/signoff/DV_SIGNOFF.md`](report/signoff/DV_SIGNOFF.md) — implemented and missing functional coverage by bucket.
+5. [`doc/BUG_HISTORY.md`](doc/BUG_HISTORY.md) — how the failing issues were closed and which follow-on items still remain.
 
 ## Quick start
 
@@ -40,13 +44,14 @@ Ordered so every step reuses artifacts from earlier steps:
 10. `make ip-uvm-longrun` — default 128-run randomized per-lane `0.0..0.5` saturation screen.
 11. `make ip-cross-baselines` — promoted CROSS-001..005 continuous-frame baselines.
 12. `CLOSURE_RESUME=1 make ip-cov-closure` — promoted UCDB closure bundle and dashboard refresh.
+13. `tb_int/report/script/start_wave_server.sh 8789` — serve checked-in waveform/analyzer evidence from `tb_int/report/wave`.
 
 ## Make targets
 
 | Target | Purpose |
 |--------|---------|
 | `make ip-init` | initialize submodules and regenerate the musip-local authentic Qsys OPQ wrapper |
-| `make ip-sync-opq` | regenerate the musip-local authentic Qsys OPQ wrapper only |
+| `make ip-sync-opq` | materialize the musip-local authentic Qsys OPQ wrapper from local Qsys packaging |
 | `make ip-svd` | regenerate the OPQ memory-map SVD under `build/ip/` |
 | `make ip-check-license` | check that the ETH Siemens/Mentor features are reachable |
 | `make ip-lint-rtl` | strict-check maintained bridge/wrapper RTL; hygiene-check legacy or imported RTL |
@@ -74,8 +79,8 @@ Ordered so every step reuses artifacts from earlier steps:
 - `plain_2env/` smoke and full replay now feed both the OPQ boundary scoreboard and the downstream DMA hit checker from the same ingress replay, so the split harness closes on the same per-hit DMA contract as the integrated path.
 - The UVM harness now supports per-hit ingress, OPQ, and DMA ledgers via `+SWB_HIT_TRACE_PREFIX=<abs-prefix>`.
 - The promoted randomized screen remains `make ip-uvm-longrun`; the current signoff owner is the regenerated authentic Qsys wrapper under `firmware/a10_board/a10/merger/qsys/opq_upstream_4lane_native_sv/`.
-- Coverage closure is green in `DV_COV.md` with merged totals `stmt=80.56`, `branch=75.95`, `cond=47.58`, `expr=57.81`, `fsm_state=90.09`, `fsm_trans=53.29`, `toggle=35.11`, and `functional=100.00`.
+- Coverage closure is green in `doc/DV_COV.md` with merged totals `stmt=80.56`, `branch=75.95`, `cond=47.58`, `expr=57.81`, `fsm_state=90.09`, `fsm_trans=53.29`, `toggle=35.11`, and `functional=100.00`.
 - CROSS-001..005 are the promoted continuous-frame baselines; CROSS-005 carries the 22-segment all-buckets frame.
 - The upstream OPQ owner is now checked in as the `external/mu3e-ip-cores` submodule; musip-local packaging and replay flows should resolve through that submodule by default.
 - External upstream `signoff_4lane` alignment is tracked as an audit note only. It is not a blocker for musip-local signoff in this repo.
-- See [`DV_REPORT.md`](DV_REPORT.md) for the current validation matrix and [`BUG_HISTORY.md`](BUG_HISTORY.md) for the open bug ledger.
+- See [`doc/DV_REPORT.md`](doc/DV_REPORT.md) for the current validation matrix, [`report/signoff/DV_SIGNOFF.md`](report/signoff/DV_SIGNOFF.md) for implemented/missing functional coverage, and [`doc/BUG_HISTORY.md`](doc/BUG_HISTORY.md) for the open bug ledger.

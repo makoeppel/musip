@@ -88,8 +88,10 @@ Current validation status on April 24, 2026:
 - the real integrated OPQ merge path is the promoted default in this repo; the former direct-path bypass workaround is retired,
 - the promoted randomized screen is the default `make ip-uvm-longrun` 128-case per-lane `0.0..0.5` saturation wrapper, and the current stronger evidence set also includes a clean 256-case rerun in `tb_int/cases/basic/uvm/report/longrun_ext_260422_fixed/summary.json`,
 - `make ip-cross-baselines` promotes CROSS-001..005 continuous-frame evidence, including the 22-segment all-buckets frame,
-- `CLOSURE_RESUME=1 make ip-cov-closure` closes the merged coverage targets reported in `tb_int/DV_COV.md`,
+- `CLOSURE_RESUME=1 make ip-cov-closure` closes the merged coverage targets reported in `tb_int/doc/DV_COV.md`,
 - Intel FE/FSE `vsim` remains unsupported for this flow; all simulation evidence in `tb_int/` is from the full Questa install above.
+
+The integrated DV workspace is documented from [`tb_int/README.md`](tb_int/README.md). Planning and dashboards live under [`tb_int/doc/`](tb_int/doc/), signoff evidence under [`tb_int/report/signoff/`](tb_int/report/signoff/), and checked-in analyzer wave bundles under [`tb_int/report/wave/`](tb_int/report/wave/).
 
 ### Upstream Mu3e IP Signoff Index
 

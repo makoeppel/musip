@@ -130,7 +130,7 @@ def main() -> int:
     parser.add_argument("--case-id", default="X125")
     parser.add_argument("--replay-source-dir", type=Path, default=Path("tb_int/cases/basic/ref/out"))
     parser.add_argument("--frame-count", type=int, default=3)
-    parser.add_argument("--out-root", type=Path, default=Path("tb_int/wave_reports"))
+    parser.add_argument("--out-root", type=Path, default=Path("tb_int/report/wave"))
     args = parser.parse_args()
 
     root = repo_root()

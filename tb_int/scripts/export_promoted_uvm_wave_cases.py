@@ -137,7 +137,7 @@ def discover_cases(case_dir: Path) -> list[tuple[str, dict[str, str], str]]:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Regenerate promoted UVM wave bundles from REPORT/cases/*.md")
+    parser = argparse.ArgumentParser(description="Regenerate promoted UVM wave bundles from report/signoff/cases/*.md")
     parser.add_argument(
         "--cases",
         nargs="*",
@@ -152,7 +152,7 @@ def main() -> int:
     args = parser.parse_args()
 
     root = repo_root()
-    case_dir = root / "tb_int/REPORT/cases"
+    case_dir = root / "tb_int/report/signoff/cases"
     discovered = discover_cases(case_dir)
     selected = set(case.upper() for case in args.cases) if args.cases else None
 

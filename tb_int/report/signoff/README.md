@@ -1,0 +1,83 @@
+# `tb_int/report/signoff/` — reviewer entry point
+
+This is the generated evidence tree for the `tb_int` MuSiP SWB/OPQ integration DV per `~/.codex/skills/dv-workflow/SKILL.md` §Report Layout. The top-level dashboards in [`../../doc/DV_REPORT.md`](../../doc/DV_REPORT.md) and [`../../doc/DV_COV.md`](../../doc/DV_COV.md) roll up to the chief architect. Everything per-case, per-bucket, per-cross, and per-random-soak lives here.
+
+> **Audience:** chief architect reviewing musip DV sign-off. You should not need to open RTL, UVM sources, or the generator to interpret any column name on a page under this tree. Every table is preceded by an HTML column legend.
+
+## Navigation
+
+| entry | purpose |
+|---|---|
+| [`buckets/BASIC.md`](buckets/BASIC.md) | ordered-merge trace for directed standard-traffic cases (`B001..B129`) |
+| [`buckets/EDGE.md`](buckets/EDGE.md)   | ordered-merge trace for boundary / corner cases (`E001..E129`) |
+| [`buckets/PROF.md`](buckets/PROF.md)   | ordered-merge trace for random / profile / soak cases (`P001..P129`) |
+| [`buckets/ERROR.md`](buckets/ERROR.md) | ordered-merge trace for fault / illegal / recovery cases (`X001..X129`) |
+| [`cases/TEMPLATE.md`](cases/TEMPLATE.md) | canonical per-case evidence schema (one `<case_id>.md` per case) |
+| [`cross/README.md`](cross/README.md)     | continuous-frame signoff runs (`CROSS-001..CROSS-129`) including `bucket_frame` and `all_buckets_frame` baselines |
+| [`txn_growth/README.md`](txn_growth/README.md) | checkpoint-UCDB coverage curves for random long-runs (pending emitter) |
+
+## Case catalog pointers
+
+| bucket | planning file | range | catalog size |
+|---|---|---|---:|
+| BASIC | [`../../doc/DV_BASIC.md`](../../doc/DV_BASIC.md) | `B001..B129` | 129 |
+| EDGE  | [`../../doc/DV_EDGE.md`](../../doc/DV_EDGE.md)   | `E001..E129` | 129 |
+| PROF  | [`../../doc/DV_PROF.md`](../../doc/DV_PROF.md)   | `P001..P129` | 129 |
+| ERROR | [`../../doc/DV_ERROR.md`](../../doc/DV_ERROR.md) | `X001..X129` | 129 |
+| CROSS | [`../../doc/DV_CROSS.md`](../../doc/DV_CROSS.md) | `CROSS-001..CROSS-129` | 129 |
+
+The canonical stimulus field map for every case is declared once in [`../../doc/DV_BASIC.md`](../../doc/DV_BASIC.md#stimulus-field-map-per-frame-per-lane) and is derived from the upstream [`../../../external/mu3e-ip-cores/feb_frame_assembly/`](../../../external/mu3e-ip-cores/feb_frame_assembly/) source folder plus Mu3eSpecBook §5.2.6.
+
+## Status emoji legend
+
+<!-- Fixed five-symbol palette from dv-workflow skill §Status Emoji Convention.
+     One emoji per row, always leftmost. No new symbols may be invented. -->
+
+| emoji | meaning |
+|:---:|---|
+| ✅ | passing / closed / at-or-above target |
+| ⚠️  | partial / below target / known-limited |
+| ❌ | failed / regression / missing required evidence |
+| ❓ | pending / not-yet-available |
+| ℹ️  | informational footnote |
+
+## Current posture
+
+<!-- columns:
+  area     = dimension of the report tree
+  state    = emoji snapshot
+  note     = one-sentence evidence or gap summary
+-->
+
+| area | state | note |
+|---|:---:|---|
+| per-case pages under `cases/`           | ⚠️ | all 516 case pages are now rendered; promoted executed evidence exists for `B046`, `E025`, `E026`, `E027`, and `P040`, while the remaining pages are explicit pending placeholders |
+| per-bucket ordered-merge traces         | ⚠️ | skeleton rows remain for coverage, but promoted spot-check rows are now linked to real case pages |
+| continuous-frame cross signoff (`cross/`) | ❓ | all `CROSS-001..129` pages are rendered as placeholders; promoted UCDB/log evidence is still pending for the continuous-frame runs |
+| random-soak txn_growth curves           | ❓ | all `P001..P129` txn-growth pages are rendered as placeholders; the UVM checkpoint emitter is still not wired |
+| integration toolchain pass/fail gates   | ✅ | see [`../../doc/DV_REPORT.md`](../../doc/DV_REPORT.md#health) and [`../../doc/DV_REPORT.json`](../../doc/DV_REPORT.json) `summary` |
+| bug ledger                              | ℹ️  | live at [`../../doc/BUG_HISTORY.md`](../../doc/BUG_HISTORY.md) (`BUG-001-H..BUG-010-R`) |
+
+## Generator
+
+This tree is produced by:
+
+```bash
+python3 tb_int/scripts/dv_report_gen.py --tb tb_int
+```
+
+- reads the current `DV_*.md` planning docs as the scenario source and preserves existing evidence-backed case pages
+- overwrites previously generated placeholder pages idempotently
+- never touches `DV_*.md` plan files, RTL, or UVM source
+- exits non-zero if the JSON is missing, malformed, or inconsistent with the planned bucket ranges
+
+Hand edits under this tree are overwritten on the next run — fix the generator or the JSON, not the output.
+
+## Links out
+
+- [`../../doc/DV_REPORT.md`](../../doc/DV_REPORT.md) — top-level dashboard
+- [`../../doc/DV_COV.md`](../../doc/DV_COV.md) — coverage dashboard and per-harness merged totals
+- [`../../doc/DV_REPORT.json`](../../doc/DV_REPORT.json) — machine-readable source
+- [`../../doc/BUG_HISTORY.md`](../../doc/BUG_HISTORY.md) — bug ledger
+- [`../../doc/DV_INT_PLAN.md`](../../doc/DV_INT_PLAN.md) — locked DV plan and signoff boundary
+- [`../../doc/DV_INT_HARNESS.md`](../../doc/DV_INT_HARNESS.md) — harness topology, monitors, plusargs

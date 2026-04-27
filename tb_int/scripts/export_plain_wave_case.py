@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Export a replay-backed plain-harness waveform bundle under tb_int/wave_reports."""
+"""Export a replay-backed plain-harness waveform bundle under tb_int/report/wave."""
 
 from __future__ import annotations
 
@@ -94,7 +94,7 @@ def write_bundle_readme(
     svd_rel: str | None,
     serve_script: Path,
 ) -> None:
-    serve_cmd = f"python3 {serve_script} --dir tb_int/wave_reports/{bucket}/{case_id}/packet_analyzer --port 8765"
+    serve_cmd = f"python3 {serve_script} --dir tb_int/report/wave/{bucket}/{case_id}/packet_analyzer --port 8765"
     path.write_text(
         "\n".join(
             [
@@ -138,7 +138,7 @@ def main() -> int:
     parser.add_argument("--sim-args", default="", help="Optional raw SIM_ARGS string passed through to make")
     parser.add_argument("--frame-start", type=int, default=0)
     parser.add_argument("--frame-count", type=int, default=3)
-    parser.add_argument("--out-root", type=Path, default=Path("tb_int/wave_reports"))
+    parser.add_argument("--out-root", type=Path, default=Path("tb_int/report/wave"))
     parser.add_argument("--svd", type=Path, default=Path("build/ip/opq_monolithic_4lane_merge.svd"))
     args = parser.parse_args()
 
