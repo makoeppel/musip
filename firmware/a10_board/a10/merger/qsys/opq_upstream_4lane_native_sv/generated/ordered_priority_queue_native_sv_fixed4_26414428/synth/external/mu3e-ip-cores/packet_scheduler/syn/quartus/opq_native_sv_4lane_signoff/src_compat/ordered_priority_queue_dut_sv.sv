@@ -1,10 +1,10 @@
 //------------------------------------------------------------------------------
 // ordered_priority_queue_dut_sv
 // Author  : Yifeng Wang (original OPQ) / native SV staging by Codex
-// Version : 26.4.13-syn
+// Version : 26.4.14-syn
 // Date    : 20260428
-// Change  : Align fixed4 synthesis wrapper CSR META identity to the 26.4.13
-//           MuSiP timing-closure source package.
+// Change  : Register OPQ drop-counter deltas before saturating CSR updates to
+//           remove the lane-mask decode path from the 250 MHz counter adder.
 //------------------------------------------------------------------------------
 
 `ifndef OPQ_N_SHD
@@ -28,7 +28,15 @@
 `endif
 
 module ordered_priority_queue_dut_sv #(
-  parameter int unsigned N_HIT = `OPQ_N_HIT
+  parameter int unsigned N_HIT = `OPQ_N_HIT,
+  parameter int unsigned IP_UID = 32'h4F50_514D,
+  parameter int unsigned VERSION_MAJOR = 26,
+  parameter int unsigned VERSION_MINOR = 4,
+  parameter int unsigned VERSION_PATCH = 14,
+  parameter int unsigned BUILD = 428,
+  parameter int unsigned VERSION_DATE = 20260428,
+  parameter int unsigned VERSION_GIT = 32'h7301_5F57,
+  parameter int unsigned INSTANCE_ID = 0
 ) (
   input  logic [35:0] asi_ingress_0_data,
   input  logic [0:0]  asi_ingress_0_valid,
@@ -130,14 +138,14 @@ module ordered_priority_queue_dut_sv #(
   localparam logic [3:0] CSR_LANE_WORD_DRR_GRANT_CNT_CONST = 4'hD;
   localparam logic [3:0] CSR_LANE_WORD_DRR_BEAT_CNT_CONST = 4'hE;
   localparam logic [3:0] CSR_LANE_WORD_DRR_DEFER_CNT_CONST = 4'hF;
-  localparam logic [31:0] UID_CONST = 32'h4F50_514D;
-  localparam int unsigned VERSION_MAJOR_CONST = 26;
-  localparam int unsigned VERSION_MINOR_CONST = 4;
-  localparam int unsigned VERSION_PATCH_CONST = 13;
-  localparam int unsigned VERSION_BUILD_CONST = 428;
-  localparam logic [31:0] VERSION_DATE_CONST = 32'd20260428;
-  localparam logic [31:0] VERSION_GIT_CONST = 32'h7301_5F57;
-  localparam logic [31:0] INSTANCE_ID_CONST = 32'd0;
+  localparam logic [31:0] UID_CONST = IP_UID;
+  localparam int unsigned VERSION_MAJOR_CONST = VERSION_MAJOR;
+  localparam int unsigned VERSION_MINOR_CONST = VERSION_MINOR;
+  localparam int unsigned VERSION_PATCH_CONST = VERSION_PATCH;
+  localparam int unsigned VERSION_BUILD_CONST = BUILD;
+  localparam logic [31:0] VERSION_DATE_CONST = VERSION_DATE;
+  localparam logic [31:0] VERSION_GIT_CONST = VERSION_GIT;
+  localparam logic [31:0] INSTANCE_ID_CONST = INSTANCE_ID;
   localparam logic [9:0] DRR_DEFAULT_ALLOWANCE_CONST = 10'd256;
 
   logic [3:0][35:0] asi_ingress_data_bus;
@@ -161,6 +169,9 @@ module ordered_priority_queue_dut_sv #(
   logic [OPQ_N_LANE_LOCAL-1:0][31:0] csr_drop_hdr_cnt;
   logic [OPQ_N_LANE_LOCAL-1:0][31:0] csr_drop_shd_cnt;
   logic [OPQ_N_LANE_LOCAL-1:0][31:0] csr_drop_hit_cnt;
+  logic [OPQ_N_LANE_LOCAL-1:0][31:0] csr_drop_hdr_delta_q;
+  logic [OPQ_N_LANE_LOCAL-1:0][31:0] csr_drop_shd_delta_q;
+  logic [OPQ_N_LANE_LOCAL-1:0][31:0] csr_drop_hit_delta_q;
   logic [OPQ_N_LANE_LOCAL-1:0][31:0] csr_drr_grant_cnt;
   logic [OPQ_N_LANE_LOCAL-1:0][31:0] csr_drr_beat_cnt;
   logic [OPQ_N_LANE_LOCAL-1:0][31:0] csr_drr_defer_cnt;
@@ -501,6 +512,9 @@ module ordered_priority_queue_dut_sv #(
       csr_drop_hdr_cnt <= '0;
       csr_drop_shd_cnt <= '0;
       csr_drop_hit_cnt <= '0;
+      csr_drop_hdr_delta_q <= '0;
+      csr_drop_shd_delta_q <= '0;
+      csr_drop_hit_delta_q <= '0;
       csr_drr_grant_cnt <= '0;
       csr_drr_beat_cnt <= '0;
       csr_drr_defer_cnt <= '0;
@@ -560,6 +574,9 @@ module ordered_priority_queue_dut_sv #(
         csr_drop_hdr_cnt <= '0;
         csr_drop_shd_cnt <= '0;
         csr_drop_hit_cnt <= '0;
+        csr_drop_hdr_delta_q <= '0;
+        csr_drop_shd_delta_q <= '0;
+        csr_drop_hit_delta_q <= '0;
         csr_drr_grant_cnt <= '0;
         csr_drr_beat_cnt <= '0;
         csr_drr_defer_cnt <= '0;
@@ -584,6 +601,16 @@ module ordered_priority_queue_dut_sv #(
           drop_hdr_delta_v = '0;
           drop_shd_delta_v = '0;
           drop_hit_delta_v = '0;
+
+          if (csr_drop_hdr_delta_q[lane] != '0) begin
+            csr_drop_hdr_cnt[lane] <= sat_add32(csr_drop_hdr_cnt[lane], csr_drop_hdr_delta_q[lane]);
+          end
+          if (csr_drop_shd_delta_q[lane] != '0) begin
+            csr_drop_shd_cnt[lane] <= sat_add32(csr_drop_shd_cnt[lane], csr_drop_shd_delta_q[lane]);
+          end
+          if (csr_drop_hit_delta_q[lane] != '0) begin
+            csr_drop_hit_cnt[lane] <= sat_add32(csr_drop_hit_cnt[lane], csr_drop_hit_delta_q[lane]);
+          end
 
           if (asi_ingress_valid_bus[lane]) begin
             if (asi_ingress_startofpacket_bus[lane] &&
@@ -626,15 +653,9 @@ module ordered_priority_queue_dut_sv #(
               {{(32-MAX_PKT_LENGTH_BITS_CONST){1'b0}}, native_handle_block_len_dbg[lane]};
           end
 
-          if (drop_hdr_delta_v != '0) begin
-            csr_drop_hdr_cnt[lane] <= sat_add32(csr_drop_hdr_cnt[lane], drop_hdr_delta_v);
-          end
-          if (drop_shd_delta_v != '0) begin
-            csr_drop_shd_cnt[lane] <= sat_add32(csr_drop_shd_cnt[lane], drop_shd_delta_v);
-          end
-          if (drop_hit_delta_v != '0) begin
-            csr_drop_hit_cnt[lane] <= sat_add32(csr_drop_hit_cnt[lane], drop_hit_delta_v);
-          end
+          csr_drop_hdr_delta_q[lane] <= drop_hdr_delta_v;
+          csr_drop_shd_delta_q[lane] <= drop_shd_delta_v;
+          csr_drop_hit_delta_q[lane] <= drop_hit_delta_v;
 
           if (native_drr_lock_event_dbg[lane]) begin
             csr_drr_grant_cnt[lane] <= sat_add32(csr_drr_grant_cnt[lane], 32'd1);

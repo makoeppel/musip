@@ -4,6 +4,16 @@ use IEEE.numeric_std.all;
 
 package opq_upstream_4lane_pkg is
 	component ordered_priority_queue_dut_sv is
+		generic (
+			IP_UID        : natural := 1330663757;
+			VERSION_MAJOR : natural := 26;
+			VERSION_MINOR : natural := 4;
+			VERSION_PATCH : natural := 14;
+			BUILD         : natural := 428;
+			VERSION_DATE  : natural := 20260428;
+			VERSION_GIT   : natural := 1332117425;
+			INSTANCE_ID   : natural := 0
+		);
 		port (
 			aso_egress_startofpacket    : out std_logic;                                        -- startofpacket
 			aso_egress_endofpacket      : out std_logic;                                        -- endofpacket

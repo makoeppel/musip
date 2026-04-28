@@ -32,4 +32,4 @@ Current local validation:
 
 - `make ip-ghdl-cross-run` passes the 22-case sequence: BASIC `B001`, `B002`, `B046..B049`; EDGE `E025..E027`; PROF `P040`, `P041`, `P123`, `P124`; ERROR `X111`, `X112`, `X116..X118`, `X120`, `X122..X124`.
 - `make ip-ghdl-cross-checkpoints` checks 13 named checkpoints and 41 signal expectations across case starts, DMA backpressure, partial-join body hold/release, error anchors, and final scoreboard state.
-- GTKWave visual inspection was performed from the generated `.gtkw` with grouped clock/reset, case delimiters, RX ingress, OPQ join/reorder, DMA egress, and scoreboard diagnostics. The captured contact sheet lives in ignored `report/` output when regenerated locally.
+- GTKWave visual inspection on April 28, 2026 opened the generated `.gtkw` and checked 10 focused points: `B001`, `B046`, `E025`, `P040` start, `P040` DMA backpressure, `P123` body hold, `P123` release, `X111`, `X118`, and `CROSS_DONE`. The groups render as clock/reset -> case delimiters -> RX ingress -> OPQ join/reorder -> DMA egress -> scoreboard diagnostics, with no ghost or missing counts and final scoreboard pass asserted.

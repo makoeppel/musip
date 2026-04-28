@@ -6,7 +6,12 @@ IP_PLAIN_DIR := tb_int/cases/basic/plain
 IP_PLAIN_2ENV_DIR := tb_int/cases/basic/plain_2env
 IP_PLAIN_2ENV_FORMAL_DIR := tb_int/cases/basic/plain_2env/formal
 IP_GHDL_CROSS_DIR := tb_int/cases/cross/ghdl
-OPQ_SVD_OUT := build/ip/opq_monolithic_4lane_merge.svd
+OPQ_QSYS_DIR := firmware/a10_board/a10/merger/qsys/opq_upstream_4lane_native_sv
+OPQ_SVD_OUT := $(OPQ_QSYS_DIR)/opq_upstream_4lane.svd
+OPQ_SOPCINFO := $(OPQ_QSYS_DIR)/opq_upstream_4lane.sopcinfo
+OPQ_CSR_LOG_DIR := build/ip
+OPQ_CSR_MASTER ?=
+SYSTEM_CONSOLE ?= /data1/intelFPGA/18.1/quartus/sopc_builder/bin/system-console
 QUESTA_HOME ?= /data1/questaone_sim/questasim
 UVM_HOME ?= $(QUESTA_HOME)/verilog_src/uvm-1.2
 ETH_LIC_SERVER ?= 8161@lic-mentor.ethz.ch
@@ -18,14 +23,18 @@ export MGLS_LICENSE_FILE ?= $(ETH_LIC_SERVER)
 export LM_LICENSE_FILE ?= $(ETH_LIC_SERVER)
 export QSIM_INI ?= $(QUESTA_HOME)/modelsim.ini
 
-.PHONY: help ip-init ip-sync-opq ip-svd ip-check-license ip-compile-basic ip-compile-basic-cov ip-compile-plain ip-compile-plain-cov ip-compile-plain-2env ip-compile-plain-2env-cov ip-uvm-basic ip-uvm-basic-cov ip-uvm-longrun ip-tlm-basic ip-tlm-basic-smoke ip-plain-basic ip-plain-basic-smoke ip-plain-basic-cov ip-plain-basic-cov-smoke ip-plain-basic-2env ip-plain-basic-2env-smoke ip-plain-basic-2env-cov ip-plain-basic-2env-cov-smoke ip-formal-boundary ip-cov-closure ip-cross-baselines ip-ghdl-cross-objects ip-ghdl-cross-run ip-ghdl-cross-gtkw ip-ghdl-cross-checkpoints ip-ghdl-cross-view ip-ghdl-cross-clean ip-e2e ip-e2e-ref ip-e2e-plain ip-e2e-plain-2env ip-clean ip-lint-rtl
+.PHONY: help ip-init ip-sync-opq ip-svd ip-csr-lint ip-opq-csr-probe ip-opq-csr-dump ip-opq-csr-monitor ip-check-license ip-compile-basic ip-compile-basic-cov ip-compile-plain ip-compile-plain-cov ip-compile-plain-2env ip-compile-plain-2env-cov ip-uvm-basic ip-uvm-basic-cov ip-uvm-longrun ip-tlm-basic ip-tlm-basic-smoke ip-plain-basic ip-plain-basic-smoke ip-plain-basic-cov ip-plain-basic-cov-smoke ip-plain-basic-2env ip-plain-basic-2env-smoke ip-plain-basic-2env-cov ip-plain-basic-2env-cov-smoke ip-formal-boundary ip-cov-closure ip-cross-baselines ip-ghdl-cross-objects ip-ghdl-cross-run ip-ghdl-cross-gtkw ip-ghdl-cross-checkpoints ip-ghdl-cross-view ip-ghdl-cross-clean ip-e2e ip-e2e-ref ip-e2e-plain ip-e2e-plain-2env ip-clean ip-lint-rtl
 
 help:
 	@printf '%s\n' \
 	  'Available targets:' \
 	  '  make ip-init          # init submodules and generate the upstream packaged OPQ Qsys wrapper for musip' \
 	  '  make ip-sync-opq      # materialize and validate the musip-local upstream OPQ Qsys wrapper' \
-	  '  make ip-svd           # generate a basic OPQ CSR SVD under build/ip/' \
+	  '  make ip-svd           # generate the OPQ CSR SVD used by JTAG CSR dump/monitor' \
+	  '  make ip-csr-lint      # lint OPQ _hw.tcl files for common UID/META CSR header compliance' \
+	  '  make ip-opq-csr-probe # probe the OPQ JTAG Avalon master service and CSR UID when hardware is live' \
+	  '  make ip-opq-csr-dump  # dump OPQ CSR registers through System Console using the generated SVD' \
+	  '  make ip-opq-csr-monitor # monitor/trigger on an OPQ CSR field and log cleanly under build/ip/' \
 	  '  make ip-check-license # verify ETH Questa features for the UVM flow' \
 	  '  make ip-compile-basic # compile the mixed-language basic UVM harness' \
 	  '  make ip-compile-basic-cov # compile the mixed-language basic UVM harness with coverage enabled' \
@@ -76,6 +85,23 @@ ip-sync-opq:
 
 ip-svd:
 	python3 tools/ip/generate_opq_svd.py --lanes 4 --output $(OPQ_SVD_OUT)
+
+ip-csr-lint:
+	/home/yifeng/.codex/skills/ip-packaging/scripts/lint_csr_header.py \
+	  external/mu3e-ip-cores/packet_scheduler/script/ordered_priority_queue_hw.tcl \
+	  $(OPQ_QSYS_DIR)/ordered_priority_queue_native_sv_fixed4_hw.tcl
+
+ip-opq-csr-probe:
+	env -u DISPLAY OPQ_CSR_CMD=probe OPQ_CSR_ARGS='--sopcinfo $(OPQ_SOPCINFO) --log $(OPQ_CSR_LOG_DIR)/opq_jtag_probe.log $(if $(OPQ_CSR_MASTER),--master $(OPQ_CSR_MASTER),)' \
+	  $(SYSTEM_CONSOLE) -cli -disable_readline -disable_timeout --script=$(abspath tools/ip/opq_jtag_csr.tcl)
+
+ip-opq-csr-dump: ip-svd
+	env -u DISPLAY OPQ_CSR_CMD=dump OPQ_CSR_ARGS='--svd $(OPQ_SVD_OUT) --base 0x0 --log $(OPQ_CSR_LOG_DIR)/opq_jtag_dump.log $(if $(OPQ_CSR_MASTER),--master $(OPQ_CSR_MASTER),)' \
+	  $(SYSTEM_CONSOLE) -cli -disable_readline -disable_timeout --script=$(abspath tools/ip/opq_jtag_csr.tcl)
+
+ip-opq-csr-monitor: ip-svd
+	env -u DISPLAY OPQ_CSR_CMD=monitor OPQ_CSR_ARGS='--svd $(OPQ_SVD_OUT) --base 0x0 --register STATUS --field MASK_EFFECTIVE --equals 1 --samples 100 --period-ms 100 --log $(OPQ_CSR_LOG_DIR)/opq_jtag_monitor.log $(if $(OPQ_CSR_MASTER),--master $(OPQ_CSR_MASTER),)' \
+	  $(SYSTEM_CONSOLE) -cli -disable_readline -disable_timeout --script=$(abspath tools/ip/opq_jtag_csr.tcl)
 
 ip-check-license:
 	tools/ip/check_questa_license.sh

@@ -50,14 +50,6 @@ begin
     e_opq_upstream_4lane : entity opq_upstream_4lane.opq_upstream_4lane
     port map (
         clk_clk                    => clk,
-        csr_address                => (others => '0'),
-        csr_read                   => '0',
-        csr_write                  => '0',
-        csr_writedata              => (others => '0'),
-        csr_readdata               => open,
-        csr_readdatavalid          => open,
-        csr_waitrequest            => open,
-        csr_burstcount             => '0',
         egress_startofpacket       => aso_egress_startofpacket,
         egress_endofpacket         => aso_egress_endofpacket,
         egress_valid               => aso_egress_valid,

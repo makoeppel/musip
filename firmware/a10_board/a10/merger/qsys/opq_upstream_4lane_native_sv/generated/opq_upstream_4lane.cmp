@@ -1,14 +1,6 @@
 	component opq_upstream_4lane is
 		port (
 			clk_clk                 : in  std_logic                     := 'X';             -- clk
-			csr_address             : in  std_logic_vector(8 downto 0)  := (others => 'X'); -- address
-			csr_read                : in  std_logic                     := 'X';             -- read
-			csr_write               : in  std_logic                     := 'X';             -- write
-			csr_writedata           : in  std_logic_vector(31 downto 0) := (others => 'X'); -- writedata
-			csr_readdata            : out std_logic_vector(31 downto 0);                    -- readdata
-			csr_readdatavalid       : out std_logic;                                        -- readdatavalid
-			csr_waitrequest         : out std_logic;                                        -- waitrequest
-			csr_burstcount          : in  std_logic                     := 'X';             -- burstcount
 			egress_startofpacket    : out std_logic;                                        -- startofpacket
 			egress_endofpacket      : out std_logic;                                        -- endofpacket
 			egress_valid            : out std_logic;                                        -- valid
