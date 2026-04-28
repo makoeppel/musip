@@ -1,7 +1,7 @@
 //------------------------------------------------------------------------------
 // ordered_priority_queue_dut_sv
 // Author  : Yifeng Wang (original OPQ) / native SV staging by Codex
-// Version : 26.4.14-syn
+// Version : 26.4.15-syn
 // Date    : 20260428
 // Change  : Register OPQ drop-counter deltas before saturating CSR updates to
 //           remove the lane-mask decode path from the 250 MHz counter adder.
@@ -32,10 +32,10 @@ module ordered_priority_queue_dut_sv #(
   parameter int unsigned IP_UID = 32'h4F50_514D,
   parameter int unsigned VERSION_MAJOR = 26,
   parameter int unsigned VERSION_MINOR = 4,
-  parameter int unsigned VERSION_PATCH = 14,
+  parameter int unsigned VERSION_PATCH = 15,
   parameter int unsigned BUILD = 428,
   parameter int unsigned VERSION_DATE = 20260428,
-  parameter int unsigned VERSION_GIT = 32'h7301_5F57,
+  parameter int unsigned VERSION_GIT = 32'h4F66_7FB1,
   parameter int unsigned INSTANCE_ID = 0
 ) (
   input  logic [35:0] asi_ingress_0_data,

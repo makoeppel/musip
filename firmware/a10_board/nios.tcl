@@ -12,4 +12,4 @@ nios_base.export_avm avm_xcvr0 18 0x70100000
 nios_base.export_avm avm_xcvr1 18 0x70200000
 nios_base.export_avm avm_sfp 14 0x70300000
 
-set_instance_parameter_value cpu impl Fast
+set_instance_parameter_value cpu impl Tiny

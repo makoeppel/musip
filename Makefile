@@ -11,6 +11,13 @@ OPQ_SVD_OUT := $(OPQ_QSYS_DIR)/opq_upstream_4lane.svd
 OPQ_SOPCINFO := $(OPQ_QSYS_DIR)/opq_upstream_4lane.sopcinfo
 OPQ_CSR_LOG_DIR := build/ip
 OPQ_CSR_MASTER ?=
+OPQ_CSR_REGISTER ?= LANE_MASK
+OPQ_CSR_FIELD ?=
+OPQ_CSR_VALUE ?= 0x0
+OPQ_CSR_DRY_RUN ?=
+OPQ_CSR_EXTRA ?=
+OPQ_LANE ?= 0
+OPQ_LANE_MASK ?= 0x0
 SYSTEM_CONSOLE ?= /data1/intelFPGA/18.1/quartus/sopc_builder/bin/system-console
 QUESTA_HOME ?= /data1/questaone_sim/questasim
 UVM_HOME ?= $(QUESTA_HOME)/verilog_src/uvm-1.2
@@ -23,7 +30,7 @@ export MGLS_LICENSE_FILE ?= $(ETH_LIC_SERVER)
 export LM_LICENSE_FILE ?= $(ETH_LIC_SERVER)
 export QSIM_INI ?= $(QUESTA_HOME)/modelsim.ini
 
-.PHONY: help ip-init ip-sync-opq ip-svd ip-csr-lint ip-opq-csr-probe ip-opq-csr-dump ip-opq-csr-monitor ip-check-license ip-compile-basic ip-compile-basic-cov ip-compile-plain ip-compile-plain-cov ip-compile-plain-2env ip-compile-plain-2env-cov ip-uvm-basic ip-uvm-basic-cov ip-uvm-longrun ip-tlm-basic ip-tlm-basic-smoke ip-plain-basic ip-plain-basic-smoke ip-plain-basic-cov ip-plain-basic-cov-smoke ip-plain-basic-2env ip-plain-basic-2env-smoke ip-plain-basic-2env-cov ip-plain-basic-2env-cov-smoke ip-formal-boundary ip-cov-closure ip-cross-baselines ip-ghdl-cross-objects ip-ghdl-cross-run ip-ghdl-cross-gtkw ip-ghdl-cross-checkpoints ip-ghdl-cross-view ip-ghdl-cross-clean ip-e2e ip-e2e-ref ip-e2e-plain ip-e2e-plain-2env ip-clean ip-lint-rtl
+.PHONY: help ip-init ip-sync-opq ip-svd ip-csr-lint ip-opq-csr-probe ip-opq-csr-dump ip-opq-csr-write ip-opq-csr-lane-mask ip-opq-csr-mask-lane ip-opq-csr-unmask-lane ip-opq-csr-monitor ip-check-license ip-compile-basic ip-compile-basic-cov ip-compile-plain ip-compile-plain-cov ip-compile-plain-2env ip-compile-plain-2env-cov ip-uvm-basic ip-uvm-basic-cov ip-uvm-longrun ip-tlm-basic ip-tlm-basic-smoke ip-plain-basic ip-plain-basic-smoke ip-plain-basic-cov ip-plain-basic-cov-smoke ip-plain-basic-2env ip-plain-basic-2env-smoke ip-plain-basic-2env-cov ip-plain-basic-2env-cov-smoke ip-formal-boundary ip-cov-closure ip-cross-baselines ip-ghdl-cross-objects ip-ghdl-cross-run ip-ghdl-cross-gtkw ip-ghdl-cross-checkpoints ip-ghdl-cross-view ip-ghdl-cross-clean ip-e2e ip-e2e-ref ip-e2e-plain ip-e2e-plain-2env ip-clean ip-lint-rtl
 
 help:
 	@printf '%s\n' \
@@ -34,6 +41,10 @@ help:
 	  '  make ip-csr-lint      # lint OPQ _hw.tcl files for common UID/META CSR header compliance' \
 	  '  make ip-opq-csr-probe # probe the OPQ JTAG Avalon master service and CSR UID when hardware is live' \
 	  '  make ip-opq-csr-dump  # dump OPQ CSR registers through System Console using the generated SVD' \
+	  '  make ip-opq-csr-write # write an OPQ CSR by SVD register/field name' \
+	  '  make ip-opq-csr-lane-mask # write the OPQ LANE_MASK CSR, e.g. OPQ_LANE_MASK=0x1' \
+	  '  make ip-opq-csr-mask-lane # set one OPQ LANE_MASK bit, e.g. OPQ_LANE=2' \
+	  '  make ip-opq-csr-unmask-lane # clear one OPQ LANE_MASK bit, e.g. OPQ_LANE=2' \
 	  '  make ip-opq-csr-monitor # monitor/trigger on an OPQ CSR field and log cleanly under build/ip/' \
 	  '  make ip-check-license # verify ETH Questa features for the UVM flow' \
 	  '  make ip-compile-basic # compile the mixed-language basic UVM harness' \
@@ -97,6 +108,22 @@ ip-opq-csr-probe:
 
 ip-opq-csr-dump: ip-svd
 	env -u DISPLAY OPQ_CSR_CMD=dump OPQ_CSR_ARGS='--svd $(OPQ_SVD_OUT) --base 0x0 --log $(OPQ_CSR_LOG_DIR)/opq_jtag_dump.log $(if $(OPQ_CSR_MASTER),--master $(OPQ_CSR_MASTER),)' \
+	  $(SYSTEM_CONSOLE) -cli -disable_readline -disable_timeout --script=$(abspath tools/ip/opq_jtag_csr.tcl)
+
+ip-opq-csr-write: ip-svd
+	env -u DISPLAY OPQ_CSR_CMD=write OPQ_CSR_ARGS='--svd $(OPQ_SVD_OUT) --base 0x0 --register $(OPQ_CSR_REGISTER) $(if $(OPQ_CSR_FIELD),--field $(OPQ_CSR_FIELD),) --value $(OPQ_CSR_VALUE) --log $(OPQ_CSR_LOG_DIR)/opq_jtag_write.log $(if $(OPQ_CSR_MASTER),--master $(OPQ_CSR_MASTER),) $(if $(OPQ_CSR_DRY_RUN),--dry-run,) $(OPQ_CSR_EXTRA)' \
+	  $(SYSTEM_CONSOLE) -cli -disable_readline -disable_timeout --script=$(abspath tools/ip/opq_jtag_csr.tcl)
+
+ip-opq-csr-lane-mask: ip-svd
+	env -u DISPLAY OPQ_CSR_CMD=write OPQ_CSR_ARGS='--svd $(OPQ_SVD_OUT) --base 0x0 --register LANE_MASK --value $(OPQ_LANE_MASK) --log $(OPQ_CSR_LOG_DIR)/opq_jtag_lane_mask.log $(if $(OPQ_CSR_MASTER),--master $(OPQ_CSR_MASTER),) $(if $(OPQ_CSR_DRY_RUN),--dry-run,) $(OPQ_CSR_EXTRA)' \
+	  $(SYSTEM_CONSOLE) -cli -disable_readline -disable_timeout --script=$(abspath tools/ip/opq_jtag_csr.tcl)
+
+ip-opq-csr-mask-lane: ip-svd
+	env -u DISPLAY OPQ_CSR_CMD=write OPQ_CSR_ARGS='--svd $(OPQ_SVD_OUT) --base 0x0 --register LANE_MASK --field MASK_LANE$(OPQ_LANE) --value 1 --log $(OPQ_CSR_LOG_DIR)/opq_jtag_mask_lane$(OPQ_LANE).log $(if $(OPQ_CSR_MASTER),--master $(OPQ_CSR_MASTER),) $(if $(OPQ_CSR_DRY_RUN),--dry-run,) $(OPQ_CSR_EXTRA)' \
+	  $(SYSTEM_CONSOLE) -cli -disable_readline -disable_timeout --script=$(abspath tools/ip/opq_jtag_csr.tcl)
+
+ip-opq-csr-unmask-lane: ip-svd
+	env -u DISPLAY OPQ_CSR_CMD=write OPQ_CSR_ARGS='--svd $(OPQ_SVD_OUT) --base 0x0 --register LANE_MASK --field MASK_LANE$(OPQ_LANE) --value 0 --log $(OPQ_CSR_LOG_DIR)/opq_jtag_unmask_lane$(OPQ_LANE).log $(if $(OPQ_CSR_MASTER),--master $(OPQ_CSR_MASTER),) $(if $(OPQ_CSR_DRY_RUN),--dry-run,) $(OPQ_CSR_EXTRA)' \
 	  $(SYSTEM_CONSOLE) -cli -disable_readline -disable_timeout --script=$(abspath tools/ip/opq_jtag_csr.tcl)
 
 ip-opq-csr-monitor: ip-svd

@@ -7,7 +7,7 @@ set_project_property HIDE_FROM_IP_CATALOG {false}
 
 add_instance clk_bridge altera_clock_bridge 18.1
 add_instance reset_bridge altera_reset_bridge 18.1
-add_instance opq_0 ordered_priority_queue_native_sv_fixed4 26.4.14.0428
+add_instance opq_0 ordered_priority_queue_native_sv_fixed4 26.4.15.0428
 add_instance csr_jtag_master altera_jtag_avalon_master 18.1
 
 set_instance_parameter_value csr_jtag_master {FAST_VER} {1}

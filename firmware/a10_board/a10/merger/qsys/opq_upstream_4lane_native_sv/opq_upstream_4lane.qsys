@@ -115,7 +115,7 @@
  <module
    name="opq_0"
    kind="ordered_priority_queue_native_sv_fixed4"
-   version="26.4.14.428"
+   version="26.4.15.428"
    enabled="1">
   <parameter name="BUILD" value="428" />
   <parameter name="INSTANCE_ID" value="0" />
@@ -124,7 +124,7 @@
   <parameter name="VERSION_GIT" value="1332117425" />
   <parameter name="VERSION_MAJOR" value="26" />
   <parameter name="VERSION_MINOR" value="4" />
-  <parameter name="VERSION_PATCH" value="14" />
+  <parameter name="VERSION_PATCH" value="15" />
  </module>
  <module
    name="reset_bridge"

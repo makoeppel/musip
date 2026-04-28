@@ -8,7 +8,7 @@ package opq_upstream_4lane_pkg is
 			IP_UID        : natural := 1330663757;
 			VERSION_MAJOR : natural := 26;
 			VERSION_MINOR : natural := 4;
-			VERSION_PATCH : natural := 14;
+			VERSION_PATCH : natural := 15;
 			BUILD         : natural := 428;
 			VERSION_DATE  : natural := 20260428;
 			VERSION_GIT   : natural := 1332117425;

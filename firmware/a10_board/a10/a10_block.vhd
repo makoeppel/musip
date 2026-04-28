@@ -433,12 +433,17 @@ begin
             i_clk               => i_clk--,
         );
 
-        e_xcvr0_rx_locked : entity work.ff_sync
-        generic map ( W => xcvr0_rx_locked'length )
-        port map (
-            i_d => l_xcvr0_rx_locked, o_q => xcvr0_rx_locked,
-            i_reset_n => pcie0_reset_n, i_clk => pcie0_clk--,
-        );
+        -- Each RX lock bit is an independent status signal; synchronize per bit
+        -- so the generic ff_sync max-skew constraint does not imply bus coherency.
+        generate_xcvr0_rx_locked_sync : for i in xcvr0_rx_locked'range generate
+        begin
+            e_xcvr0_rx_locked : entity work.ff_sync
+            generic map ( W => 1 )
+            port map (
+                i_d(0) => l_xcvr0_rx_locked(i), o_q(0) => xcvr0_rx_locked(i),
+                i_reset_n => pcie0_reset_n, i_clk => pcie0_clk--,
+            );
+        end generate;
 
         generate_mux10 : for i in g_XCVR0_N-1 downto 0 generate
             -- last channel of each xcvr is reset
@@ -579,12 +584,17 @@ begin
             i_clk               => i_clk--,
         );
 
-        e_xcvr1_rx_locked : entity work.ff_sync
-        generic map ( W => xcvr1_rx_locked'length )
-        port map (
-            i_d => l_xcvr1_rx_locked, o_q => xcvr1_rx_locked,
-            i_reset_n => pcie0_reset_n, i_clk => pcie0_clk--,
-        );
+        -- Each RX lock bit is an independent status signal; synchronize per bit
+        -- so the generic ff_sync max-skew constraint does not imply bus coherency.
+        generate_xcvr1_rx_locked_sync : for i in xcvr1_rx_locked'range generate
+        begin
+            e_xcvr1_rx_locked : entity work.ff_sync
+            generic map ( W => 1 )
+            port map (
+                i_d(0) => l_xcvr1_rx_locked(i), o_q(0) => xcvr1_rx_locked(i),
+                i_reset_n => pcie0_reset_n, i_clk => pcie0_clk--,
+            );
+        end generate;
     end generate;
 
     generate_xcvr1_fifo : for i in g_XCVR1_CHANNELS-1 downto 0 generate

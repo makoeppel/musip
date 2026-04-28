@@ -83,14 +83,14 @@ The OPQ/SWB integration flow added in this workspace uses root-level `make` targ
 Current validation status on April 28, 2026:
 
 - the full Siemens Questa install at `/data1/questaone_sim/questasim` is the only supported simulator on this host,
-- `mu3e-ip-cores` is tracked in-repo as the pull-only `external/mu3e-ip-cores` consumer snapshot and is the default upstream owner for OPQ packaging and sync; the OPQ Qsys wrapper is regenerated from packet_scheduler `26.4.14.0428` at nested commit `4f667fb`,
-- `make ip-svd`, `make ip-csr-lint`, and `make ip-opq-csr-{probe,dump,monitor}` are the OPQ CSR bring-up entry points; the Qsys wrapper includes an internal JTAG Avalon master connected to the OPQ CSR slave, with SVD-backed field decoding and clean log output under `build/ip/`,
+- `mu3e-ip-cores` is tracked in-repo as the pull-only `external/mu3e-ip-cores` consumer snapshot and is the default upstream owner for OPQ packaging and sync; the OPQ Qsys wrapper is regenerated from packet_scheduler `26.4.15.0428` at nested commit `e549c81` through parent snapshot `7e8bca8`,
+- `make ip-svd`, `make ip-csr-lint`, and `make ip-opq-csr-{probe,dump,write,lane-mask,mask-lane,unmask-lane,monitor}` are the OPQ CSR bring-up entry points; the Qsys wrapper includes an internal JTAG Avalon master connected to the OPQ CSR slave, with SVD-backed field decoding/writeback and clean log output under `build/ip/`,
 - the replay generator, the integrated `plain/` and `uvm/` benches, the split OPQ-boundary harness, and the formal seam scaffold all pass on that toolchain,
 - the real integrated OPQ merge path is the promoted default in this repo; the former direct-path bypass workaround is retired,
 - the promoted randomized screen is the default `make ip-uvm-longrun` 128-case per-lane `0.0..0.5` saturation wrapper, and the current stronger evidence set also includes a clean 256-case rerun in `tb_int/cases/basic/uvm/report/longrun_ext_260422_fixed/summary.json`,
 - `make ip-cross-baselines` promotes CROSS-001..005 continuous-frame evidence, including the 22-segment all-buckets frame,
 - `make ip-ghdl-cross-run` plus `make ip-ghdl-cross-checkpoints` is the fast local GHDL/GTKWave inspection path for the all-bucket cross shape; it is debug evidence, not a replacement for the promoted UVM/UCDB signoff runs,
-- `make -C firmware/a10_board flow` completes cleanly with the generated OPQ synthesis files: worst setup slack `+0.016 ns`, worst hold slack `+0.012 ns`, and zero setup/hold TNS; fit usage is 27,642 ALMs, 45,313 registers, 18,157,920 block-memory bits, 1,154 RAM blocks, and 3 DSPs,
+- `make -C firmware/a10_board flow` completes cleanly with the generated OPQ synthesis files: worst setup slack `+0.030 ns`, worst hold slack `+0.013 ns`, and zero setup/hold TNS; fit usage is 26,782 ALMs, 44,094 registers, 18,103,136 block-memory bits, 1,147 RAM blocks, and 0 DSPs,
 - `CLOSURE_RESUME=1 make ip-cov-closure` closes the merged coverage targets reported in `tb_int/doc/DV_COV.md`,
 - Intel FE/FSE `vsim` remains unsupported for this flow; all simulation evidence in `tb_int/` is from the full Questa install above.
 
@@ -102,7 +102,7 @@ The parent repo tracks the upstream `external/mu3e-ip-cores` signoff entry point
 
 | Upstream IP | Pinned upstream commit | SYN | DV |
 |---|---|:---:|:---:|
-| `packet_scheduler` | `4f667fb` | [✅](external/mu3e-ip-cores/packet_scheduler/doc/SIGNOFF.md) | [✅](external/mu3e-ip-cores/packet_scheduler/doc/SIGNOFF.md) |
+| `packet_scheduler` | `e549c81` | [✅](external/mu3e-ip-cores/packet_scheduler/doc/SIGNOFF.md) | [✅](external/mu3e-ip-cores/packet_scheduler/doc/SIGNOFF.md) |
 | `ring-buffer_cam` | `3710786` | [✅](external/mu3e-ip-cores/ring-buffer_cam/doc/SIGNOFF.md) | [✅](external/mu3e-ip-cores/ring-buffer_cam/doc/SIGNOFF.md) |
 | `mutrig_frame_deassembly` | `8af676e` | [✅](external/mu3e-ip-cores/mutrig_frame_deassembly/doc/SIGNOFF.md) | [✅](external/mu3e-ip-cores/mutrig_frame_deassembly/doc/SIGNOFF.md) |
 | `emulator_mutrig` | `e763a56` | [✅](external/mu3e-ip-cores/emulator_mutrig/doc/SIGNOFF.md) | [✅](external/mu3e-ip-cores/emulator_mutrig/doc/SIGNOFF.md) |
@@ -129,7 +129,7 @@ Important:
 
 - `make ip-init` now syncs the nested `external/mu3e-ip-cores` submodule tree, rewrites public GitHub SSH URLs to HTTPS for this workspace, and refreshes the musip-local OPQ wrapper from that in-repo upstream source.
 - `make ip-svd` regenerates the OPQ SVD beside the Qsys wrapper, and `make ip-csr-lint` checks both the upstream OPQ `_hw.tcl` and the musip-local fixed-4 wrapper against the common UID/META CSR header contract.
-- `make ip-opq-csr-probe`, `make ip-opq-csr-dump`, and `make ip-opq-csr-monitor` use Intel System Console to claim an OPQ JTAG Avalon master service, read the CSR slave, decode fields from the generated SVD, and save probe/dump/monitor logs under `build/ip/`. Use `OPQ_CSR_MASTER=<service>` when multiple JTAG master services are visible.
+- `make ip-opq-csr-probe`, `make ip-opq-csr-dump`, `make ip-opq-csr-write`, `make ip-opq-csr-lane-mask`, `make ip-opq-csr-mask-lane`, `make ip-opq-csr-unmask-lane`, and `make ip-opq-csr-monitor` use Intel System Console to claim an OPQ JTAG Avalon master service, read or update the CSR slave through the generated SVD, and save logs under `build/ip/`. Use `OPQ_CSR_MASTER=<service>` when multiple JTAG master services are visible; for example, `make ip-opq-csr-mask-lane OPQ_LANE=2 OPQ_CSR_MASTER='10AX115*csr_jtag_master'`.
 - `make ip-tlm-basic-smoke` is the smallest deterministic replay bundle. It is the right first step when you are debugging the OPQ seam.
 - `make ip-tlm-basic` exports replay vectors and expected DMA words without running RTL. Use it when you want a deterministic replay bundle for the full case.
 - `make ip-lint-rtl` applies a strict style gate to the clean maintained bridge/wrapper files and a hygiene gate to legacy or imported RTL touched by this integration branch.
@@ -138,7 +138,7 @@ Important:
 - `make ip-uvm-longrun` wraps the same harness and writes the default 128-run campaign summary to `tb_int/cases/basic/uvm/report/longrun/summary.json`.
 - The current stronger musip-local evidence also includes `python3 tb_int/cases/basic/uvm/run_longrun.py --runs 256 --campaign-seed 260422 --out-dir report/longrun_ext_260422_fixed`, which passes cleanly and writes `tb_int/cases/basic/uvm/report/longrun_ext_260422_fixed/summary.json`.
 - `make ip-ghdl-cross-objects`, `make ip-ghdl-cross-run`, `make ip-ghdl-cross-gtkw`, `make ip-ghdl-cross-checkpoints`, and `make ip-ghdl-cross-view` live under `tb_int/cases/cross/ghdl/`. They build a deterministic GHDL waveform fixture with SignalTap-style groups, case markers, and named checkpoint validation for quick visual triage.
-- `make -C firmware/a10_board flow` is the integrated board synthesis/timing gate. The current clean closure uses the generated `ordered_priority_queue_native_sv_fixed4_26414428` synthesis files instead of the older unpacked local OPQ source tree.
+- `make -C firmware/a10_board flow` is the integrated board synthesis/timing gate. The current clean closure uses the generated `ordered_priority_queue_native_sv_fixed4_26415428` synthesis files instead of the older unpacked local OPQ source tree.
 - The install's `modelsim.ini` maps `altera_mf`, `altera`, `lpm`, and `sgate` to refreshed 2026-built Intel VHDL libraries under `/data1/questaone_sim/questasim/intel_2026/vhdl`. If the Siemens install is replaced, rerun `tools/ip/refresh_questa_intel_libs.sh`.
 - `make ip-plain-basic` is the plain mixed-language replay bench. It also uses the integrated merge path by default and validates the DMA result at the per-hit level with `tb_int/cases/basic/plain/check_dma_hits.py`.
 - `make ip-plain-basic-2env` is the split seam harness with explicit OPQ boundary scoreboarding. It remains the promoted boundary audit path, but it is no longer the only passing owner in this repo.

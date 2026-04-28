@@ -2,7 +2,7 @@ package require -exact qsys 16.1
 
 set_module_property NAME                         ordered_priority_queue_native_sv_fixed4
 set_module_property DISPLAY_NAME                 "Ordered Priority Queue Native SV Fixed4"
-set_module_property VERSION                      26.4.14.0428
+set_module_property VERSION                      26.4.15.0428
 set_module_property GROUP                        "Mu3e Data Plane/Modules"
 set_module_property DESCRIPTION                  "Fixed-profile 4-lane native-SV OPQ wrapper for MuSiP integration"
 set_module_property AUTHOR                       "Yifeng Wang / Codex local packaging"
@@ -25,7 +25,7 @@ proc add_html_text {group_name item_name html_text} {
 set IP_UID_DEFAULT_CONST        1330663757
 set VERSION_MAJOR_DEFAULT_CONST 26
 set VERSION_MINOR_DEFAULT_CONST 4
-set VERSION_PATCH_DEFAULT_CONST 14
+set VERSION_PATCH_DEFAULT_CONST 15
 set BUILD_DEFAULT_CONST         428
 set VERSION_DATE_DEFAULT_CONST  20260428
 set VERSION_GIT_DEFAULT_CONST   1332117425

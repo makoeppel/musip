@@ -9,6 +9,7 @@ proc usage {} {
     puts "Usage:"
     puts "  opq_jtag_csr.tcl probe   ?--sopcinfo PATH? ?--master PATTERN? ?--log PATH? ?--require-live?"
     puts "  opq_jtag_csr.tcl dump    --svd PATH ?--base 0x0? ?--master PATTERN? ?--log PATH? ?--dry-run?"
+    puts "  opq_jtag_csr.tcl write   --svd PATH --register NAME --value VALUE ?--field NAME? ?--base 0x0? ?--master PATTERN? ?--log PATH? ?--dry-run?"
     puts "  opq_jtag_csr.tcl monitor --svd PATH --register NAME ?--field NAME|--mask MASK? --equals VALUE ?--samples N? ?--period-ms N? ?--log PATH?"
 }
 
@@ -129,6 +130,27 @@ proc extract_field {value field} {
     return [expr {($value >> $offset) & $mask}]
 }
 
+proc field_mask {field} {
+    set width [dict get $field bit_width]
+    set offset [dict get $field bit_offset]
+    if {$width >= 32} {
+        set mask 0xFFFFFFFF
+    } else {
+        set mask [expr {(1 << $width) - 1}]
+    }
+    return [expr {($mask << $offset) & 0xFFFFFFFF}]
+}
+
+proc update_field {value field field_value} {
+    set width [dict get $field bit_width]
+    set offset [dict get $field bit_offset]
+    if {$width < 32 && $field_value >= (1 << $width)} {
+        fail "field value [hex32 $field_value] does not fit in $width bits"
+    }
+    set mask [field_mask $field]
+    return [expr {(($value & (~$mask)) | (($field_value << $offset) & $mask)) & 0xFFFFFFFF}]
+}
+
 proc describe_fields {reg value} {
     set parts {}
     foreach field [lindex $reg 5] {
@@ -145,7 +167,7 @@ proc parse_options {argv defaults} {
     while {$i < [llength $argv]} {
         set arg [lindex $argv $i]
         switch -- $arg {
-            --svd - --sopcinfo - --master - --log - --base - --register - --field - --mask - --equals - --samples - --period-ms {
+            --svd - --sopcinfo - --master - --log - --base - --register - --field - --value - --mask - --equals - --samples - --period-ms {
                 incr i
                 if {$i >= [llength $argv]} {
                     fail "missing value for $arg"
@@ -157,6 +179,12 @@ proc parse_options {argv defaults} {
             }
             --dry-run {
                 set opts(dry-run) 1
+            }
+            --force {
+                set opts(force) 1
+            }
+            --no-readback {
+                set opts(readback) 0
             }
             --no-meta-pages {
                 set opts(no-meta-pages) 1
@@ -172,6 +200,14 @@ proc parse_options {argv defaults} {
         incr i
     }
     return [array get opts]
+}
+
+proc reg_can_read {access} {
+    return [expr {![string equal -nocase $access "write-only"]}]
+}
+
+proc reg_can_write {access} {
+    return [expr {[string match -nocase "*write*" $access]}]
 }
 
 proc has_live_system_console {} {
@@ -344,6 +380,76 @@ proc run_dump {argv} {
     }
 }
 
+proc run_write {argv} {
+    array set opts [parse_options $argv [list svd $::opq_default_svd base 0x0 master "" log "build/ip/opq_jtag_write.log" register "" field "" value "" dry-run 0 force 0 readback 1]]
+    if {$opts(register) eq ""} {
+        fail "write requires --register NAME"
+    }
+    if {$opts(value) eq ""} {
+        fail "write requires --value VALUE"
+    }
+    set regs [parse_svd $opts(svd)]
+    set reg [find_register $regs $opts(register)]
+    set reg_name [lindex $reg 1]
+    set access [lindex $reg 2]
+    if {![reg_can_write $access] && !$opts(force)} {
+        fail "register $reg_name is not writable in SVD access=$access"
+    }
+    set base [parse_int $opts(base)]
+    set addr [expr {$base + [lindex $reg 0]}]
+    set requested [parse_int $opts(value)]
+    set log_fd [log_open $opts(log)]
+    log_line $log_fd "opq_jtag_csr write timestamp=[timestamp]"
+    log_line $log_fd "svd=$opts(svd)"
+    log_line $log_fd "register=$reg_name addr=[hex32 $addr] access=$access requested=[hex32 $requested]"
+
+    set field ""
+    if {$opts(field) ne ""} {
+        if {![reg_can_read $access] && !$opts(force)} {
+            close $log_fd
+            fail "field write for $reg_name needs read-modify-write, but SVD access=$access"
+        }
+        set field [find_field $reg $opts(field)]
+        log_line $log_fd "field=[dict get $field name] bit_offset=[dict get $field bit_offset] bit_width=[dict get $field bit_width]"
+    }
+
+    if {$opts(dry-run)} {
+        if {$field ne ""} {
+            set before [lindex $reg 3]
+            set write_value [update_field $before $field $requested]
+            log_line $log_fd "dry_run=1 before_reset=[hex32 $before] write_value=[hex32 $write_value]"
+        } else {
+            log_line $log_fd "dry_run=1 write_value=[hex32 $requested]"
+        }
+        close $log_fd
+        return
+    }
+
+    set ticket [claim_master $opts(master) 1 $log_fd]
+    set before ""
+    if {[reg_can_read $access]} {
+        set before [rd32 $ticket $addr]
+        log_line $log_fd "before=[hex32 $before]"
+    }
+    if {$field ne ""} {
+        set write_value [update_field $before $field $requested]
+    } else {
+        set write_value $requested
+    }
+    wr32 $ticket $addr $write_value
+    log_line $log_fd "write_value=[hex32 $write_value]"
+    if {$opts(readback) && [reg_can_read $access]} {
+        set after [rd32 $ticket $addr]
+        log_line $log_fd "readback=[hex32 $after] match=[expr {$after == $write_value}]"
+        set fields [describe_fields $reg $after]
+        if {$fields ne ""} {
+            log_line $log_fd "readback_fields={$fields}"
+        }
+    }
+    close_master $ticket
+    close $log_fd
+}
+
 proc run_monitor {argv} {
     array set opts [parse_options $argv [list svd $::opq_default_svd base 0x0 master "" log "build/ip/opq_jtag_monitor.log" register STATUS field "" mask "" equals "" samples 50 period-ms 100 dry-run 0]]
     if {$opts(equals) eq ""} {
@@ -419,6 +525,9 @@ switch -- $command {
     }
     dump {
         run_dump $rest
+    }
+    write {
+        run_write $rest
     }
     monitor {
         run_monitor $rest

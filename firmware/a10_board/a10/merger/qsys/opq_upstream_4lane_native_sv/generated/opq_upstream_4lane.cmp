@@ -33,4 +33,4 @@
 			ingress_3_error         : in  std_logic_vector(2 downto 0)  := (others => 'X'); -- error
 			reset_reset             : in  std_logic                     := 'X'              -- reset
 		);
-		end component opq_upstream_4lane;
+	end component opq_upstream_4lane;

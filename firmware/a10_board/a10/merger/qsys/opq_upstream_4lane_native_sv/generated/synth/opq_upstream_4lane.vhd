@@ -4,13 +4,13 @@
 
 library IEEE;
 library opq_upstream_4lane_altera_jtag_avalon_master_181;
-library opq_upstream_4lane_ordered_priority_queue_native_sv_fixed4_26414428;
+library opq_upstream_4lane_ordered_priority_queue_native_sv_fixed4_26415428;
 library opq_upstream_4lane_altera_mm_interconnect_181;
 library opq_upstream_4lane_altera_reset_controller_181;
 use IEEE.std_logic_1164.all;
 use IEEE.numeric_std.all;
 use opq_upstream_4lane_altera_jtag_avalon_master_181.opq_upstream_4lane_pkg.all;
-use opq_upstream_4lane_ordered_priority_queue_native_sv_fixed4_26414428.opq_upstream_4lane_pkg.all;
+use opq_upstream_4lane_ordered_priority_queue_native_sv_fixed4_26415428.opq_upstream_4lane_pkg.all;
 use opq_upstream_4lane_altera_mm_interconnect_181.opq_upstream_4lane_pkg.all;
 use opq_upstream_4lane_altera_reset_controller_181.opq_upstream_4lane_pkg.all;
 
@@ -92,12 +92,12 @@ begin
 			master_reset_reset   => open                                  -- master_reset.reset
 		);
 
-	opq_0 : component opq_upstream_4lane_ordered_priority_queue_native_sv_fixed4_26414428.opq_upstream_4lane_pkg.ordered_priority_queue_dut_sv
+	opq_0 : component opq_upstream_4lane_ordered_priority_queue_native_sv_fixed4_26415428.opq_upstream_4lane_pkg.ordered_priority_queue_dut_sv
 		generic map (
 			IP_UID        => 1330663757,
 			VERSION_MAJOR => 26,
 			VERSION_MINOR => 4,
-			VERSION_PATCH => 14,
+			VERSION_PATCH => 15,
 			BUILD         => 428,
 			VERSION_DATE  => 20260428,
 			VERSION_GIT   => 1332117425,

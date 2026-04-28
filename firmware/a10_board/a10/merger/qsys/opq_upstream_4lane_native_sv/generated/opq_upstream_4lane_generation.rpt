@@ -6,7 +6,7 @@ Progress: Adding clk_bridge [altera_clock_bridge 18.1]
 Progress: Parameterizing module clk_bridge
 Progress: Adding csr_jtag_master [altera_jtag_avalon_master 18.1]
 Progress: Parameterizing module csr_jtag_master
-Progress: Adding opq_0 [ordered_priority_queue_native_sv_fixed4 26.4.14.428]
+Progress: Adding opq_0 [ordered_priority_queue_native_sv_fixed4 26.4.15.428]
 Progress: Parameterizing module opq_0
 Progress: Adding reset_bridge [altera_reset_bridge 18.1]
 Progress: Parameterizing module reset_bridge
@@ -50,7 +50,7 @@ Info: Interconnect is inserted between master csr_jtag_master.master and slave o
 Info: Interconnect is inserted between master csr_jtag_master.master and slave opq_0.csr because the master has byteenable signal 4 bit wide, but the slave is 0 bit wide.
 Info: opq_upstream_4lane: Running transform merlin_avalon_transform took 0.210s
 Info: csr_jtag_master: Running transform merlin_avalon_transform
-Info: csr_jtag_master: Running transform merlin_avalon_transform took 0.012s
+Info: csr_jtag_master: Running transform merlin_avalon_transform took 0.011s
 Info: mm_interconnect_0: Running transform merlin_avalon_transform
 Info: mm_interconnect_0: Running transform merlin_avalon_transform took 0.032s
 Info: opq_upstream_4lane: "Naming system components in system: opq_upstream_4lane"
