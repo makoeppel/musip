@@ -5,6 +5,7 @@ IP_REF_DIR := tb_int/cases/basic/ref
 IP_PLAIN_DIR := tb_int/cases/basic/plain
 IP_PLAIN_2ENV_DIR := tb_int/cases/basic/plain_2env
 IP_PLAIN_2ENV_FORMAL_DIR := tb_int/cases/basic/plain_2env/formal
+IP_GHDL_CROSS_DIR := tb_int/cases/cross/ghdl
 OPQ_SVD_OUT := build/ip/opq_monolithic_4lane_merge.svd
 QUESTA_HOME ?= /data1/questaone_sim/questasim
 UVM_HOME ?= $(QUESTA_HOME)/verilog_src/uvm-1.2
@@ -17,7 +18,7 @@ export MGLS_LICENSE_FILE ?= $(ETH_LIC_SERVER)
 export LM_LICENSE_FILE ?= $(ETH_LIC_SERVER)
 export QSIM_INI ?= $(QUESTA_HOME)/modelsim.ini
 
-.PHONY: help ip-init ip-sync-opq ip-svd ip-check-license ip-compile-basic ip-compile-basic-cov ip-compile-plain ip-compile-plain-cov ip-compile-plain-2env ip-compile-plain-2env-cov ip-uvm-basic ip-uvm-basic-cov ip-uvm-longrun ip-tlm-basic ip-tlm-basic-smoke ip-plain-basic ip-plain-basic-smoke ip-plain-basic-cov ip-plain-basic-cov-smoke ip-plain-basic-2env ip-plain-basic-2env-smoke ip-plain-basic-2env-cov ip-plain-basic-2env-cov-smoke ip-formal-boundary ip-cov-closure ip-cross-baselines ip-e2e ip-e2e-ref ip-e2e-plain ip-e2e-plain-2env ip-clean ip-lint-rtl
+.PHONY: help ip-init ip-sync-opq ip-svd ip-check-license ip-compile-basic ip-compile-basic-cov ip-compile-plain ip-compile-plain-cov ip-compile-plain-2env ip-compile-plain-2env-cov ip-uvm-basic ip-uvm-basic-cov ip-uvm-longrun ip-tlm-basic ip-tlm-basic-smoke ip-plain-basic ip-plain-basic-smoke ip-plain-basic-cov ip-plain-basic-cov-smoke ip-plain-basic-2env ip-plain-basic-2env-smoke ip-plain-basic-2env-cov ip-plain-basic-2env-cov-smoke ip-formal-boundary ip-cov-closure ip-cross-baselines ip-ghdl-cross-objects ip-ghdl-cross-run ip-ghdl-cross-gtkw ip-ghdl-cross-checkpoints ip-ghdl-cross-view ip-ghdl-cross-clean ip-e2e ip-e2e-ref ip-e2e-plain ip-e2e-plain-2env ip-clean ip-lint-rtl
 
 help:
 	@printf '%s\n' \
@@ -48,6 +49,11 @@ help:
 	  '  make ip-formal-boundary # run the OPQ-boundary formal scaffold' \
 	  '  make ip-cov-closure   # run the promoted UCDB closure bundle and regenerate the DV report' \
 	  '  make ip-cross-baselines # run promoted CROSS-001..005 continuous-frame baseline evidence' \
+	  '  make ip-ghdl-cross-objects # compile the lightweight GHDL all-bucket cross waveform fixture' \
+	  '  make ip-ghdl-cross-run # run the lightweight GHDL all-bucket cross waveform fixture' \
+	  '  make ip-ghdl-cross-gtkw # generate the SignalTap-aligned GTKWave save file for the GHDL fixture' \
+	  '  make ip-ghdl-cross-checkpoints # verify named VCD checkpoints for the GHDL fixture' \
+	  '  make ip-ghdl-cross-view # run the GHDL fixture and open GTKWave when DISPLAY is available' \
 	  '  make ip-e2e           # alias for the basic end-to-end UVM case' \
 	  '  make ip-e2e-ref       # alias for the simulatorless basic reference case' \
 	  '  make ip-e2e-plain     # alias for the plain mixed-language replay bench' \
@@ -140,6 +146,24 @@ ip-cov-closure:
 ip-cross-baselines:
 	python3 tb_int/scripts/run_cross_baselines.py --tb tb_int
 
+ip-ghdl-cross-objects:
+	$(MAKE) -C $(IP_GHDL_CROSS_DIR) objects
+
+ip-ghdl-cross-run:
+	$(MAKE) -C $(IP_GHDL_CROSS_DIR) run
+
+ip-ghdl-cross-gtkw:
+	$(MAKE) -C $(IP_GHDL_CROSS_DIR) gtkw
+
+ip-ghdl-cross-checkpoints:
+	$(MAKE) -C $(IP_GHDL_CROSS_DIR) checkpoints
+
+ip-ghdl-cross-view:
+	$(MAKE) -C $(IP_GHDL_CROSS_DIR) view
+
+ip-ghdl-cross-clean:
+	$(MAKE) -C $(IP_GHDL_CROSS_DIR) clean
+
 ip-e2e: ip-uvm-basic
 
 ip-e2e-ref: ip-tlm-basic
@@ -153,6 +177,7 @@ ip-clean:
 	$(MAKE) -C $(IP_REF_DIR) clean
 	$(MAKE) -C $(IP_PLAIN_DIR) clean
 	$(MAKE) -C $(IP_PLAIN_2ENV_DIR) clean
+	$(MAKE) -C $(IP_GHDL_CROSS_DIR) clean
 
 ip-lint-rtl:
 	python3 tools/ip/lint_rtl.py

@@ -1,7 +1,7 @@
 # ✅ DV Report — `tb_int` MuSiP SWB/OPQ integration
 
 **DUT:** `swb_block` (`ingress_egress_adaptor` → Qsys-generated native-SV OPQ merge → `musip_mux_4_1` → `musip_event_builder`)
-**Date:** `2026-04-27`
+**Date:** `2026-04-28`
 **Branch:** `yifeng-ip_sim-2604`
 
 This page is the chief-architect dashboard. All per-case evidence lives under [`report/signoff/`](../report/signoff/README.md).
@@ -23,12 +23,15 @@ This page is the chief-architect dashboard. All per-case evidence lives under [`
 | ✅ | `local_plain_semantic_hit_check` | plain replay bench closes on normalized per-hit payload content |
 | ✅ | `local_uvm_hit_trace` | seeded UVM run exports per-hit ingress/OPQ/DMA ledgers with zero ghost/missing hits |
 | ✅ | `local_uvm_longrun_cross_0_50_128` | default 128-run per-lane `0.0..0.5` randomized screen passes cleanly |
+| ✅ | `ghdl_cross_fixture` | `make ip-ghdl-cross-run` and `make ip-ghdl-cross-checkpoints` pass: 22 cases, 13 named checkpoints, and 41 VCD signal expectations |
+| ✅ | `gtkwave_visual_inspection` | GTKWave save inspected across `13` checkpoints with SignalTap-style groups, markers, and translate filters |
 | ✅ | `opq_boundary_audit` | `ip-plain-basic-2env` smoke and full replay pass |
 | ✅ | `seam_formal` | `ip-formal-boundary` seam scaffold passes |
 | ✅ | `implemented_catalog_cases` | all `516` case pages and `129` cross pages are present under `report/signoff/` |
 | ✅ | `implemented_cross_runs` | `5` / `129` cross pages have promoted evidence; required CROSS-001..005 baselines are tracked in Signoff Runs |
 | ✅ | `event_builder_contract_cleanup` | `BUG-004-R` is fixed in the musip-local `musip_event_builder` RTL |
 | ✅ | `coverage_merged_totals` | merged UCDB totals are measured: stmt=80.56, branch=75.95, cond=47.58, expr=57.81, fsm_state=90.09, fsm_trans=53.29, toggle=35.11, functional=100.00 |
+| ✅ | `board_quartus_flow` | `make -C firmware/a10_board flow` passes with generated OPQ synthesis files; setup slack=0.141 ns, hold slack=0.013 ns, setup/hold TNS=0.0/0.0 |
 
 ## Signoff Scope
 
@@ -37,8 +40,11 @@ This page is the chief-architect dashboard. All per-case evidence lives under [`
 | workspace | `tb_int` |
 | dut | `swb_block integrated SWB/OPQ path` |
 | opq_source_mode | `upstream_qsys_generated` |
+| opq_qsys_version | `26.4.13.0428` |
+| opq_generated_synthesis | `firmware/a10_board/a10/merger/qsys/opq_upstream_4lane_native_sv/generated/ordered_priority_queue_native_sv_fixed4_26413428` |
 | simulator | `/data1/questaone_sim/questasim` |
 | license_server | `8161@lic-mentor.ethz.ch` |
+| board_flow | `make -C firmware/a10_board flow` |
 | stimulus_source | `firmware/a10_board/a10/merger/../feb_frame_assembly/feb_frame_assembly.vhd` |
 | coverage_ucdb | `/home/yifeng/packages/musip_2604/tb_int/sim_runs/coverage/tb_int_merged.ucdb` |
 

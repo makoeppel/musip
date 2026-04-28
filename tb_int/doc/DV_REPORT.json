@@ -1,6 +1,6 @@
 {
   "workspace": "tb_int",
-  "date": "2026-04-27",
+  "date": "2026-04-28",
   "branch": "yifeng-ip_sim-2604",
   "toolchain": {
     "questa_home": "/data1/questaone_sim/questasim",
@@ -11,6 +11,30 @@
     "opq_source_mode": "upstream_qsys_generated",
     "uvm_default": "SWB_USE_MERGE=1",
     "plain_default": "USE_MERGE=1"
+  },
+  "ghdl_cross": {
+    "make_run": "make ip-ghdl-cross-run",
+    "make_checkpoints": "make ip-ghdl-cross-checkpoints",
+    "cases": 22,
+    "checkpoints": 13,
+    "signal_expectations": 41,
+    "status": "pass",
+    "gtkwave_visual_checkpoints": 13,
+    "report_dir": "tb_int/cases/cross/ghdl/report"
+  },
+  "timing_closure": {
+    "board_flow": "make -C firmware/a10_board flow",
+    "opq_qsys_version": "26.4.13.0428",
+    "opq_generated_synthesis_dir": "firmware/a10_board/a10/merger/qsys/opq_upstream_4lane_native_sv/generated/ordered_priority_queue_native_sv_fixed4_26413428",
+    "worst_setup_slack_ns": 0.141,
+    "worst_hold_slack_ns": 0.013,
+    "setup_tns": 0.0,
+    "hold_tns": 0.0,
+    "alms": 24955,
+    "registers": 42591,
+    "block_memory_bits": 18157408,
+    "ram_blocks": 1153,
+    "dsp_blocks": 3
   },
   "stimulus": {
     "authoritative_source": "firmware/a10_board/a10/merger/../feb_frame_assembly/feb_frame_assembly.vhd",
@@ -231,12 +255,15 @@
     "local_plain_semantic_hit_check": "pass",
     "local_uvm_hit_trace": "pass",
     "local_uvm_longrun_cross_0_50_128": "pass",
+    "ghdl_cross_fixture": "pass",
+    "gtkwave_visual_inspection": "pass",
     "opq_boundary_audit": "pass",
     "seam_formal": "pass",
     "coverage_merged_totals": "pass",
     "implemented_catalog_cases": "pass",
     "implemented_cross_runs": "pass",
-    "event_builder_contract_cleanup": "pass"
+    "event_builder_contract_cleanup": "pass",
+    "board_quartus_flow": "pass"
   },
   "findings": [
     {

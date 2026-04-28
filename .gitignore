@@ -2,3 +2,41 @@ build/
 install/
 quartus-build*/
 __pycache__/
+*.pyc
+
+# Local editor/session artifacts
+.vscode/
+.tmp_*
+.tmp_spec/
+web_debug_snapshot_*/
+
+# Generated documentation/site output
+site/
+
+# Simulator work libraries and generated run products
+work/
+tb_int/sim_runs/
+tb_int/syn/
+tb_int/cases/basic/ref/cov_closure/
+tb_int/cases/basic/ref/out*/
+tb_int/cases/basic/uvm/report/*.log
+tb_int/cases/basic/uvm/report/*_hits.tsv
+tb_int/cases/basic/uvm/report/*_summary.txt
+tb_int/cases/basic/uvm/report/current_*
+tb_int/cases/basic/uvm/report/debug_*
+tb_int/cases/basic/uvm/report/full_replay_*
+tb_int/cases/basic/uvm/report/replay_*
+tb_int/cases/basic/uvm/report/x120_repeat_seed2/
+tb_int/cases/basic/uvm/report/x120_seed2/
+tb_int/cases/basic/uvm/report/longrun/*.log
+tb_int/cases/basic/uvm/report/longrun_ext_*/
+!tb_int/cases/basic/uvm/report/longrun_ext_260422_fixed/
+tb_int/cases/basic/uvm/report/longrun_ext_260422_fixed/*.log
+
+# Local Quartus compile artifacts
+firmware/a10_board/db/
+firmware/a10_board/*.log
+firmware/a10_board/*.qpf
+firmware/a10_board/*.rpt
+firmware/a10_board/*.summary
+*_generation_previous.rpt

@@ -5,11 +5,11 @@
  version="1.0"
  fabric="QSYS">
  <!-- Format version 18.1 625 (Future versions may contain additional information.) -->
- <!-- 2026.04.27.19:43:36 -->
+ <!-- 2026.04.28.16:49:30 -->
  <!-- A collection of modules and connections -->
  <parameter name="AUTO_GENERATION_ID">
   <type>java.lang.Integer</type>
-  <value>1777311816</value>
+  <value>1777387770</value>
   <derived>false</derived>
   <enabled>true</enabled>
   <visible>false</visible>
@@ -102,7 +102,7 @@
  <module
    name="opq_0"
    kind="ordered_priority_queue_native_sv_fixed4"
-   version="26.4.11.427"
+   version="26.4.13.428"
    path="opq_0">
   <!-- Describes a single module. Module parameters are
 the requested settings for a module instance. -->
@@ -1377,7 +1377,7 @@ parameters are a RESULT of the module parameters. -->
   <type>com.altera.entityinterfaces.IElementClass</type>
   <subtype>com.altera.entityinterfaces.IModule</subtype>
   <displayName>Ordered Priority Queue Native SV Fixed4</displayName>
-  <version>26.4.11.427</version>
+  <version>26.4.13.428</version>
  </plugin>
  <plugin>
   <instanceCount>1</instanceCount>

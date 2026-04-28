@@ -80,14 +80,16 @@ make serve_mkdocs
 
 The OPQ/SWB integration flow added in this workspace uses root-level `make` targets.
 
-Current validation status on April 24, 2026:
+Current validation status on April 28, 2026:
 
 - the full Siemens Questa install at `/data1/questaone_sim/questasim` is the only supported simulator on this host,
-- `mu3e-ip-cores` is now tracked in-repo as the `external/mu3e-ip-cores` git submodule and is the default upstream owner for OPQ packaging and sync,
+- `mu3e-ip-cores` is now tracked in-repo as the `external/mu3e-ip-cores` git submodule and is the default upstream owner for OPQ packaging and sync; the OPQ Qsys wrapper is regenerated from packet_scheduler `26.4.13.0428`,
 - the replay generator, the integrated `plain/` and `uvm/` benches, the split OPQ-boundary harness, and the formal seam scaffold all pass on that toolchain,
 - the real integrated OPQ merge path is the promoted default in this repo; the former direct-path bypass workaround is retired,
 - the promoted randomized screen is the default `make ip-uvm-longrun` 128-case per-lane `0.0..0.5` saturation wrapper, and the current stronger evidence set also includes a clean 256-case rerun in `tb_int/cases/basic/uvm/report/longrun_ext_260422_fixed/summary.json`,
 - `make ip-cross-baselines` promotes CROSS-001..005 continuous-frame evidence, including the 22-segment all-buckets frame,
+- `make ip-ghdl-cross-run` plus `make ip-ghdl-cross-checkpoints` is the fast local GHDL/GTKWave inspection path for the all-bucket cross shape; it is debug evidence, not a replacement for the promoted UVM/UCDB signoff runs,
+- `make -C firmware/a10_board flow` completes cleanly with the generated OPQ synthesis files: worst setup slack `+0.141 ns`, worst hold slack `+0.013 ns`, and zero setup/hold TNS; fit usage is 24,955 ALMs, 42,591 registers, 18,157,408 block-memory bits, 1,153 RAM blocks, and 3 DSPs,
 - `CLOSURE_RESUME=1 make ip-cov-closure` closes the merged coverage targets reported in `tb_int/doc/DV_COV.md`,
 - Intel FE/FSE `vsim` remains unsupported for this flow; all simulation evidence in `tb_int/` is from the full Questa install above.
 
@@ -99,7 +101,7 @@ The parent repo tracks the upstream `external/mu3e-ip-cores` signoff entry point
 
 | Upstream IP | Pinned upstream commit | SYN | DV |
 |---|---|:---:|:---:|
-| `packet_scheduler` | `bf59a0d` | [✅](external/mu3e-ip-cores/packet_scheduler/doc/SIGNOFF.md) | [✅](external/mu3e-ip-cores/packet_scheduler/doc/SIGNOFF.md) |
+| `packet_scheduler` | `71b09ef` | [✅](external/mu3e-ip-cores/packet_scheduler/doc/SIGNOFF.md) | [✅](external/mu3e-ip-cores/packet_scheduler/doc/SIGNOFF.md) |
 | `ring-buffer_cam` | `3c512dd` | [✅](external/mu3e-ip-cores/ring-buffer_cam/doc/SIGNOFF.md) | [✅](external/mu3e-ip-cores/ring-buffer_cam/doc/SIGNOFF.md) |
 | `mutrig_frame_deassembly` | `8af676e` | [✅](external/mu3e-ip-cores/mutrig_frame_deassembly/doc/SIGNOFF.md) | [✅](external/mu3e-ip-cores/mutrig_frame_deassembly/doc/SIGNOFF.md) |
 | `emulator_mutrig` | `e763a56` | [✅](external/mu3e-ip-cores/emulator_mutrig/doc/SIGNOFF.md) | [✅](external/mu3e-ip-cores/emulator_mutrig/doc/SIGNOFF.md) |
@@ -116,7 +118,9 @@ If you just want the shortest safe path:
 8. Run `make ip-plain-basic-2env`
 9. Run `make ip-uvm-longrun`
 10. Run `make ip-cross-baselines`
-11. Run `CLOSURE_RESUME=1 make ip-cov-closure`
+11. Run `make ip-ghdl-cross-run`
+12. Run `make ip-ghdl-cross-checkpoints`
+13. Run `CLOSURE_RESUME=1 make ip-cov-closure`
 
 Important:
 
@@ -128,6 +132,8 @@ Important:
 - `make ip-uvm-basic` accepts `+SWB_CASE_SEED=<n>` for exact random-case replay and `+SWB_HIT_TRACE_PREFIX=<abs-prefix>` to emit per-hit ingress, OPQ, and DMA ledgers plus a summary file.
 - `make ip-uvm-longrun` wraps the same harness and writes the default 128-run campaign summary to `tb_int/cases/basic/uvm/report/longrun/summary.json`.
 - The current stronger musip-local evidence also includes `python3 tb_int/cases/basic/uvm/run_longrun.py --runs 256 --campaign-seed 260422 --out-dir report/longrun_ext_260422_fixed`, which passes cleanly and writes `tb_int/cases/basic/uvm/report/longrun_ext_260422_fixed/summary.json`.
+- `make ip-ghdl-cross-objects`, `make ip-ghdl-cross-run`, `make ip-ghdl-cross-gtkw`, `make ip-ghdl-cross-checkpoints`, and `make ip-ghdl-cross-view` live under `tb_int/cases/cross/ghdl/`. They build a deterministic GHDL waveform fixture with SignalTap-style groups, case markers, and named checkpoint validation for quick visual triage.
+- `make -C firmware/a10_board flow` is the integrated board synthesis/timing gate. The current clean closure uses the generated `ordered_priority_queue_native_sv_fixed4_26413428` synthesis files instead of the older unpacked local OPQ source tree.
 - The install's `modelsim.ini` maps `altera_mf`, `altera`, `lpm`, and `sgate` to refreshed 2026-built Intel VHDL libraries under `/data1/questaone_sim/questasim/intel_2026/vhdl`. If the Siemens install is replaced, rerun `tools/ip/refresh_questa_intel_libs.sh`.
 - `make ip-plain-basic` is the plain mixed-language replay bench. It also uses the integrated merge path by default and validates the DMA result at the per-hit level with `tb_int/cases/basic/plain/check_dma_hits.py`.
 - `make ip-plain-basic-2env` is the split seam harness with explicit OPQ boundary scoreboarding. It remains the promoted boundary audit path, but it is no longer the only passing owner in this repo.

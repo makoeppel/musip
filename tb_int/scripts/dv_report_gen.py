@@ -655,6 +655,12 @@ def health_rows(data: dict) -> list[tuple[str, str, str]]:
     cov = data.get("coverage_merged", {})
     summary = data.get("summary", {})
     toolchain = data.get("toolchain", {})
+    ghdl = data.get("ghdl_cross", {})
+    if not isinstance(ghdl, dict):
+        ghdl = {}
+    timing = data.get("timing_closure", {})
+    if not isinstance(timing, dict):
+        timing = {}
     rows = OrderedDict(
         [
             (
@@ -684,6 +690,16 @@ def health_rows(data: dict) -> list[tuple[str, str, str]]:
                 "local_uvm_longrun_cross_0_50_128",
                 "default 128-run per-lane `0.0..0.5` randomized screen passes cleanly",
             ),
+            (
+                "ghdl_cross_fixture",
+                f"`{ghdl.get('make_run', 'make ip-ghdl-cross-run')}` and `{ghdl.get('make_checkpoints', 'make ip-ghdl-cross-checkpoints')}` pass: "
+                f"{ghdl.get('cases', 'pending')} cases, {ghdl.get('checkpoints', 'pending')} named checkpoints, "
+                f"and {ghdl.get('signal_expectations', 'pending')} VCD signal expectations",
+            ),
+            (
+                "gtkwave_visual_inspection",
+                f"GTKWave save inspected across `{ghdl.get('gtkwave_visual_checkpoints', 'pending')}` checkpoints with SignalTap-style groups, markers, and translate filters",
+            ),
             ("opq_boundary_audit", "`ip-plain-basic-2env` smoke and full replay pass"),
             ("seam_formal", "`ip-formal-boundary` seam scaffold passes"),
             (
@@ -706,6 +722,12 @@ def health_rows(data: dict) -> list[tuple[str, str, str]]:
                 f"fsm_state={fmt_pct(cov.get('fsm_state'))}, fsm_trans={fmt_pct(cov.get('fsm_trans'))}, "
                 f"toggle={fmt_pct(cov.get('toggle'))}, functional={fmt_pct(cov.get('functional_pct_bins_saturated'))}",
             ),
+            (
+                "board_quartus_flow",
+                f"`{timing.get('board_flow', 'make -C firmware/a10_board flow')}` passes with generated OPQ synthesis files; "
+                f"setup slack={timing.get('worst_setup_slack_ns', 'pending')} ns, hold slack={timing.get('worst_hold_slack_ns', 'pending')} ns, "
+                f"setup/hold TNS={timing.get('setup_tns', 'pending')}/{timing.get('hold_tns', 'pending')}",
+            ),
         ]
     )
     rendered: list[tuple[str, str, str]] = []
@@ -719,15 +741,22 @@ def signoff_scope_rows(data: dict) -> list[tuple[str, str]]:
     toolchain = data.get("toolchain", {})
     stimulus = data.get("stimulus", {})
     cov = data.get("coverage_merged", {})
-    return [
+    timing = data.get("timing_closure", {})
+    if not isinstance(timing, dict):
+        timing = {}
+    rows = [
         ("workspace", data.get("workspace", "tb_int")),
         ("dut", "swb_block integrated SWB/OPQ path"),
         ("opq_source_mode", defaults.get("opq_source_mode", "unknown")),
+        ("opq_qsys_version", timing.get("opq_qsys_version", "unknown")),
+        ("opq_generated_synthesis", timing.get("opq_generated_synthesis_dir", "unknown")),
         ("simulator", toolchain.get("questa_home", "unknown")),
         ("license_server", toolchain.get("license_server", "unknown")),
+        ("board_flow", timing.get("board_flow", "pending")),
         ("stimulus_source", stimulus.get("authoritative_source", "unknown")),
         ("coverage_ucdb", cov.get("ucdb", "pending")),
     ]
+    return rows
 
 
 def bucket_summary_rows(data: dict) -> list[dict[str, object]]:

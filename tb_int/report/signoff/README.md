@@ -51,9 +51,9 @@ The canonical stimulus field map for every case is declared once in [`../../doc/
 
 | area | state | note |
 |---|:---:|---|
-| per-case pages under `cases/`           | ⚠️ | all 516 case pages are now rendered; promoted executed evidence exists for `B046`, `E025`, `E026`, `E027`, and `P040`, while the remaining pages are explicit pending placeholders |
-| per-bucket ordered-merge traces         | ⚠️ | skeleton rows remain for coverage, but promoted spot-check rows are now linked to real case pages |
-| continuous-frame cross signoff (`cross/`) | ❓ | all `CROSS-001..129` pages are rendered as placeholders; promoted UCDB/log evidence is still pending for the continuous-frame runs |
+| per-case pages under `cases/`           | ⚠️ | all 516 case pages are now rendered; promoted executed evidence exists for 29 anchor cases, while the remaining pages are explicit pending placeholders |
+| per-bucket ordered-merge traces         | ⚠️ | skeleton rows remain for broader coverage, but promoted spot-check rows are linked to real case pages |
+| continuous-frame cross signoff (`cross/`) | ⚠️ | all `CROSS-001..129` pages are rendered; promoted UCDB/log evidence exists for `CROSS-001..005`, while the remaining rows are explicit pending placeholders |
 | random-soak txn_growth curves           | ❓ | all `P001..P129` txn-growth pages are rendered as placeholders; the UVM checkpoint emitter is still not wired |
 | integration toolchain pass/fail gates   | ✅ | see [`../../doc/DV_REPORT.md`](../../doc/DV_REPORT.md#health) and [`../../doc/DV_REPORT.json`](../../doc/DV_REPORT.json) `summary` |
 | bug ledger                              | ℹ️  | live at [`../../doc/BUG_HISTORY.md`](../../doc/BUG_HISTORY.md) (`BUG-001-H..BUG-010-R`) |

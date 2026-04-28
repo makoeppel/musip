@@ -5,7 +5,7 @@ create_system {opq_upstream_4lane}
 set_project_property DEVICE_FAMILY {Arria 10}
 set_project_property HIDE_FROM_IP_CATALOG {false}
 
-add_instance opq_0 ordered_priority_queue_native_sv_fixed4 26.4.11.0427
+add_instance opq_0 ordered_priority_queue_native_sv_fixed4 26.4.13.0428
 
 add_interface clk clock sink
 set_interface_property clk EXPORT_OF opq_0.clk_interface

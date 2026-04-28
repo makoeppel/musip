@@ -69,7 +69,7 @@
  <module
    name="opq_0"
    kind="ordered_priority_queue_native_sv_fixed4"
-   version="26.4.11.427"
+   version="26.4.13.428"
    enabled="1" />
  <interconnectRequirement for="$system" name="qsys_mm.clockCrossingAdapter" value="HANDSHAKE" />
  <interconnectRequirement for="$system" name="qsys_mm.enableEccProtection" value="FALSE" />

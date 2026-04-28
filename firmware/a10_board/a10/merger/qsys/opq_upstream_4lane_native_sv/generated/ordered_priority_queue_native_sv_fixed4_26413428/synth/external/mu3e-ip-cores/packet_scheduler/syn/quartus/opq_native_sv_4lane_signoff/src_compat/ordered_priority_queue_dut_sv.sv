@@ -1,9 +1,10 @@
 //------------------------------------------------------------------------------
 // ordered_priority_queue_dut_sv
 // Author  : Yifeng Wang (original OPQ) / native SV staging by Codex
-// Version : 26.4.11-syn
-// Date    : 20260427
-// Change  : Align signoff wrapper identity to the partial-frame body-hold fix
+// Version : 26.4.13-syn
+// Date    : 20260428
+// Change  : Align fixed4 synthesis wrapper CSR META identity to the 26.4.13
+//           MuSiP timing-closure source package.
 //------------------------------------------------------------------------------
 
 `ifndef OPQ_N_SHD
@@ -132,10 +133,10 @@ module ordered_priority_queue_dut_sv #(
   localparam logic [31:0] UID_CONST = 32'h4F50_514D;
   localparam int unsigned VERSION_MAJOR_CONST = 26;
   localparam int unsigned VERSION_MINOR_CONST = 4;
-  localparam int unsigned VERSION_PATCH_CONST = 11;
-  localparam int unsigned VERSION_BUILD_CONST = 427;
-  localparam logic [31:0] VERSION_DATE_CONST = 32'd20260427;
-  localparam logic [31:0] VERSION_GIT_CONST = 32'h3B55_C935;
+  localparam int unsigned VERSION_PATCH_CONST = 13;
+  localparam int unsigned VERSION_BUILD_CONST = 428;
+  localparam logic [31:0] VERSION_DATE_CONST = 32'd20260428;
+  localparam logic [31:0] VERSION_GIT_CONST = 32'h7301_5F57;
   localparam logic [31:0] INSTANCE_ID_CONST = 32'd0;
   localparam logic [9:0] DRR_DEFAULT_ALLOWANCE_CONST = 10'd256;
 

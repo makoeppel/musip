@@ -86,7 +86,8 @@ begin
     e_fifo_event : entity work.ip_scfifo_v2
     generic map (
         g_ADDR_WIDTH => 14,
-        g_DATA_WIDTH => 256--,
+        g_DATA_WIDTH => 256,
+        g_RREG_N     => 1--,
     )
     port map (
         i_we        => i_valid,

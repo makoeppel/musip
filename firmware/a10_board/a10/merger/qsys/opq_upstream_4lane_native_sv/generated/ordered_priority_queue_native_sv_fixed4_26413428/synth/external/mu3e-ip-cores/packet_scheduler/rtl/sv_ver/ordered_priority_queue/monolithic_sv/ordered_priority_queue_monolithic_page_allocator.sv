@@ -1,9 +1,10 @@
 //------------------------------------------------------------------------------
 // ordered_priority_queue_monolithic_page_allocator
 // Author  : Yifeng Wang (original OPQ) / native SV staging by Codex
-// Version : 26.4.11
-// Date    : 20260427
-// Change  : Keep body fetch held until inactive join lanes present their current-frame SOPs
+// Version : 26.4.13
+// Date    : 20260428
+// Change  : Permit forward-serial rebase at the same frame timestamp after
+//           masked/drop-only frames so mixed no-restart 4-lane soaks reopen.
 //------------------------------------------------------------------------------
 
 module ordered_priority_queue_monolithic_page_allocator #(
@@ -1599,7 +1600,7 @@ module ordered_priority_queue_monolithic_page_allocator #(
           fetch_future_frame_seen_q &&
           serial_reached_or_passed(fetch_future_frame_serial_q, page_allocator.frame_serial) &&
           (fetch_future_frame_serial_q != page_allocator.frame_serial) &&
-          (fetch_future_frame_ts_q > page_allocator.frame_ts);
+          (fetch_future_frame_ts_q >= page_allocator.frame_ts);
         fetch_rebase_future_frame_q <= rebase_future_frame_v;
         fetch_rebase_future_frame_lane_q <= {N_LANE{rebase_future_frame_v}};
         fetch_predrop_current_frame_q <= predrop_current_frame_v;

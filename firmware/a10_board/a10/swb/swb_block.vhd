@@ -86,6 +86,7 @@ architecture arch of swb_block is
     signal rx_data, rx_data_sim : work.mu3e.link32_array_t(g_NLINKS_FEB_TOTL-1 downto 0) := (others => work.mu3e.LINK32_IDLE);
     signal rx_data_sim_opq : work.mu3e.link32_array_t(3 downto 0) := (others => work.mu3e.LINK32_IDLE);
     signal rx_data_sim_merged : work.mu3e.link32_array_t(3 downto 0) := (others => work.mu3e.LINK32_IDLE);
+    signal rx_data_sim_merged_r : work.mu3e.link32_array_t(3 downto 0) := (others => work.mu3e.LINK32_IDLE);
     signal rx_data_sim_merged_mask : std_logic_vector(3 downto 0) := (others => '0');
     signal rx_sc : work.mu3e.link32_array_t(g_NLINKS_FEB_TOTL-1 downto 0)   := (others => work.mu3e.LINK32_IDLE);
     signal rx_rc : work.mu3e.link32_array_t(g_NLINKS_FEB_TOTL-1 downto 0)   := (others => work.mu3e.LINK32_IDLE);
@@ -109,7 +110,13 @@ architecture arch of swb_block is
     signal data_path_reset_n : std_logic;
     signal opq_reset_n : std_logic;
     signal mux_reset_n : std_logic;
+    signal event_builder_reset_pipe_n : std_logic_vector(1 downto 0) := (others => '0');
     signal event_builder_reset_n : std_logic;
+    attribute altera_attribute : string;
+    attribute altera_attribute of opq_reset_n : signal is "-name DONT_MERGE_REGISTER ON; -name PRESERVE_REGISTER ON; -name GLOBAL_SIGNAL OFF";
+    attribute altera_attribute of mux_reset_n : signal is "-name DONT_MERGE_REGISTER ON; -name PRESERVE_REGISTER ON; -name GLOBAL_SIGNAL OFF";
+    attribute altera_attribute of event_builder_reset_pipe_n : signal is "-name DONT_MERGE_REGISTER ON; -name PRESERVE_REGISTER ON; -name GLOBAL_SIGNAL OFF";
+    attribute altera_attribute of event_builder_reset_n : signal is "-name DONT_MERGE_REGISTER ON; -name PRESERVE_REGISTER ON; -name GLOBAL_SIGNAL OFF";
 
     --! dma
     signal hits_256 : std_logic_vector(255 downto 0);
@@ -270,6 +277,7 @@ begin
         data_path_reset_n <= '0';
         opq_reset_n <= '0';
         mux_reset_n <= '0';
+        event_builder_reset_pipe_n <= (others => '0');
         event_builder_reset_n <= '0';
         mask_n <= (others => '0');
         use_opq_merge <= '0';
@@ -280,7 +288,8 @@ begin
         data_path_reset_n <= i_resets_n(RESET_BIT_DATA_PATH);
         opq_reset_n <= data_path_reset_n;
         mux_reset_n <= data_path_reset_n;
-        event_builder_reset_n <= data_path_reset_n;
+        event_builder_reset_pipe_n <= event_builder_reset_pipe_n(0) & data_path_reset_n;
+        event_builder_reset_n <= event_builder_reset_pipe_n(1);
         mask_n <= x"00000000" & i_writeregs(SWB_GENERIC_MASK_REGISTER_W);
         use_opq_merge <= i_writeregs(SWB_READOUT_STATE_REGISTER_W)(USE_BIT_MERGER);
         lookup_ctrl <= i_writeregs(SWB_LOOKUP_CTRL_REGISTER_W);
@@ -343,12 +352,23 @@ begin
     rx_data_sim_merged_mask(2) <= '0' when use_opq_merge = '1' else mask_n(2);
     rx_data_sim_merged_mask(3) <= '0' when use_opq_merge = '1' else mask_n(3);
 
+    p_mux_input_pipe : process(i_clk)
+    begin
+    if rising_edge(i_clk) then
+        if ( mux_reset_n /= '1' ) then
+            rx_data_sim_merged_r <= (others => work.mu3e.LINK32_IDLE);
+        else
+            rx_data_sim_merged_r <= rx_data_sim_merged;
+        end if;
+    end if;
+    end process;
+
     e_musip_mux_4_1 : entity work.musip_mux_4_1
     generic map (
         g_LINK_N => 4
     )
     port map (
-        i_rx            => rx_data_sim_merged(3 downto 0),
+        i_rx            => rx_data_sim_merged_r(3 downto 0),
         i_rmask_n       => rx_data_sim_merged_mask,
         i_use_direct_mux=> use_opq_merge,
 
@@ -371,9 +391,9 @@ begin
         i_clk           => i_clk--,
     );
 
-    o_opq_data  <= rx_data_sim_merged(0).data;
-    o_opq_datak <= rx_data_sim_merged(0).datak;
-    o_opq_valid <= not rx_data_sim_merged(0).idle;
+    o_opq_data  <= rx_data_sim_merged_r(0).data;
+    o_opq_datak <= rx_data_sim_merged_r(0).datak;
+    o_opq_valid <= not rx_data_sim_merged_r(0).idle;
 
     --! event builder
     --! ------------------------------------------------------------------------
