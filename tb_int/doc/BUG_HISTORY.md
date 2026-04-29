@@ -53,6 +53,7 @@ Historical formal note:
 | [BUG-011-R](#bug-011-r-auth-qsys-opq-egress-seam-did-not-reconstruct-canonical-mu3e-framing-so-merged-opq-traffic-failed-to-parse) | R | hard stuck error | `common (any merge-enabled auth-wrapper traffic on the broken seam)` | fixed | `make ip-uvm-basic` with `B047_lane1_only` on the current auth-wrapper state | `39a6a83` | The musip-owned auth-wrapper seam forwarded raw Qsys egress words without reconstructing canonical Mu3e SOP/EOP semantics, so merged OPQ traffic accumulated parse errors and DMA stayed empty. |
 | [BUG-012-R](#bug-012-r-merged-opq-egress-was-still-remasked-by-raw-feb-lane-enables-so-non-lane0-mask-cases-blackholed-valid-dma-traffic) | R | soft error | `corner-only (merged path with lane0 masked off)` | fixed | `make ip-uvm-basic` with `B047_lane1_only` after `BUG-011-R` seam repair | `39a6a83` | The merged OPQ egress always emerged on logical lane0, but the downstream mux still used the raw FEB lane mask, so lane1/2/3-only cases blackholed valid merged traffic before DMA packing. |
 | [BUG-013-R](#bug-013-r-half-frame-lane-skew-bring-up-exposed-a-seeded-merge-path-stall-that-also-reproduces-at-skew-0) | R | hard stuck error | `corner-only (seeded symmetric 4-lane random profile; skew stress exposed it immediately)` | fixed | `make ip-uvm-basic` with `P123_fixed_lane_skew_0_2048` | `pending` | Half-frame skew closure initially exposed a promoted merge-enabled stall, but the blocker is now fixed locally: the vendored Qsys OPQ wrapper now forwards `OPQ_N_HIT=2047` and the monolithic page allocator now waits a full `N_SHD * 16` frame-join window, so both `P123` and `P124` retire cleanly. |
+| [BUG-014-R](#bug-014-r-opq-adapter-treated-musip-marker-sidebands-as-parser-error-bits) | R | soft error | `common (any merge-enabled traffic with asserted t0 or t1 markers)` | fixed | OPQ stream contract audit of `ingress_egress_adaptor.vhd` | `pending` | The MuSiP OPQ adapter drove OPQ parser error bits from local `err`, `t0`, and `t1` marker sidebands even though the OPQ wrapper expects `hit_err`, `shd_err`, and `hdr_err`, so normal marker traffic could be misclassified as parser-error traffic. |
 
 ## 2026-04-21
 
@@ -396,5 +397,33 @@ Historical formal note:
     - `B048_lane2_only`: `opq/dma hits = 1180/1180`
     - `B049_lane3_only`: `opq/dma hits = 1420/1420`
   - this bug only appears when the merged path is enabled and the surviving FEB mask excludes lane0
+- Commit:
+  - `pending`
+
+## 2026-04-29
+
+### BUG-014-R: OPQ adapter treated MuSiP marker sidebands as parser error bits
+- First seen in:
+  - OPQ stream contract audit of `firmware/a10_board/a10/merger/ingress_egress_adaptor.vhd`
+  - matching native-SV simulation mirror `tb_int/cases/basic/uvm/dut/ingress_egress_adaptor_native_sv.vhd`
+- Symptom:
+  - the MuSiP adapter drove `ingress_error(lane)(0)` from `rx_ingress(lane).err`, `ingress_error(lane)(1)` from `rx_ingress(lane).t0`, and `ingress_error(lane)(2)` from `rx_ingress(lane).t1`
+  - the OPQ wrapper consumes those three bits as parser error semantics (`hit_err`, `shd_err`, and `hdr_err`), while MuSiP `t0` and `t1` are local marker sidebands used for other purposes
+  - the adapter also consumed OPQ egress error sidebands back into `link32_t.err`, creating the opposite contract leak on the return side
+- Root cause:
+  - the adapter assumed the MuSiP `link32_t` sideband tuple was layout-compatible with the OPQ Avalon-ST error vector
+  - that premise is false: OPQ error bits are semantic parser-error requests, while MuSiP `t0` and `t1` are not error qualifiers for this boundary
+- Fix status:
+  - state: fixed and covered by the final firmware build gate for this release
+  - files/modules: `firmware/a10_board/a10/merger/ingress_egress_adaptor.vhd` and `tb_int/cases/basic/uvm/dut/ingress_egress_adaptor_native_sv.vhd`
+  - mechanism: OPQ ingress error vectors are now tied to `"000"` for all four lanes, OPQ egress error ports are left open, and the merged MuSiP egress `err` bit is tied low at this adapter
+  - before_fix_outcome: any asserted `t0` or `t1` marker could be interpreted by OPQ as `shd_err` or `hdr_err`, potentially masking otherwise valid traffic as parser-error traffic
+  - after_fix_outcome: the MuSiP marker sidebands remain local to the surrounding datapath and this OPQ boundary receives no parser-error requests from them
+  - potential_hazard: low; this is a localized stream-boundary contract tie-off, but any future attempt to forward real parser errors must define a new named contract instead of reusing `t0` or `t1`
+  - Claude Opus 4.7 xhigh review decision: pending / not run
+- Runtime / coverage context:
+  - source audit evidence: OPQ `asi_ingress_error[0:2]` is interpreted as `hit_err`, `shd_err`, and `hdr_err`, not as MuSiP marker metadata
+  - fast gate: `git diff --check` passes on the patch
+  - firmware gate: `make -C firmware/a10_board flow` is the release build gate and the release notes record the final Quartus result and STA caveat
 - Commit:
   - `pending`

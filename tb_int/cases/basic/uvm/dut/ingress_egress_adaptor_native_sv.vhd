@@ -73,7 +73,6 @@ architecture rtl of ingress_egress_adaptor is
     signal aso_egress_valid          : std_logic;
     signal aso_egress_startofpacket  : std_logic;
     signal aso_egress_endofpacket    : std_logic;
-    signal aso_egress_error          : std_logic_vector(2 downto 0);
     signal ingress_startofpacket     : std_logic_vector(3 downto 0) := (others => '0');
     signal ingress_endofpacket       : std_logic_vector(3 downto 0) := (others => '0');
     signal ingress_error             : slv3_array_t(3 downto 0) := (others => (others => '0'));
@@ -87,9 +86,7 @@ begin
     begin
         ingress_startofpacket(lane) <= enable and rx_ingress(lane).sop and not rx_ingress(lane).idle;
         ingress_endofpacket(lane)   <= enable and rx_ingress(lane).eop and not rx_ingress(lane).idle;
-        ingress_error(lane)(0)      <= rx_ingress(lane).err;
-        ingress_error(lane)(1)      <= rx_ingress(lane).t0;
-        ingress_error(lane)(2)      <= rx_ingress(lane).t1;
+        ingress_error(lane)         <= (others => '0');
     end generate;
 
     e_opq_native_sv : component ordered_priority_queue_dut_sv
@@ -123,7 +120,7 @@ begin
         aso_egress_ready            => '1',
         aso_egress_startofpacket    => aso_egress_startofpacket,
         aso_egress_endofpacket      => aso_egress_endofpacket,
-        aso_egress_error            => aso_egress_error,
+        aso_egress_error            => open,
         avs_csr_address             => (others => '0'),
         avs_csr_read                => '0',
         avs_csr_write               => '0',
@@ -157,11 +154,7 @@ begin
                 else
                     egress_link.eop := aso_egress_endofpacket;
                 end if;
-                if aso_egress_error /= "000" then
-                    egress_link.err := '1';
-                else
-                    egress_link.err := '0';
-                end if;
+                egress_link.err := '0';
                 rx_egress(0) <= egress_link;
             end if;
         end if;
