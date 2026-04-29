@@ -69,9 +69,9 @@ help:
 	  '  make ip-formal-boundary # run the OPQ-boundary formal scaffold' \
 	  '  make ip-cov-closure   # run the promoted UCDB closure bundle and regenerate the DV report' \
 	  '  make ip-cross-baselines # run promoted CROSS-001..005 continuous-frame baseline evidence' \
-	  '  make ip-ghdl-cross-objects # compile the lightweight GHDL all-bucket cross waveform fixture' \
-	  '  make ip-ghdl-cross-run # run the lightweight GHDL all-bucket cross waveform fixture' \
-	  '  make ip-ghdl-cross-gtkw # generate the SignalTap-aligned GTKWave save file for the GHDL fixture' \
+	  '  make ip-ghdl-cross-objects # compile the lightweight GHDL packet-evidence waveform fixture' \
+	  '  make ip-ghdl-cross-run # run the lightweight GHDL packet-evidence waveform fixture' \
+	  '  make ip-ghdl-cross-gtkw # generate the packet-decoded GTKWave save file for the GHDL fixture' \
 	  '  make ip-ghdl-cross-checkpoints # verify named VCD checkpoints for the GHDL fixture' \
 	  '  make ip-ghdl-cross-view # run the GHDL fixture and open GTKWave when DISPLAY is available' \
 	  '  make ip-e2e           # alias for the basic end-to-end UVM case' \

@@ -120,6 +120,11 @@ def build_arg_parser() -> argparse.ArgumentParser:
         type=Path,
         help="Optional existing replay/reference directory to copy into the bundle instead of regenerating it.",
     )
+    parser.add_argument(
+        "--opq-source-mode",
+        default="upstream_qsys_generated",
+        help="OPQ_SOURCE_MODE passed to the UVM makefile, for example native_sv_signoff.",
+    )
     return parser
 
 
@@ -357,6 +362,7 @@ def main(argv: list[str]) -> int:
             "-C",
             str(uvm_dir),
             "run",
+            f"OPQ_SOURCE_MODE={args.opq_source_mode}",
             f"RUN_LOG={run_log}",
             f"RUN_DO={do_script}",
             f"SIM_ARGS={' '.join(sim_args)}",
@@ -403,6 +409,7 @@ def main(argv: list[str]) -> int:
         "seed": args.seed,
         "hit_mode": args.hit_mode,
         "frame_slot_cycles": args.frame_slot_cycles,
+        "opq_source_mode": args.opq_source_mode,
         "lane_saturation": list(args.sat),
         "feb_enable_mask": f"0x{mask_value:x}",
         "dma_half_full_pct": args.dma_half_full_pct,

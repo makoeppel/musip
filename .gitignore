@@ -32,6 +32,7 @@ tb_int/cases/basic/uvm/report/longrun/*.log
 tb_int/cases/basic/uvm/report/longrun_ext_*/
 !tb_int/cases/basic/uvm/report/longrun_ext_260422_fixed/
 tb_int/cases/basic/uvm/report/longrun_ext_260422_fixed/*.log
+tb_int/report/wave_native_compare/
 
 # Local Quartus compile artifacts
 firmware/a10_board/db/

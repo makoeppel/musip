@@ -142,6 +142,9 @@ class swb_scoreboard extends uvm_component;
   bit                     allow_deferred_plan;
   bit                     enable_case_contract_cov;
   bit                     case_started;
+  int unsigned            frame_slot_cycles;
+  longint unsigned        ingress_sop_cycles[SWB_N_LANES][$];
+  int unsigned            ingress_sop_alignment_errors;
 
   covergroup case_contract_cg with function sample(
     int unsigned expected_word_count_i,
@@ -267,6 +270,8 @@ class swb_scoreboard extends uvm_component;
     allow_deferred_plan = 1'b0;
     enable_case_contract_cov = 1'b1;
     case_started = 1'b0;
+    frame_slot_cycles = 0;
+    ingress_sop_alignment_errors = 0;
     case_contract_cg = new();
   endfunction
 
@@ -287,6 +292,7 @@ class swb_scoreboard extends uvm_component;
     super.build_phase(phase);
     void'(uvm_config_db#(bit)::get(this, "", "allow_deferred_plan", allow_deferred_plan));
     void'(uvm_config_db#(bit)::get(this, "", "enable_case_contract_cov", enable_case_contract_cov));
+    void'($value$plusargs("SWB_FRAME_SLOT_CYCLES=%d", frame_slot_cycles));
     if (!uvm_config_db#(swb_case_plan)::get(this, "", "case_plan", plan)) begin
       if (!allow_deferred_plan) begin
         `uvm_fatal("NOPLAN", "swb_case_plan missing from config_db")
@@ -322,6 +328,10 @@ class swb_scoreboard extends uvm_component;
     opq_missing_count = 0;
     dma_ghost_count = 0;
     dma_missing_count = 0;
+    ingress_sop_alignment_errors = 0;
+    foreach (ingress_sop_cycles[lane]) begin
+      ingress_sop_cycles[lane].delete();
+    end
     foreach (ingress_parsers[lane]) begin
       if (ingress_parsers[lane] != null) begin
         ingress_parsers[lane].reset();
@@ -388,6 +398,115 @@ class swb_scoreboard extends uvm_component;
   end
   endfunction
 
+  function void record_ingress_sop(
+    swb_stream_parser_state parser,
+    swb_stream_beat         beat
+  );
+  begin
+    if (parser.stage_name == "opq_egress") begin
+      return;
+    end
+    ingress_sop_cycles[parser.lane_id].push_back(beat.observed_cycle);
+  end
+  endfunction
+
+  function bit check_ingress_sop_alignment();
+    bit ok;
+    int unsigned frames_to_check;
+    int unsigned ref_lane;
+    int unsigned ref_skew;
+    bit have_ref;
+    longint unsigned ref_cycle;
+    longint signed observed_delta;
+    longint signed expected_delta;
+  begin
+    ok = 1'b1;
+    if (plan == null) begin
+      return ok;
+    end
+
+    frames_to_check = plan.frame_count;
+    if (frame_slot_cycles == 0 && frames_to_check > 1) begin
+      frames_to_check = 1;
+      `uvm_info(
+        "INGRESS_SOP_ALIGN",
+        "SWB_FRAME_SLOT_CYCLES is unset; validating first-frame SOP alignment only",
+        UVM_LOW
+      )
+    end
+
+    for (int frame_idx = 0; frame_idx < frames_to_check; frame_idx++) begin
+      have_ref = 1'b0;
+      ref_lane = 0;
+      ref_cycle = 0;
+      ref_skew = 0;
+
+      for (int lane = 0; lane < SWB_N_LANES; lane++) begin
+        if (!plan.feb_enable_mask[lane]) begin
+          continue;
+        end
+        if (plan.frames_by_lane[lane].size() <= frame_idx) begin
+          ingress_sop_alignment_errors++;
+          ok = 1'b0;
+          `uvm_error(
+            "INGRESS_SOP_ALIGN",
+            $sformatf("lane%0d has no planned frame %0d for enabled-lane SOP alignment", lane, frame_idx)
+          )
+          continue;
+        end
+        if (ingress_sop_cycles[lane].size() <= frame_idx) begin
+          ingress_sop_alignment_errors++;
+          ok = 1'b0;
+          `uvm_error(
+            "INGRESS_SOP_ALIGN",
+            $sformatf("lane%0d frame %0d SOP was not observed", lane, frame_idx)
+          )
+          continue;
+        end
+
+        if (!have_ref) begin
+          have_ref = 1'b1;
+          ref_lane = lane;
+          ref_cycle = ingress_sop_cycles[lane][frame_idx];
+          ref_skew = plan.frames_by_lane[lane][frame_idx].pre_sop_cycles;
+        end else begin
+          observed_delta = longint'(ingress_sop_cycles[lane][frame_idx]) - longint'(ref_cycle);
+          expected_delta = longint'(plan.frames_by_lane[lane][frame_idx].pre_sop_cycles) - longint'(ref_skew);
+          if (observed_delta != expected_delta) begin
+            ingress_sop_alignment_errors++;
+            ok = 1'b0;
+            `uvm_error(
+              "INGRESS_SOP_ALIGN",
+              $sformatf(
+                "frame %0d lane%0d SOP cycle delta vs lane%0d is %0d, expected %0d from pre_sop_cycles",
+                frame_idx,
+                lane,
+                ref_lane,
+                observed_delta,
+                expected_delta
+              )
+            )
+          end
+        end
+      end
+    end
+
+    if (ok) begin
+      `uvm_info(
+        "INGRESS_SOP_ALIGN",
+        $sformatf(
+          "validated %0d frame-start SOP alignment point(s), slot_cycles=%0d skew0=%s",
+          frames_to_check,
+          frame_slot_cycles,
+          plan.first_frame_lane_skew_summary()
+        ),
+        UVM_LOW
+      )
+    end
+    return ok;
+  end
+  endfunction
+
   function void consume_stream_beat(
     swb_stream_parser_state parser,
     ref swb_stage_hit       stage_hits[$],
@@ -410,6 +529,7 @@ class swb_scoreboard extends uvm_component;
         end
         parser.header_id = beat.data[31:26];
         parser.subheader_idx = 0;
+        record_ingress_sop(parser, beat);
         parser.state = SWB_PARSE_EXPECT_TS_HIGH;
       end
 
@@ -591,6 +711,8 @@ class swb_scoreboard extends uvm_component;
     $fdisplay(fd, "observed_payload_words=%0d", recv_words);
     $fdisplay(fd, "padding_words=%0d", padding_words);
     $fdisplay(fd, "parse_errors=%0d", parse_errors);
+    $fdisplay(fd, "frame_slot_cycles=%0d", frame_slot_cycles);
+    $fdisplay(fd, "ingress_sop_alignment_errors=%0d", ingress_sop_alignment_errors);
     $fdisplay(fd, "saw_end_of_event=%0d", saw_end_of_event);
     $fdisplay(fd, "ingress_hits=%0d", ingress_hits.size());
     $fdisplay(fd, "expected_hits=%0d", expected_hits.size());
@@ -739,6 +861,7 @@ class swb_scoreboard extends uvm_component;
     bit           scoreboard_pass;
     bit           require_dma_completion;
     bit           padding_contract_ok;
+    bit           ingress_sop_alignment_ok;
   begin
     if ((plan == null) || !case_started) begin
       `uvm_error("NOCASE", "check_current_case called before any active case was loaded")
@@ -749,6 +872,7 @@ class swb_scoreboard extends uvm_component;
     opq_complete = 1'b1;
     require_dma_completion = (plan.expected_dma_words.size() != 0);
     padding_contract_ok = 1'b1;
+    ingress_sop_alignment_ok = 1'b1;
 
     if (recv_words != plan.expected_dma_words.size()) begin
       `uvm_error(
@@ -801,6 +925,8 @@ class swb_scoreboard extends uvm_component;
       )
     end
 
+    ingress_sop_alignment_ok = check_ingress_sop_alignment();
+
     foreach (ingress_hits[idx]) begin
       if (plan.feb_enable_mask[ingress_hits[idx].lane_id]) begin
         expected_merged_hits.push_back(ingress_hits[idx]);
@@ -834,6 +960,7 @@ class swb_scoreboard extends uvm_component;
 
     scoreboard_pass =
       (parse_errors == 0) &&
+      ingress_sop_alignment_ok &&
       ingress_complete &&
       (!expect_opq_merged || opq_complete) &&
       padding_contract_ok &&

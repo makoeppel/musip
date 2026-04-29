@@ -138,6 +138,7 @@ class swb_ingress_monitor extends uvm_component;
   uvm_analysis_port #(swb_stream_beat) ap;
   int unsigned lane_id;
   int unsigned beat_count;
+  longint unsigned cycle_count;
 
   `uvm_component_utils(swb_ingress_monitor)
 
@@ -146,6 +147,7 @@ class swb_ingress_monitor extends uvm_component;
     ap = new("ap", this);
     lane_id = 0;
     beat_count = 0;
+    cycle_count = 0;
   endfunction
 
   function void build_phase(uvm_phase phase);
@@ -165,12 +167,15 @@ class swb_ingress_monitor extends uvm_component;
         item = swb_stream_beat::type_id::create($sformatf("lane%0d_ingress_beat", lane_id));
         item.lane_id = lane_id;
         item.beat_idx = beat_count;
+        item.observed_cycle = cycle_count;
+        item.observed_time = $time;
         item.data = vif.data;
         item.datak = vif.datak;
         item.stream_name = $sformatf("lane%0d_ingress", lane_id);
         beat_count++;
         ap.write(item);
       end
+      cycle_count++;
     end
   end
   endtask
@@ -209,6 +214,7 @@ class swb_opq_monitor extends uvm_component;
   virtual opq_egress_if vif;
   uvm_analysis_port #(swb_stream_beat) ap;
   int unsigned beat_count;
+  longint unsigned cycle_count;
 
   `uvm_component_utils(swb_opq_monitor)
 
@@ -216,6 +222,7 @@ class swb_opq_monitor extends uvm_component;
     super.new(name, parent);
     ap = new("ap", this);
     beat_count = 0;
+    cycle_count = 0;
   endfunction
 
   function void build_phase(uvm_phase phase);
@@ -234,12 +241,15 @@ class swb_opq_monitor extends uvm_component;
         item = swb_stream_beat::type_id::create("opq_egress_beat");
         item.lane_id = 0;
         item.beat_idx = beat_count;
+        item.observed_cycle = cycle_count;
+        item.observed_time = $time;
         item.data = vif.data;
         item.datak = vif.datak;
         item.stream_name = "opq_egress";
         beat_count++;
         ap.write(item);
       end
+      cycle_count++;
     end
   end
   endtask

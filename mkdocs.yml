@@ -30,6 +30,7 @@ nav:
     - FEB LVDS: registers/lvds_registers.md
     - FEB MuPix: registers/mupix_registers.md
     - FEB MuTRiG: registers/mutrig_registers.md
+    - OPQ JTAG CSR: registers/opq_jtag_csr.md
     - FEB Sorter: registers/sorter_registers.md
   - MIDAS: 
     - Banks: registers/midas_format.md

@@ -10,27 +10,10 @@ from pathlib import Path
 
 CASES = [
     ("B001", 1, 0),
-    ("B002", 2, 0),
     ("B046", 46, 0),
-    ("B047", 47, 0),
-    ("B048", 48, 0),
-    ("B049", 49, 0),
-    ("E025", 1025, 1),
-    ("E026", 1026, 1),
-    ("E027", 1027, 1),
-    ("P040", 2040, 2),
-    ("P041", 2041, 2),
     ("P123", 2123, 2),
-    ("P124", 2124, 2),
     ("X111", 3111, 3),
-    ("X112", 3112, 3),
-    ("X116", 3116, 3),
-    ("X117", 3117, 3),
-    ("X118", 3118, 3),
-    ("X120", 3120, 3),
-    ("X122", 3122, 3),
-    ("X123", 3123, 3),
-    ("X124", 3124, 3),
+    ("C001", 4001, 4),
 ]
 
 
@@ -69,6 +52,7 @@ def checkpoint_plan(case_cycles: int, clock_period_ns: int) -> list[Check]:
     period_fs = clock_period_ns * 1_000_000
     base_fs = ((2 * 8 - 1) * clock_period_ns * 500_000)
     stride_fs = (case_cycles + 1) * period_fs
+    frame_period_cycles = (0x800 * 8) // clock_period_ns
 
     def start(case_idx: int) -> int:
         return base_fs + case_idx * stride_fs
@@ -77,19 +61,18 @@ def checkpoint_plan(case_cycles: int, clock_period_ns: int) -> list[Check]:
         return start(case_idx) + cycles * period_fs
 
     checks: list[Check] = [
-        Check("T01_BASIC_B001 start", start(0), {"case_code[15:0]": 1, "bucket_id[3:0]": 0, "run_active": "1", "ghost_count[15:0]": 0, "missing_count[15:0]": 0}),
-        Check("T03_BASIC_B046 single lane", start(2), {"case_code[15:0]": 46, "bucket_id[3:0]": 0, "lane_mask[3:0]": 1}),
-        Check("T07_EDGE_E025 start", start(6), {"case_code[15:0]": 1025, "bucket_id[3:0]": 1, "error_expected": "0"}),
-        Check("T10_PROF_P040 start", start(9), {"case_code[15:0]": 2040, "bucket_id[3:0]": 2}),
-        Check("P040 DMA backpressure active", mid(9, 20), {"case_code[15:0]": 2040, "dma_half_full": "1", "flow_state[3:0]": 4}),
-        Check("P041 DMA backpressure released", mid(10, 80), {"case_code[15:0]": 2041, "dma_half_full": "0"}),
-        Check("T12_PROF_P123 start", start(11), {"case_code[15:0]": 2123, "bucket_id[3:0]": 2}),
-        Check("P123 partial-join body hold", mid(11, 1000), {"case_code[15:0]": 2123, "opq_body_hold": "1", "join_pending": "1", "flow_state[3:0]": 3}),
-        Check("P123 body hold released", mid(11, 3000), {"case_code[15:0]": 2123, "opq_body_hold": "0", "join_pending": "0"}),
-        Check("P124 partial-join body hold", mid(12, 1000), {"case_code[15:0]": 2124, "opq_body_hold": "1", "join_pending": "1"}),
-        Check("T14_ERROR_X111 start", start(13), {"case_code[15:0]": 3111, "bucket_id[3:0]": 3, "error_expected": "1"}),
-        Check("T18_ERROR_X118 start", start(17), {"case_code[15:0]": 3118, "bucket_id[3:0]": 3, "error_expected": "1"}),
-        Check("T23_CROSS_DONE", start(len(CASES)) + period_fs, {"run_active": "0", "cases_done[7:0]": 22, "ghost_count[15:0]": 0, "missing_count[15:0]": 0, "scoreboard_pass": "1"}),
+        Check("T01_B001 aligned ingress start", mid(0, 1), {"case_index[7:0]": 0, "run_active": "1", "lane_mask[3:0]": 15, "lane0_word_kind[4:0]": 1, "lane1_word_kind[4:0]": 1, "lane2_word_kind[4:0]": 1, "lane3_word_kind[4:0]": 1, "opq_word_kind[4:0]": 0, "ghost_count[15:0]": 0, "missing_count[15:0]": 0}),
+        Check("B001 first packet committed before OPQ egress", mid(0, 3872), {"case_index[7:0]": 0, "opq_word_kind[4:0]": 1, "opq_lane_provenance[2:0]": 4, "opq_page_ram_we": "0"}),
+        Check("B001 second UVM-spaced frame timestamp", mid(0, frame_period_cycles + 3), {"case_index[7:0]": 0, "lane0_word_kind[4:0]": 3, "lane0_frame_ts[47:0]": 0x800}),
+        Check("T02_BASIC_B046 start", mid(1, 1), {"case_code[15:0]": 46, "bucket_id[3:0]": 0, "lane_mask[3:0]": 15}),
+        Check("B046 runtime mask frame1", mid(1, frame_period_cycles + 9), {"case_code[15:0]": 46, "lane_mask[3:0]": 3, "lane_mask_cmd_valid": "0"}),
+        Check("B046 runtime mask frame2", mid(1, 2 * frame_period_cycles + 9), {"case_code[15:0]": 46, "lane_mask[3:0]": 1}),
+        Check("T03_PROF_P123 start", mid(2, 1), {"case_code[15:0]": 2123, "bucket_id[3:0]": 2}),
+        Check("P123 partial-join body hold", mid(2, 1000), {"case_code[15:0]": 2123, "opq_body_hold": "1", "join_pending": "1", "flow_state[3:0]": 3}),
+        Check("P123 DMA backpressure", mid(2, 2020), {"case_code[15:0]": 2123, "dma_half_full": "1"}),
+        Check("T04_ERROR_X111 start", mid(3, 1), {"case_code[15:0]": 3111, "bucket_id[3:0]": 3, "error_expected": "1"}),
+        Check("T05_CSR_C001 read", mid(4, 65), {"case_code[15:0]": 4001, "bucket_id[3:0]": 4, "csr_read_valid": "1", "csr_reg_id[7:0]": 1}),
+        Check("T06_CROSS_DONE", start(len(CASES)) + period_fs, {"run_active": "0", "cases_done[7:0]": 5, "ghost_count[15:0]": 0, "missing_count[15:0]": 0, "scoreboard_pass": "1"}),
     ]
     return checks
 

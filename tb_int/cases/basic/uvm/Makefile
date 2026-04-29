@@ -67,7 +67,7 @@ VHDL_SOURCES = \
 	$(ROOT)/firmware/a10_board/a10/swb/swb_sc_secondary.vhd \
 	$(ROOT)/firmware/a10_board/a10/swb/qc_histos.vhd \
 	$(OPQ_VHDL_DUT_SOURCES) \
-	$(ROOT)/firmware/a10_board/a10/merger/ingress_egress_adaptor.vhd \
+	$(OPQ_ADAPTOR_VHDL_SOURCE) \
 	$(ROOT)/firmware/a10_board/a10/swb/musip_mux_4_1.vhd \
 	$(ROOT)/firmware/a10_board/a10/swb/swb_block.vhd \
 	$(CURDIR)/dut/swb_block_uvm_wrapper.vhd

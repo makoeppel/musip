@@ -34,6 +34,7 @@ OPQ_SIGNOFF_HW_TCL := $(MU3E_IP_CORES_ROOT)/packet_scheduler/script/ordered_prio
 OPQ_VHDL_DUT_SOURCES =
 OPQ_VERILOG_DUT_SOURCES =
 OPQ_SV_DUT_SOURCES =
+OPQ_ADAPTOR_VHDL_SOURCE = $(OPQ_LOCAL_DIR)/ingress_egress_adaptor.vhd
 OPQ_SIM_EXTRA_LIBS =
 OPQ_SIM_QSYS_LIB =
 OPQ_SIM_QSYS_TOP_LIB =
@@ -75,8 +76,8 @@ OPQ_DUT_DEFINES = \
 
 else ifeq ($(OPQ_SOURCE_MODE),native_sv_signoff)
 OPQ_VSIM_LIB_FLAGS = $(OPQ_INTEL_PRIM_SIM_LIB_FLAGS)
-OPQ_VHDL_DUT_SOURCES = \
-	$(OPQ_LOCAL_DIR)/opq_native_sv_pkg.vhd
+OPQ_VHDL_DUT_SOURCES =
+OPQ_ADAPTOR_VHDL_SOURCE = $(ROOT)/tb_int/cases/basic/uvm/dut/ingress_egress_adaptor_native_sv.vhd
 
 OPQ_VERILOG_DUT_SOURCES = \
 	$(OPQ_SIGNOFF_VENDOR_DIR)/frame_table.v \

@@ -117,6 +117,8 @@ endclass
 class swb_stream_beat extends uvm_sequence_item;
   int unsigned lane_id;
   int unsigned beat_idx;
+  longint unsigned observed_cycle;
+  time         observed_time;
   bit [31:0]   data;
   bit [3:0]    datak;
   string       stream_name;
@@ -127,6 +129,8 @@ class swb_stream_beat extends uvm_sequence_item;
     super.new(name);
     lane_id = 0;
     beat_idx = 0;
+    observed_cycle = 0;
+    observed_time = 0;
     data = '0;
     datak = '0;
     stream_name = "";
@@ -134,10 +138,12 @@ class swb_stream_beat extends uvm_sequence_item;
 
   function string convert2string();
     return $sformatf(
-      "%s beat[%0d] lane=%0d datak=0x%0h data=0x%08h",
+      "%s beat[%0d] lane=%0d cycle=%0d time=%0t datak=0x%0h data=0x%08h",
       stream_name,
       beat_idx,
       lane_id,
+      observed_cycle,
+      observed_time,
       datak,
       data
     );
