@@ -59,6 +59,10 @@ target_include_directories(writetdacs PUBLIC include)
 add_executable(dmatest firmware/dmatest.cpp)
 target_link_libraries(dmatest libmudaq)
 
+add_executable(swb_dma_snapshot firmware/swb_dma_snapshot.cpp)
+target_link_libraries(swb_dma_snapshot libmudaq)
+
 install(TARGETS
     dmatest
+    swb_dma_snapshot
 )

@@ -90,14 +90,19 @@ int FEBSlowcontrolInterface::FEB_write(uint32_t febIDx, const uint32_t startaddr
     }
     mdev.write_memory_rw(3 + data.size(), 0x0000009c);
 
+    // Flush posted PCIe/MMIO writes before SC main samples the command RAM.
+    (void)mdev.read_memory_rw(3 + data.size());
+
     // SC_MAIN_LENGTH_REGISTER_W starts from 1
     // length for SC Main does not include preamble and trailer, thats why it is
     // 2+length
     mdev.write_register(SC_MAIN_LENGTH_REGISTER_W, 2 + data.size());
     mdev.write_register(SC_MAIN_ENABLE_REGISTER_W, 0x0);
-    mdev.toggle_register_fast(SC_MAIN_ENABLE_REGISTER_W, 0x1);
     // firmware regs SC_MAIN_ENABLE_REGISTER_W so that it only starts on a 0->1
     // transition
+    mdev.write_register(SC_MAIN_ENABLE_REGISTER_W, 0x1);
+    (void)mdev.read_register_ro(SC_MAIN_STATUS_REGISTER_R);
+    mdev.write_register(SC_MAIN_ENABLE_REGISTER_W, 0x0);
 
     // check if SC Main is done
     uint32_t count = 0;
@@ -238,13 +243,18 @@ int FEBSlowcontrolInterface::FEB_read(uint32_t febIDx, const uint32_t startaddr,
     mdev.write_memory_rw(2, data.size());
     mdev.write_memory_rw(3, 0x0000009c);
 
+    // Flush posted PCIe/MMIO writes before SC main samples the command RAM.
+    (void)mdev.read_memory_rw(3);
+
     // SC_MAIN_LENGTH_REGISTER_W starts from 1
     // length for SC Main does not include preamble and trailer, thats why it is 2
     mdev.write_register(SC_MAIN_LENGTH_REGISTER_W, 2);
     mdev.write_register(SC_MAIN_ENABLE_REGISTER_W, 0x0);
     // firmware regs SC_MAIN_ENABLE_REGISTER_W so that it only starts on a 0->1
     // transition
-    mdev.toggle_register(SC_MAIN_ENABLE_REGISTER_W, 0x1, 100);
+    mdev.write_register(SC_MAIN_ENABLE_REGISTER_W, 0x1);
+    (void)mdev.read_register_ro(SC_MAIN_STATUS_REGISTER_R);
+    mdev.write_register(SC_MAIN_ENABLE_REGISTER_W, 0x0);
 
     int count = 0;
     while (count < 1000) {

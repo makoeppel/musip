@@ -130,6 +130,7 @@ Important:
 - `make ip-init` now syncs the nested `external/mu3e-ip-cores` submodule tree, rewrites public GitHub SSH URLs to HTTPS for this workspace, and refreshes the musip-local OPQ wrapper from that in-repo upstream source.
 - `make ip-svd` regenerates the OPQ SVD beside the Qsys wrapper, and `make ip-csr-lint` checks both the upstream OPQ `_hw.tcl` and the musip-local fixed-4 wrapper against the common UID/META CSR header contract.
 - The full OPQ JTAG CSR target list, `OPQ_CSR_MASTER` service-selection rule, write/lane-mask examples, and log locations are maintained in `docs/registers/opq_jtag_csr.md`.
+- SWB hardware DMA snapshots use the read-only `build/tools/swb_dma_snapshot` helper and the SignalTap correlation flow in `docs/swb_dma_capture.md`.
 - `make ip-tlm-basic-smoke` is the smallest deterministic replay bundle. It is the right first step when you are debugging the OPQ seam.
 - `make ip-tlm-basic` exports replay vectors and expected DMA words without running RTL. Use it when you want a deterministic replay bundle for the full case.
 - `make ip-lint-rtl` applies a strict style gate to the clean maintained bridge/wrapper files and a hygiene gate to legacy or imported RTL touched by this integration branch.

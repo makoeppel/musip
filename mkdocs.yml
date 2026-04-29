@@ -32,6 +32,8 @@ nav:
     - FEB MuTRiG: registers/mutrig_registers.md
     - OPQ JTAG CSR: registers/opq_jtag_csr.md
     - FEB Sorter: registers/sorter_registers.md
+  - Hardware:
+    - SWB DMA Capture: swb_dma_capture.md
   - MIDAS: 
     - Banks: registers/midas_format.md
   - configuration:

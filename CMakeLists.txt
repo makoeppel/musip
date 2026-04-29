@@ -37,6 +37,10 @@ find_package(Boost 1.74 REQUIRED
 find_package(ROOT
     COMPONENTS Core MathCore RIO Hist Tree Net RHTTP Gui XMLIO
 )
+if(ROOT_FOUND AND (NOT TARGET ROOT::ROOTNTuple OR NOT TARGET ROOT::ROOTNTupleUtil))
+    message(WARNING "ROOT was found without ROOTNTuple targets; skipping analyzer targets")
+    set(ROOT_FOUND FALSE)
+endif()
 if(ROOT_FOUND)
     find_package(Midas REQUIRED COMPONENTS manalyzer
         NO_DEFAULT_PATH PATHS "$ENV{MIDASSYS}"
