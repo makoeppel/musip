@@ -20,7 +20,7 @@ All cases below address specific fields or beats defined in the stimulus field m
 - `subheader_cnt[14:0]` — debug0 high, `hit_cnt[15:0]` — debug0 low (frame totals)
 - `shd_ts[11:4]` — subheader beat high byte · `sub_hit_cnt[7:0]` — subheader beat mid byte
 - hit word `{TS2[4:0], TS1[10:0], Col[6:0], Row[8:0]}`
-- `N_SHD` — per-lane subheader budget (`SWB_N_SUBHEADERS`, default 256 in replay, 128 in OPQ)
+- `N_SHD` — per-lane subheader budget (`SWB_N_SUBHEADERS`, default 128 for the FEB/OPQ contract; 64 and 256 are variant-only regression points)
 - `MAX_HITS` — `SWB_MAX_HITS_PER_SUBHEADER` (default 4)
 
 ## Catalog

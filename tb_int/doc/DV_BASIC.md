@@ -167,7 +167,7 @@ Timestamp prior for promoted evidence: `ts[47:0]` is in `8 ns` units. The frame 
 | B123 | D | planned (variant-only) | `SWB_N_LANES=2` build | build compiles, 2 lane streams honored, remaining lanes tied off | A |
 | B124 | D | planned (variant-only) | `SWB_N_LANES=8` build | build compiles, 8 lane streams honored, OPQ page allocator scales | A |
 | B125 | D | planned (variant-only) | `SWB_N_SUBHEADERS=64` build | `N_SHD=64` accepted by `feb_frame_assembly` and OPQ; shorter frames | I |
-| B126 | D | planned (variant-only) | `SWB_N_SUBHEADERS=256` build (current default) | `N_SHD=256` as emitted by `run_basic_ref.py` | I |
+| B126 | D | planned (variant-only) | `SWB_N_SUBHEADERS=256` build | `N_SHD=256` remains a variant-only larger-frame regression point | I |
 | B127 | D | planned | `SWB_MAX_HITS_PER_SUBHEADER=2` (reduced) | each subheader carries at most 2 hits; DMA hit multiset still matches | I/D |
 | B128 | D | planned | `SWB_MAX_HITS_PER_SUBHEADER=8` (extended) | each subheader carries at most 8 hits | I/D |
 | B129 | D | live UVM | signoff smoke regression: `B001..B006` chained in `bucket_frame` mode | all six cases close without harness reset between them | all |

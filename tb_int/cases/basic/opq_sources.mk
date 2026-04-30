@@ -1,6 +1,6 @@
 OPQ_SOURCE_MODE ?= upstream_qsys_generated
 MU3E_IP_CORES_ROOT ?= $(ROOT)/external/mu3e-ip-cores
-OPQ_N_SHD ?= 256
+OPQ_N_SHD ?= 128
 OPQ_N_HIT ?= 2047
 OPQ_LANE_FIFO_DEPTH ?= 1024
 OPQ_TICKET_FIFO_DEPTH ?= 1024
@@ -63,7 +63,7 @@ OPQ_SIM_QSYS_VERILOG_SOURCES = \
 # The generated Qsys wrapper bakes the fixed profile into its top-level SV,
 # but the submodules are compiled as separate SystemVerilog units. Keep the
 # command-line defines pinned to the same packaged values so every compile unit
-# sees the identical 4-lane / N_SHD contract as the synthesis QIP.
+# sees the identical 4-lane / FEB N_SHD=128 contract as the synthesis QIP.
 OPQ_DUT_DEFINES = \
 	+define+OPQ_USE_NATIVE_SV \
 	+define+OPQ_N_LANE=4 \

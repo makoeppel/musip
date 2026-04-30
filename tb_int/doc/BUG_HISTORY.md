@@ -54,6 +54,7 @@ Historical formal note:
 | [BUG-012-R](#bug-012-r-merged-opq-egress-was-still-remasked-by-raw-feb-lane-enables-so-non-lane0-mask-cases-blackholed-valid-dma-traffic) | R | soft error | `corner-only (merged path with lane0 masked off)` | fixed | `make ip-uvm-basic` with `B047_lane1_only` after `BUG-011-R` seam repair | `39a6a83` | The merged OPQ egress always emerged on logical lane0, but the downstream mux still used the raw FEB lane mask, so lane1/2/3-only cases blackholed valid merged traffic before DMA packing. |
 | [BUG-013-R](#bug-013-r-half-frame-lane-skew-bring-up-exposed-a-seeded-merge-path-stall-that-also-reproduces-at-skew-0) | R | hard stuck error | `corner-only (seeded symmetric 4-lane random profile; skew stress exposed it immediately)` | fixed | `make ip-uvm-basic` with `P123_fixed_lane_skew_0_2048` | `pending` | Half-frame skew closure initially exposed a promoted merge-enabled stall, but the blocker is now fixed locally: the vendored Qsys OPQ wrapper now forwards `OPQ_N_HIT=2047` and the monolithic page allocator now waits a full `N_SHD * 16` frame-join window, so both `P123` and `P124` retire cleanly. |
 | [BUG-014-R](#bug-014-r-opq-adapter-treated-musip-marker-sidebands-as-parser-error-bits) | R | soft error | `common (any merge-enabled traffic with asserted t0 or t1 markers)` | fixed | OPQ stream contract audit of `ingress_egress_adaptor.vhd` | `pending` | The MuSiP OPQ adapter drove OPQ parser error bits from local `err`, `t0`, and `t1` marker sidebands even though the OPQ wrapper expects `hit_err`, `shd_err`, and `hdr_err`, so normal marker traffic could be misclassified as parser-error traffic. |
+| [BUG-015-R](#bug-015-r-musip-opq-profile-used-256-subheaders-while-feb-frame-format-requires-128) | R | soft error | `common (every promoted FEB/OPQ build using the stale 256-subheader firmware profile)` | fixed | OPQ preset/profile audit against FEB frame format | `pending` | The MuSiP firmware and tb_int OPQ defaults still compiled `OPQ_N_SHD=256`, but the FEB frame format is a hard `N_SHD=128` contract, so the promoted OPQ build could run with a larger page/frame budget than the frame producer actually emits. |
 
 ## 2026-04-21
 
@@ -423,6 +424,35 @@ Historical formal note:
   - Claude Opus 4.7 xhigh review decision: pending / not run
 - Runtime / coverage context:
   - source audit evidence: OPQ `asi_ingress_error[0:2]` is interpreted as `hit_err`, `shd_err`, and `hdr_err`, not as MuSiP marker metadata
+  - fast gate: `git diff --check` passes on the patch
+  - firmware gate: `make -C firmware/a10_board flow` is the release build gate and the release notes record the final Quartus result and STA caveat
+- Commit:
+  - `pending`
+
+## 2026-04-30
+
+### BUG-015-R: MuSiP OPQ profile used 256 subheaders while FEB frame format requires 128
+- First seen in:
+  - OPQ preset/profile audit comparing the source `Mu3e Demo` preset with the current MuSiP firmware build profile
+  - `firmware/a10_board/Makefile`
+  - `tb_int/cases/basic/opq_sources.mk`
+- Symptom:
+  - the promoted MuSiP firmware profile compiled `OPQ_N_SHD=256`
+  - the promoted tb_int OPQ simulation defaults also used `OPQ_N_SHD=256`
+  - the FEB frame producer contract is `N_SHD=128`, and timing/evidence docs already describe the physical `+0x0800` frame cadence for that format
+- Root cause:
+  - the MuSiP OPQ integration kept an older larger-page profile after the FEB-side frame contract had already settled on 128 subheaders
+  - that premise is wrong: `N_SHD` is not a free capacity knob for the promoted FEB path; it is part of the frame-format contract shared by producer, OPQ parser, timing model, and evidence generators
+- Fix status:
+  - state: fixed and covered by the final firmware build gate for this release
+  - files/modules: `firmware/a10_board/Makefile`, `tb_int/cases/basic/opq_sources.mk`, `tb_int/doc/DV_BASIC.md`, and `tb_int/doc/DV_EDGE.md`
+  - mechanism: the firmware Quartus macro block and tb_int OPQ compile defaults now pin `OPQ_N_SHD=128`, while `N_SHD=256` is documented only as a variant regression point
+  - before_fix_outcome: a promoted build could synthesize and simulate the OPQ wrapper with a 256-subheader page budget even though the legal FEB stream only emits 128-subheader frames
+  - after_fix_outcome: the promoted firmware and simulation compile profiles match the FEB frame-format contract
+  - potential_hazard: low; future profile changes must treat `N_SHD` as a cross-boundary format contract, not a local OPQ capacity override
+  - Claude Opus 4.7 xhigh review decision: pending / not run
+- Runtime / coverage context:
+  - source audit evidence: the source OPQ `Mu3e Demo` preset uses `N_SHD=128`, matching the FEB frame contract
   - fast gate: `git diff --check` passes on the patch
   - firmware gate: `make -C firmware/a10_board flow` is the release build gate and the release notes record the final Quartus result and STA caveat
 - Commit:
