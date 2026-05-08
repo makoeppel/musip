@@ -91,7 +91,13 @@ begin
                 egress_link := work.mu3e.to_link(aso_egress_data(31 downto 0), aso_egress_data(35 downto 32));
                 egress_link.idle := '0';
                 if (aso_egress_data(35 downto 32) = "0001") and (aso_egress_data(7 downto 0) = x"BC") then
-                    egress_link.data(31 downto 26) := MUPIX_HEADER_ID;
+                    if (aso_egress_data(31 downto 26) = MUPIX_HEADER_ID) or
+                       (aso_egress_data(31 downto 26) = TILE_HEADER_ID) or
+                       (aso_egress_data(31 downto 26) = SCIFI_HEADER_ID) then
+                        egress_link.data(31 downto 26) := aso_egress_data(31 downto 26);
+                    else
+                        egress_link.data(31 downto 26) := MUPIX_HEADER_ID;
+                    end if;
                     egress_link.sop := '1';
                 else
                     egress_link.sop := aso_egress_startofpacket;
