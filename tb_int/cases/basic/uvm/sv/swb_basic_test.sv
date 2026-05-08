@@ -17,6 +17,7 @@ class swb_basic_test extends uvm_test;
   bit use_replay;
   bit use_segment_manifest;
   bit use_merge;
+  bit passive_ingress;
   swb_case_segment segments[$];
 
   `uvm_component_utils(swb_basic_test)
@@ -90,32 +91,40 @@ class swb_basic_test extends uvm_test;
   begin
     fork
       begin
-        lane_seq0 = swb_frame_sequence::type_id::create("lane_seq_0");
-        for (int idx = 0; idx < active_plan.frames_by_lane[0].size(); idx++) begin
-          lane_seq0.frames.push_back(active_plan.frames_by_lane[0][idx]);
+        if (active_plan.feb_enable_mask[0]) begin
+          lane_seq0 = swb_frame_sequence::type_id::create("lane_seq_0");
+          for (int idx = 0; idx < active_plan.frames_by_lane[0].size(); idx++) begin
+            lane_seq0.frames.push_back(active_plan.frames_by_lane[0][idx]);
+          end
+          lane_seq0.start(env.ingress_agents[0].sequencer);
         end
-        lane_seq0.start(env.ingress_agents[0].sequencer);
       end
       begin
-        lane_seq1 = swb_frame_sequence::type_id::create("lane_seq_1");
-        for (int idx = 0; idx < active_plan.frames_by_lane[1].size(); idx++) begin
-          lane_seq1.frames.push_back(active_plan.frames_by_lane[1][idx]);
+        if (active_plan.feb_enable_mask[1]) begin
+          lane_seq1 = swb_frame_sequence::type_id::create("lane_seq_1");
+          for (int idx = 0; idx < active_plan.frames_by_lane[1].size(); idx++) begin
+            lane_seq1.frames.push_back(active_plan.frames_by_lane[1][idx]);
+          end
+          lane_seq1.start(env.ingress_agents[1].sequencer);
         end
-        lane_seq1.start(env.ingress_agents[1].sequencer);
       end
       begin
-        lane_seq2 = swb_frame_sequence::type_id::create("lane_seq_2");
-        for (int idx = 0; idx < active_plan.frames_by_lane[2].size(); idx++) begin
-          lane_seq2.frames.push_back(active_plan.frames_by_lane[2][idx]);
+        if (active_plan.feb_enable_mask[2]) begin
+          lane_seq2 = swb_frame_sequence::type_id::create("lane_seq_2");
+          for (int idx = 0; idx < active_plan.frames_by_lane[2].size(); idx++) begin
+            lane_seq2.frames.push_back(active_plan.frames_by_lane[2][idx]);
+          end
+          lane_seq2.start(env.ingress_agents[2].sequencer);
         end
-        lane_seq2.start(env.ingress_agents[2].sequencer);
       end
       begin
-        lane_seq3 = swb_frame_sequence::type_id::create("lane_seq_3");
-        for (int idx = 0; idx < active_plan.frames_by_lane[3].size(); idx++) begin
-          lane_seq3.frames.push_back(active_plan.frames_by_lane[3][idx]);
+        if (active_plan.feb_enable_mask[3]) begin
+          lane_seq3 = swb_frame_sequence::type_id::create("lane_seq_3");
+          for (int idx = 0; idx < active_plan.frames_by_lane[3].size(); idx++) begin
+            lane_seq3.frames.push_back(active_plan.frames_by_lane[3][idx]);
+          end
+          lane_seq3.start(env.ingress_agents[3].sequencer);
         end
-        lane_seq3.start(env.ingress_agents[3].sequencer);
       end
     join
   end
@@ -202,7 +211,15 @@ class swb_basic_test extends uvm_test;
     end
 
     zero_payload_case = (active_plan.expected_word_count == 0);
-    drive_case_frames(active_plan);
+    if (passive_ingress) begin
+      `uvm_info(
+        "PASSIVE_INGRESS",
+        "SWB_PASSIVE_INGRESS=1; external corun source owns feb_ingress_if lanes",
+        UVM_LOW
+      )
+    end else begin
+      drive_case_frames(active_plan);
+    end
 
     timeout_cycles = (active_plan.expected_word_count * 32) + 300000;
     if (zero_payload_case) begin
@@ -303,6 +320,7 @@ class swb_basic_test extends uvm_test;
     use_replay = 1'b0;
     use_segment_manifest = 1'b0;
     use_merge = 1'b0;
+    passive_ingress = 1'b0;
     dma_half_full_pct = 0;
     dma_half_full_seed = 32'h5a17_c0de;
     lookup_ctrl_word = '0;
@@ -330,6 +348,7 @@ class swb_basic_test extends uvm_test;
       feb_enable_mask = plusarg_mask[3:0];
     end
     void'($value$plusargs("SWB_USE_MERGE=%d", use_merge));
+    void'($value$plusargs("SWB_PASSIVE_INGRESS=%d", passive_ingress));
     void'($value$plusargs("SWB_DMA_HALF_FULL_PCT=%d", dma_half_full_pct));
     void'($value$plusargs("SWB_DMA_HALF_FULL_SEED=%d", dma_half_full_seed));
     void'($value$plusargs("SWB_LOOKUP_CTRL_WORD=%h", lookup_ctrl_word));
@@ -408,6 +427,17 @@ class swb_basic_test extends uvm_test;
       end
       uvm_config_db#(swb_case_plan)::set(this, "*", "case_plan", plan);
       uvm_config_db#(bit)::set(this, "env.scoreboard", "expect_opq_merged", use_merge);
+    end
+
+    if (passive_ingress) begin
+      for (int lane = 0; lane < SWB_N_LANES; lane++) begin
+        uvm_config_db#(uvm_active_passive_enum)::set(
+          this,
+          $sformatf("env.ingress_agent_%0d", lane),
+          "is_active",
+          UVM_PASSIVE
+        );
+      end
     end
 
     env = swb_env::type_id::create("env", this);

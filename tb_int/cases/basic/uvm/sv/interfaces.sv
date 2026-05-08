@@ -4,11 +4,15 @@ interface feb_ingress_if(input logic clk);
   logic        valid;
   logic [31:0] data;
   logic [3:0]  datak;
+  logic        sideband_debug_valid;
+  logic [63:0] sideband_debug_meta;
 
   task automatic drive_idle();
-    valid <= 1'b0;
-    data  <= '0;
-    datak <= '0;
+    valid                <= 1'b0;
+    data                 <= '0;
+    datak                <= '0;
+    sideband_debug_valid <= 1'b0;
+    sideband_debug_meta  <= '0;
   endtask
 endinterface
 

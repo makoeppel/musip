@@ -15,6 +15,8 @@ class swb_stage_hit extends uvm_object;
   bit [63:0]       raw_hit_word;
   bit [63:0]       normalized_hit_word;
   longint unsigned debug_ts_8ns;
+  bit              sideband_debug_valid;
+  bit [63:0]       sideband_debug_meta;
   int              hidden_id;
   string           ingress_sort_key;
 
@@ -31,13 +33,15 @@ class swb_stage_hit extends uvm_object;
     raw_hit_word = '0;
     normalized_hit_word = '0;
     debug_ts_8ns = 0;
+    sideband_debug_valid = 1'b0;
+    sideband_debug_meta = '0;
     hidden_id = -1;
     ingress_sort_key = "";
   endfunction
 
   function string convert2string();
     return $sformatf(
-      "%s hit[%0d] id=%0d lane=%0d frame=%0d shd=%0d hit=%0d ts8ns=%0d norm=%016h",
+      "%s hit[%0d] id=%0d lane=%0d frame=%0d shd=%0d hit=%0d ts8ns=%0d norm=%016h dbg_valid=%0b dbg_meta=%016h",
       stage_name,
       observed_idx,
       hidden_id,
@@ -46,7 +50,9 @@ class swb_stage_hit extends uvm_object;
       subheader_idx,
       hit_idx,
       debug_ts_8ns,
-      normalized_hit_word
+      normalized_hit_word,
+      sideband_debug_valid,
+      sideband_debug_meta
     );
   endfunction
 endclass
@@ -371,7 +377,9 @@ class swb_scoreboard extends uvm_component;
     input int unsigned frame_idx,
     input int unsigned subheader_idx,
     input int unsigned hit_idx,
-    input bit [63:0]  hit_word
+    input bit [63:0]  hit_word,
+    input bit         sideband_debug_valid,
+    input bit [63:0]  sideband_debug_meta
   );
     swb_stage_hit item;
   begin
@@ -385,6 +393,8 @@ class swb_scoreboard extends uvm_component;
     item.raw_hit_word = hit_word;
     item.normalized_hit_word = swb_normalize_dma_hit_word(hit_word);
     item.debug_ts_8ns = swb_debug_ts_from_hit_word(item.normalized_hit_word);
+    item.sideband_debug_valid = sideband_debug_valid;
+    item.sideband_debug_meta = sideband_debug_meta;
     item.hidden_id = -1;
     item.ingress_sort_key = $sformatf(
       "%010h_%01d_%06d_%06d_%06d",
@@ -601,7 +611,9 @@ class swb_scoreboard extends uvm_component;
               parser.ts_low_word,
               parser.current_shd_ts,
               beat.data
-            )
+            ),
+            beat.sideband_debug_valid,
+            beat.sideband_debug_meta
           );
           parser.hits_remaining--;
           parser.hit_idx_in_subheader++;
@@ -637,7 +649,7 @@ class swb_scoreboard extends uvm_component;
       for (int idx = 0; idx < 4; idx++) begin
         bit [63:0] raw_hit_word;
         raw_hit_word = item.data[(idx * 64) +: 64];
-        push_parsed_hit(dma_hits, "dma", idx, recv_words, 0, idx, raw_hit_word);
+        push_parsed_hit(dma_hits, "dma", idx, recv_words, 0, idx, raw_hit_word, 1'b0, 64'h0);
       end
       recv_words++;
     end
@@ -666,11 +678,11 @@ class swb_scoreboard extends uvm_component;
       return;
     end
 
-    $fdisplay(fd, "stage_name\tobserved_idx\thidden_id\tlane_id\tframe_idx\tsubheader_idx\thit_idx\tdebug_ts_8ns\tnormalized_hit_word\traw_hit_word\tingress_sort_key");
+    $fdisplay(fd, "stage_name\tobserved_idx\thidden_id\tlane_id\tframe_idx\tsubheader_idx\thit_idx\tdebug_ts_8ns\tnormalized_hit_word\traw_hit_word\tingress_sort_key\tsideband_debug_valid\tsideband_debug_meta\tsideband_level\tsideband_lane\tsideband_source\tsideband_ps_tag\tsideband_ts_tag\tsideband_hit_id");
     foreach (stage_hits[idx]) begin
       $fdisplay(
         fd,
-        "%s\t%0d\t%0d\t%0d\t%0d\t%0d\t%0d\t%0d\t%016h\t%016h\t%s",
+        "%s\t%0d\t%0d\t%0d\t%0d\t%0d\t%0d\t%0d\t%016h\t%016h\t%s\t%0b\t%016h\t%0d\t%0d\t%0d\t%0d\t%0d\t%0d",
         stage_hits[idx].stage_name,
         stage_hits[idx].observed_idx,
         stage_hits[idx].hidden_id,
@@ -681,7 +693,15 @@ class swb_scoreboard extends uvm_component;
         stage_hits[idx].debug_ts_8ns,
         stage_hits[idx].normalized_hit_word,
         stage_hits[idx].raw_hit_word,
-        stage_hits[idx].ingress_sort_key
+        stage_hits[idx].ingress_sort_key,
+        stage_hits[idx].sideband_debug_valid,
+        stage_hits[idx].sideband_debug_meta,
+        stage_hits[idx].sideband_debug_meta[63:62],
+        stage_hits[idx].sideband_debug_meta[61:60],
+        stage_hits[idx].sideband_debug_meta[59:56],
+        stage_hits[idx].sideband_debug_meta[55:48],
+        stage_hits[idx].sideband_debug_meta[47:32],
+        stage_hits[idx].sideband_debug_meta[31:0]
       );
     end
     void'($fclose(fd));

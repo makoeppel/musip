@@ -30,9 +30,11 @@ class swb_ingress_driver extends uvm_driver #(swb_frame_item);
 
   task drive_cycle(bit valid, bit [31:0] data, bit [3:0] datak);
     @(posedge vif.clk);
-    vif.valid <= valid;
-    vif.data  <= data;
-    vif.datak <= datak;
+    vif.valid                <= valid;
+    vif.data                 <= data;
+    vif.datak                <= datak;
+    vif.sideband_debug_valid <= 1'b0;
+    vif.sideband_debug_meta  <= '0;
   endtask
 
   task drive_idle_cycles(int unsigned idle_cycles);
@@ -171,6 +173,8 @@ class swb_ingress_monitor extends uvm_component;
         item.observed_time = $time;
         item.data = vif.data;
         item.datak = vif.datak;
+        item.sideband_debug_valid = vif.sideband_debug_valid;
+        item.sideband_debug_meta = vif.sideband_debug_meta;
         item.stream_name = $sformatf("lane%0d_ingress", lane_id);
         beat_count++;
         ap.write(item);
@@ -196,17 +200,22 @@ class swb_ingress_agent extends uvm_agent;
 
   function void build_phase(uvm_phase phase);
     super.build_phase(phase);
+    void'(uvm_config_db#(uvm_active_passive_enum)::get(this, "", "is_active", is_active));
     void'(uvm_config_db#(int unsigned)::get(this, "", "lane_id", lane_id));
-    sequencer = swb_ingress_sequencer::type_id::create("sequencer", this);
-    driver    = swb_ingress_driver::type_id::create("driver", this);
-    monitor   = swb_ingress_monitor::type_id::create("monitor", this);
-    uvm_config_db#(int unsigned)::set(this, "driver", "lane_id", lane_id);
+    if (is_active == UVM_ACTIVE) begin
+      sequencer = swb_ingress_sequencer::type_id::create("sequencer", this);
+      driver    = swb_ingress_driver::type_id::create("driver", this);
+      uvm_config_db#(int unsigned)::set(this, "driver", "lane_id", lane_id);
+    end
+    monitor = swb_ingress_monitor::type_id::create("monitor", this);
     uvm_config_db#(int unsigned)::set(this, "monitor", "lane_id", lane_id);
   endfunction
 
   function void connect_phase(uvm_phase phase);
     super.connect_phase(phase);
-    driver.seq_item_port.connect(sequencer.seq_item_export);
+    if (is_active == UVM_ACTIVE) begin
+      driver.seq_item_port.connect(sequencer.seq_item_export);
+    end
   endfunction
 endclass
 

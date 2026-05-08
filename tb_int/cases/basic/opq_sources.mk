@@ -15,6 +15,9 @@ OPQ_QSYS_WRAPPER_VHDL := $(OPQ_QSYS_SYNTH_DIR)/opq_upstream_4lane.vhd
 OPQ_QSYS_TOP_LIB := opq_upstream_4lane
 OPQ_QSYS_COMPONENT_LIB := $(strip $(shell awk '/^library / && $$2 != "IEEE;" { gsub(/;/, "", $$2); print $$2; exit }' $(OPQ_QSYS_SYNTH_DIR)/opq_upstream_4lane.vhd 2>/dev/null))
 OPQ_QSYS_COMPONENT_SYNTH_DIR := $(patsubst %/,%,$(firstword $(sort $(dir $(wildcard $(OPQ_QSYS_GEN_DIR)/*/synth/*_pkg.vhd)))))
+OPQ_QSYS_COMPONENT_SYNTH_DIRS := $(shell find $(OPQ_QSYS_GEN_DIR) -mindepth 2 -maxdepth 2 -type d -name synth 2>/dev/null | sort)
+OPQ_QSYS_COMPONENT_DIR_NAMES := $(notdir $(patsubst %/,%,$(dir $(OPQ_QSYS_COMPONENT_SYNTH_DIRS))))
+OPQ_QSYS_COMPONENT_LIBS := $(addprefix $(OPQ_QSYS_TOP_LIB)_,$(OPQ_QSYS_COMPONENT_DIR_NAMES))
 OPQ_QSYS_FILE := $(OPQ_QSYS_DIR)/opq_upstream_4lane.qsys
 OPQ_QSYS_TCL := $(OPQ_QSYS_DIR)/opq_upstream_4lane.tcl
 OPQ_QSYS_QIP := $(OPQ_QSYS_GEN_DIR)/opq_upstream_4lane.qip
@@ -38,6 +41,7 @@ OPQ_ADAPTOR_VHDL_SOURCE = $(OPQ_LOCAL_DIR)/ingress_egress_adaptor.vhd
 OPQ_SIM_EXTRA_LIBS =
 OPQ_SIM_QSYS_LIB =
 OPQ_SIM_QSYS_TOP_LIB =
+OPQ_SIM_QSYS_COMPONENT_SYNTH_DIRS =
 OPQ_SIM_QSYS_TOP_VHDL_SOURCES =
 OPQ_SIM_QSYS_VHDL_SOURCES =
 OPQ_SIM_QSYS_VERILOG_SOURCES =
@@ -46,19 +50,20 @@ OPQ_INTEL_PRIM_SIM_LIB_FLAGS = -L altera_mf_ver -L 220model_ver -L altera_mf -L 
 OPQ_DUT_DEFINES =
 
 ifeq ($(OPQ_SOURCE_MODE),upstream_qsys_generated)
-OPQ_SIM_EXTRA_LIBS = $(OPQ_QSYS_TOP_LIB) $(OPQ_QSYS_COMPONENT_LIB)
-OPQ_SIM_QSYS_LIB = $(OPQ_QSYS_COMPONENT_LIB)
+OPQ_SIM_EXTRA_LIBS = $(OPQ_QSYS_TOP_LIB) $(OPQ_QSYS_COMPONENT_LIBS)
+OPQ_SIM_QSYS_LIB = $(OPQ_QSYS_COMPONENT_LIBS)
 OPQ_SIM_QSYS_TOP_LIB = $(OPQ_QSYS_TOP_LIB)
-OPQ_VSIM_LIB_FLAGS = $(OPQ_INTEL_PRIM_SIM_LIB_FLAGS) -L $(OPQ_QSYS_TOP_LIB) -L $(OPQ_SIM_QSYS_LIB)
+OPQ_SIM_QSYS_COMPONENT_SYNTH_DIRS = $(OPQ_QSYS_COMPONENT_SYNTH_DIRS)
+OPQ_VSIM_LIB_FLAGS = $(OPQ_INTEL_PRIM_SIM_LIB_FLAGS) $(addprefix -L ,$(OPQ_SIM_EXTRA_LIBS))
 
 OPQ_SIM_QSYS_TOP_VHDL_SOURCES = \
 	$(OPQ_QSYS_WRAPPER_VHDL)
 
 OPQ_SIM_QSYS_VHDL_SOURCES = \
-	$(shell find $(OPQ_QSYS_COMPONENT_SYNTH_DIR) -type f -name '*.vhd' | sort)
+	$(shell find $(OPQ_QSYS_COMPONENT_SYNTH_DIRS) -type f -name '*.vhd' 2>/dev/null | sort)
 
 OPQ_SIM_QSYS_VERILOG_SOURCES = \
-	$(shell find $(OPQ_QSYS_COMPONENT_SYNTH_DIR) -type f \( -name '*.v' -o -name '*.sv' \) | sort)
+	$(shell find $(OPQ_QSYS_COMPONENT_SYNTH_DIRS) -type f \( -name '*.v' -o -name '*.sv' \) 2>/dev/null | sort)
 
 # The generated Qsys wrapper bakes the fixed profile into its top-level SV,
 # but the submodules are compiled as separate SystemVerilog units. Keep the

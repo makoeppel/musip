@@ -121,6 +121,8 @@ class swb_stream_beat extends uvm_sequence_item;
   time         observed_time;
   bit [31:0]   data;
   bit [3:0]    datak;
+  bit          sideband_debug_valid;
+  bit [63:0]   sideband_debug_meta;
   string       stream_name;
 
   `uvm_object_utils(swb_stream_beat)
@@ -133,19 +135,23 @@ class swb_stream_beat extends uvm_sequence_item;
     observed_time = 0;
     data = '0;
     datak = '0;
+    sideband_debug_valid = 1'b0;
+    sideband_debug_meta = '0;
     stream_name = "";
   endfunction
 
   function string convert2string();
     return $sformatf(
-      "%s beat[%0d] lane=%0d cycle=%0d time=%0t datak=0x%0h data=0x%08h",
+      "%s beat[%0d] lane=%0d cycle=%0d time=%0t datak=0x%0h data=0x%08h dbg_valid=%0b dbg_meta=0x%016h",
       stream_name,
       beat_idx,
       lane_id,
       observed_cycle,
       observed_time,
       datak,
-      data
+      data,
+      sideband_debug_valid,
+      sideband_debug_meta
     );
   endfunction
 endclass
