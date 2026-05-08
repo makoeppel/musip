@@ -71,6 +71,7 @@ architecture arch of musip_mux_4_1 is
     signal rx_256               : slv256_array_t(g_LINK_N-1 downto 0);
     signal rx_valid             : std_logic_vector(g_LINK_N-1 downto 0);
     signal index_256            : int_0_3_array_t(g_LINK_N-1 downto 0);
+    signal flush_256_pending    : std_logic_vector(g_LINK_N-1 downto 0);
 
     signal subtime_data         : std_logic_vector(255 downto 0);
     signal subtime_valid        : std_logic;
@@ -265,19 +266,42 @@ begin
                 rx_256(i) <= (others => '0');
                 rx_valid(i) <= '0';
                 index_256(i) <= 0;
+                flush_256_pending(i) <= '0';
                 --
             else
 
                 rx_valid(i) <= '0';
-                if (next_64bit_word_valid(i) = '1') then
+                if (flush_256_pending(i) = '1') then
+                    rx_valid(i) <= '1';
+                    flush_256_pending(i) <= '0';
+                    index_256(i) <= 0;
+                elsif (next_64bit_word_valid(i) = '1') then
                     if (index_256(i) = 3) then
                         rx_valid(i) <= '1';
                         rx_256(i)((index_256(i) + 1) * 64 - 1 downto index_256(i) * 64) <= next_64bit_word(i);
                         index_256(i) <= 0;
                     else
                         rx_256(i)((index_256(i) + 1) * 64 - 1 downto index_256(i) * 64) <= next_64bit_word(i);
-                        index_256(i) <= index_256(i) + 1;
+                        if (i_rx(i).eop = '1') then
+                            for j in 0 to 3 loop
+                                if (j > index_256(i)) then
+                                    rx_256(i)((j + 1) * 64 - 1 downto j * 64) <= (others => '0');
+                                end if;
+                            end loop;
+                            flush_256_pending(i) <= '1';
+                            index_256(i) <= 0;
+                        else
+                            index_256(i) <= index_256(i) + 1;
+                        end if;
                     end if;
+                elsif (i_rx(i).eop = '1' and index_256(i) /= 0) then
+                    for j in 0 to 3 loop
+                        if (j >= index_256(i)) then
+                            rx_256(i)((j + 1) * 64 - 1 downto j * 64) <= (others => '0');
+                        end if;
+                    end loop;
+                    flush_256_pending(i) <= '1';
+                    index_256(i) <= 0;
                 end if;
 
             end if;
