@@ -55,6 +55,7 @@ Historical formal note:
 | [BUG-013-R](#bug-013-r-half-frame-lane-skew-bring-up-exposed-a-seeded-merge-path-stall-that-also-reproduces-at-skew-0) | R | hard stuck error | `corner-only (seeded symmetric 4-lane random profile; skew stress exposed it immediately)` | fixed | `make ip-uvm-basic` with `P123_fixed_lane_skew_0_2048` | `pending` | Half-frame skew closure initially exposed a promoted merge-enabled stall, but the blocker is now fixed locally: the vendored Qsys OPQ wrapper now forwards `OPQ_N_HIT=2047` and the monolithic page allocator now waits a full `N_SHD * 16` frame-join window, so both `P123` and `P124` retire cleanly. |
 | [BUG-014-R](#bug-014-r-opq-adapter-treated-musip-marker-sidebands-as-parser-error-bits) | R | soft error | `common (any merge-enabled traffic with asserted t0 or t1 markers)` | fixed | OPQ stream contract audit of `ingress_egress_adaptor.vhd` | `pending` | The MuSiP OPQ adapter drove OPQ parser error bits from local `err`, `t0`, and `t1` marker sidebands even though the OPQ wrapper expects `hit_err`, `shd_err`, and `hdr_err`, so normal marker traffic could be misclassified as parser-error traffic. |
 | [BUG-015-R](#bug-015-r-musip-opq-profile-used-256-subheaders-while-feb-frame-format-requires-128) | R | soft error | `common (every promoted FEB/OPQ build using the stale 256-subheader firmware profile)` | fixed | OPQ preset/profile audit against FEB frame format | `pending` | The MuSiP firmware and tb_int OPQ defaults still compiled `OPQ_N_SHD=256`, but the FEB frame format is a hard `N_SHD=128` contract, so the promoted OPQ build could run with a larger page/frame budget than the frame producer actually emits. |
+| [BUG-016-R](#bug-016-r-opq-egress-adaptor-forced-feb-scifi-headers-to-mupix) | R | soft error | `common (any FEB SciFi traffic through OPQ merge)` | fixed | FEB/SWB corun `run_swb_corun` on `2026-05-08` | `e7f29d8` | The OPQ egress adaptor forced every merged K28.5 preamble back to `MUPIX_HEADER_ID`, so FEB SciFi/MuTRiG traffic reached `musip_mux_4_1` with the wrong hit-packing contract. |
 
 ## 2026-04-21
 
@@ -457,3 +458,28 @@ Historical formal note:
   - firmware gate: `make -C firmware/a10_board flow` is the release build gate and the release notes record the final Quartus result and STA caveat
 - Commit:
   - `pending`
+
+## 2026-05-08
+
+### BUG-016-R: OPQ egress adaptor forced FEB SciFi headers to MuPix
+- First seen in:
+  - FEB/SWB direct corun `make run_swb_corun QUESTA_HOME=/data1/questaone_sim-2026.1_1/questasim` on `2026-05-08`
+- Symptom:
+  - FEB ingress emitted SciFi K28.5 preambles such as `0xe00000bc`, but OPQ egress trace showed the merged stream as `0xe80000bc`
+  - downstream DMA hit comparison then saw SciFi/MuTRiG hits packed as the wrong detector type, producing missing expected hits and ghost actual hits
+- Root cause:
+  - `ingress_egress_adaptor.vhd` reconstructed the canonical Mu3e SOP beat after OPQ merge by unconditionally assigning `MUPIX_HEADER_ID`
+  - `musip_mux_4_1` selects pixel versus SciFi/TILE hit packing from that preamble header id, so the adaptor rewrite changed the downstream data contract even though OPQ had preserved the frame contents
+- Fix status:
+  - state: fixed and committed in the MuSiP SWB integration RTL
+  - files/modules: `firmware/a10_board/a10/merger/ingress_egress_adaptor.vhd` in entity `ingress_egress_adaptor`
+  - mechanism: the adaptor now preserves known `MUPIX_HEADER_ID`, `TILE_HEADER_ID`, and `SCIFI_HEADER_ID` preamble ids on OPQ egress K28.5 beats, while retaining the legacy MuPix fallback for unknown detector ids
+  - before_fix_outcome: direct FEB/SWB corun showed OPQ headers rewritten from SciFi `0xe00000bc` to MuPix `0xe80000bc`, and the DMA scoreboard reported missing/ghost hit identities
+  - after_fix_outcome: direct FEB/SWB corun passes with `FEB_SWB_CORUN_PLAIN_PASS expected_hits=12 dma_payload_words=3 opq_beats=66`; summary reports `actual_hits=12`, `missing_hits=0`, `ghost_hits=0`, `end_of_event_count=1`, and `fifo_overflow=0x0`
+  - potential_hazard: low for known detector ids; any future detector preamble id must be added explicitly or it will still take the MuPix fallback path
+  - Claude Opus 4.7 xhigh review decision: pending / not run
+- Runtime / coverage context:
+  - passing evidence is in the FEB worktree under `firmware_builds/systems/system_20260504_emulator_type0/tb_int/feb_swb_corun/report/`
+  - this is a MuSiP wrapper integration defect, not an upstream OPQ parser attribution
+- Commit:
+  - `e7f29d8`
