@@ -56,6 +56,7 @@ Historical formal note:
 | [BUG-014-R](#bug-014-r-opq-adapter-treated-musip-marker-sidebands-as-parser-error-bits) | R | soft error | `common (any merge-enabled traffic with asserted t0 or t1 markers)` | fixed | OPQ stream contract audit of `ingress_egress_adaptor.vhd` | `pending` | The MuSiP OPQ adapter drove OPQ parser error bits from local `err`, `t0`, and `t1` marker sidebands even though the OPQ wrapper expects `hit_err`, `shd_err`, and `hdr_err`, so normal marker traffic could be misclassified as parser-error traffic. |
 | [BUG-015-R](#bug-015-r-musip-opq-profile-used-256-subheaders-while-feb-frame-format-requires-128) | R | soft error | `common (every promoted FEB/OPQ build using the stale 256-subheader firmware profile)` | fixed | OPQ preset/profile audit against FEB frame format | `pending` | The MuSiP firmware and tb_int OPQ defaults still compiled `OPQ_N_SHD=256`, but the FEB frame format is a hard `N_SHD=128` contract, so the promoted OPQ build could run with a larger page/frame budget than the frame producer actually emits. |
 | [BUG-016-R](#bug-016-r-opq-egress-adaptor-forced-feb-scifi-headers-to-mupix) | R | soft error | `common (any FEB SciFi traffic through OPQ merge)` | fixed | FEB/SWB corun `run_swb_corun` on `2026-05-08` | `e7f29d8` | The OPQ egress adaptor forced every merged K28.5 preamble back to `MUPIX_HEADER_ID`, so FEB SciFi/MuTRiG traffic reached `musip_mux_4_1` with the wrong hit-packing contract. |
+| [BUG-017-R](#bug-017-r-scifi-dma-timestamp-packing-dropped-frame-bit-11-for-128-subheader-feb-frames) | R | soft error | `common (FEB SciFi traffic in odd 2048-tick frames)` | fixed | FEB/SWB trace debug on `2026-05-08` | `39947ff` | SciFi/MuTRiG DMA packing kept the old 256-subheader timestamp layout, dropping `ts_low[11]` for the promoted 128-subheader FEB frame profile and placing some hits in the wrong DMA timestamp bucket. |
 
 ## 2026-04-21
 
@@ -483,3 +484,28 @@ Historical formal note:
   - this is a MuSiP wrapper integration defect, not an upstream OPQ parser attribution
 - Commit:
   - `e7f29d8`
+
+### BUG-017-R: SciFi DMA timestamp packing dropped frame bit 11 for 128-subheader FEB frames
+- First seen in:
+  - FEB/SWB trace-level corun `make run_swb_corun QUESTA_HOME=/data1/questaone_sim-2026.1_1/questasim` on `2026-05-08`
+  - trace analyzer output `TRACE_DEBUG_FAIL hits=12 pass_hits=7 issues=5` before the fix
+- Symptom:
+  - exact hit count and payload comparison could appear clean, but trace-level bucket checks showed DMA timestamp failures for hits crossing odd 2048-tick frame bases
+  - the first failing directed set was hit ids `2`, `3`, `5`, `6`, and `9`; for example hit id `2` belonged to frame `1`, subheader `28`, bucket `2496..2511`, and absolute timestamp `2500`
+- Root cause:
+  - `musip_mux_4_1.vhd` packed SciFi/TILE DMA bits `[38:0]` as `ts_high[22:0]`, `ts_low[15:12]`, `subheader[7:0]`, and hit timestamp nibble
+  - that layout assumes 256 subheaders per frame, but the promoted FEB/SWB OPQ profile is `N_SHD=128`, so one additional frame bit must come from `ts_low[11]` while the subheader contributes only seven bits
+- Fix status:
+  - state: fixed and committed in the MuSiP SWB integration RTL and reference models
+  - files/modules: `firmware/a10_board/a10/swb/musip_mux_4_1.vhd`, `tb_int/cases/basic/ref/run_basic_ref.py`, and `tb_int/cases/basic/uvm/sv/swb_types.sv`
+  - mechanism: SciFi/TILE DMA timestamp packing now uses `ts_high[22:0]`, `ts_low[15:11]`, `subheader[6:0]`, and the hit timestamp nibble, matching the 128-subheader FEB frame contract
+  - before_fix_outcome: trace-level checker found five DMA absolute timestamp mismatches even though the directed corun reached the right hit count
+  - after_fix_outcome: `TRACE_DEBUG_PASS hits=12 channel=0 asic=0`; trace summary reports `expected_ingress_hits=12`, `opq_hits=12`, `dma_hits=12`, `pass_hits=12`, `fail_hits=0`, `ghost_opq_hits=0`, `ghost_dma_hits=0`, and `issue_count=0`
+  - potential_hazard: low for the promoted `N_SHD=128` profile; any future `N_SHD=256` variant must be treated as a distinct packet-format profile with its own packer/reference expectation
+  - Claude Opus 4.7 xhigh review decision: pending / not run
+- Runtime / coverage context:
+  - FEB/SWB corun uses active mask `0x3`, drives virtual MuTRiG ASIC0/channel0 at 100 kHz on lane 0, emits legal empty FEB frames on lane 1, and masks lanes 2 and 3
+  - `make -C tb_int/cases/basic/plain run-smoke QUESTA_HOME=/data1/questaone_sim-2026.1_1/questasim USE_MERGE=0` still passes as a bypass discriminator
+  - `make -C tb_int/cases/basic/plain run-smoke QUESTA_HOME=/data1/questaone_sim-2026.1_1/questasim USE_MERGE=1` still fails with zero observed payload words in the plain merge smoke path; that broader smoke blocker is separate from this trace-level timestamp packing fix because the focused FEB/SWB OPQ corun closes through OPQ and DMA
+- Commit:
+  - `39947ff`
