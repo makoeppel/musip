@@ -171,9 +171,9 @@ def make_expected_mutrig_hit(header_id: int, ts_high_word: int, ts_low_word: int
     data_word |= ((hit_word >> 9) & 0x1F) << 39
     if header_id == SWB_SCIFI_HEADER_ID:
         time_tail = (
-            ((ts_high_word & ((1 << 23) - 1)) << (4 + 8 + 4))
-            | (((ts_low_word >> 12) & 0xF) << (8 + 4))
-            | ((shd_ts & 0xFF) << 4)
+            ((ts_high_word & ((1 << 23) - 1)) << (5 + 7 + 4))
+            | (((ts_low_word >> 11) & 0x1F) << (7 + 4))
+            | ((shd_ts & 0x7F) << 4)
             | ((hit_word >> 28) & 0xF)
         )
         data_word |= time_tail & ((1 << 39) - 1)
