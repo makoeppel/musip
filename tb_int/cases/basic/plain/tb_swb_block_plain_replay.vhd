@@ -149,6 +149,15 @@ architecture rtl of tb_swb_block_plain_replay is
         return normalized;
     end function;
 
+    function normalize_dma_hit_word(
+        constant hit_word : std_logic_vector(63 downto 0)
+    ) return std_logic_vector is
+        variable normalized : std_logic_vector(63 downto 0) := hit_word;
+    begin
+        normalized(62 downto 58) := (others => '0');
+        return normalized;
+    end function;
+
     impure function count_hex_lines(
         constant fname : string
     ) return natural is
@@ -174,6 +183,54 @@ architecture rtl of tb_swb_block_plain_replay is
 
         file_close(f);
         return count;
+    end function;
+
+    impure function count_expected_payload_words(
+        constant fname : string;
+        constant mask  : std_logic_vector(3 downto 0)
+    ) return natural is
+        file f              : text;
+        variable fs         : file_open_status;
+        variable l          : line;
+        variable data_word  : std_logic_vector(255 downto 0);
+        variable hit_word   : std_logic_vector(63 downto 0);
+        variable good       : boolean;
+        variable lane_idx   : natural;
+        variable active_hits : natural := 0;
+    begin
+        if mask = "1111" then
+            return count_hex_lines(fname);
+        end if;
+
+        file_open(fs, f, fname, read_mode);
+        assert fs = open_ok
+            report "Unable to open expected DMA file " & fname
+            severity failure;
+
+        while not endfile(f) loop
+            readline(f, l);
+            read_hex(l, data_word, good);
+            if good and data_word /= C_DMA_PADDING_WORD then
+                for slot in 0 to 3 loop
+                    hit_word := normalize_dma_hit_word(
+                        data_word((slot + 1) * 64 - 1 downto slot * 64)
+                    );
+                    lane_idx := to_integer(unsigned(hit_word(1 downto 0)));
+                    if mask(lane_idx) = '1' then
+                        active_hits := active_hits + 1;
+                    end if;
+                end loop;
+            end if;
+        end loop;
+
+        file_close(f);
+        if (active_hits mod 4) /= 0 then
+            report "Masked active hit count "
+                & integer'image(active_hits)
+                & " is not divisible by 4; expecting a final partial DMA word"
+                severity warning;
+        end if;
+        return (active_hits + 3) / 4;
     end function;
 
 begin
@@ -328,7 +385,10 @@ begin
         constant c_actual_opq_path   : string := G_ACTUAL_OPQ_PATH;
         constant c_actual_path       : string := G_ACTUAL_DMA_PATH;
     begin
-        expected_word_count := count_hex_lines(c_expected_path);
+        expected_word_count := count_expected_payload_words(
+            c_expected_path,
+            C_FEB_ENABLE_MASK
+        );
         get_n_words <= std_logic_vector(to_unsigned(expected_word_count, get_n_words'length));
         enable_dma  <= '0';
 

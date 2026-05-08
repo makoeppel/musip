@@ -95,14 +95,41 @@ endif
 
 compile: $(COMPILE_STAMP)
 
-$(COMPILE_STAMP): $(VHDL_SOURCES) $(OPQ_SIM_QSYS_VHDL_SOURCES) $(OPQ_SIM_QSYS_VERILOG_SOURCES) $(VERILOG_DUT_SOURCES) $(SV_DUT_SOURCES) $(QUESTA_INI_PREP)
+$(COMPILE_STAMP): $(VHDL_SOURCES) $(OPQ_SIM_QSYS_TOP_VHDL_SOURCES) $(OPQ_SIM_QSYS_VHDL_SOURCES) $(OPQ_SIM_QSYS_VERILOG_SOURCES) $(VERILOG_DUT_SOURCES) $(SV_DUT_SOURCES) $(QUESTA_INI_PREP)
 	rm -rf $(BUILD_DIR)
 	mkdir -p $(BUILD_DIR)
 	$(QUESTA_INI_PREP) $(QUESTA_HOME) $(QUESTA_INI)
 	cd $(BUILD_DIR) && QSIM_INI=$(QUESTA_INI) $(VLIB) work
 	cd $(BUILD_DIR) && set -e; for lib in $(OPQ_SIM_EXTRA_LIBS); do QSIM_INI=$(QUESTA_INI) $(VLIB) $$lib; QSIM_INI=$(QUESTA_INI) $(VMAP) $$lib $$lib; done
-	cd $(BUILD_DIR) && set -e; for file in $(OPQ_SIM_QSYS_VHDL_SOURCES); do QSIM_INI=$(QUESTA_INI) $(VCOM) $(VCOM_FLAGS) -work $(OPQ_SIM_QSYS_LIB) $$file; done
-	cd $(BUILD_DIR) && if [ -n "$(strip $(OPQ_SIM_QSYS_VERILOG_SOURCES))" ]; then QSIM_INI=$(QUESTA_INI) $(VLOG) $(VLOG_FLAGS) -work $(OPQ_SIM_QSYS_LIB) $(OPQ_DUT_DEFINES) $(OPQ_SIM_QSYS_VERILOG_SOURCES); fi
+	cd $(BUILD_DIR) && if [ -n "$(strip $(OPQ_SIM_QSYS_COMPONENT_SYNTH_DIRS))" ]; then \
+	    set -e; \
+	    for dir in $(OPQ_SIM_QSYS_COMPONENT_SYNTH_DIRS); do \
+	        lib="$(OPQ_QSYS_TOP_LIB)_$$(basename "$$(dirname "$$dir")")"; \
+	        vhd_files=$$(find "$$dir" -type f -name '*.vhd' | sort); \
+	        if [ -n "$$vhd_files" ]; then \
+	            QSIM_INI=$(QUESTA_INI) $(VCOM) $(VCOM_FLAGS) -work $$lib $$vhd_files; \
+	        fi; \
+	    done; \
+	    for dir in $(OPQ_SIM_QSYS_COMPONENT_SYNTH_DIRS); do \
+	        lib="$(OPQ_QSYS_TOP_LIB)_$$(basename "$$(dirname "$$dir")")"; \
+	        vlog_files=$$(find "$$dir" -type f \( -name '*.v' -o -name '*.sv' \) ! -name '*_cfg.v' | sort); \
+	        if [ -n "$$vlog_files" ]; then \
+	            QSIM_INI=$(QUESTA_INI) $(VLOG) $(VLOG_FLAGS) -work $$lib $(OPQ_DUT_DEFINES) $$vlog_files; \
+	        fi; \
+	    done; \
+	    for dir in $(OPQ_SIM_QSYS_COMPONENT_SYNTH_DIRS); do \
+	        lib="$(OPQ_QSYS_TOP_LIB)_$$(basename "$$(dirname "$$dir")")"; \
+	        cfg_files=$$(find "$$dir" -type f -name '*_cfg.v' | sort); \
+	        if [ -n "$$cfg_files" ]; then \
+	            QSIM_INI=$(QUESTA_INI) $(VLOG) $(VLOG_FLAGS) -work $$lib $(OPQ_DUT_DEFINES) $$cfg_files; \
+	        fi; \
+	    done; \
+	else \
+	    set -e; \
+	    for file in $(OPQ_SIM_QSYS_VHDL_SOURCES); do QSIM_INI=$(QUESTA_INI) $(VCOM) $(VCOM_FLAGS) -work $(OPQ_SIM_QSYS_LIB) $$file; done; \
+	    if [ -n "$(strip $(OPQ_SIM_QSYS_VERILOG_SOURCES))" ]; then QSIM_INI=$(QUESTA_INI) $(VLOG) $(VLOG_FLAGS) -work $(OPQ_SIM_QSYS_LIB) $(OPQ_DUT_DEFINES) $(OPQ_SIM_QSYS_VERILOG_SOURCES); fi; \
+	fi
+	cd $(BUILD_DIR) && if [ -n "$(strip $(OPQ_SIM_QSYS_TOP_VHDL_SOURCES))" ]; then set -e; for file in $(OPQ_SIM_QSYS_TOP_VHDL_SOURCES); do QSIM_INI=$(QUESTA_INI) $(VCOM) $(VCOM_FLAGS) -work $(OPQ_SIM_QSYS_TOP_LIB) $$file; done; fi
 	cd $(BUILD_DIR) && set -e; for file in $(VHDL_SOURCES); do QSIM_INI=$(QUESTA_INI) $(VCOM) $(VCOM_FLAGS) $$file; done
 	cd $(BUILD_DIR) && if [ -n "$(strip $(VERILOG_DUT_SOURCES) $(SV_DUT_SOURCES))" ]; then QSIM_INI=$(QUESTA_INI) $(VLOG) $(VLOG_FLAGS) $(OPQ_DUT_DEFINES) $(VERILOG_DUT_SOURCES) $(SV_DUT_SOURCES); fi
 	touch $@
@@ -112,14 +139,14 @@ run: compile
 	rm -f $(ACTUAL_DMA_WORDS)
 	cd $(BUILD_DIR) && set -o pipefail; \
 	QSIM_INI=$(QUESTA_INI) $(QUESTA_RUNNER) $(VSIM) $(VSIM_FLAGS) $(OPQ_VSIM_LIB_FLAGS) -gG_REPLAY_DIR=$(REPLAY_DIR) -gG_ACTUAL_DMA_PATH=$(ACTUAL_DMA_WORDS) -gG_USE_MERGE=$(USE_MERGE) -gG_FEB_ENABLE_MASK_HEX=$(FEB_ENABLE_MASK_HEX) -gG_LOOKUP_CTRL_HEX=$(LOOKUP_CTRL_HEX) -gG_DMA_HALF_FULL_PERIOD_CYCLES=$(DMA_HALF_FULL_PERIOD_CYCLES) -gG_DMA_HALF_FULL_ASSERT_CYCLES=$(DMA_HALF_FULL_ASSERT_CYCLES) tb_swb_block_plain_replay -do "$(RUN_DO)" $(SIM_ARGS) | tee "$(RUN_LOG)"
-	$(PYTHON) $(DMA_HIT_CHECKER) --expected "$(REPLAY_DIR)/expected_dma_words.mem" --actual "$(ACTUAL_DMA_WORDS)"
+	$(PYTHON) $(DMA_HIT_CHECKER) --expected "$(REPLAY_DIR)/expected_dma_words.mem" --actual "$(ACTUAL_DMA_WORDS)" --feb-enable-mask "$(FEB_ENABLE_MASK_HEX)"
 
 run-smoke: compile
 	mkdir -p $(REPORT_DIR)
 	rm -f $(ACTUAL_DMA_WORDS_SMOKE)
 	cd $(BUILD_DIR) && set -o pipefail; \
 	QSIM_INI=$(QUESTA_INI) $(QUESTA_RUNNER) $(VSIM) $(VSIM_FLAGS) $(OPQ_VSIM_LIB_FLAGS) -gG_REPLAY_DIR=$(SMOKE_REPLAY_DIR) -gG_ACTUAL_DMA_PATH=$(ACTUAL_DMA_WORDS_SMOKE) -gG_USE_MERGE=$(USE_MERGE) -gG_FEB_ENABLE_MASK_HEX=$(FEB_ENABLE_MASK_HEX) -gG_LOOKUP_CTRL_HEX=$(LOOKUP_CTRL_HEX) -gG_DMA_HALF_FULL_PERIOD_CYCLES=$(DMA_HALF_FULL_PERIOD_CYCLES) -gG_DMA_HALF_FULL_ASSERT_CYCLES=$(DMA_HALF_FULL_ASSERT_CYCLES) tb_swb_block_plain_replay -do "$(RUN_DO)" $(SIM_ARGS) | tee "$(RUN_LOG_SMOKE)"
-	$(PYTHON) $(DMA_HIT_CHECKER) --expected "$(SMOKE_REPLAY_DIR)/expected_dma_words.mem" --actual "$(ACTUAL_DMA_WORDS_SMOKE)"
+	$(PYTHON) $(DMA_HIT_CHECKER) --expected "$(SMOKE_REPLAY_DIR)/expected_dma_words.mem" --actual "$(ACTUAL_DMA_WORDS_SMOKE)" --feb-enable-mask "$(FEB_ENABLE_MASK_HEX)"
 
 run_cov: compile
 	mkdir -p $(REPORT_DIR)
@@ -127,7 +154,7 @@ run_cov: compile
 	rm -f $(ACTUAL_DMA_WORDS) $(COV_UCDB_ABS)
 	cd $(BUILD_DIR) && set -o pipefail; \
 	QSIM_INI=$(QUESTA_INI) $(QUESTA_RUNNER) $(VSIM) $(VSIM_FLAGS) $(OPQ_VSIM_LIB_FLAGS) -gG_REPLAY_DIR=$(REPLAY_DIR) -gG_ACTUAL_DMA_PATH=$(ACTUAL_DMA_WORDS) -gG_USE_MERGE=$(USE_MERGE) -gG_FEB_ENABLE_MASK_HEX=$(FEB_ENABLE_MASK_HEX) -gG_LOOKUP_CTRL_HEX=$(LOOKUP_CTRL_HEX) -gG_DMA_HALF_FULL_PERIOD_CYCLES=$(DMA_HALF_FULL_PERIOD_CYCLES) -gG_DMA_HALF_FULL_ASSERT_CYCLES=$(DMA_HALF_FULL_ASSERT_CYCLES) tb_swb_block_plain_replay -do "coverage save -onexit $(COV_UCDB_ABS); $(RUN_DO)" $(SIM_ARGS) | tee "$(RUN_LOG)"
-	$(PYTHON) $(DMA_HIT_CHECKER) --expected "$(REPLAY_DIR)/expected_dma_words.mem" --actual "$(ACTUAL_DMA_WORDS)"
+	$(PYTHON) $(DMA_HIT_CHECKER) --expected "$(REPLAY_DIR)/expected_dma_words.mem" --actual "$(ACTUAL_DMA_WORDS)" --feb-enable-mask "$(FEB_ENABLE_MASK_HEX)"
 
 run_cov_smoke: compile
 	mkdir -p $(REPORT_DIR)
@@ -135,7 +162,7 @@ run_cov_smoke: compile
 	rm -f $(ACTUAL_DMA_WORDS_SMOKE) $(COV_UCDB_SMOKE_ABS)
 	cd $(BUILD_DIR) && set -o pipefail; \
 	QSIM_INI=$(QUESTA_INI) $(QUESTA_RUNNER) $(VSIM) $(VSIM_FLAGS) $(OPQ_VSIM_LIB_FLAGS) -gG_REPLAY_DIR=$(SMOKE_REPLAY_DIR) -gG_ACTUAL_DMA_PATH=$(ACTUAL_DMA_WORDS_SMOKE) -gG_USE_MERGE=$(USE_MERGE) -gG_FEB_ENABLE_MASK_HEX=$(FEB_ENABLE_MASK_HEX) -gG_LOOKUP_CTRL_HEX=$(LOOKUP_CTRL_HEX) -gG_DMA_HALF_FULL_PERIOD_CYCLES=$(DMA_HALF_FULL_PERIOD_CYCLES) -gG_DMA_HALF_FULL_ASSERT_CYCLES=$(DMA_HALF_FULL_ASSERT_CYCLES) tb_swb_block_plain_replay -do "coverage save -onexit $(COV_UCDB_SMOKE_ABS); $(RUN_DO)" $(SIM_ARGS) | tee "$(RUN_LOG_SMOKE)"
-	$(PYTHON) $(DMA_HIT_CHECKER) --expected "$(SMOKE_REPLAY_DIR)/expected_dma_words.mem" --actual "$(ACTUAL_DMA_WORDS_SMOKE)"
+	$(PYTHON) $(DMA_HIT_CHECKER) --expected "$(SMOKE_REPLAY_DIR)/expected_dma_words.mem" --actual "$(ACTUAL_DMA_WORDS_SMOKE)" --feb-enable-mask "$(FEB_ENABLE_MASK_HEX)"
 
 coverage_report:
 	@if [ -z "$(VCOVER)" ]; then \

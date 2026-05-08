@@ -20,6 +20,7 @@ DMA_WORD_HEX = DMA_WORD_BITS // 4
 DMA_PADDING_WORD = (1 << DMA_WORD_BITS) - 1
 HIT_MASK = (1 << HIT_WORD_BITS) - 1
 HIT_RSVD_MASK = ~(((1 << 5) - 1) << 58) & HIT_MASK
+FULL_FEB_ENABLE_MASK = 0xF
 
 
 def read_hex_words(path: Path, width_hex: int) -> list[int]:
@@ -37,17 +38,64 @@ def normalize_hit(hit_word: int) -> int:
     return hit_word & HIT_RSVD_MASK
 
 
-def split_payload_hits(words: list[int]) -> tuple[list[int], int]:
+def parse_feb_enable_mask(mask_text: str) -> int:
+    normalized = mask_text.strip().lower()
+    if normalized.startswith("0x"):
+        normalized = normalized[2:]
+    return int(normalized, 16) & FULL_FEB_ENABLE_MASK
+
+
+def generated_replay_lane_id(hit_word: int) -> int:
+    """Return the lane encoded by the basic generated replay payload.
+
+    The reference replay generator puts lane_id + hit_idx * 4 into the low hit
+    nibble before the SWB expected-hit packing, so the normalized DMA hit keeps
+    the source lane in bits [1:0]. This is only used to trim the generated
+    expected stream for FEB_ENABLE_MASK partial-lane checks.
+    """
+
+    return hit_word & 0x3
+
+
+def split_payload_hits(
+    words: list[int],
+    *,
+    expected_active_mask: int | None = None,
+) -> tuple[list[int], int, int]:
     hits: list[int] = []
     padding_words = 0
+    masked_slots = 0
     for word in words:
         if word == DMA_PADDING_WORD:
             padding_words += 1
             continue
         for slot in range(4):
             hit_word = normalize_hit((word >> (slot * HIT_WORD_BITS)) & HIT_MASK)
+            if expected_active_mask is not None:
+                lane_id = generated_replay_lane_id(hit_word)
+                if ((expected_active_mask >> lane_id) & 0x1) == 0:
+                    masked_slots += 1
+                    continue
             hits.append(hit_word)
-    return hits, padding_words
+    return hits, padding_words, masked_slots
+
+
+def trim_surplus_zero_fill_hits(hits: list[int], expected_zero_count: int) -> tuple[list[int], int]:
+    trimmed_hits: list[int] = []
+    kept_zero_count = 0
+    zero_fill_slots = 0
+
+    for hit_word in hits:
+        if hit_word == 0:
+            if kept_zero_count < expected_zero_count:
+                kept_zero_count += 1
+                trimmed_hits.append(hit_word)
+            else:
+                zero_fill_slots += 1
+            continue
+        trimmed_hits.append(hit_word)
+
+    return trimmed_hits, zero_fill_slots
 
 
 def debug_ts_8ns(hit_word: int) -> int:
@@ -82,15 +130,31 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--expected", required=True, type=Path)
     parser.add_argument("--actual", required=True, type=Path)
+    parser.add_argument(
+        "--feb-enable-mask",
+        default="F",
+        help="active FEB lane mask as a hex nibble; default keeps legacy four-lane checking",
+    )
     args = parser.parse_args()
+
+    feb_enable_mask = parse_feb_enable_mask(args.feb_enable_mask)
+    partial_lane_mask = feb_enable_mask != FULL_FEB_ENABLE_MASK
 
     expected_words = read_hex_words(args.expected, DMA_WORD_HEX)
     actual_words = read_hex_words(args.actual, DMA_WORD_HEX)
 
-    expected_hits, expected_padding = split_payload_hits(expected_words)
-    actual_hits, actual_padding = split_payload_hits(actual_words)
+    expected_hits, expected_padding, expected_masked = split_payload_hits(
+        expected_words,
+        expected_active_mask=feb_enable_mask if partial_lane_mask else None,
+    )
+    actual_hits, actual_padding, _actual_masked = split_payload_hits(actual_words)
 
     expected_counter = collections.Counter(expected_hits)
+    if partial_lane_mask:
+        actual_hits, actual_zero_fill = trim_surplus_zero_fill_hits(actual_hits, expected_counter[0])
+    else:
+        actual_zero_fill = 0
+
     actual_counter = collections.Counter(actual_hits)
     missing = expected_counter - actual_counter
     ghosts = actual_counter - expected_counter
@@ -101,7 +165,9 @@ def main() -> int:
         "plain_dma_check: "
         f"expected_words={len(expected_words)} actual_words={len(actual_words)} "
         f"expected_hits={len(expected_hits)} actual_hits={len(actual_hits)} "
-        f"actual_padding_words={actual_padding} order_exact={int(order_exact)}"
+        f"expected_padding_words={expected_padding} actual_padding_words={actual_padding} "
+        f"expected_masked_slots={expected_masked} actual_zero_fill_slots={actual_zero_fill} "
+        f"feb_enable_mask=0x{feb_enable_mask:X} order_exact={int(order_exact)}"
     )
 
     if missing or ghosts:
