@@ -83,7 +83,7 @@ The OPQ/SWB integration flow added in this workspace uses root-level `make` targ
 Current validation status on April 28, 2026:
 
 - the full Siemens Questa install at `/data1/questaone_sim/questasim` is the only supported simulator on this host,
-- `mu3e-ip-cores` is tracked in-repo as the pull-only `external/mu3e-ip-cores` consumer snapshot and is the default upstream owner for OPQ packaging and sync; the OPQ Qsys wrapper is regenerated from packet_scheduler `26.4.15.0428` at nested commit `e549c81` through parent snapshot `7e8bca8`,
+- `mu3e-ip-cores` is tracked in-repo as the pull-only `external/mu3e-ip-cores` consumer snapshot and is the default upstream owner for OPQ packaging and sync; the OPQ Qsys wrapper is regenerated from packet_scheduler `26.5.1.0509` at nested commit `245eb93` through parent snapshot `c9ca241`,
 - `make ip-svd`, `make ip-csr-lint`, and the `make ip-opq-csr-*` live-hardware helpers are the OPQ CSR bring-up entry points; see the canonical `docs/registers/opq_jtag_csr.md` runbook for the JTAG Avalon master path, variables, and examples,
 - the replay generator, the integrated `plain/` and `uvm/` benches, the split OPQ-boundary harness, and the formal seam scaffold all pass on that toolchain,
 - the real integrated OPQ merge path is the promoted default in this repo; the former direct-path bypass workaround is retired,
@@ -102,7 +102,7 @@ The parent repo tracks the upstream `external/mu3e-ip-cores` signoff entry point
 
 | Upstream IP | Pinned upstream commit | SYN | DV |
 |---|---|:---:|:---:|
-| `packet_scheduler` | `e549c81` | [✅](external/mu3e-ip-cores/packet_scheduler/doc/SIGNOFF.md) | [✅](external/mu3e-ip-cores/packet_scheduler/doc/SIGNOFF.md) |
+| `packet_scheduler` | `245eb93` | [✅](external/mu3e-ip-cores/packet_scheduler/doc/SIGNOFF.md) | [✅](external/mu3e-ip-cores/packet_scheduler/doc/SIGNOFF.md) |
 | `ring-buffer_cam` | `3710786` | [✅](external/mu3e-ip-cores/ring-buffer_cam/doc/SIGNOFF.md) | [✅](external/mu3e-ip-cores/ring-buffer_cam/doc/SIGNOFF.md) |
 | `mutrig_frame_deassembly` | `8af676e` | [✅](external/mu3e-ip-cores/mutrig_frame_deassembly/doc/SIGNOFF.md) | [✅](external/mu3e-ip-cores/mutrig_frame_deassembly/doc/SIGNOFF.md) |
 | `emulator_mutrig` | `e763a56` | [✅](external/mu3e-ip-cores/emulator_mutrig/doc/SIGNOFF.md) | [✅](external/mu3e-ip-cores/emulator_mutrig/doc/SIGNOFF.md) |
