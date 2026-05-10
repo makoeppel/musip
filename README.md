@@ -83,7 +83,7 @@ The OPQ/SWB integration flow added in this workspace uses root-level `make` targ
 Current validation status on April 28, 2026:
 
 - the full Siemens Questa install at `/data1/questaone_sim/questasim` is the only supported simulator on this host,
-- `mu3e-ip-cores` is tracked in-repo as the pull-only `external/mu3e-ip-cores` consumer snapshot and is the default upstream owner for OPQ packaging and sync; the OPQ Qsys wrapper is regenerated from packet_scheduler `26.5.1.0509` at nested commit `245eb93` through parent snapshot `17233bd`, which also pins mutrig_timestamp_processor `26.0.12.0510` at `a833ea0`,
+- `mu3e-ip-cores` is tracked in-repo as the pull-only `external/mu3e-ip-cores` consumer snapshot and is the default upstream owner for OPQ packaging and sync; the OPQ Qsys wrapper is regenerated from packet_scheduler `26.5.1.0509` at nested commit `245eb93` through parent snapshot `1ef5e7c`, which also pins mutrig_timestamp_processor `26.0.12.0510` at `96d2adb`,
 - `make ip-svd`, `make ip-csr-lint`, and the `make ip-opq-csr-*` live-hardware helpers are the OPQ CSR bring-up entry points; see the canonical `docs/registers/opq_jtag_csr.md` runbook for the JTAG Avalon master path, variables, and examples,
 - the replay generator, the integrated `plain/` and `uvm/` benches, the split OPQ-boundary harness, and the formal seam scaffold all pass on that toolchain,
 - the real integrated OPQ merge path is the promoted default in this repo; the former direct-path bypass workaround is retired,
