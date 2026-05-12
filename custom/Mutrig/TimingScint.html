@@ -11,8 +11,8 @@
     <script src="midas.js"></script>
     <script src="mhttpd.js"></script>
     <script src="mplot.js"></script>
-    <script src="dqm/onlineDQM.js"></script>
-    <script src="mhistory.js"></script>
+    <script src="onlineDQM.js"></script>
+    <!-- <script src="mhistory.js"></script> -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <link rel="stylesheet" type="text/css" href="Quads/tabs.css">
@@ -27,10 +27,9 @@
 
     <div id="mmain">
     <h2>Power Managment</h2>
-
     <div class="container" id="div_LVHV">
         <table class="mtable" id="LVsupplies">
-            <tr><th colspan="8" class="mtableheader">LV SUPPLIES</th></tr>
+            <tr><th colspan="9" class="mtableheader">LV SUPPLIES</th></tr>
             <tr>
                 <th>Device</th>
                 <th>Channel</th>
@@ -47,7 +46,7 @@
         </table>
 
         <table class="mtable" id="HVsupplies">
-            <tr><th colspan="8" class="mtableheader">HV SUPPLIES</th></tr>
+            <tr><th colspan="9" class="mtableheader">HV SUPPLIES</th></tr>
             <tr>
                 <th>Device</th>
                 <th>Channel</th>
@@ -73,7 +72,7 @@
                 <td id="HVSUPPLY0_0" style="text-align: center">Quad 3 (70µm)</td>
             </tr>
 	    -->
-</table>
+        </table>
 
 
     </div>
@@ -190,7 +189,8 @@
         <table class="mtable" id="sensorSelection">
             <tr><th colspan="3" class="mtableheader">Sensor selection</th></tr>
             <td>
-                <object type="image/svg+xml" data="Mutrig/MuSR-Scint1.svg" id="svg-object" height=300px aria-label="MuSR Scintillator diagram">
+               <!--object type="image/svg+xml" data="Mutrig/MuSR-Scint1.svg" id="svg-object" height=300px aria-label="MuSR Scintillator diagram"-->
+                <object type="image/svg+xml" data="Mutrig/matrix.svg" id="svg-object" height=300px aria-label="Matrix SiPM diagram">
                     <!-- Fallback content for browsers that don't support <object> or SVG -->
                     <p>Your browser does not support inline SVG.</p>
                 </object>
@@ -278,7 +278,7 @@
     </div>
     <div class="container" id="div_SlowMonitoring">
         <table class="mtable" id="SlowMonitoring">
-            <tr><th colspan="2" class="mtableheader">Slow Data Monitoring</th></tr>
+            <tr><th colspan="3" class="mtableheader">Slow Data Monitoring</th></tr>
             <tr>
                 <th>
                     <div class="plot-container">
@@ -293,7 +293,10 @@
                     </div>
                 </th>
                 <th>
-                    <div class="mjshistory" data-group="Timing" data-panel="RatesChannels" style="width: 500px; height: 300px;" ></div>
+                    <div class="mjshistory" data-group="Timing" data-panel="Temperatures" style="width: 500px; height: 300px;" ></div>
+                </th>
+                <th>
+                    <div class="mjshistory" data-group="HV" data-panel="Currents" style="width: 500px; height: 300px;" ></div>
                 </th>
         </tr>
         </table>
@@ -483,26 +486,42 @@
         //init();
         mhttpd_init('Timing Sytem', 100);
         mplot_init();
-        mhistory_init();
+        // mhistory_init();
         boardcontrol_init();
 
-        init_channelSelection('Mutrig/MuSR-Channelmapping.json');
-        init_LVTable('Mutrig/MuSR-Channelmapping.json');
-        init_HVTable('Mutrig/MuSR-Channelmapping.json');
+        init_channelSelection('Mutrig/Matrix-Channelmapping.json');
+        init_LVTable('Mutrig/Matrix-Channelmapping.json');
+        init_HVTable('Mutrig/Matrix-Channelmapping.json');
         plots = [
             //{source: "mutrig/ChannelID", title: "Hits per channel", xTitle: "channel" , yTitle: "Entries"},
             
-            {source: "mutrig/h_tot_32", title: "ToT Muon L", xTitle: "ToT" , yTitle: "Entries", },
-            {source: "mutrig/h_tot_33", title: "ToT Muon R", xTitle: "ToT" , yTitle: "Entries", },
-            {source: "mutrig/h_tot_34", title: "ToT Backward L", xTitle: "ToT" , yTitle: "Entries", },
-            {source: "mutrig/h_tot_35", title: "ToT Backward R", xTitle: "ToT" , yTitle: "Entries", },
-            {source: "mutrig/h_tot_36", title: "ToT Forward L", xTitle: "ToT" , yTitle: "Entries", },
-            {source: "mutrig/h_tot_37", title: "ToT Forward R", xTitle: "ToT" , yTitle: "Entries", },
+            {source: "mutrig/h_tot_0", title: "Matrix CH 0", xTitle: "ToT" , yTitle: "Entries", },
+            {source: "mutrig/h_tot_1", title: "Matrix CH 1", xTitle: "ToT" , yTitle: "Entries", },
+            {source: "mutrig/h_tot_2", title: "Matrix CH 2", xTitle: "ToT" , yTitle: "Entries", },
+            {source: "mutrig/h_tot_3", title: "Matrix CH 3", xTitle: "ToT" , yTitle: "Entries", },
+            {source: "mutrig/h_tot_4", title: "Matrix CH 4", xTitle: "ToT" , yTitle: "Entries", },
+            {source: "mutrig/h_tot_5", title: "Matrix CH 5", xTitle: "ToT" , yTitle: "Entries", },
+            {source: "mutrig/h_tot_6", title: "Matrix CH 6", xTitle: "ToT" , yTitle: "Entries", },
+            {source: "mutrig/h_tot_7", title: "Matrix CH 7", xTitle: "ToT" , yTitle: "Entries", },
+            {source: "mutrig/h_tot_8", title: "Matrix CH 8", xTitle: "ToT" , yTitle: "Entries", },
+            {source: "mutrig/h_tot_9", title: "Matrix CH 9", xTitle: "ToT" , yTitle: "Entries", },
+            {source: "mutrig/h_tot_10", title: "Matrix CH 10", xTitle: "ToT" , yTitle: "Entries", },
+            {source: "mutrig/h_tot_11", title: "Matrix CH 11", xTitle: "ToT" , yTitle: "Entries", },
+            {source: "mutrig/h_tot_12", title: "Matrix CH 12", xTitle: "ToT" , yTitle: "Entries", },
+            {source: "mutrig/h_tot_13", title: "Matrix CH 13", xTitle: "ToT" , yTitle: "Entries", },
+            {source: "mutrig/h_tot_14", title: "Matrix CH 14", xTitle: "ToT" , yTitle: "Entries", },
+            {source: "mutrig/h_tot_15", title: "Matrix CH 15", xTitle: "ToT" , yTitle: "Entries", },
+            //{source: "mutrig/h_tot_32", title: "ToT Muon L", xTitle: "ToT" , yTitle: "Entries", },
+            //{source: "mutrig/h_tot_33", title: "ToT Muon R", xTitle: "ToT" , yTitle: "Entries", },
+            //{source: "mutrig/h_tot_34", title: "ToT Backward L", xTitle: "ToT" , yTitle: "Entries", },
+            //{source: "mutrig/h_tot_35", title: "ToT Backward R", xTitle: "ToT" , yTitle: "Entries", },
+            //{source: "mutrig/h_tot_36", title: "ToT Forward L", xTitle: "ToT" , yTitle: "Entries", },
+            //{source: "mutrig/h_tot_37", title: "ToT Forward R", xTitle: "ToT" , yTitle: "Entries", },
             //{source: "mutrig/h_tot_36", title: "ToT channel 36", xTitle: "ToT" , yTitle: "Entries", },
             
-            {source: "mutrig/TimeStampDelta_m_internal", title: "Muon intra timing", xTitle: "dT [ns]" , yTitle: "Entries", },
-            {source: "mutrig/TimeStampDelta_backward_internal", title: "Backward intra timing", xTitle: "dT [ns]" , yTitle: "Entries", },
-            {source: "mutrig/TimeStampDelta_forward_internal", title: "Forward intra timing", xTitle: "dT [ns]" , yTitle: "Entries", },
+            //{source: "mutrig/TimeStampDelta_m_internal", title: "Muon intra timing", xTitle: "dT [ns]" , yTitle: "Entries", },
+            //{source: "mutrig/TimeStampDelta_backward_internal", title: "Backward intra timing", xTitle: "dT [ns]" , yTitle: "Entries", },
+            //{source: "mutrig/TimeStampDelta_forward_internal", title: "Forward intra timing", xTitle: "dT [ns]" , yTitle: "Entries", },
             //{source: "mutrig/TimeStampDelta_det2_internal", title: "Detector 2 intra timing", xTitle: "dT [ns]" , yTitle: "Entries", },
         ];
         dqmInit("anaPlotsMutrig", plots);

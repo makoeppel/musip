@@ -131,7 +131,7 @@
 
 
         const boxes = counterBoxes[type];
-        console.log("Found boxes for", type, ":", boxes);
+        //console.log("Found boxes for", type, ":", boxes);
         if (!boxes.length) return;
         for (let mod = 0; mod < boxes.length; mod++) {
             const slice = values.slice(mod * 2, (mod + 1) * 2);
@@ -163,7 +163,7 @@
                     break;
                 }
             }
-            console.log(`Module ${mod} (${type}): setting color to ${color}`);
+            //console.log(`Module ${mod} (${type}): setting color to ${color}`);
             boxes[mod].setAttribute("data-color", color);
         }
     }
@@ -176,18 +176,18 @@
         if (!body) return;
         body.innerHTML = '';
 
-        mjsonrpc_db_get_values(["/Equipment/LinksLabor/Settings/LinkMask","/Equipment/LinksLabor/Settings/FEBType"]).then(function(rpc) {
+        mjsonrpc_db_get_values(["/Equipment/Quads/Settings/DAQ/Links/FEBsActive","/Equipment/Quads/Settings/DAQ/Links/FEBsMutrig"]).then(function(rpc) {
             boardID = 0;
             for(let feb=0; feb<4; feb++) {
-                // Only include boards that are enabled in LinkMask
+                // Only include boards that are enabled
                 // only include Tile febs here
-                if(rpc.result.data[0][feb] != "0x00000003") {
+                if(!rpc.result.data[0][feb]) {
                     continue;
                 }
-                if(rpc.result.data[1][feb] != "0x00000004") {
+                if(!rpc.result.data[1][feb]) {
                     continue;
                 }
-                febID = feb - 2;
+                febID = feb;
                 //TODO: implement mapping from feb (port number) to module number (febID)
                 for (let board = 0; board < 2; board++) {
                     // Create a new row
@@ -203,11 +203,11 @@
                         <td style="text-align: center"><div class="modbbox" name="vccd" style="width:25px; height: 20px;"></div></td>
                         <td style="text-align: center">
                             <input type="checkbox" name="ASICMaskCB" onclick=updateASICmask(this,${feb},${board})></input>
-                            <div class="modbvalue" name="ASICMask" data-odb-path="/Equipment/LinksLabor/Settings/ASICMask[${feb}]" data-odb-editable="0" style="width:60px; height: 20px;"  onchange="initASICMaskCB()"></div>
+                            <div class="modbvalue" name="ASICMask" data-odb-path="/Equipment/Quads/Settings/DAQ/Links/ASICMask[${feb}]" data-odb-editable="0" style="width:60px; height: 20px;"  onchange="initASICMaskCB()"></div>
                         </td> 
                         <td style="text-align: center">
                             <input type="checkbox" name="LVDSMaskCB" onclick=updateLVDSmask(this,${feb},${board})>
-                            <div class="modbvalue" name="LVDSMask" data-odb-path="/Equipment/LinksLabor/Settings/LVDSLinkMask[${feb}]" data-odb-editable="0" style="width:60px; height: 20px;" onchange="initLVDSMaskCB()"></div>
+                            <div class="modbvalue" name="LVDSMask" data-odb-path="/Equipment/Quads/Settings/DAQ/Links/LVDSLinkMask[${feb}]" data-odb-editable="0" style="width:60px; height: 20px;" onchange="initLVDSMaskCB()"></div>
                             </input>
                         </td> 
                         <td style="text-align: center"><div class="modbbox" name="TMB_P" style="width:50px; height: 20px;"></div></td>
@@ -251,7 +251,7 @@ function initLVDSMaskCB(){
         value = document.getElementsByName("LVDSMask")[feb].value;
         mask = 1<<board;
         bvalue = (value & mask) >> board;
-        //console.log("Index:", index, "FEB:", feb, " Board:", board, " Value:", value, " Mask:", mask, " Result:", bvalue);
+        console.log("Index:", index, "FEB:", feb, " Board:", board, " Value:", value, " Mask:", mask, " Result:", bvalue);
         object.checked = bvalue;
         index += 1;
     }
@@ -273,34 +273,33 @@ function updateLVDSmask(checkbox, feb, board){
     const mask = 1<<board;
     obj = document.getElementsByName("LVDSMask")[0];
     value = parseInt(obj.value);
+    oldvalue = value;
     value &= ~mask;
     value |= checkbox.checked << board;
-    console.log("LVDS Mask for FEB ", feb, " Board ", board, " set to ", value);
+    console.log("LVDS Mask for FEB ", feb, " Board ", board, " set from ", oldvalue, " to ", value);
     obj.setValue(value);
 }
 
 
 function setGlobalASICpower( flag = false ){
-    setODBValue("/Equipment/TilesLabor/TMB_control/module_power", flag, false);
+    setODBValue("/Equipment/Quads/Settings/DAQ/Commands/MuTRiG/module_power", flag, false);
 }
 
 function boardcontrol_init(){
         console.log("Initializing Board Control Module");
-        path="/Equipment/TilesLabor";
+        path="/Equipment/Quads";
         //Initializing all functions to display current ODB
-        mjsonrpc_db_get_values(["/Equipment/LinksLabor/Settings/LinkMask"]).then(
+        mjsonrpc_db_get_values(["/Equipment/Quads/DAQ/Links/FEBsActive"]).then(
 		rpcL => {
-			linkmask = rpcL.result.data[0];
-        	maxtmb = linkmask.lastIndexOf("0x00000003")+1;
             init_boardtable();
-        	mjsonrpc_db_get_values([path.concat("/Variables/","TDCF")]).then(function(rpc){applyColors(rpc.result.data[0], "tdcf")});
-        	mjsonrpc_db_get_values([path.concat("/Variables/","TDCE")]).then(function(rpc){applyColors(rpc.result.data[0], "tdce")});
-        	mjsonrpc_db_get_values([path.concat("/Variables/","TDCH")]).then(function(rpc){applyColors(rpc.result.data[0], "tdch")});
-        	mjsonrpc_db_get_values([path.concat("/Variables/","TDSM")]).then(function(rpc){updateBoardStatus(rpc.result.data[0])});
-        	mjsonrpc_db_get_values(["/Equipment/TilesLabor/Settings/Names TDTM"]).then(function(rpc){
+        	mjsonrpc_db_get_values([path.concat("/Variables/","MTCF")]).then(function(rpc){applyColors(rpc.result.data[0], "tdcf")});
+        	mjsonrpc_db_get_values([path.concat("/Variables/","MTCE")]).then(function(rpc){applyColors(rpc.result.data[0], "tdce")});
+        	mjsonrpc_db_get_values([path.concat("/Variables/","MTCH")]).then(function(rpc){applyColors(rpc.result.data[0], "tdch")});
+        	mjsonrpc_db_get_values([path.concat("/Variables/","MTSM")]).then(function(rpc){updateBoardStatus(rpc.result.data[0])});
+        	mjsonrpc_db_get_values(["/Equipment/TilesLabor/Settings/Names MTTM"]).then(function(rpc){
         	    tmp_names = rpc.result.data[0];
 	    	});
-        	mjsonrpc_db_get_values(["/Equipment/TilesLabor/Settings/Names TDPM"]).then(function(rpc){
+        	mjsonrpc_db_get_values(["/Equipment/TilesLabor/Settings/Names MTPM"]).then(function(rpc){
         	    power_names = rpc.result.data[0];
             });
             initASICMaskCB()

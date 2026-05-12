@@ -1,23 +1,23 @@
-eq_path ="/Equipment/TilesLabor";
+eq_path ="/Equipment/Quads";
 
 async function reset_mutrig_asics() {
     console.log("Resetting MuTrig ASICs");
-    await setODBValue(eq_path+"/Settings/DAQ/reset_asics", 1);
+    await setODBValue(eq_path+"/Settings/DAQ/Commands/MuTRiG/reset_asics", 1);
 }
 
 async function reset_mutrig_dpath() {
     console.log("Resetting MuTrig Data Path");
-    await setODBValue(eq_path+"/Settings/DAQ/reset_datapath", 1);
+    await setODBValue(eq_path+"/Settings/DAQ/Commands/MuTRiG/reset_datapath", 1);
 }
 
 async function reset_mutrig_lvds() {
     console.log("Resetting MuTrig LVDS");
-    await setODBValue(eq_path+"/Settings/DAQ/reset_lvds", 1);
+    await setODBValue(eq_path+"/Settings/DAQ/Commands/MuTRiG/reset_lvds", 1);
 }
 
 async function reset_mutrig_counters() {
     console.log("Resetting MuTrig Counters");
-    await setODBValue(eq_path+"/Settings/DAQ/reset_counters", 1);
+    await setODBValue(eq_path+"/Settings/DAQ/Commands/MuTRiG/reset_counters", 1);
 }
 
 async function mutrig_atestout_selected() {
@@ -43,7 +43,7 @@ async function set_mutrig_testout(selectedChannel){
     console.log("Setting MuTrig TestOut [",selectedChannel,"] to ", value);
 
     //TODO: combine calls
-    path = eq_path+"/Settings/ASICs/Channels/amonctrl";
+    path = eq_path+"/Settings/ConfigMuTRiG/Channels/amonctrl";
     amon = await getODBValue(path, true);
     amon.fill(0);
     if (selectedChannel !== null) {
@@ -51,7 +51,7 @@ async function set_mutrig_testout(selectedChannel){
     }
     await setODBValue(path, amon, false);
 
-    path = eq_path+"/Settings/ASICs/Channels/amon_en_n";
+    path = eq_path+"/Settings/ConfigMuTRiG/Channels/amon_en_n";
     amon_en_n = await getODBValue(path, true);
     amon_en_n.fill(true);
     if(value != 0){
@@ -71,8 +71,8 @@ async function set_mutrig_dtestout(selectedChannel){
         channel = -1;
     }
     const params = new Map([
-        [ eq_path+"/Settings/ASICs/TDCs/dmon_select[*]",   channel ],
-        [ eq_path+"/Settings/ASICs/TDCs/dmon_sw[*]",   select ],
+        [ eq_path+"/Settings/ConfigMuTRiG/TDCs/dmon_select[*]",   channel ],
+        [ eq_path+"/Settings/ConfigMuTRiG/TDCs/dmon_sw[*]",   select ],
         ]);
     setODBValue(Array.from(params.keys()),Array.from(params.values()),true).then(function(){
         mutrig_configure_all();
@@ -91,11 +91,11 @@ async function mutrig_sop_maskChannel(channel, value) {
     console.log("mutrig_sop_maskChannel "+channel+ " = "+ value);
     if (channel == -1){
         params = new Map([
-        [ eq_path+"/Settings/ASICs/Channels/mask[*]",        value ],
+        [ eq_path+"/Settings/ConfigMuTRiG/Channels/mask[*]",        value ],
         ]);
     }else{
         params = new Map([
-        [ eq_path+"/Settings/ASICs/Channels/mask["+channel+"]", value ],
+        [ eq_path+"/Settings/ConfigMuTRiG/Channels/mask["+channel+"]", value ],
         ]);
 
     }
@@ -105,31 +105,53 @@ async function mutrig_sop_maskChannel(channel, value) {
     });
 }
 
-
+/*
+SUBROUTINE TLD_pll_ASIC_config
+   ODBSET /Equipment/TilesDownstream/Settings/ConfigMuTRiG/Global/tx_mode, 0
+   ODBSET /Equipment/TilesDownstream/Settings/ConfigMuTRiG/Channels/cml[*], 0
+   ODBSET /Equipment/TilesDownstream/Settings/ConfigMuTRiG/Channels/cml_sc[*], 1
+   ODBSET /Equipment/TilesDownstream/Settings/ConfigMuTRiG/Channels/tdctest_n[*], 0
+   ODBSET /Equipment/TilesDownstream/Settings/ConfigMuTRiG/Channels/recv_all[*], 1
+   ODBSET /Equipment/TilesDownstream/Settings/ConfigMuTRiG/TDCs/dmon_select[*], -1
+   ODBSET /Equipment/TilesDownstream/Settings/ConfigMuTRiG/Channels/mask[*], 0
+   ODBSET /Equipment/TilesDownstream/Commands/TestPulsesTDC, n
+   ODBSET /Equipment/TilesDownstream/Commands/TestPulsesTDC, y
+   CALL TLD_configure_ASICs
+   ODBSET /Equipment/TilesDownstream/Settings/ConfigMuTRiG/Channels/cml[*], 8
+   CALL TLD_configure_ASICs
+   ODBSET /Equipment/TilesDownstream/Settings/ConfigMuTRiG/Channels/cml[*], 0
+   CALL TLD_configure_ASICs
+ENDSUBROUTINE
+*/
 async function mutrig_sop_inject(channel="*") {
     idx = "["+channel+"]"
-    const params = new Map([
-        [ eq_path+"/Settings/ASICs/Global/tx_mode",         0 ],
-        [ eq_path+"/Settings/ASICs/Channels/cml"+idx,        0 ],
-        [ eq_path+"/Settings/ASICs/Channels/cml_sc"+idx,     1 ],
-        [ eq_path+"/Settings/ASICs/Channels/tdctest_n"+idx,  0 ],
-        [ eq_path+"/Settings/ASICs/Channels/recv_all"+idx,   1 ],
-        [ eq_path+"/Settings/ASICs/TDCs/dmon_select"+idx,   -1 ],
+    params = new Map([
+        [ eq_path+"/Settings/ConfigMuTRiG/Global/tx_mode",         0 ],
+        [ eq_path+"/Settings/ConfigMuTRiG/Channels/cml"+idx,        0 ],
+        [ eq_path+"/Settings/ConfigMuTRiG/Channels/cml_sc"+idx,     1 ],
+        [ eq_path+"/Settings/ConfigMuTRiG/Channels/tdctest_n"+idx,  0 ],
+        [ eq_path+"/Settings/ConfigMuTRiG/Channels/recv_all"+idx,   1 ],
+        [ eq_path+"/Settings/ConfigMuTRiG/TDCs/dmon_select"+idx,   -1 ],
         [ eq_path+"/Settings/Commands/TestPulsesTDC",       1 ],
         ]);
-    setODBValue(Array.from(params.keys()),Array.from(params.values()),true).then(function(){
-        mutrig_configure_all();
-    });
+    await setODBValue(Array.from(params.keys()),Array.from(params.values()),true);
+    await mutrig_configure_all();
+    params = new Map([ [ eq_path+"/Settings/ConfigMuTRiG/Channels/cml"+idx, 8 ]]);
+    await setODBValue(Array.from(params.keys()),Array.from(params.values()),true);
+    await mutrig_configure_all();
+    params = new Map([ [ eq_path+"/Settings/ConfigMuTRiG/Channels/cml"+idx, 0 ]]);
+    await setODBValue(Array.from(params.keys()),Array.from(params.values()),true);
+    await mutrig_configure_all();
 }
 
 async function mutrig_sop_normal() {
     const params = new Map([
-        [ eq_path+"/Settings/ASICs/Global/tx_mode",         0 ],
-        [ eq_path+"/Settings/ASICs/Channels/cml[*]",        8 ],
-        [ eq_path+"/Settings/ASICs/Channels/cml_sc[*]",     0 ],
-        [ eq_path+"/Settings/ASICs/Channels/tdctest_n[*]",  1 ],
-        [ eq_path+"/Settings/ASICs/Channels/recv_all[*]",   0 ],
-        [ eq_path+"/Settings/ASICs/TDCs/dmon_select[*]",   -1 ],
+        [ eq_path+"/Settings/ConfigMuTRiG/Global/tx_mode",         0 ],
+        [ eq_path+"/Settings/ConfigMuTRiG/Channels/cml[*]",        8 ],
+        [ eq_path+"/Settings/ConfigMuTRiG/Channels/cml_sc[*]",     0 ],
+        [ eq_path+"/Settings/ConfigMuTRiG/Channels/tdctest_n[*]",  1 ],
+        [ eq_path+"/Settings/ConfigMuTRiG/Channels/recv_all[*]",   0 ],
+        [ eq_path+"/Settings/ConfigMuTRiG/TDCs/dmon_select[*]",   -1 ],
         [ eq_path+"/Settings/Commands/TestPulsesTDC",       0 ],
         ]);
     setODBValue(Array.from(params.keys()),Array.from(params.values()),true).then(function(){
@@ -139,12 +161,12 @@ async function mutrig_sop_normal() {
 
 async function mutrig_sop_noise() {
     const params = new Map([
-        [ eq_path+"/Settings/ASICs/Global/tx_mode",         0 ],
-        [ eq_path+"/Settings/ASICs/Channels/cml[*]",        8 ],
-        [ eq_path+"/Settings/ASICs/Channels/cml_sc[*]",     0 ],
-        [ eq_path+"/Settings/ASICs/Channels/tdctest_n[*]",  1 ],
-        [ eq_path+"/Settings/ASICs/Channels/recv_all[*]",   1 ],
-        [ eq_path+"/Settings/ASICs/TDCs/dmon_select[*]",   -1 ],
+        [ eq_path+"/Settings/ConfigMuTRiG/Global/tx_mode",         0 ],
+        [ eq_path+"/Settings/ConfigMuTRiG/Channels/cml[*]",        8 ],
+        [ eq_path+"/Settings/ConfigMuTRiG/Channels/cml_sc[*]",     0 ],
+        [ eq_path+"/Settings/ConfigMuTRiG/Channels/tdctest_n[*]",  1 ],
+        [ eq_path+"/Settings/ConfigMuTRiG/Channels/recv_all[*]",   1 ],
+        [ eq_path+"/Settings/ConfigMuTRiG/TDCs/dmon_select[*]",   -1 ],
         [ eq_path+"/Settings/Commands/TestPulsesTDC",       0 ],
         ]);
     setODBValue(Array.from(params.keys()),Array.from(params.values()),true).then(function(){
@@ -154,7 +176,7 @@ async function mutrig_sop_noise() {
 
 async function mutrig_sop_prbs() {
     const params = new Map([
-        [ eq_path+"/Settings/ASICs/Global/tx_mode",         1 ],
+        [ eq_path+"/Settings/ConfigMuTRiG/Global/tx_mode",         1 ],
         ]);
     setODBValue(Array.from(params.keys()),Array.from(params.values()),true).then(function(){
         mutrig_configure_all();

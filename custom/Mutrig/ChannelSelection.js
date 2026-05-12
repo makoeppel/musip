@@ -29,7 +29,7 @@ function showMessage(nameOrEvent) {
   
 
   selectedASIC = 0;
-  selectedChannel = mapped || null;
+  selectedChannel = (mapped !== undefined && mapped !== null) ? mapped: null;
   // Update selected channel display
   var selSpan = document.getElementById('channel_selection');
   if (selSpan) selSpan.textContent = (selectedChannel !== null) ? String(selectedChannel) : 'None';

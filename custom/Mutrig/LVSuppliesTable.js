@@ -101,8 +101,8 @@ function init_HVTable(config_url){
         tr.appendChild(makeCell('' + index + ''));
 
         //this is for the SCSHV boxes at PSI
-        var statePath = '/Equipment/' + device + '/Variables/ChStatus[' + index + ']';
-        var setStatePath = null; //'/Equipment/' + device + '/Variables/ChStatus[' + index + ']';
+        var statePath = '/Equipment/' + device +  '/Variables/Current[' + index + ']';//'/Variables/ChStatus[' + index + ']';
+        var setStatePath = null;// '/Equipment/' + device + '/Variables/ChStatus[' + index + ']'; //null; 
         var demandVPath = '/Equipment/' + device + '/Variables/Demand[' + index + ']';
         var voltagePath = '/Equipment/' + device + '/Variables/Measured[' + index + ']';
         var currentLimitPath = '/Equipment/' + device + '/Settings/Current Limit[' + index + ']';
@@ -110,7 +110,7 @@ function init_HVTable(config_url){
         var descPath = '/Equipment/' + device + '/Settings/Names[' + index + ']';
 
         // State color box
-        tr.appendChild(makeCell('<div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="' + statePath + '" data-color="lightgreen" data-background-color="red"></div>'));
+        tr.appendChild(makeCell('<div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="' + statePath + '" data-formula="Math.abs(x) > 0.01"  data-color="lightgreen" data-background-color="red"></div>'));
 
         // Set state checkbox
 	if(setStatePath != null)
