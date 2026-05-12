@@ -287,10 +287,10 @@ int ConfigureASICs(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings, uint8
 int ConfigureMuTRiGASICs(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings, uint8_t* bitpattern_w) {
     int status = FE_SUCCESS;
 
-    // Bind the generator to the real ODB tree once.
+    // bind the generator to the ODB tree
     mutrig::ODBConfigGenerator::BoundGenerator cfg(m_settings["ConfigMuTRiG"]);
 
-    // Optional sanity check against constants.h
+    // sanity check against constants.h
     if (!cfg.validate()) {
         cm_msg(MERROR, "ConfigureMuTRiGASICs",
                "MuTRiG layout mismatch: ODB layout gives %zu bits / %zu bytes, "
@@ -320,7 +320,7 @@ int ConfigureMuTRiGASICs(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings,
                    "/Settings/ConfigMuTRiG -> globalASIC-%u -> localASIC-%u on FEB-%u",
                    globalAsic, localAsic, febIDx);
 
-            // Build full MuTRiG config from ODB
+            // build full MuTRiG config from ODB
             const auto bytes = cfg.generate(globalAsic);
 
             if (bytes.size() != N_BYTES_MUTRIG) {
@@ -338,16 +338,15 @@ int ConfigureMuTRiGASICs(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings,
                 std::cout << json << std::endl;
             }
 
-            // Send to hardware here, using your existing FEB slow control call.
-            // Replace this line with your real write function.
-            //
-            // status = feb_sc.WriteMutrigConfig(febIDx, localAsic, bitpattern_w, N_BYTES_MUTRIG);
-            //
-            // if (status != FE_SUCCESS) {
-            //     cm_msg(MERROR, "ConfigureMuTRiGASICs",
-            //            "Failed to configure ASIC %u on FEB %u", localAsic, febIDx);
-            //     return status;
-            // }
+            // generate payload and send it to the mutrig
+            vector<vector<uint32_t>> payload;
+            payload.push_back(vector<uint32_t>(reinterpret_cast<uint32_t*>(bitpattern_w),reinterpret_cast<uint32_t*>(bitpattern_w)+bytes.size()/4));
+            auto _status = feb_sc.FEBsc_NiosRPC(febIDx, CMD_MUTRIG_ASIC_CFG | (localAsic), payload );
+            if (_status != FE_SUCCESS) {
+                cm_msg(MERROR, "ConfigureMuTRiGASICs",
+                       "Failed to configure ASIC %u on FEB %u", localAsic, febIDx);
+                return status;
+            }
         }
     }
 

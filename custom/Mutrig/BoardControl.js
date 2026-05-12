@@ -92,7 +92,7 @@
                     table.insertRow().innerHTML =
                         `<td style="white-space:nowrap;"> ${name} ${rowIdx}: ` +
                         `<span id="counter_${name}_${rowIdx}" class="modbvalue" ` +
-                        `data-odb-path="Equipment/TilesLabor/Variables/${name}[${rowIdx}]"></span></td>`;
+                        `data-odb-path="Equipment/Quads/Variables/${name}[${rowIdx}]"></span></td>`;
                 }
                 //tooltip.appendChild(table);
             });
@@ -194,7 +194,7 @@
                     var row = document.createElement('tr');    
                     row.innerHTML = `
                         <td>${febID}.${board}</td>
-                        <td style="text-align: center"><input type="checkbox" name="Power" class="modbcheckbox" data-odb-path="/Equipment/TilesLabor/TMB_control/module_power_mask[${febID}]" style="width:20px; height: 20px;"></td>
+                        <td style="text-align: center"><input type="checkbox" name="Power" class="modbcheckbox" data-odb-path="/Equipment/Qudas/Settings/DAQ/Commands/MuTRiG/module_power_mask[${febID}]" style="width:20px; height: 20px;"></td>
                         <!-- CheckBox for ASIC mask, per asic -->
                         <!-- CheckBox for LVDS mask, per asic -->
                         <td style="text-align: center"><div class="modbbox" name="Init" style="width:25px; height: 20px;"></div></td>
@@ -296,10 +296,10 @@ function boardcontrol_init(){
         	mjsonrpc_db_get_values([path.concat("/Variables/","MTCE")]).then(function(rpc){applyColors(rpc.result.data[0], "tdce")});
         	mjsonrpc_db_get_values([path.concat("/Variables/","MTCH")]).then(function(rpc){applyColors(rpc.result.data[0], "tdch")});
         	mjsonrpc_db_get_values([path.concat("/Variables/","MTSM")]).then(function(rpc){updateBoardStatus(rpc.result.data[0])});
-        	mjsonrpc_db_get_values(["/Equipment/TilesLabor/Settings/Names MTTM"]).then(function(rpc){
+        	mjsonrpc_db_get_values([path.concat("/Variables/", "Names MTTM")]).then(function(rpc){
         	    tmp_names = rpc.result.data[0];
 	    	});
-        	mjsonrpc_db_get_values(["/Equipment/TilesLabor/Settings/Names MTPM"]).then(function(rpc){
+        	mjsonrpc_db_get_values([path.concat("/Variables/", "Names MTPM")]).then(function(rpc){
         	    power_names = rpc.result.data[0];
             });
             initASICMaskCB()

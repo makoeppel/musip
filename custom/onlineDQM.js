@@ -79,14 +79,59 @@ function decodeHistogram(arraybuffer) {
     return histogram;
 }
 
-/** Asynchronously retrieves a histogram object from a DQM instance.
- *
- * The `runs` argument is an array of the run numbers that you want the histogram for, where `0` is
- * the current run. The default is `[0]` i.e. only the current run. */
-function getHistogram(name, runs = [0], dqmProgname = "ana") {
-    const messageType_hist = 0x68697374; // equivalent to the 4 byte sequence "hist".
+function decodeHistogramMetadata(arraybuffer) {
+    let dataView = new DataView(arraybuffer);
 
-    return mjsonrpc_call("brpc", { "client_name": dqmProgname, "max_reply_length": 1048576, "cmd":"dqm::histogram", "args": JSON.stringify({name: name, runs: runs}) }, "arraybuffer").then(
+    if(arraybuffer.byteLength == 0) return;
+
+    const little_endian = true;
+    let currentByte = 0;
+
+    //
+    // The first byte says how many entries there are.
+    //
+    const entries = dataView.getUint8(currentByte++, little_endian);
+
+    let textDecoder = new TextDecoder();
+    let returnValue = {};
+
+    for(let entryIndex = 0; entryIndex < entries; ++entryIndex) {
+        //
+        // For each entry there will be 1 byte to describe the metadata "category", then a null terminated
+        // string for the value. The available categories are the C++ mu3e::dqm::Metadata::Category enum values
+        // (see tools/include/mu3e/dqm/Metadata.hpp). They are:
+        // * 0 - Category::Title
+        // * 1 - Category::Description
+        // * 2 - Category::AxisTitleX
+        // * 3 - Category::AxisTitleY
+        // * 4 - Category::AxisTitleZ
+        //
+        const entryType = dataView.getUint8(currentByte++, little_endian);
+
+        const entryStart = currentByte;
+        // Look for the null terminator to see how long the string is.
+        for(; currentByte < arraybuffer.byteLength; ++currentByte) {
+            if(dataView.getUint8(currentByte) == 0) break;
+        }
+
+        let text = textDecoder.decode(arraybuffer.slice(entryStart, currentByte));
+        ++currentByte; // skip over the null terminator
+
+        if(entryType == 0) returnValue.title = text;
+        else if(entryType == 1) returnValue.description = text;
+        else if(entryType == 2) returnValue.axisTitleX = text;
+        else if(entryType == 3) returnValue.axisTitleY = text;
+        else if(entryType == 4) returnValue.axisTitleZ = text;
+    }
+
+    return returnValue;
+}
+
+/** For internal use. Makes an RPC request and if the result was truncated by Midas make another request with the correct max_reply_length.
+ *
+ * This assumes that the response has an 8 byte header saying the actual message size and the type of the message (as all DQM responses do). */
+function dqmRemoteCall(cmd, args, expectedMessageType, dqmProgname, max_reply_length) {
+    return mjsonrpc_call("brpc", { "client_name": dqmProgname, "max_reply_length": max_reply_length, "cmd": cmd, "args": args}, "arraybuffer").then(
         function(rpc) {
             if(rpc.byteLength == 0) throw new Error("Empty response");
 
@@ -97,25 +142,51 @@ function getHistogram(name, runs = [0], dqmProgname = "ana") {
             let dataView = new DataView(rpc);
             let expectedMessageLength = dataView.getUint32(0, true /*little endian*/);
             let messageType = dataView.getUint32(4); // Note that we read as big endian here. It's a 4 byte sequence we're reading, and order matters.
-            if(messageType != messageType_hist) console.log("getHistogram() Warning: Unexpected message type '" + messageType + "'");
+            if(messageType != expectedMessageType) console.log("dqmRemoteCall() Warning: Unexpected message type '" + messageType + "'");
 
             if(rpc.byteLength < expectedMessageLength) {
-                console.log("getHistogram() RPC call of size " + expectedMessageLength + " was truncated. Trying again with adequate \"max_reply_length\".");
-                return mjsonrpc_call("brpc", { "client_name": dqmProgname, "max_reply_length": expectedMessageLength, "cmd":"dqm::histogram", "args": JSON.stringify({name: name, runs: runs}) }, "arraybuffer").then(
+                console.log("dqmRemoteCall() RPC call of size " + expectedMessageLength + " was truncated. Trying again with adequate \"max_reply_length\".");
+                return mjsonrpc_call("brpc", { "client_name": dqmProgname, "max_reply_length": expectedMessageLength, "cmd": cmd, "args": args }, "arraybuffer").then(
                     (rpc) => {
                         if(rpc.byteLength == 0) throw new Error("Empty response");
                         let dataView = new DataView(rpc);
                         let expectedMessageLength = dataView.getUint32(0, true /*little endian*/);
                         let messageType = dataView.getUint32(4); // Note that we read as big endian here. It's a 4 byte sequence we're reading, and order matters.
-                        if(messageType != messageType_hist) console.log("getHistogram() Warning: Unexpected message type '" + messageType + "'");
+                        if(messageType != expectedMessageType) console.log("dqmRemoteCall() Warning: Unexpected message type '" + messageType + "'");
 
                         if(rpc.byteLength < expectedMessageLength) throw new Error("Couldn't get full histogram data after second attempt");
-                        else return decodeHistogram(rpc.slice(8));
+                        else return rpc.slice(8);
                     }
                 );
             }
 
-            return decodeHistogram(rpc.slice(8));
+            return rpc.slice(8);
+        }
+    );
+}
+
+/** Asynchronously retrieves a histogram object from a DQM instance.
+ *
+ * The `runs` argument is an array of the run numbers that you want the histogram for, where `0` is
+ * the current run. The default is `[0]` i.e. only the current run. */
+function getHistogram(name, runs = [0], dqmProgname = "ana") {
+    const messageType_hist = 0x68697374; // equivalent to the 4 byte sequence "hist".
+    const initial_max_reply_length = 1048576;
+
+    return dqmRemoteCall("dqm::histogram", JSON.stringify({name: name, runs: runs}), messageType_hist, dqmProgname, initial_max_reply_length).then(
+        (response) => {
+            return decodeHistogram(response);
+        }
+    );
+}
+
+function getHistogramMetadata(name, run = 0, dqmProgname = "ana") {
+    const messageType_meta = 0x6d657461; // equivalent to the 4 byte sequence "meta".
+    const initial_max_reply_length = 1024;
+
+    return dqmRemoteCall("dqm::metadata", JSON.stringify({name: name, runs: [run]}), messageType_meta, dqmProgname, initial_max_reply_length).then(
+        (response) => {
+            return decodeHistogramMetadata(response);
         }
     );
 }
@@ -123,6 +194,8 @@ function getHistogram(name, runs = [0], dqmProgname = "ana") {
 /** Displays the provided histogram in the Midas MPlotGraph instance */
 function displayHistogram(histogram, mPlotGraph, seriesIndex = 0) {
     try {
+        mPlotGraph.error = null; // clear in case it was set before
+
         // The binning details we have don't include under/overflow, but Midas histograms don't add them implicitly.
         // So we have to manually add bins for the under and overflow bins.
         let binWidths = []
@@ -131,18 +204,18 @@ function displayHistogram(histogram, mPlotGraph, seriesIndex = 0) {
             binWidths[dimension] = (histogram.highEdge[dimension] - histogram.lowEdge[dimension]) / histogram.numberOfBins[dimension];
         }
 
-        // If the param.plot array is not big enough, get Midas to embiggen it by setting dummy data.
-        if(mPlotGraph.param.plot.length <= seriesIndex) {
-            // Note that this requires you to have a Midas with https://bitbucket.org/tmidas/midas/pull-requests/54
-            // merged into it.
-            mPlotGraph.setData(seriesIndex, []);
+        // If the param.plot array is not big enough, get Midas to embiggen it.
+        while(mPlotGraph.param.plot.length <= seriesIndex) {
+            mPlotGraph.addPlot();
         }
 
+        let xdata, ydata, zdata;
         if(dimensions == 1) {
             mPlotGraph.param.plot[seriesIndex].type = "histogram";
             mPlotGraph.param.plot[seriesIndex].xMin = histogram.lowEdge[0] - binWidths[0]; // add a bin for the underflow
             mPlotGraph.param.plot[seriesIndex].xMax = histogram.highEdge[0] + binWidths[0]; // add a bin for the overflow
             mPlotGraph.param.plot[seriesIndex].xData = undefined; // Force Midas to recompute the axis data
+            ydata = histogram.data;
         }
         else if(dimensions == 2) {
             // Pretty sure seriesIndex != 0 won't work for 2D plots, but we'll honour the users request.
@@ -154,65 +227,29 @@ function displayHistogram(histogram, mPlotGraph, seriesIndex = 0) {
             mPlotGraph.param.plot[seriesIndex].xMax = histogram.highEdge[0] + binWidths[0]; // add a bin for the overflow
             mPlotGraph.param.plot[seriesIndex].yMin = histogram.lowEdge[1] - binWidths[1];
             mPlotGraph.param.plot[seriesIndex].yMax = histogram.highEdge[1] + binWidths[1];
+            zdata = histogram.data;
         }
 
-        mPlotGraph.setData(seriesIndex, histogram.data)
+        mPlotGraph.setData(seriesIndex, xdata, ydata, zdata);
     } catch(error) {
         console.log("error with `displayHistogram()`: ", error, "histogram was:", histogram);
-        mPlotGraph.param.plot[seriesIndex].xData = undefined;
+        mPlotGraph.error = error;
         mPlotGraph.redraw();
     }
 }
 
 function listHistograms(runs = [0], dqmProgname = "ana") {
     const messageType_list = 0x6C697374; // equivalent to the 4 byte sequence "list".
+    const initial_max_reply_length = 2097152;
 
-    return mjsonrpc_call("brpc", { "client_name": dqmProgname, "max_reply_length": 2097152, "cmd":"dqm::list", "args": JSON.stringify({runs: runs}) }, "arraybuffer").then(
-        // The RPC result is a concatenated list of the histogram names split by newlines
-        (rpc) => {
-            // The first 8 bytes are a transport header. 4 bytes of little endian message size and 4 bytes of
-            // message type.
-            // Use this to check that Midas hasn't truncated the message. If it has, repeat the call with an increased
-            // `max_reply_length` parameter.
-            let dataView = new DataView(rpc);
-            let expectedMessageLength = dataView.getUint32(0, true /*little endian*/);
-            let messageType = dataView.getUint32(4); // Note that we read as big endian here. It's a 4 byte sequence we're reading, and order matters.
-
-            if( messageType != messageType_list ) console.log("listHistograms() Warning: Unexpected message type '" + messageType + "'");
-
-            if(rpc.byteLength < expectedMessageLength) {
-                console.log("listHistograms() RPC call of size " + expectedMessageLength + " was truncated. Trying again with adequate \"max_reply_length\".");
-                return mjsonrpc_call("brpc", { "client_name": dqmProgname, "max_reply_length": expectedMessageLength, "cmd":"dqm::list", "args":"" }, "arraybuffer").then(
-                    (rpc) => {
-                        let dataView = new DataView(rpc);
-                        let expectedMessageLength = dataView.getUint32(0, true /*little endian*/);
-                        let messageType = dataView.getUint32(4); // Note that we read as big endian here. It's a 4 byte sequence we're reading, and order matters.
-
-                        if( messageType != messageType_list ) console.log("listHistograms() Warning: Unexpected message type '" + messageType + "'");
-
-                        if(rpc.length < expectedMessageLength) {
-                            // We don't try again or we could get in an infinite loop exhausting resources.
-                            console.log("listHistograms() RPC call of size " + expectedMessageLength + " was truncated after second attempt. List may be incomplete.");
-                        }
-
-                        let responseData = rpc.slice(8); // Chop off the header
-                        if(responseData.byteLength == 0) return []; // Otherwise the split below would return `[""]` rather than an empty array.
-
-                        let textDecoder = new TextDecoder(); // Default is utf8
-                        return textDecoder.decode(responseData).split("\n"); // Convert text, then split into an array on newlines
-                    }
-                );
-            }
-
-            let responseData = rpc.slice(8); // Chop off the header
-            if(responseData.byteLength == 0) return []; // Otherwise the split below would return `[""]` rather than an empty array.
+    return dqmRemoteCall("dqm::list", JSON.stringify({runs: runs}), messageType_list, dqmProgname, initial_max_reply_length).then(
+        (response) => {
+            if(response.byteLength == 0) return []; // Otherwise the split below would return `[""]` rather than an empty array.
 
             let textDecoder = new TextDecoder(); // Default is utf8
-            return textDecoder.decode(responseData).split("\n"); // Convert text, then split into an array on newlines
+            return textDecoder.decode(response).split("\n"); // Convert text, then split into an array on newlines
         }
-    ).catch(function(error) {
-        console.log("error with `listHistograms`: ", error);
-    });
+    );
 }
 
 /** @brief Clear either all histograms, all histograms in a collection, or a specific histogram.
@@ -352,6 +389,7 @@ class PlotAutoUpdater {
                 if(sourceAsArray[index].hasOwnProperty("prog")) dqmProg = sourceAsArray[index].prog;
 
                 return getHistogram(name, runs, dqmProg).then((histogram) => {
+                    mPlotGraph.error = null;
                     displayHistogram(histogram, mPlotGraph, index);
                 },
                 (error) => {
@@ -359,6 +397,7 @@ class PlotAutoUpdater {
                     // people will think they're seeing the histogram they asked for. This is the
                     // only way I know to clear an MPlotGraph.
                     mPlotGraph.param.plot[0].xData = undefined;
+                    mPlotGraph.error = error;
                     mPlotGraph.redraw();
                 });
             };

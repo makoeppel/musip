@@ -135,7 +135,7 @@ int write_command_by_name(const char* name, uint32_t payload = 0, uint16_t addre
 }
 
 void init_banks() {
-    midas::odb link_settings("/Equipment/Quads/Settings", true);
+    midas::odb quads_settings("/Equipment/Quads/Settings", true);
 
     // setup PCLS bank
     std::string namename = std::string("Names PCLS");
@@ -151,7 +151,7 @@ void init_banks() {
             names.push_back("F" + std::to_string(i) + "L" + std::to_string(j) + " Num Hits LVDS");
         }
     }
-    link_settings[namename] = names;
+    quads_settings[namename] = names;
 
     namename = std::string("Names PVSC");
     names.clear();
@@ -166,7 +166,34 @@ void init_banks() {
             }
         }
     }
-    link_settings[namename] = names;
+    quads_settings[namename] = names;
+
+    std::string nameMTCR = std::string("Names MTCR");
+    std::string nameMTCH = std::string("Names MTCH");
+    std::string nameMTCF = std::string("Names MTCF");
+    std::string nameMTCE = std::string("Names MTCE");
+    std::vector<std::string> namesMTCR;
+    std::vector<std::string> namesMTCH;
+    std::vector<std::string> namesMTCF;
+    std::vector<std::string> namesMTCE;
+    int globalch = 0;
+    int globalasic = 0;
+    for (uint32_t i = 0; i < N_FEBS; i++) {
+        for(int asic = 0; asic < N_MUTRIGS_PER_FEB; asic++) {
+            namesMTCH.push_back("hits asic " + std::to_string(globalasic));
+            namesMTCF.push_back("frame rate asic " + std::to_string(globalasic));
+            namesMTCE.push_back("CRC errors asic " + std::to_string(globalasic));
+            globalasic++;
+            for ( size_t ch = 0; ch < NMUTRIGCHANNELS; ch++ ) {
+                namesMTCR.push_back("rate channel " + std::to_string(globalch));
+                globalch++;
+            }
+        }
+    }
+    quads_settings[nameMTCR] = namesMTCR;
+    quads_settings[nameMTCH] = namesMTCH;
+    quads_settings[nameMTCF] = namesMTCF;
+    quads_settings[nameMTCE] = namesMTCE;
 }
 
 int begin_of_run() {
@@ -241,6 +268,7 @@ void sc_settings_changed(midas::odb o) {
         "Trigger injection loop",
         "Full chip Injection",
         "init_tmb",
+        "TestPulsesTDC",
         "override_power_moduleid",
         "module_power_mask",
         "module_power",
@@ -249,9 +277,20 @@ void sc_settings_changed(midas::odb o) {
         "DataGenDisable"
     };
 
-    bool found = (std::find(names.begin(), names.end(), name) != names.end());
+    std::vector<std::string> names_no_reset{
+        "module_power_mask",
+        "module_power",
+        "TestPulsesTDC",
+    };
 
-    if (o && found){
+    if( (name == "module_power_mask" || name == "module_power") ){
+        UpdatePower(*feb_sc, m_settings);
+    }
+
+    bool found = (std::find(names.begin(), names.end(), name) != names.end());
+    bool no_reset = (std::find(names_no_reset.begin(), names_no_reset.end(), name) != names_no_reset.end());
+
+    if (found && (o || no_reset)){
 
         cm_msg(MINFO, "sc_settings_changed", "Setting changed (%s)", name.c_str());
 
@@ -333,13 +372,12 @@ void sc_settings_changed(midas::odb o) {
         if(name == "init_tmb" && o){
             TMBinit(*feb_sc, m_settings);
         }
+        if(name == "TestPulsesTDC"){
+            ChangeTDCTest(*feb_sc, m_settings);
+        }
 
         if( name == "override_power_moduleid" && o){
             UpdatePowerOverride(*feb_sc, m_settings);
-        }
-
-        if( (name == "module_power_mask" || name == "module_power") && o){
-            UpdatePower(*feb_sc, m_settings);
         }
 
         if ( name == "MutrigConfig" && o) {
@@ -378,7 +416,8 @@ void sc_settings_changed(midas::odb o) {
 
         }
 
-        o = false;
+        if(!no_reset)
+            o = false;
     }
 
 }
@@ -431,6 +470,10 @@ int frontend_init() {
 
     // create watch
     settings["DAQ/Commands"].watch(sc_settings_changed);
+
+    midas::odb custom("/Custom", true);
+    custom["Quads"] = "Quads/quad_basics.html";
+    custom["MuTRiG"] = "Mutrig/TimingScint.html";
 
     return SUCCESS;
 }
@@ -551,6 +594,10 @@ int read_sc_event(char* pevent, int off) {
         bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
         bool FEBsIsMutrig = m_settings["DAQ"]["Links"]["FEBsMutrig"][febIDx];
         if (FEBActive && FEBsIsMutrig) {
+
+            // reset counter address
+            feb_sc->FEB_write(febIDx, MUTRIG_CTRL_RESET_REGISTER_W, 0x10);
+            feb_sc->FEB_write(febIDx, MUTRIG_CTRL_RESET_REGISTER_W, 0x0);
 
             // TODO: +2 should be fixed in firmware
             std::vector<uint32_t> counter(2+N_MUTRIGS_PER_FEB*64);

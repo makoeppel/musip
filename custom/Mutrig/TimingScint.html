@@ -81,10 +81,10 @@
 
     <div class="container" id="div_ModuleControl">
         <table class="mtable" id="ModuleControl">
-            <div class="modb" data-odb-path="/Equipment/TilesLabor/Variables/TDSM" onchange="updateBoardStatus(this.value);"></div>
-            <div class="modb" data-odb-path="/Equipment/TilesLabor/Variables/TDCF" onchange="applyColors(this.value, 'tdcf');"></div>
-            <div class="modb" data-odb-path="/Equipment/TilesLabor/Variables/TDCE" onchange="applyColors(this.value, 'tdce');"></div>
-            <div class="modb" data-odb-path="/Equipment/TilesLabor/Variables/TDCH" onchange="applyColors(this.value, 'tdch');"></div>
+            <div class="modb" data-odb-path="/Equipment/Quads/Variables/TDSM" onchange="updateBoardStatus(this.value);"></div>
+            <div class="modb" data-odb-path="/Equipment/Quads/Variables/TDCF" onchange="applyColors(this.value, 'tdcf');"></div>
+            <div class="modb" data-odb-path="/Equipment/Quads/Variables/TDCE" onchange="applyColors(this.value, 'tdce');"></div>
+            <div class="modb" data-odb-path="/Equipment/Quads/Variables/TDCH" onchange="applyColors(this.value, 'tdch');"></div>
 
             <tr><th colspan="14" class="mtableheader">Module Control, Status & Monitoring</th></tr>
             <tr>
@@ -107,8 +107,8 @@
                 <button class="mbutton" id="Pall" name="Power_all" onclick="setGlobalASICpower(true);" >Enable Power</button>
                 <button class="mbutton" id="Pall" name="Power_all_n" onclick="setGlobalASICpower(false);" >Disable Power</button>
                 </th>
-            <th style="text-align: center"><input type="checkbox" class="modbcheckbox" data-odb-path="/Equipment/TilesLabor/TMB_control/init_tmb" style="width:20px; height: 20px;" data-odb-editable="false"></input></th>
-            <th style="text-align: center"><input type="checkbox" class="modbcheckbox" data-odb-path="/Equipment/TilesLabor/Commands/TestPulsesTDC" style="width:20px; height: 20px;" data-odb-editable="false"></input></th>
+            <th style="text-align: center"><input type="checkbox" class="modbcheckbox" data-odb-path="/Equipment/Quads/Settings/DAQ/Commands/MuTRiG/init_tmb" style="width:20px; height: 20px;" data-odb-editable="false"></input></th>
+            <th style="text-align: center"><input type="checkbox" class="modbcheckbox" data-odb-path="/Equipment/Quads/Settings/DAQ/Commands/MuTRiG/TestPulsesTDC" style="width:20px; height: 20px;" data-odb-editable="false"></input></th>
             <th>A</th>
             <th>D</th>
             <tbody id="ModuleControl-body">
@@ -283,7 +283,7 @@
                 <th>
                     <div class="plot-container">
                         <div class="mplot" id="rates" style="height: 300px;width: 500px;"
-                            data-odb-path="/Equipment/TilesLabor/Variables" data-y="TDCR"
+                            data-odb-path="/Equipment/Quads/Variables" data-y="TDCR"
                             data-x-text="channel" data-y-text="Rate [Hz]"
                             data-x-min=0 data-x-max=64
                             data-nx=32 data-y-log=true data-y-min=1 data-y-max=1e7

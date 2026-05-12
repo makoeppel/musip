@@ -329,7 +329,7 @@ public:
 
             for (std::uint32_t src_bit = 0; src_bit < width; ++src_bit) {
                 const bool bit = ((value >> src_bit) & 0x1u) != 0u;
-                const std::uint32_t dst_bit = inverted_bits ? src_bit : (width - 1u - src_bit);
+                const std::uint32_t dst_bit = !inverted_bits ? src_bit : (width - 1u - src_bit);
 
                 const std::size_t absolute_bit = bit_offset + dst_bit;
                 const std::size_t byte_index = absolute_bit / 8u;

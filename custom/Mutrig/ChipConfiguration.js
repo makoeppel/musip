@@ -1,6 +1,6 @@
 
 
-var odb_path = "Equipment/TilesLabor/";
+var odb_path = "Equipment/Quads/Settings/ConfigMuTRiG/";
 var config_container_class = "chip_settings_container";
 
 
@@ -78,25 +78,25 @@ function map_indices(init = false, tdc = 0, ch = 0){
                 if(asicsettings_channel_int.includes(name) || asicsettings_channel_bool.includes(name)){
                     box.setAttribute("data-validate", "validate_odb");
                     box.setAttribute("data-odb-editable", "1");
-                    box.setAttribute("data-odb-path", create_path("Settings/ASICs/Channels/",name,ch));
+                    box.setAttribute("data-odb-path", create_path("Channels/",name,ch));
                     continue;
                 }
                 if(asicsettings_tdc_int.includes(name) || asicsettings_tdc_bool.includes(name)){
                     box.setAttribute("data-validate", "validate_odb");
                     box.setAttribute("data-odb-editable", "1");
-                    box.setAttribute("data-odb-path", create_path("Settings/ASICs/TDCs/",name,tdc));
+                    box.setAttribute("data-odb-path", create_path("TDCs/",name,tdc));
                     continue;
                 }
                 if(asicsettings_global_int.includes(name)){
                     box.setAttribute("data-validate", "validate_odb");
                     box.setAttribute("data-odb-editable", "1");
-                    box.setAttribute("data-odb-path", create_path("Settings/ASICs/Global/",name));
+                    box.setAttribute("data-odb-path", create_path("Global/",name));
                     continue;
                 }
                 if(daqsettings_int.includes(name) || daqsettings_bool.includes(name)){
                     box.setAttribute("data-validate", "validate_odb");
                     box.setAttribute("data-odb-editable", "1");
-                    box.setAttribute("data-odb-path", create_path("Settings/Daq/",name));
+                    box.setAttribute("data-odb-path", create_path("Daq/",name));
                     box.classList.add("daq_int_setting");
                     continue;
                 }

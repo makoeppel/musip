@@ -81,7 +81,7 @@ async function set_mutrig_dtestout(selectedChannel){
 
 async function mutrig_configure_all() {
     console.log("Configuring all MuTrig chips");
-    setODBValue(eq_path+"/Commands/MutrigConfig", 1);
+    setODBValue(eq_path+"/Settings/DAQ/Commands/MuTRiG/MutrigConfig", 1);
 }
 
 //Mask channels on mutrig.
@@ -105,35 +105,17 @@ async function mutrig_sop_maskChannel(channel, value) {
     });
 }
 
-/*
-SUBROUTINE TLD_pll_ASIC_config
-   ODBSET /Equipment/TilesDownstream/Settings/ConfigMuTRiG/Global/tx_mode, 0
-   ODBSET /Equipment/TilesDownstream/Settings/ConfigMuTRiG/Channels/cml[*], 0
-   ODBSET /Equipment/TilesDownstream/Settings/ConfigMuTRiG/Channels/cml_sc[*], 1
-   ODBSET /Equipment/TilesDownstream/Settings/ConfigMuTRiG/Channels/tdctest_n[*], 0
-   ODBSET /Equipment/TilesDownstream/Settings/ConfigMuTRiG/Channels/recv_all[*], 1
-   ODBSET /Equipment/TilesDownstream/Settings/ConfigMuTRiG/TDCs/dmon_select[*], -1
-   ODBSET /Equipment/TilesDownstream/Settings/ConfigMuTRiG/Channels/mask[*], 0
-   ODBSET /Equipment/TilesDownstream/Commands/TestPulsesTDC, n
-   ODBSET /Equipment/TilesDownstream/Commands/TestPulsesTDC, y
-   CALL TLD_configure_ASICs
-   ODBSET /Equipment/TilesDownstream/Settings/ConfigMuTRiG/Channels/cml[*], 8
-   CALL TLD_configure_ASICs
-   ODBSET /Equipment/TilesDownstream/Settings/ConfigMuTRiG/Channels/cml[*], 0
-   CALL TLD_configure_ASICs
-ENDSUBROUTINE
-*/
 async function mutrig_sop_inject(channel="*") {
     idx = "["+channel+"]"
     params = new Map([
-        [ eq_path+"/Settings/ConfigMuTRiG/Global/tx_mode",         0 ],
+        [ eq_path+"/Settings/ConfigMuTRiG/Global/tx_mode",          0 ],
         [ eq_path+"/Settings/ConfigMuTRiG/Channels/cml"+idx,        0 ],
         [ eq_path+"/Settings/ConfigMuTRiG/Channels/cml_sc"+idx,     1 ],
         [ eq_path+"/Settings/ConfigMuTRiG/Channels/tdctest_n"+idx,  0 ],
         [ eq_path+"/Settings/ConfigMuTRiG/Channels/recv_all"+idx,   1 ],
         [ eq_path+"/Settings/ConfigMuTRiG/TDCs/dmon_select"+idx,   -1 ],
-        [ eq_path+"/Settings/Commands/TestPulsesTDC",       1 ],
-        ]);
+        [ eq_path+"/Settings/DAQ/Commands/MuTRiG/TestPulsesTDC",    1 ],
+    ]);
     await setODBValue(Array.from(params.keys()),Array.from(params.values()),true);
     await mutrig_configure_all();
     params = new Map([ [ eq_path+"/Settings/ConfigMuTRiG/Channels/cml"+idx, 8 ]]);
@@ -152,7 +134,7 @@ async function mutrig_sop_normal() {
         [ eq_path+"/Settings/ConfigMuTRiG/Channels/tdctest_n[*]",  1 ],
         [ eq_path+"/Settings/ConfigMuTRiG/Channels/recv_all[*]",   0 ],
         [ eq_path+"/Settings/ConfigMuTRiG/TDCs/dmon_select[*]",   -1 ],
-        [ eq_path+"/Settings/Commands/TestPulsesTDC",       0 ],
+        [ eq_path+"/Settings/DAQ/Commands/MuTRiG/TestPulsesTDC",       0 ],
         ]);
     setODBValue(Array.from(params.keys()),Array.from(params.values()),true).then(function(){
         mutrig_configure_all();
@@ -167,7 +149,7 @@ async function mutrig_sop_noise() {
         [ eq_path+"/Settings/ConfigMuTRiG/Channels/tdctest_n[*]",  1 ],
         [ eq_path+"/Settings/ConfigMuTRiG/Channels/recv_all[*]",   1 ],
         [ eq_path+"/Settings/ConfigMuTRiG/TDCs/dmon_select[*]",   -1 ],
-        [ eq_path+"/Settings/Commands/TestPulsesTDC",       0 ],
+        [ eq_path+"/Settings/DAQ/Commands/MuTRiG/TestPulsesTDC",       0 ],
         ]);
     setODBValue(Array.from(params.keys()),Array.from(params.values()),true).then(function(){
         mutrig_configure_all();

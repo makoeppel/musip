@@ -8,13 +8,20 @@
         <script src="mhttpd.js"></script>
         <script src="mplot.js"></script>
 
-        <title>Online Display</title>
+        <title>Online DQM</title>
     </head>
 
-    <script src="onlineDQM.js"></script>
+    <script src="dqm/onlineDQM.js"></script>
     <script type="module">
-        var mPlotGraph = new MPlotGraph(document.getElementById("rpc_plot"));
-        mPlotGraph.param.plot[0].bgcolor = "white";
+        var mPlotGraph = new MPlotGraph(document.getElementById("rpc_plot"), {"stats": {"show": false}});
+        mPlotGraph.addPlot({"zeroColor": "white"});
+        mPlotGraph.param.xAxis.title.textSize /= 2;
+        mPlotGraph.param.yAxis.title.textSize /= 2;
+
+        // We add the title outside of the plot. Setting the title on the MPlotGraph itself and
+        // letting Midas render it takes up a lot of the plot area.
+        let plotTitle = document.createTextNode("title");
+        document.getElementById("title_div").appendChild(plotTitle);
 
         let autoUpdater = new PlotAutoUpdater();
         autoUpdater.addPlot(mPlotGraph);
@@ -78,7 +85,7 @@
                     } // end of loop over entries in `histograms`
 
                     if(newSelection !== undefined) selector.value = newSelection;
-                    if(selector.length > 0) autoUpdater.changeSource(mPlotGraph, {name: selector.value, runs: runNumbers}, true);
+                    if(selector.length > 0) onHistogramSelected(selector.id);
                 } // end of loop of selectors
             }).catch((error) => {
                 console.log(error);
@@ -88,6 +95,21 @@
         window.onHistogramSelected = function(id) {
             let selector = document.getElementById(id);
             autoUpdater.changeSource(mPlotGraph, {name: selector.value, runs: runNumbers}, true);
+            getHistogramMetadata(selector.value, runNumbers[0], document.getElementById("dqmProg").value).then(
+                (metadata) => {
+                    if(metadata.hasOwnProperty("title")) plotTitle.textContent = metadata.title;
+                    else plotTitle.textContent = "";
+
+                    if(metadata.hasOwnProperty("axisTitleX")) mPlotGraph.param.xAxis.title.text = metadata.axisTitleX;
+                    else mPlotGraph.param.xAxis.title.text = "";
+
+                    if(metadata.hasOwnProperty("axisTitleY")) mPlotGraph.param.yAxis.title.text = metadata.axisTitleY;
+                    else mPlotGraph.param.yAxis.title.text = "";
+
+                    if(metadata.hasOwnProperty("axisTitleZ")) mPlotGraph.param.zAxis.title.text = metadata.axisTitleZ;
+                    else mPlotGraph.param.zAxis.title.text = "";
+                }
+            );
         }
 
         window.onClearAll = function() {
@@ -101,9 +123,21 @@
 
         window.onAxis = function(id) {
             let checkbox = document.getElementById(id);
-            if(id == 'logXAxis') mPlotGraph.param.xAxis.log = checkbox.checked;
-            else if(id == 'logYAxis') mPlotGraph.param.yAxis.log = checkbox.checked;
-            else if(id == 'logZAxis') mPlotGraph.param.zAxis.log = checkbox.checked;
+            if(id == 'logXAxis') {
+                mPlotGraph.param.xAxis.log = checkbox.checked;
+                if(mPlotGraph.param.xAxis.log) mPlotGraph.xMin = 0.9;
+                else mPlotGraph.xMin = 0.0;
+            }
+            else if(id == 'logYAxis') {
+                mPlotGraph.param.yAxis.log = checkbox.checked;
+                if(mPlotGraph.param.yAxis.log) mPlotGraph.yMin = 0.9;
+                else mPlotGraph.yMin = 0.0;
+            }
+            else if(id == 'logZAxis') {
+                mPlotGraph.param.zAxis.log = checkbox.checked;
+                if(mPlotGraph.param.zAxis.log) mPlotGraph.zMin = 0.9;
+                else mPlotGraph.zMin = 0.0;
+            }
             mPlotGraph.draw();
         }
     </script>
@@ -127,6 +161,7 @@
                 Auto refresh<input type=checkbox id='autoRefresh' onClick='onAutoRefreshClicked()'/>
                 <input type=button value='Clear all' onClick='onClearAll()'/>
             </div>
+            <div id="title_div"></div>
             <div id="enclosing_div">
                 <div id="rpc_plot"></div>
                 <input type=checkbox id='logXAxis' onchange='onAxis("logXAxis")'>Log x axis</input>
