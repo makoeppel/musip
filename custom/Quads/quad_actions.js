@@ -181,6 +181,17 @@ async function set_sensors_dac(dac, value, config_ids, type){
         const id = config_ids[i];
         console.log("Set dac", dac, "to", value, "for sensor", id, "of type", type);
         promises.push(set_sensor_dac(dac, value, id, type));
+	if (dac === "ThHigh") {
+	    value_low = value - 1;
+	    dac_low = "ThLow";
+            console.log("Set dac", dac_low, "to", value_low, "for sensor", id, "of type", type);
+            promises.push(set_sensor_dac(dac_low, value_low, id, type));
+	} else if (dac === "ThLow") {
+	    value_high = value + 1;
+	    dac_high = "ThHigh";
+            console.log("Set dac", dac_high, "to", value_high, "for sensor", id, "of type", type);
+            promises.push(set_sensor_dac(dac_high, value_high, id, type));
+	}
     }
     
     // Wait for all operations to complete
