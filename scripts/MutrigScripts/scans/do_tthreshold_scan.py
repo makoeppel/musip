@@ -1,4 +1,3 @@
-#/bin/python3
 import sys
 sys.path.append("../../../python/")
 import mutrig.base_variables as cfg
@@ -9,7 +8,7 @@ import midas.client as client
 import signal
 import sys
 import os
-import numpy.typing
+
 
 # Sequencer callbacks
 def define_params(seq):
@@ -52,10 +51,8 @@ if __name__ == "__main__":
     signal.signal(signal.SIGINT, _interrupt_handler)
     signal.signal(signal.SIGTERM, _interrupt_handler)
 
-    th,r,settings = tscan.scan(seq,start_threshold=0, stop_threshold=63, step_threshold=1, wait_time=3, start_offset=0, stop_offset=1)
-    filename = "MuSR-TTH-ReadoutTester09042026.bottomConnector.json"
+    th,r,temperatures,settings = tscan.scan(seq,start_threshold=0, stop_threshold=63, step_threshold=1, wait_time=3, start_offset=0, stop_offset=2)
+    filename = f'tthreshold_scan.json'
     seq.msg("Scan complete. Writing output to "+filename)
-    tscan.write_json(filename,th,r,settings);
-    #rate_calibration.select_threshold_const(th,r,100)
-
+    tscan.write_json(filename,th,r,temperatures,settings);
 

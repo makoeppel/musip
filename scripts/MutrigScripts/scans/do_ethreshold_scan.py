@@ -51,11 +51,8 @@ if __name__ == "__main__":
     signal.signal(signal.SIGINT, _interrupt_handler)
     signal.signal(signal.SIGTERM, _interrupt_handler)
 
-    th,r,temps,settings = escan.scan(seq,start_threshold=30, stop_threshold=220, step_threshold=1, wait_time=3)
-    filename = "MuSR-ETH-ReadoutTester09042026.bottomConnector.json"
+    th,r,temperatures,settings = escan.scan(seq,start_threshold=40, stop_threshold=200, step_threshold=1, wait_time=3)
+    filename = f'ethreshold_scan.json'
     seq.msg("Scan complete. Writing output to "+filename)
-    escan.write_json(filename,th,r, temps, settings);
-    #rate_calibration.select_threshold_const(th,r,100)ç
+    escan.write_json(filename,th,r,temperatures,settings);
 
-
-   
