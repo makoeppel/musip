@@ -57,8 +57,11 @@ target_include_directories(writetdacs PUBLIC include)
 
 
 add_executable(dmatest firmware/dmatest.cpp)
+add_executable(sctest firmware/sctest.cpp)
 target_link_libraries(dmatest libmudaq)
+target_link_libraries(sctest libmudaq)
 
 install(TARGETS
     dmatest
+    sctest
 )

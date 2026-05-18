@@ -54,7 +54,10 @@ struct mutrighit {
     [[nodiscard]] uint8_t ts_low() const { return (hitdata >> 12) & 0xF; }
     [[nodiscard]] uint8_t subheader_time() const { return (hitdata >> 4) & 0xFF; }
     [[nodiscard]] uint8_t ts_sorterhit() const { return hitdata & 0xF; }
-    [[nodiscard]] uint64_t time() const { return hitdata & 0x7FFFFFFFFFULL; }
+    [[nodiscard]] uint64_t time8ns() const { return hitdata & 0x7FFFFFFFFFULL; }
+    [[nodiscard]] uint8_t finetime_extended() const {return (hitdata >> 39) & 0xFF;}
+    [[nodiscard]] uint64_t timestamp() const {return time8ns()*160 + finetime_extended();} //returns time in units of 50ps
+    [[nodiscard]] uint32_t time() const {return timestamp()*50e-3;} //returns time in ns
 
     void Print() const {
         std::printf(

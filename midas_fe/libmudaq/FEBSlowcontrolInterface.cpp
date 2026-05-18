@@ -136,7 +136,7 @@ int FEBSlowcontrolInterface::FEB_write(uint32_t febIDx, const uint32_t startaddr
     if (count == 1000) {
         cm_msg(MERROR, "FEBSlowcontrolInterface::FEB_write",
                "Timeout occured waiting for reply: Wanted to write to FPGA %d, "
-               "Addr %d, length %zu",
+               "Addr 0x%08X, length %zu",
                FPGA_ID, startaddr, data.size());
         return ERRCODES::FPGA_TIMEOUT;
     }
@@ -267,7 +267,7 @@ int FEBSlowcontrolInterface::FEB_read(uint32_t febIDx, const uint32_t startaddr,
     if (count == 1000) {
         cm_msg(MERROR, "MudaqDevice::FEBsc_read",
                "Timeout occured waiting for reply: Wanted to read from FPGA %d, "
-               "Addr %d, length %zu, memaddr %d",
+               "Addr 0x%08X, length %zu, memaddr 0x%08X",
                FPGA_ID, startaddr, data.size(), m_FEBsc_rmem_addr);
         return ERRCODES::FPGA_TIMEOUT;
     }
@@ -286,7 +286,7 @@ int FEBSlowcontrolInterface::FEB_read(uint32_t febIDx, const uint32_t startaddr,
     }
     if (sc_packet_deque.front().GetLength() != data.size()) {
         cm_msg(MERROR, "MudaqDevice::FEBsc_read",
-               "Wanted to read from FPGA %d, Addr %d, length %zu", FPGA_ID, startaddr, data.size());
+               "Wanted to read from FPGA %d, Addr 0x%08X, length %zu", FPGA_ID, startaddr, data.size());
         cm_msg(MERROR, "MudaqDevice::FEBsc_read",
                "Received packet fails size check, communication error, resetting");
         sc_packet_deque.pop_front();
@@ -316,6 +316,7 @@ void FEBSlowcontrolInterface::FEBsc_resetMain() {
     m_FEBsc_wmem_addr = 0;
     // reset fpga entity
     mdev.toggle_register(RESET_REGISTER_W, SET_RESET_BIT_SC_MAIN(0), 1000);
+    cm_msg(MINFO, "FEBsc_resetMain()", "FEBsc_resetMain() Done");
 }
 
 void FEBSlowcontrolInterface::FEBsc_resetSecondary() {
@@ -341,6 +342,7 @@ void FEBSlowcontrolInterface::FEBsc_resetSecondary() {
             exit(0);
         }
     };
+    cm_msg(MINFO, "FEBsc_resetSecondary()", "FEBsc_resetSecondary() Done");
 }
 
 int FEBSlowcontrolInterface::FEBsc_NiosRPC(uint32_t febIDx, uint16_t command,
@@ -472,6 +474,10 @@ void FEBSlowcontrolInterface::FPGAHistoStart() {
 
 void FEBSlowcontrolInterface::FPGAHistoStop() {
     mdev.write_register(SWB_ZERO_HISTOS_REGISTER_W, 0);
+}
+
+void FEBSlowcontrolInterface::FEBEnable() {
+    mdev.write_register(FEB_ENABLE_REGISTER_W, 0xFFFFFFFF);
 }
 
 uint32_t FEBSlowcontrolInterface::FPGAHistoGetContent(uint32_t idx) {

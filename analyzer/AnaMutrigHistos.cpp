@@ -219,26 +219,32 @@ TAFlowEvent* AnaMutrigHistos::AnalyzeFlowEvent(TARunInfo*, TAFlags* flags, TAFlo
     HitVectorFlowEvent* hitevent = flow->Find<HitVectorFlowEvent>();
     if(!hitevent) return flow;
 
+    std::vector<mutrighit> mutrighits;
+    for ( auto& cur_hit : hitevent->hits )
+        if (cur_hit.is_mutrig())
+            mutrighits.push_back(cur_hit.as_mutrig());
+
     //calculate event-based observables
     double average_timestamp = std::accumulate(
-           hitevent->mutrighits.begin(),
-           hitevent->mutrighits.end(),
+           mutrighits.begin(),
+           mutrighits.end(),
            0.0,
            [](double a, mutrighit const b) -> double{ return a+b.timestamp();}
-        ) / hitevent->mutrighits.size();
+        ) / mutrighits.size();
 
     double rms_timestamp = sqrt(std::accumulate(
-           hitevent->mutrighits.begin(),
-           hitevent->mutrighits.end(),
+           mutrighits.begin(),
+           mutrighits.end(),
            0.0,
            [average_timestamp](double a, mutrighit const b) -> double{ return a + (average_timestamp - b.timestamp())*(average_timestamp - b.timestamp());}
-        ) / hitevent->mutrighits.size());
+        ) / mutrighits.size());
 
 
     //fill event-based observables
-    h_nHits->Fill(hitevent->mutrighits.size());
+    h_nHits->Fill(mutrighits.size());
+
     //loop over hits
-    for(auto& hit : hitevent->mutrighits) {
+    for(auto& hit : mutrighits) {
         int cnt =0;
         auto last_hit = last_hits[hit.channel()];
 
@@ -273,7 +279,7 @@ TAFlowEvent* AnaMutrigHistos::AnalyzeFlowEvent(TARunInfo*, TAFlags* flags, TAFlo
         }
 
         //time differences of hits in paired channel
-        for (auto& hitB : hitevent->mutrighits) {
+        for (auto& hitB : mutrighits) {
             if ( (hit.channel() >= hitB.channel()) ) continue;
             int64_t timeStampDelta = ((int64_t) hit.timestamp()) - hitB.timestamp(); // in units of 50ps
             if(abs(timeStampDelta * binsize_ns) >= 10) continue; // cut out 10ns

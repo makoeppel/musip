@@ -28,6 +28,7 @@
 
 #include "FEBSlowcontrolInterface.h"
 #include "mutrig_config.h"
+#include "Mutrig3Config.h"
 #include "bits_utils.h"
 
 /**
@@ -167,8 +168,15 @@ void get_VDACs_from_odb(midas::odb m_config, uint8_t* bitpattern_w, uint32_t asi
  * @return FE_SUCCESS on success.
  */
 int InitFEBs(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) {
+    // set FEB enable regs
+    feb_sc.FEBEnable();
     for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
         bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
+        bool FEBsIsMutrig = m_settings["DAQ"]["Links"]["FEBsMutrig"][febIDx];
+        if (FEBsIsMutrig) {
+            feb_sc.FEB_write(febIDx, MUTRIG_CTRL_DP_REGISTER_W, 0x0FFFFFFF);
+            feb_sc.FEB_write(febIDx, MUTRIG_CTRL_DUMMY_REGISTER_W, 0x0);
+        }
         if (!FEBActive)
             continue;
         // set FPGA ID
@@ -287,18 +295,7 @@ int ConfigureASICs(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings, uint8
 int ConfigureMuTRiGASICs(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings, uint8_t* bitpattern_w) {
     int status = FE_SUCCESS;
 
-    // bind the generator to the ODB tree
-    mutrig::ODBConfigGenerator::BoundGenerator cfg(m_settings["ConfigMuTRiG"]);
-
-    // sanity check against constants.h
-    if (!cfg.validate()) {
-        cm_msg(MERROR, "ConfigureMuTRiGASICs",
-               "MuTRiG layout mismatch: ODB layout gives %zu bits / %zu bytes, "
-               "but constants.h expects %u bits / %u bytes",
-               cfg.total_bits(), cfg.total_bytes(),
-               N_BITS_MUTRIG, N_BYTES_MUTRIG);
-        return FE_ERR_HW;
-    }
+    mutrig::Mutrig3Config config;
 
     for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
         const bool febActive   = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
@@ -320,27 +317,10 @@ int ConfigureMuTRiGASICs(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings,
                    "/Settings/ConfigMuTRiG -> globalASIC-%u -> localASIC-%u on FEB-%u",
                    globalAsic, localAsic, febIDx);
 
-            // build full MuTRiG config from ODB
-            const auto bytes = cfg.generate(globalAsic);
+            config.MapConfigFromDB(m_settings["ConfigMuTRiG"], globalAsic);
 
-            if (bytes.size() != N_BYTES_MUTRIG) {
-                cm_msg(MERROR, "ConfigureMuTRiGASICs",
-                       "Generated config size mismatch for ASIC %u: got %zu bytes, expected %u",
-                       globalAsic, bytes.size(), N_BYTES_MUTRIG);
-                return FE_ERR_HW;
-            }
-
-            std::memcpy(bitpattern_w, bytes.data(), bytes.size());
-
-            // Optional debug output
-            if (false) {
-                const std::string json = cfg.test_json(globalAsic);
-                std::cout << json << std::endl;
-            }
-
-            // generate payload and send it to the mutrig
             vector<vector<uint32_t>> payload;
-            payload.push_back(vector<uint32_t>(reinterpret_cast<uint32_t*>(bitpattern_w),reinterpret_cast<uint32_t*>(bitpattern_w)+bytes.size()/4));
+            payload.push_back(vector<uint32_t>(reinterpret_cast<uint32_t*>(config.bitpattern_w),reinterpret_cast<uint32_t*>(config.bitpattern_w)+config.length_32bits));
             auto _status = feb_sc.FEBsc_NiosRPC(febIDx, CMD_MUTRIG_ASIC_CFG | (localAsic), payload );
             if (_status != FE_SUCCESS) {
                 cm_msg(MERROR, "ConfigureMuTRiGASICs",
@@ -352,6 +332,74 @@ int ConfigureMuTRiGASICs(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings,
 
     return status;
 }
+// int ConfigureMuTRiGASICs(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings, uint8_t* bitpattern_w) {
+//     int status = FE_SUCCESS;
+
+//     // bind the generator to the ODB tree
+//     mutrig::ODBConfigGenerator::BoundGenerator cfg(m_settings["ConfigMuTRiG"]);
+
+//     // sanity check against constants.h
+//     if (!cfg.validate()) {
+//         cm_msg(MERROR, "ConfigureMuTRiGASICs",
+//                "MuTRiG layout mismatch: ODB layout gives %zu bits / %zu bytes, "
+//                "but constants.h expects %u bits / %u bytes",
+//                cfg.total_bits(), cfg.total_bytes(),
+//                N_BITS_MUTRIG, N_BYTES_MUTRIG);
+//         return FE_ERR_HW;
+//     }
+
+//     for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
+//         const bool febActive   = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
+//         const bool febIsMutrig = m_settings["DAQ"]["Links"]["FEBsMutrig"][febIDx];
+//         const uint16_t asicMask = m_settings["DAQ"]["Links"]["ASICMask"][febIDx];
+
+//         if (!febActive || !febIsMutrig) {
+//             continue;
+//         }
+
+//         for (uint32_t localAsic = 0; localAsic < N_MUTRIGS_PER_FEB; ++localAsic) {
+//             if (((asicMask >> localAsic) & 0x1u) == 0u) {
+//                 continue;
+//             }
+
+//             const uint32_t globalAsic = febIDx * N_MUTRIGS_PER_FEB + localAsic;
+
+//             cm_msg(MINFO, "ConfigureMuTRiGASICs",
+//                    "/Settings/ConfigMuTRiG -> globalASIC-%u -> localASIC-%u on FEB-%u",
+//                    globalAsic, localAsic, febIDx);
+
+//             // build full MuTRiG config from ODB
+//             const auto bytes = cfg.generate(globalAsic);
+
+//             if (bytes.size() != N_BYTES_MUTRIG) {
+//                 cm_msg(MERROR, "ConfigureMuTRiGASICs",
+//                        "Generated config size mismatch for ASIC %u: got %zu bytes, expected %u",
+//                        globalAsic, bytes.size(), N_BYTES_MUTRIG);
+//                 return FE_ERR_HW;
+//             }
+
+//             std::memcpy(bitpattern_w, bytes.data(), bytes.size());
+
+//             // Optional debug output
+//             if (false) {
+//                 const std::string json = cfg.test_json(globalAsic);
+//                 std::cout << json << std::endl;
+//             }
+
+//             // generate payload and send it to the mutrig
+//             vector<vector<uint32_t>> payload;
+//             payload.push_back(vector<uint32_t>(reinterpret_cast<uint32_t*>(bitpattern_w),reinterpret_cast<uint32_t*>(bitpattern_w)+bytes.size()/4));
+//             auto _status = feb_sc.FEBsc_NiosRPC(febIDx, CMD_MUTRIG_ASIC_CFG | (localAsic), payload );
+//             if (_status != FE_SUCCESS) {
+//                 cm_msg(MERROR, "ConfigureMuTRiGASICs",
+//                        "Failed to configure ASIC %u on FEB %u", localAsic, febIDx);
+//                 return status;
+//             }
+//         }
+//     }
+
+//     return status;
+// }
 
 /**
  * @brief Read TDAC file from a given path.

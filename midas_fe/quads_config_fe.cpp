@@ -41,6 +41,7 @@
 // clang-format on
 #include "DummyFEBSlowcontrolInterface.h"
 #include "FEBSlowcontrolInterface.h"
+#include "Mutrig3Config.h"
 #include "mcstd.h"
 #include "mfe.h"
 #include "missing_hardware.h"
@@ -61,6 +62,7 @@ midas::odb m_settings;
 uint8_t bitpattern_mupix[N_BYTES_MUPIX] = {};
 uint8_t bitpattern_mutrig[N_BYTES_MUTRIG] = {};
 mudaq::DmaMudaqDevice* mup = nullptr;
+std::vector<uint32_t> readout_banks = {};
 std::vector<uint32_t> lvds_banks = {};
 std::vector<uint32_t> matrix_banks = {};
 std::vector<uint32_t> adc_banks = {};
@@ -137,9 +139,29 @@ int write_command_by_name(const char* name, uint32_t payload = 0, uint16_t addre
 void init_banks() {
     midas::odb quads_settings("/Equipment/Quads/Settings", true);
 
-    // setup PCLS bank
-    std::string namename = std::string("Names PCLS");
+    // setup RCNT bank
+    std::string namename = std::string("Names RCNT");
     std::vector<std::string> names;
+    // read rate and counters for the for links
+    for (int i = 0; i <= 3; ++i) {
+        names.push_back("SOP " + std::to_string(i) + " CNT");
+        names.push_back("SOP " + std::to_string(i) + " RATE");
+        names.push_back("SUB " + std::to_string(i) + " CNT");
+        names.push_back("SUB " + std::to_string(i) + " RATE");
+        names.push_back("HIT " + std::to_string(i) + " CNT");
+        names.push_back("HIT " + std::to_string(i) + " RATE");
+    }
+    names.push_back("MUX CNT");
+    names.push_back("MUX RATE");
+    names.push_back("DMA CNT");
+    names.push_back("DMA RATE");
+    names.push_back("DMA SKIP");
+    names.push_back("DMA FULL");
+    quads_settings[namename] = names;
+
+    // setup PCLS bank
+    namename = std::string("Names PCLS");
+    names.clear();
     for (uint32_t i = 0; i < N_FEBS; i++) {
         names.push_back("FEB" + std::to_string(i));
         names.push_back("FEB" + std::to_string(i) + " N LVDS Links");
@@ -460,6 +482,7 @@ int frontend_init() {
     usleep(500000);  // we sleep here to wait until the command is processed
     mup->write_register(RESET_LINK_CTL_REGISTER_W, 0x0);
 
+    // init FEBs
     InitFEBs(*feb_sc, m_settings);
 
     // init banks
@@ -479,16 +502,50 @@ int frontend_init() {
 }
 
 int read_sc_event(char* pevent, int off) {
-    // TODO: move this to the quad_loop
+    // fill counter banks for the readout
+    readout_banks.clear();
+    // read rate and counters for the for links
+    for (int i = 0; i <= 3; ++i) {
+        mup->write_register(SWB_COUNTER_REGISTER_W, i);
+        uint32_t sub_cnt = mup->read_register_ro(SWB_COUNTER_REGISTER_R);
+        uint32_t sub_rate = mup->read_register_ro(SWB_LINK_COUNTER_REGISTER_R);
+        mup->write_register(SWB_COUNTER_REGISTER_W, i+4);
+        uint32_t hit_cnt = mup->read_register_ro(SWB_COUNTER_REGISTER_R);
+        uint32_t hit_rate = mup->read_register_ro(SWB_LINK_COUNTER_REGISTER_R);
+        mup->write_register(SWB_COUNTER_REGISTER_W, i+8);
+        uint32_t package_cnt = mup->read_register_ro(SWB_COUNTER_REGISTER_R);
+        uint32_t package_rate = mup->read_register_ro(SWB_LINK_COUNTER_REGISTER_R);
+        readout_banks.push_back(package_cnt);
+        readout_banks.push_back(package_rate);
+        readout_banks.push_back(sub_cnt);
+        readout_banks.push_back(sub_rate);
+        readout_banks.push_back(hit_cnt);
+        readout_banks.push_back(hit_rate);
+    }
+    // read MUX rate and cnts
+    mup->write_register(SWB_COUNTER_REGISTER_W, 12);
+    uint32_t mux_cnt = mup->read_register_ro(SWB_COUNTER_REGISTER_R);
+    uint32_t mux_rate = mup->read_register_ro(SWB_LINK_COUNTER_REGISTER_R);
+    readout_banks.push_back(mux_cnt);
+    readout_banks.push_back(mux_rate);
+    // read DMA rate and cnts
+    uint32_t dma_cnt = mup->read_register_ro(EVENT_BUILD_IDLE_NOT_HEADER_R) * 4;
+    uint32_t dma_rate = mup->read_register_ro(EVENT_BUILD_TAG_FIFO_FULL_R) * 4;
+    uint32_t dma_skip = mup->read_register_ro(EVENT_BUILD_SKIP_EVENT_DMA_R) * 4;
+    uint32_t dma_full = mup->read_register_ro(BUFFER_STATUS_REGISTER_R) * 4;
+    readout_banks.push_back(dma_cnt);
+    readout_banks.push_back(dma_rate);
+    readout_banks.push_back(dma_skip);
+    readout_banks.push_back(dma_full);
+
     // fill lvds bank
     lvds_banks.clear();
     uint32_t offset = 1;
     for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
         bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
-        bool FEBsIsQuads = m_settings["DAQ"]["Links"]["FEBsQuads"][febIDx];
         lvds_banks.push_back(febIDx);
         lvds_banks.push_back(MAX_LVDS_LINKS_PER_FEB);
-        if (FEBActive && FEBsIsQuads) {
+        if (FEBActive) {
             std::vector<uint32_t> status(offset + (MAX_LVDS_LINKS_PER_FEB * 4));
             feb_sc->FEB_read(febIDx, LVDS_STATUS_START_REGISTER_W, status, false);
             for (uint32_t i = 0; i < MAX_LVDS_LINKS_PER_FEB; i++) {
@@ -691,6 +748,11 @@ int read_sc_event(char* pevent, int off) {
     // create bank, pdata
     bk_init32a(pevent);
     DWORD* pdata = NULL;
+
+    // create a bank with readout status
+    bk_create(pevent, "RCNT", TID_DWORD, (void**)&pdata);
+    for (auto data : readout_banks) *pdata++ = data;
+    bk_close(pevent, pdata);
 
     // create a bank with the lvds status
     bk_create(pevent, "PCLS", TID_DWORD, (void**)&pdata);

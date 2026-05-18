@@ -41,6 +41,7 @@ class FEBSlowcontrolInterface {
                          const bool nonincrementing = false);
     virtual int FEB_read(uint32_t febIDx, const uint32_t startaddr, uint32_t& data);
 
+    virtual void FEBEnable();
     virtual void FEBsc_resetMain();
     virtual void FEBsc_resetSecondary();
     virtual int FEBsc_NiosRPC(uint32_t febIDx, uint16_t command,
