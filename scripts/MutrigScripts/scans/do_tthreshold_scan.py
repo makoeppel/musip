@@ -1,5 +1,6 @@
+#!/usr/bin/env -S python3
 import sys
-sys.path.append("../../../python/")
+sys.path.append("../../")
 import mutrig.base_variables as cfg
 import mutrig.mutrigTB_variables
 import mutrig.tthreshold_scan as tscan
@@ -8,7 +9,6 @@ import midas.client as client
 import signal
 import sys
 import os
-
 
 # Sequencer callbacks
 def define_params(seq):
@@ -51,6 +51,9 @@ if __name__ == "__main__":
     signal.signal(signal.SIGINT, _interrupt_handler)
     signal.signal(signal.SIGTERM, _interrupt_handler)
 
+    #cfg.TEST_MODE = True
+    #th,r,temperatures,settings = tscan.scan(seq,start_threshold=0, stop_threshold=63, step_threshold=1, wait_time=0.2, start_offset=0, stop_offset=2)
+    
     th,r,temperatures,settings = tscan.scan(seq,start_threshold=0, stop_threshold=63, step_threshold=1, wait_time=3, start_offset=0, stop_offset=2)
     filename = f'tthreshold_scan.json'
     seq.msg("Scan complete. Writing output to "+filename)

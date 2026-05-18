@@ -1,26 +1,27 @@
 import mutrig.base_variables as cfg
+import time
 
 ##################################################
 # Mutrig paths for ODB access of channels and asics
 ##################################################
 def Get_asic_odb_path(setting, index=None):
     if index is not None:
-        return f"{cfg.path_settings}/ASICs/TDCs/{setting}[{index}]"
+        return f"{cfg.path_asicsettings}/TDCs/{setting}[{index}]"
     else:
-        return f"{cfg.path_settings}/ASICs/TDCs/{setting}"
+        return f"{cfg.path_asicsettings}/TDCs/{setting}"
 
 def Get_channel_odb_path(setting, index=None):
     if index is not None:
-        return f"{cfg.path_settings}/ASICs/Channels/{setting}[{index}]"
+        return f"{cfg.path_asicsettings}/Channels/{setting}[{index}]"
     else:
-        return f"{cfg.path_settings}/ASICs/Channels/{setting}"
+        return f"{cfg.path_asicsettings}/Channels/{setting}"
 
 ##################################################
 # Standard Mutrig ASIC commands
 ##################################################
 def Configure_all_asics(client):
     client.odb_set(f"{cfg.path_commands}/MutrigConfig", 1)
-    while client.odb_get(f"{cfg.path_commands}/MutrigConfig") < 1:
+    while not cfg.TEST_MODE and client.odb_get(f"{cfg.path_commands}/MutrigConfig") != False:
         time.sleep(0.1)
 
 def SetTestPulse(client, enable=1):
@@ -31,7 +32,7 @@ def SetTestPulse(client, enable=1):
 # Standard Mutrig ASIC configuration
 ##################################################
 def Mutrig_TorE_ASIC_configure(client):
-    path = f"{cfg.path_settings}/ASICs"
+    path = f"{cfg.path_asicsettings}"
     settings=client.odb_get(path)
     length_ch = len(settings['Channels']['cml'])
     length_asic = len(settings['TDCs']['dmon_select'])
@@ -47,7 +48,7 @@ def Mutrig_TorE_ASIC_configure(client):
     Configure_all_asics(client);
 
 def Mutrig_TandE_ASIC_configure(client):
-    path = f"{cfg.path_settings}/ASICs"
+    path = f"{cfg.path_asicsettings}"
     settings=client.odb_get(path)
     length_ch = len(settings['Channels']['cml'])
     length_asic = len(settings['TDCs']['dmon_select'])
@@ -63,7 +64,7 @@ def Mutrig_TandE_ASIC_configure(client):
     Configure_all_asics(client);
 
 def Mutrig_Inject_ASIC_configure(client):
-    path = f"{cfg.path_settings}/ASICs"
+    path = f"{cfg.path_asicsettings}"
     settings=client.odb_get(path)
     length_ch = len(settings['Channels']['cml'])
     length_asic = len(settings['TDCs']['dmon_select'])
@@ -112,11 +113,11 @@ def Set_eth(client,previous_threshold):
     client.odb_set(path_threshold,previous_threshold)
 
 def Store_Settings(client):
-    settings=client.odb_get(f"{cfg.path_settings}")
+    settings=client.odb_get(f"{cfg.path_asicsettings}")
     return settings
 
 def Restore_Settings(client,settings):
-    settings=client.odb_set(f"{cfg.path_settings}",settings)
+    settings=client.odb_set(f"{cfg.path_asicsettings}",settings)
     Configure_all_asics(client)
 
 def Get_tth_offsets(client):

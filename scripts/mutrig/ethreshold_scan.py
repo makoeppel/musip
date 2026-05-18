@@ -18,19 +18,42 @@ _original_settings = {}
 
 # Scan the e-threshold of the Mutrig chips
 # Record rate per channel at each e-threshold setting
-def scan(seq, start_threshold, stop_threshold, step_threshold, wait_time, do_start_run_on_step=false):
+def scan(seq, start_threshold, stop_threshold, step_threshold, wait_time, do_start_run_on_step=False):
     '''
-    Pythonized version of original sequencer script to scan the e-threshold of the Mutrig chips
-    args:
-        seq - MIDAS seq that connects with the ODB
-        start_threshold - starting T-threshold value
-        stop_threshold - stopping T-threshold value
-        step_threshold - step size for T-threshold
-        wait_time - time to wait after setting new T-threshold before reading out rates
-    returns:
-        th - list of T-thresholds per channel
-        rates - list of rates per channel
-        original_settings - original settings before the scan
+    Scan the e-threshold of the MuTrig chips and capture per-channel rates.
+
+    This function performs an e-threshold sweep by writing the appropriate
+    `ethresh` value for all channels and then reading the channel rates and
+    temperature from the ODB after a settle period.
+
+    Parameters
+    ----------
+    seq : midas.sequencer
+        MIDAS sequencer object used to read/write the ODB and control runs.
+    start_threshold : int
+        Starting base threshold value (inclusive). The function converts this
+        to the MIDAS register value as `255 - start_threshold`.
+    stop_threshold : int
+        Ending base threshold value (inclusive).
+    step_threshold : int
+        Increment step for the base threshold.
+    wait_time : float
+        Time in seconds to wait after applying a new threshold before reading
+        rates and temperature.
+    do_start_run_on_step : bool, optional
+        If True, start and stop a MIDAS run at each step to collect hit data.
+        If False, the scan only waits for the setting to settle.
+
+    Returns
+    -------
+    tuple
+        (th, rates, temperatures, original_settings)
+
+        - th (list of lists): Per-channel threshold values recorded for each
+          scan step. `th[channel][step]` is the base threshold used at that step.
+        - rates (list of lists): Per-channel measured rates for each step.
+        - temperatures (list): Temperature reading at each scan step.
+        - original_settings (dict): Snapshot of ODB settings before the scan.
     '''
     cfg.check_defined()
     print(f"Config: {cfg.path_asicsettings}")
@@ -52,7 +75,7 @@ def scan(seq, start_threshold, stop_threshold, step_threshold, wait_time, do_sta
     # Store current values
     global original_settings
     original_settings = m.Store_Settings(seq)
-    NChannels = len(original_settings['ASICs']['Channels']['ethresh'])
+    NChannels = len(original_settings['Channels']['ethresh'])
     # Prepare output arrays
     th    = [ [] for i in range(NChannels) ]
     rates = [ [] for i in range(NChannels) ]
@@ -78,7 +101,7 @@ def scan(seq, start_threshold, stop_threshold, step_threshold, wait_time, do_sta
 
         if do_start_run_on_step:
             # === MIDAS Run start if requested ===
-            run_number = 
+            run_number = seq.odb_get("/RunInfo/Run number")
             seq.msg(f"Starting Run {run_number} for E-Threshold {current_ethreshold}")
             seq.odb_exec(f"/RunControl/start now")
 
@@ -95,10 +118,10 @@ def scan(seq, start_threshold, stop_threshold, step_threshold, wait_time, do_sta
 
 
         # Readout rates
-        path_rate = f"{cfg.path_variables}/TDCR"
+        path_rate = f"{cfg.path_variables}/{cfg.bank_prefix}CR"
         current_rate = seq.odb_get(path_rate);
         #Readout Temperature
-        path_temp = f"{cfg.path_variables}/TDTM"
+        path_temp = f"{cfg.path_variables}/{cfg.bank_prefix}TM"
         current_temp = seq.odb_get(path_temp);
         temp_value = current_temp[0]
 
@@ -119,29 +142,80 @@ def scan(seq, start_threshold, stop_threshold, step_threshold, wait_time, do_sta
     return th, rates, temperatures, original_settings;
 
 # Write data to json
-def write_json(path, th,rates,temperatures, original_settings):
+def write_json(path, th, rates, temperatures, original_settings):
+    '''
+    Write e-threshold scan results to a JSON file.
+
+    The JSON file contains the same structure returned by `scan()`.
+
+    Parameters
+    ----------
+    path : str
+        Output filename to write the JSON data to.
+    th : list
+        Per-channel threshold arrays.
+    rates : list
+        Per-channel rate arrays.
+    temperatures : list
+        Temperature values recorded at each scan step.
+    original_settings : dict
+        Snapshot of ODB settings saved before the scan.
+    '''
     with open(path, 'w') as json_file:
-        json.dump(fp = json_file, obj = {
-            'th':th,
-            'rates':rates,
-            'temperatures':temperatures,
-            'settings':original_settings})
+        json.dump(fp=json_file, obj={
+            'th': th,
+            'rates': rates,
+            'temperatures': temperatures,
+            'settings': original_settings
+        })
 
 
 # Readout e-threshold scan results
 
 # Read in Data from json
 def read_json(path, **kwargs):
+    '''
+    Read e-threshold scan results previously written by `write_json`.
+
+    Parameters
+    ----------
+    path : str
+        Path to the JSON file containing scan results.
+
+    Returns
+    -------
+    tuple or None
+        (th, rates, temperatures, settings) if the file exists and is readable,
+        otherwise None.
+    '''
     if os.path.isfile(path) and os.access(path, os.R_OK):
-        # Set the path for the output:
         with open(path) as json_file:
             data = json.load(json_file)
-            # read json based on how it was written in write_json        
             return data['th'], data['rates'], data['temperatures'], data['settings']
     return None
 
 # Read in Data from json
 def read_odb(seq, **kwargs):
+    '''
+    Read e-threshold scan results from the ODB and transpose them per-channel.
+
+    This function reads `rate<N>` and `thresh<N>` entries from the ODB output
+    node and returns dictionaries keyed by channel index.
+
+    Parameters
+    ----------
+    seq : midas.sequencer
+        MIDAS sequencer object used to read the ODB.
+
+    Returns
+    -------
+    tuple
+        (scan_th, scan_r, None)
+
+        - scan_th (dict): channel -> [thresholds per iteration]
+        - scan_r (dict): channel -> [rates per iteration]
+        - Third return value is reserved for compatibility and always None.
+    '''
     data = seq.odb_get(f"{path_this_scan}/Output")
     scan_th = {}
     scan_r = {}
@@ -165,7 +239,30 @@ def read_odb(seq, **kwargs):
 # ethresh : list or np.array of E-Thresholds per channel
 # Optional Parameters:
 # path : specify output path and filename (default: eth_calib_DD-MM-YYYY_HH-MM-SS.json)
-def write_config_db(ethresh, settings, **kwargs):
+def write_config_odb(ethresh, settings, **kwargs):
+    '''
+    Create a JSON configuration file containing e-threshold and related channel settings.
+
+    This writes an object suitable for importing into the MuTrig ODB, converting
+    `ethresh` values to the actual register values expected by the hardware.
+
+    Parameters
+    ----------
+    ethresh : list or np.array
+        Per-channel base thresholds. Stored values are converted to actual
+        e-threshold register values as `255 - x`.
+    settings : dict
+        Original ODB settings snapshot from `m.Store_Settings(seq)` or similar.
+        Used to preserve `ebias`, `energy_c_en`, and `energy_r_en` values.
+    path : str, optional
+        Output filename to write. If omitted, a timestamped filename is used.
+
+    Returns
+    -------
+    dict
+        JSON object that was written to disk. Includes `/ODB path`, `ethresh`,
+        `ebias`, `energy_c_en`, and `energy_r_en` fields.
+    '''
     now = datetime.now()
     # Format the string
     if "path" in kwargs:
@@ -173,13 +270,14 @@ def write_config_db(ethresh, settings, **kwargs):
     else:
         output_path = now.strftime("eth_calib_DB_%d-%m-%Y_%H-%M-%S.json")
         print("No valid filename specified, setting it to", output_path)
-        
-    output = {"/ODB path": f"{cfg.path_asicsettings}/Channels","ethresh": [int(x) for x in np.array(ethresh).astype(int)]}
-    ebias = settings["ASICs"]["Channels"]["ebias"]
+    
+    # Add e-thresholds to output dict, converting from threshold to actual e-threshold value (255-x)
+    output = {"/ODB path": f"{cfg.path_asicsettings}/Channels","ethresh": [int(255-x) for x in np.array(ethresh).astype(int)]}
+    ebias = settings["Channels"]["ebias"]
     ebias_dict = {'ebias':ebias}
-    energy_c_en = settings["ASICs"]["Channels"]["energy_c_en"]
+    energy_c_en = settings["Channels"]["energy_c_en"]
     energy_c_en_dict = {'energy_c_en':energy_c_en}
-    energy_r_en = settings["ASICs"]["Channels"]["energy_r_en"]
+    energy_r_en = settings["Channels"]["energy_r_en"]
     energy_r_en_dict = {'energy_r_en':energy_r_en}
     output.update(ebias_dict)
     output.update(energy_c_en_dict)

@@ -1,5 +1,6 @@
+#!/usr/bin/env -S python3
 import sys
-sys.path.append("../../../python/")
+sys.path.append("../../")
 import mutrig.base_variables as cfg
 import mutrig.mutrigTB_variables
 import mutrig.ethreshold_scan as escan
@@ -14,7 +15,7 @@ import os
 def define_params(seq):
     seq.register_param("start_threshold", "Start e-threshold", 0);
     seq.register_param("stop_threshold", "Stop e-threshold", 255);
-    seq.register_param("step_threshold", "Step e-threshold", 1);
+    seq.register_param("step_threshold", "Step e::-threshold", 1);
     seq.register_param("wait_time", "Wait time (s)", 1);
 
 
@@ -50,8 +51,11 @@ if __name__ == "__main__":
     # register handler for common termination signals
     signal.signal(signal.SIGINT, _interrupt_handler)
     signal.signal(signal.SIGTERM, _interrupt_handler)
+    cfg.TEST_MODE = True
+    th,r,temperatures,settings = escan.scan(seq,start_threshold=40, stop_threshold=200, step_threshold=1, wait_time=0.2)
 
-    th,r,temperatures,settings = escan.scan(seq,start_threshold=40, stop_threshold=200, step_threshold=1, wait_time=3)
+
+    #th,r,temperatures,settings = escan.scan(seq,start_threshold=40, stop_threshold=200, step_threshold=1, wait_time=3)
     filename = f'ethreshold_scan.json'
     seq.msg("Scan complete. Writing output to "+filename)
     escan.write_json(filename,th,r,temperatures,settings);
