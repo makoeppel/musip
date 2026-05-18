@@ -410,7 +410,7 @@ def write_config_odb(tthresh, tth_offsets=None, **kwargs):
         output_path = now.strftime("tth_calib_ODB_%d-%m-%Y_%H-%M-%S.json")
         print("No valid filename specified, setting it to", output_path)
         
-    output = {"/ODB path": f"{cfg.path_asicsettings}/Channels", "tthresh": [int(x) for x in np.array(tthresh).astype(int)]}
+    output = {"/ODB path": f"{cfg.path_asicsettings}/Channels", "tthresh": [int(63 - x) for x in np.array(tthresh).astype(int)]}
     if tth_offsets is not None:
         offsets = {'tthresh_offset': [int(x) for x in np.array(tth_offsets).astype(int)]}
         output.update(offsets)
