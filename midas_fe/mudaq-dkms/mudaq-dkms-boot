@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+MODULE="${MUDAQ_MODULE:-mudaq}"
+KERNEL="${MUDAQ_KERNEL:-$(uname -r)}"
+VERSION="${MUDAQ_VERSION:-}"
+
+log() {
+    echo "mudaq-dkms-boot: $*"
+}
+
+command -v dkms >/dev/null 2>&1 || { log "dkms is not installed"; exit 1; }
+command -v modprobe >/dev/null 2>&1 || { log "modprobe is not installed"; exit 1; }
+
+if [[ ! -d "/lib/modules/${KERNEL}/build" ]]; then
+    log "kernel devel/header tree missing for ${KERNEL}: /lib/modules/${KERNEL}/build"
+    log "install the matching kernel-*-devel package, e.g. kernel-desktop-devel-latest on Mageia desktop kernels"
+    exit 0
+fi
+
+# Pick the requested version, otherwise the newest registered DKMS source,
+# otherwise the newest /usr/src/mudaq-* source tree.
+if [[ -z "${VERSION}" ]]; then
+    if [[ -d "/var/lib/dkms/${MODULE}" ]]; then
+        VERSION="$(find "/var/lib/dkms/${MODULE}" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort -V | tail -n 1 || true)"
+    fi
+fi
+if [[ -z "${VERSION}" ]]; then
+    VERSION="$(find /usr/src -maxdepth 1 -type d -name "${MODULE}-*" -printf '%f\n' 2>/dev/null | sed "s/^${MODULE}-//" | sort -V | tail -n 1 || true)"
+fi
+if [[ -z "${VERSION}" ]]; then
+    log "no ${MODULE} DKMS source found under /var/lib/dkms or /usr/src"
+    exit 1
+fi
+
+if ! dkms status -m "${MODULE}" -v "${VERSION}" >/dev/null 2>&1; then
+    log "registering ${MODULE}/${VERSION} with DKMS"
+    dkms add -m "${MODULE}" -v "${VERSION}"
+fi
+
+status="$(dkms status -m "${MODULE}" -v "${VERSION}" 2>/dev/null || true)"
+if echo "${status}" | grep -F "${KERNEL}" | grep -q "installed"; then
+    log "${MODULE}/${VERSION} is already installed for ${KERNEL}"
+else
+    log "building ${MODULE}/${VERSION} for ${KERNEL}"
+    dkms build -m "${MODULE}" -v "${VERSION}" -k "${KERNEL}"
+    log "installing ${MODULE}/${VERSION} for ${KERNEL}"
+    dkms install -m "${MODULE}" -v "${VERSION}" -k "${KERNEL}" --force
+fi
+
+depmod "${KERNEL}" || depmod -a
+modprobe "${MODULE}"
+udevadm trigger --subsystem-match=misc || true
+log "done"

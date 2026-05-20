@@ -71,3 +71,24 @@ sudo ./remove-dkms.sh
 - `99-mudaq.rules` keeps the upstream permissive behavior with `MODE="0666"`. On shared systems, consider changing this to `MODE="0660"` with a dedicated group.
 - Secure Boot systems may reject unsigned DKMS modules unless MOK signing is configured.
 - The installer fails early if any required source or register header is missing, so DKMS build failures from missing includes should be avoided.
+
+## Mageia 9 boot-time DKMS automation
+
+For Mageia 9 hosts, the most robust setup is:
+
+```bash
+sudo urpmi dkms make gcc kernel-desktop-devel-latest
+sudo ./install-dkms.sh --version 0.1.2 --boot-autoinstall
+```
+
+`AUTOINSTALL="yes"` in `dkms.conf` lets DKMS rebuild automatically when booting a new kernel. The optional `mudaq-dkms-boot.service` adds a belt-and-suspenders boot check: on every boot it verifies that the module is installed for `uname -r`, builds/installs it if missing, then runs `modprobe mudaq` and retriggers the misc udev rules.
+
+Check after reboot:
+
+```bash
+systemctl status mudaq-dkms-boot.service
+journalctl -u mudaq-dkms-boot.service -b --no-pager
+dkms status -m mudaq
+modinfo mudaq
+ls -l /dev/mudaq*
+```

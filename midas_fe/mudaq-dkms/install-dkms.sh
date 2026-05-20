@@ -2,15 +2,16 @@
 set -euo pipefail
 
 MODULE="mudaq"
-VERSION="${MUDAQ_VERSION:-0.1.1}"
+VERSION="${MUDAQ_VERSION:-0.1.2}"
 LOAD_AFTER_INSTALL=1
 INSTALL_AUTOLOAD=0
 INSTALL_SYSTEMD=0
+INSTALL_BOOT_AUTOINSTALL=0
 SOURCE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 usage() {
     cat <<USAGE
-Usage: $0 [--version VERSION] [--no-load] [--autoload] [--systemd] [--source DIR]
+Usage: $0 [--version VERSION] [--no-load] [--autoload] [--systemd] [--boot-autoinstall] [--source DIR]
 
 Installs the self-contained mudaq PCIe driver as a DKMS module.
 
@@ -19,6 +20,7 @@ Options:
   --no-load          Build/install but do not modprobe after install
   --autoload         Install /etc/modules-load.d/mudaq.conf fallback autoload
   --systemd          Install and enable mudaq-load.service fallback loader
+  --boot-autoinstall Install and enable a boot service that runs DKMS build/install for the current kernel before loading
   --source DIR       Source directory; default: this package directory
   -h, --help         Show this help
 USAGE
@@ -30,6 +32,7 @@ while [[ $# -gt 0 ]]; do
         --no-load) LOAD_AFTER_INSTALL=0; shift ;;
         --autoload) INSTALL_AUTOLOAD=1; shift ;;
         --systemd) INSTALL_SYSTEMD=1; shift ;;
+        --boot-autoinstall) INSTALL_BOOT_AUTOINSTALL=1; shift ;;
         --source) SOURCE_DIR="$(cd "$2" && pwd)"; shift 2 ;;
         -h|--help) usage; exit 0 ;;
         *) echo "Unknown option: $1" >&2; usage >&2; exit 2 ;;
@@ -42,6 +45,7 @@ if [[ ${EUID} -ne 0 ]]; then
         $([[ $LOAD_AFTER_INSTALL -eq 0 ]] && echo --no-load) \
         $([[ $INSTALL_AUTOLOAD -eq 1 ]] && echo --autoload) \
         $([[ $INSTALL_SYSTEMD -eq 1 ]] && echo --systemd) \
+        $([[ $INSTALL_BOOT_AUTOINSTALL -eq 1 ]] && echo --boot-autoinstall) \
         --source "$SOURCE_DIR"
 fi
 
@@ -63,6 +67,8 @@ required_files=(
     "Makefile"
     "dkms.conf.in"
     "99-mudaq.rules"
+    "mudaq-dkms-boot"
+    "mudaq-dkms-boot.service"
     "dmabuf/dmabuf.h"
     "dmabuf/dmabuf_fops.h"
     "dmabuf/module.h"
@@ -94,7 +100,10 @@ trap 'rm -rf "$TMP"' EXIT
 
 mkdir -p "$TMP/dmabuf" "$TMP/registers"
 for rel in "${required_files[@]}"; do
-    install -m 0644 "$SOURCE_DIR/$rel" "$TMP/$rel"
+    case "$rel" in
+        mudaq-dkms-boot) install -m 0755 "$SOURCE_DIR/$rel" "$TMP/$rel" ;;
+        *) install -m 0644 "$SOURCE_DIR/$rel" "$TMP/$rel" ;;
+    esac
 done
 
 # Normalize legacy upstream source layout, if someone supplies an older source tree.
@@ -119,6 +128,13 @@ if [[ $INSTALL_SYSTEMD -eq 1 ]]; then
     systemctl enable mudaq-load.service
 fi
 
+if [[ $INSTALL_BOOT_AUTOINSTALL -eq 1 ]]; then
+    install -o root -g root -m 0755 "$SOURCE_DIR/mudaq-dkms-boot" /usr/local/sbin/mudaq-dkms-boot
+    install -o root -g root -m 0644 "$SOURCE_DIR/mudaq-dkms-boot.service" /etc/systemd/system/mudaq-dkms-boot.service
+    systemctl daemon-reload
+    systemctl enable mudaq-dkms-boot.service
+fi
+
 if dkms status -m "$MODULE" -v "$VERSION" >/dev/null 2>&1; then
     dkms remove -m "$MODULE" -v "$VERSION" --all || true
 fi
@@ -135,4 +151,7 @@ if [[ $LOAD_AFTER_INSTALL -eq 1 ]]; then
 fi
 
 echo "Installed ${MODULE}/${VERSION} with DKMS."
+if [[ $INSTALL_BOOT_AUTOINSTALL -eq 1 ]]; then
+    echo "Boot-time DKMS check enabled: systemctl status mudaq-dkms-boot.service"
+fi
 echo "Check: dkms status -m ${MODULE}; modinfo ${MODULE}; ls -l /dev/mudaq*"
