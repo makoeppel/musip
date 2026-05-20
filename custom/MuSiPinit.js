@@ -19,7 +19,8 @@ var instrODB = {
     totalStats:    "/Equipment/PixelsLabor/Statistics/Events sent",
     sampleName:    "/Info/Sample Name",
     // This depends on the used equipment
-    sampleTemp:    "/Equipment/SampleCryo/Variables/Input[1]",
+    //sampleTemp:    "/Equipment/SampleCryo/Variables/Input[1]",
+    sampleTemp:    "/Equipment/LS340/Variables/Input[1]",
     //magField:      "/Equipment/Danfysik_PABA_Magnet/Variables/Input[",
     impEnergy:     "/Info/Implantation Energy (keV)",
     pID:           "/Info/File_Header_Info/Proposal Number",
