@@ -480,6 +480,10 @@ void FEBSlowcontrolInterface::FEBEnable() {
     mdev.write_register(FEB_ENABLE_REGISTER_W, 0xFFFFFFFF);
 }
 
+void FEBSlowcontrolInterface::write_register(uint32_t addr, uint32_t value) {
+    mdev.write_register(addr, value);
+}
+
 uint32_t FEBSlowcontrolInterface::FPGAHistoGetContent(uint32_t idx) {
     mdev.write_register(SWB_HISTO_ADDR_REGISTER_W, idx);  //((col << 8) | row));
     return mdev.read_register_ro(SWB_HISTOS_DATA_REGISTER_R);

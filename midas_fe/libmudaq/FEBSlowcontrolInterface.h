@@ -51,6 +51,7 @@ class FEBSlowcontrolInterface {
     virtual void FPGAHistoStart();
     virtual void FPGAHistoStop();
     virtual uint32_t FPGAHistoGetContent(uint32_t idx);
+    virtual void write_register(uint32_t addr, uint32_t value);
 
     enum ERRCODES {
         ADDR_INVALID = -20,

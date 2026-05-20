@@ -236,6 +236,29 @@ function make_link_dialog(index, nlinks, _id, febrow, _febname){
     h14.innerHTML = "Inverted";
     rh2.appendChild(h14);
 
+    for (let link = 0; link < nlinks; link++) {
+
+        let tr = table.insertRow();
+
+        psls[index][febrow][link] = [];
+        psls_last[index][febrow][link] = [];
+
+        for (let col = 0; col < numvals + 2; col++) {
+
+            let td = tr.insertCell();
+
+            td.style.textAlign = "center";
+            td.style.padding = "2px 6px";
+
+            psls[index][febrow][link][col] = td;
+
+            // initialise previous values
+            psls_last[index][febrow][link][col] = 0;
+        }
+
+        psls[index][febrow][link][0].innerHTML = link;
+    }
+
     panel.appendChild(table);
     div.appendChild(panel);
 
@@ -291,16 +314,16 @@ function formatRow(row, last, active, status, disp, err, nhits, inverted){
     if (outofphase > 0) ok = false;
     last[8] = outofphase;
 
-    row[9].innerHTML=Number(disp).toPrecision(5);
+    row[9].innerHTML=Number(disp - last[9]).toPrecision(5);
     row[9].style.color = (disp - last[9] > 0)? badcolour : goodcolour;
     if (disp - last[9] > 0) ok = false;
     last[9] = disp;
 
-    row[10].innerHTML=Number(err).toPrecision(5);
+    row[10].innerHTML=Number(err - last[10]).toPrecision(5);
     row[10].style.color = (err - last[10] > 0)? badcolour : goodcolour;
     if (err - last[10] > 0) ok = false;
     last[10] = err;
-    row[11].innerHTML=Number(nhits).toPrecision(5);
+    row[11].innerHTML=Number(nhits - last[11]).toPrecision(5);
     last[11] = nhits;
     if(active)
         row[12].innerHTML="Y";

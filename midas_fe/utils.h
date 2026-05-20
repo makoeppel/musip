@@ -201,7 +201,20 @@ int InitFEBs(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) {
         feb_sc.FEB_write(febIDx, MP_CTRL_SLOW_DOWN_REGISTER_W, 0x0000001F);
         uint32_t delay = m_settings["Readout"]["Sorter Delay"][febIDx];
         feb_sc.FEB_write(febIDx, SORTER_COUNTER_REGISTER_R + SORTER_INDEX_DELAY, delay);
+
+        // chip mapping
+        cm_msg(MINFO, "InitFEBs()", "Set global ASIC ID mapping");
+        for ( uint32_t chipID = febIDx * N_CHIPS; chipID < (febIDx + 1) * N_CHIPS; chipID++ ) {
+            uint16_t globalChipID = (uint16_t) m_settings["DAQ"]["Links"]["Mapping"][chipID];
+            uint16_t localChipID = chipID % N_CHIPS;
+            cm_msg(MINFO, "InitFEBs()", "Setup globalChipID-%i -> localASIC-%i on FEB-%i", globalChipID, localChipID, febIDx);
+            uint32_t command = (globalChipID << 9) | (0x1 << 7) | (febIDx << 4) | localChipID;
+            feb_sc.write_register(SWB_LOOKUP_CTRL_REGISTER_W, command);
+            //cout << hex << command << " i:" << hex << i << " v:" << hex << (uint16_t) asic_global_odb[i] << "FEB " << feb << endl;
+        }
     }
+    feb_sc.write_register(SWB_LOOKUP_CTRL_REGISTER_W, 0x0);
+
     return FE_SUCCESS;
 }
 

@@ -70,6 +70,7 @@ uint32_t n_mevents = 0;
 uint32_t readout_timeout = 1000;
 uint32_t use_timeout = true;
 uint32_t cnt_loop = 0;
+uint32_t maxwords = 0;
 mudaq::DmaMudaqDevice* mup = nullptr;
 mudaq::DmaMudaqDevice::DataBlock block;
 std::vector<uint32_t> lvds_banks;
@@ -226,14 +227,15 @@ int begin_of_run() {
     mu.write_register(SWB_READOUT_STATE_REGISTER_W, readout_state_regs);
 
     // request to read blocks of 256 bits
+    maxwords = (uint32_t) m_settings["Readout"]["max_requested_words"];
     mu.write_register(GET_N_DMA_WORDS_REGISTER_W,
-                      (int)m_settings["Readout"]["max_requested_words"]);
+                      (uint32_t) m_settings["Readout"]["max_requested_words"]);
 
     // set event id for this frontend
     mu.write_register(FARM_EVENT_ID_REGISTER_W, eventID_data);
 
     // link masks
-    mu.write_register(SWB_GENERIC_MASK_REGISTER_W, (int)m_settings["Readout"]["mask_n_generic"]);
+    mu.write_register(SWB_GENERIC_MASK_REGISTER_W, (uint32_t) m_settings["Readout"]["mask_n_generic"]);
 
     // release reset
     mu.write_register_wait(RESET_REGISTER_W, 0x0, 100);
@@ -270,6 +272,28 @@ int create_midas_events(uint32_t* dmaBuffer, uint32_t dmaBufSize, int rbh)
     if (dmaBufSize < 2)
         return -1;
 
+    // sort hits
+    static constexpr uint64_t kTimestampMask = (1ULL << 37) - 1ULL; // bits 0..36
+    struct HitWord {
+        uint32_t word0;
+        uint32_t word1;
+        uint64_t ts;
+    };
+    std::vector<HitWord> hits;
+
+    for (uint32_t i = 0; i < maxwords / 8; i += 2) {
+        uint32_t word0 = dmaBuffer[i];
+        uint32_t word1 = dmaBuffer[i+1];
+        uint64_t word =
+             static_cast<uint64_t>(word0) |
+            (static_cast<uint64_t>(word1) << 32);
+        uint64_t ts = word & kTimestampMask;
+        hits.push_back({word0, word1, ts});
+    }
+    // Sort by timestamp
+    std::sort(hits.begin(), hits.end(),
+              [](const HitWord& a, const HitWord& b) { return a.ts < b.ts; });
+
     // create MIDAS event
     void* event = nullptr;
     int status = 0;
@@ -292,13 +316,18 @@ int create_midas_events(uint32_t* dmaBuffer, uint32_t dmaBufSize, int rbh)
     auto bankHeader = reinterpret_cast<BANK_HEADER*>(eventHeader + 1);
     bk_init32a(bankHeader); // create MIDAS bank
 
-    char* data = nullptr;
+    uint32_t* data = nullptr;
     std::string bank_name = "H000";
     bk_create(bankHeader, bank_name.c_str(), TID_UINT32, reinterpret_cast<void**>(&data));
     // memcpy(data, dmaBuffer, dmaBufSize * sizeof(uint32_t));
     // data += dmaBufSize * sizeof(uint32_t);
-    memcpy(data, dmaBuffer, 10000 * sizeof(uint32_t));
-    data += 10000 * sizeof(uint32_t);
+    // Store 64-bit words as two uint32_t words
+    for (size_t i = 0; i < hits.size(); ++i) {
+        data[2 * i]     = hits[i].word0;
+        data[2 * i + 1] = hits[i].word1;
+    }
+    memcpy(data, data, hits.size() / 2 * sizeof(uint32_t));
+    data += hits.size() / 2 * sizeof(uint32_t);
     bk_close(bankHeader, data);
 
     eventHeader->data_size = bk_size(bankHeader);

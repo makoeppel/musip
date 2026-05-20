@@ -329,9 +329,9 @@ void sc_settings_changed(midas::odb o) {
             resetASICs(*feb_sc, m_settings);
         }
 
-        if (name == "ADC Continuous Readout" && o) {
-            adcContinuousReadout(*feb_sc, m_settings);
-        }
+        // if (name == "ADC Continuous Readout" && o) {
+        //     adcContinuousReadout(*feb_sc, m_settings);
+        // }
 
         if (name == "Run Cycle FEB" && o) {
             // send run start
