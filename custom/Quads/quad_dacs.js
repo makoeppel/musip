@@ -651,6 +651,12 @@ class DACCell {
                 if (all_selected_ids == -1 || all_selected_ids == undefined || all_selected_ids.length == 0) {
                     // Just set for active sensor if no selection
                     await set_sensor_dac(this.dac_name, this.value, this.conf_id, this.dac_class);
+		    // High and low thresholds should be changed in lockstep being 1 apart
+		    if (this.dac_name.startsWith("ThHigh")) {
+                        await set_sensor_dac(this.dac_name.replace(/High/g, "Low"), parseInt(this.value) - 1, this.conf_id, this.dac_class);
+		    } else if (this.dac_name.startsWith("ThLow")) {
+                        await set_sensor_dac(this.dac_name.replace(/Low/g, "High"), parseInt(this.value) + 1, this.conf_id, this.dac_class);
+		    }
                 } else {
                     // Set for all selected sensors
                     let all_conf_ids = getConfigIds(all_selected_ids);
@@ -831,6 +837,11 @@ class DACCell {
             if (all_selected_ids == -1 || all_selected_ids == undefined || all_selected_ids.length <= 1) {
                 //console.log("onchange: single sensor or no selection");
                 this.update();
+		if (this.dac_name.startsWith("ThHigh")) {
+                    await set_sensor_dac(this.dac_name.replace(/High/g, "Low"), parseInt(this.value) - 1, this.conf_id, this.dac_class);
+		} else if (this.dac_name.startsWith("ThLow")) {
+                    await set_sensor_dac(this.dac_name.replace(/Low/g, "High"), parseInt(this.value) + 1, this.conf_id, this.dac_class);
+		}
                 // Still trigger color update for consistency
                 setTimeout(() => this.trigger_selection_color_update(), 50);
                 return;
