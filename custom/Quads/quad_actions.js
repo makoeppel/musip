@@ -346,7 +346,7 @@ async function mask_selected() {
     let selected = getSelection();
     setOutputText("Masking selected sensors: " + list_to_string(selected));
 
-    if (selected.length == 16){
+    if (selected.length == 24){
         await mask_all();
     }
     else {

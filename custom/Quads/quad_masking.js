@@ -100,7 +100,7 @@ async function revertDisplayToODB() {
 function getActiveSensors() {
     // Return all sensor IDs (0-15) if no specific selection is available
     let allSensors = [];
-    for (let i = 0; i < 16; i++) {
+    for (let i = 0; i < 24; i++) {
         allSensors.push(i);
     }
     return allSensors;
@@ -639,7 +639,7 @@ async function syncUIToActiveSensor() {
     let activeSensor = 0;
     if (typeof getActiveSelection === 'function') {
         const sel = getActiveSelection();
-        if (typeof sel === 'number' && sel >= 0 && sel < 16) activeSensor = sel;
+        if (typeof sel === 'number' && sel >= 0 && sel < 24) activeSensor = sel;
     }
     // Get ODB value for this sensor
     const odbPath = `/Equipment/Quads/Settings/Config/TDACS/${activeSensor}/TDACFILE`;

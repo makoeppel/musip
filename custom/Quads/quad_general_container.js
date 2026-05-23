@@ -9,16 +9,16 @@ function SetupGeneral(name, drawFunction){
 
     document.getElementById(this.name + 'Table').appendChild(this.container);
 
-    this.Quads = new Array(4);
+    this.Quads = new Array(6);
 
-    for (var i = 0; i < 4; i++){
+    for (var i = 0; i < 6; i++){
         this.Quads[i] = new QuadGeneral(i, name, drawFunction);
 
         this.container.appendChild(this.Quads[i].container)
     }
 
     this.draw = function(){
-        for(var i = 0; i < 4; i++ ){   
+        for(var i = 0; i < 6; i++ ){
             this.Quads[i].draw();
         }
     }
