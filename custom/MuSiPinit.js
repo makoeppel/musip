@@ -4,7 +4,7 @@
 var instrName     = "MuSiP";
 var instrColor    = "#FF0000";
 var elogLink      = "https://lem03.psi.ch:8000/Si-Pixel/";
-var autoRunPath   = "/home/mu3e/debug_online/online/userfiles/sequencer";
+var autoRunPath   = "/home/mu3e/musip/online/userfiles/sequencer/";
 
 // Make a Map for instrument specific ODBs
 var instrODB = {
