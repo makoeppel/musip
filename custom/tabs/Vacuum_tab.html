@@ -66,8 +66,14 @@
     </tr>
     <tr>
       <td align="center">
-	<input class="mbutton" id="startPS" type="button" value="Pump" onclick="modbset('/Equipment/Pump/Variables/Output',1);">
-	<input class="mbutton" id="ventPS" type="button" value="Vent" onclick="modbset('/Equipment/Pump/Variables/Output',2);">
+        <select class="modbselect" data-odb-path="/Equipment/Pump/Variables/Output" id="pumpCmd">
+	  <option value="0">Idle</option>
+	  <option value="1">Pump ON</option>
+	  <option value="2">Pump OFF</option>
+	  <option value="3">Vent lock HV/BV</option>
+	  <option value="4">Vent unlock HV/BV</option>
+	  <option value="5">Reset fault</option>
+	</select>
       </td>
     </tr>
   </table>

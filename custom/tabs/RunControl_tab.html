@@ -24,7 +24,7 @@
 	    <tr>
 	      <td class="gray_td">Sample Temp.</td>
 	      <td id="SampleT"
-	      class="nocol_td"><span class="modbvalue" id="sampleTempD" data-odb-path="/Equipment/LS340/Variables/Output[0]" data-format="f2.1" data-odb-editable="1"></span> <span id="unitTD">K</span></td>
+	      class="nocol_td"><span class="modbvalue" id="sampleTempD" data-odb-path="/Equipment/LS340/Variables/Output[1]" data-format="f2.1" data-odb-editable="1"></span> <span id="unitTD">K</span></td>
 	      <td class="yellow_td"><span class="modbvalue" id="sampleTempR" data-format="f2" data-odb-path="/Equipment/LS340/Variables/Input[0]"></span>/<span class="modbvalue" id="sampleTempR" data-format="f2" data-odb-path="/Equipment/LS340/Variables/Input[1]"></span>  <span id="unitTR">K</span><span style="float:right"><a id="histTLink" onclick="mhistory_dialog('Sample','Temperature');"><img src="Graph.ico" width="20" height="15"></a></span></td>
 	    </tr>
 	    <tr id="RateRow">
@@ -35,23 +35,24 @@
 	    <tr>
 	      <td class="gray_td">Heater</td>
 	      <td class="nocol_td">
-		<select class="modbselect" data-odb-path="/Equipment/LS340/Variables/Output[4]" data-odb-editable="1">
-		  <option value="1">Low</option>
-		  <option value="2">Medium</option>
-		  <option value="3">High</option>
+		<select class="modbselect" data-odb-path="/Equipment/LS340/Variables/Output[5]" data-odb-editable="1">
+		  <option value="1">Very Low</option>
+		  <option value="2">Low</option>
+		  <option value="3">Medium</option>
+		  <option value="4">High</option>
 		</select>
 	      </td>
-	      <td id="Heater" class="yellow_td"><span class="modbvalue" data-odb-path="/Equipment/LS340/Variables/Input[8]" data-format="f1"></span>%<span style="float:right"><a onclick="mhistory_dialog('Sample','Heater');"><img src="Graph.ico" width="20" height="15"></a></span></td>
+	      <td id="Heater" class="yellow_td"><span class="modbvalue" data-odb-path="/Equipment/LS340/Variables/Input[7]" data-format="f1"></span>%<span style="float:right"><a onclick="mhistory_dialog('Sample','Heater');"><img src="Graph.ico" width="20" height="15"></a></span></td>
 	    </tr>
 	    <tr id="PRow">
 	      <td class="gray_td">P / I / D</td>
-	      <td class="nocol_td"><span class="modbvalue" data-odb-path="/Equipment/LS340/Variables/Output[1]" data-format="f2.1" data-odb-editable="1"></span>
-		/ <span class="modbvalue" data-odb-path="/Equipment/LS340/Variables/Output[2]" data-format="f2.1" data-odb-editable="1"></span>
+	      <td class="nocol_td"><span class="modbvalue" data-odb-path="/Equipment/LS340/Variables/Output[2]" data-format="f2.1" data-odb-editable="1"></span>
 		/ <span class="modbvalue" data-odb-path="/Equipment/LS340/Variables/Output[3]" data-format="f2.1" data-odb-editable="1"></span>
+		/ <span class="modbvalue" data-odb-path="/Equipment/LS340/Variables/Output[4]" data-format="f2.1" data-odb-editable="1"></span>
 	      </td>
-	      <td class="yellow_td"><span class="modbvalue" data-format="f2" data-odb-path="/Equipment/LS340/Variables/Input[10]"></span>
+	      <td class="yellow_td"><span class="modbvalue" data-format="f2" data-odb-path="/Equipment/LS340/Variables/Input[9]"></span>
+		/ <span class="modbvalue" data-format="f2" data-odb-path="/Equipment/LS340/Variables/Input[10]"></span>
 		/ <span class="modbvalue" data-format="f2" data-odb-path="/Equipment/LS340/Variables/Input[11]"></span>
-		/ <span class="modbvalue" data-format="f2" data-odb-path="/Equipment/LS340/Variables/Input[12]"></span>
 	      </td>
 	    </tr>
 	    <tr>
