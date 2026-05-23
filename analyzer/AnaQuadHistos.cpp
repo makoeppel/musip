@@ -32,10 +32,10 @@ void AnaQuadHistos::BeginRun(TARunInfo* runinfo) {
     using MD = musip::dqm::Metadata;
 
     /////////  1D histos  ///////////
-    chipID = pPlotCollection_->getOrCreateHistogram1DD("chipID", 16, -0.5, 16 - 0.5, error);
+    chipID = pPlotCollection_->getOrCreateHistogram1DD("chipID", 24, -0.5, 24 - 0.5, error);
 
     /////////  2D histos  ///////////
-    for (int i = 0; i < 16; i++) {
+    for (int i = 0; i < 24; i++) {
         mask_files.push_back({});
         char quadIDString[256];
         std::string directoryName = std::string("");
@@ -82,7 +82,7 @@ void AnaQuadHistos::BeginRun(TARunInfo* runinfo) {
             MD::AxisTitleY("Row")
         ));
     }
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 6; i++) {
         char quadIDString[256];
         std::string directoryName = std::string("");
         // Create a name from the 4 chip IDs
@@ -228,7 +228,7 @@ void AnaQuadHistos::EndRun(TARunInfo* runinfo) {
 
     // write mask file
     std::string path = "/home/mu3e/musip/output/maskfiles_analyzer";
-    for ( int index = 0; index < 16; index++ ) {
+    for ( int index = 0; index < 24; index++ ) {
         mask_files[index] = create_mask_file(hitmaps[index]->asRootObject("myHistogram", "My histogram title").get(), index, 0.5);
 
         std::string data = "/mask_" + std::to_string(index) + "_run_" + std::to_string(runinfo->fRunNo) + ".bin";
@@ -264,7 +264,7 @@ TAFlowEvent* AnaQuadHistos::AnalyzeFlowEvent(TARunInfo*, TAFlags* flags, TAFlowE
         auto hit = cur_hit.as_pixel();
         chipID->Fill(hit.chipid());
 
-        if (hit.chipid() >= 16) continue;
+        if (hit.chipid() >= 24) continue;
 
         // fill hitmap histograms
         uint32_t col, row;
