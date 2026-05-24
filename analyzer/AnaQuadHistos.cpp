@@ -269,10 +269,12 @@ TAFlowEvent* AnaQuadHistos::AnalyzeFlowEvent(TARunInfo*, TAFlags* flags, TAFlowE
         // fill hitmap histograms
         uint32_t col, row;
         std::tie(col, row) = get_quad_global_col_row(hit);
-        if ( hit.chipid() < 4 ) combinedHitmap[0]->Fill(col, row);
-        if ( hit.chipid() >= 4 && hit.chipid() < 8 ) combinedHitmap[1]->Fill(col, row);
-        if ( hit.chipid() >= 8 && hit.chipid() < 12 ) combinedHitmap[2]->Fill(col, row);
-        if ( hit.chipid() >= 12 ) combinedHitmap[3]->Fill(col, row);
+        if (hit.chipid() < 4) combinedHitmap[0]->Fill(col, row);
+        if (hit.chipid() >= 4 && hit.chipid() < 8) combinedHitmap[1]->Fill(col, row);
+        if (hit.chipid() >= 8 && hit.chipid() < 12) combinedHitmap[2]->Fill(col, row);
+        if (hit.chipid() >= 12 && hit.chipid() < 16) combinedHitmap[3]->Fill(col, row);
+        if (hit.chipid() >= 16 && hit.chipid() < 20) combinedHitmap[4]->Fill(col, row);
+        if (hit.chipid() >= 20) combinedHitmap[5]->Fill(col, row);
         hitmaps[hit.chipid()]->Fill(hit.col(), hit.row());
 
         // fill timing histogram
