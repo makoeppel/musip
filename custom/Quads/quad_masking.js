@@ -1,7 +1,7 @@
 // Load masking files:
 
 // Default path for UI display only - does NOT modify ODB values on page load
-let currentMaskFolderPath = "/home/mu3e/mu3e/debug_online/online/userfiles/maskfiles/"; // Default: maskfiles directory
+let currentMaskFolderPath = "/home/mu3e/musip/online/userfiles/maskfiles/"; // Default: maskfiles directory
 
 // Track display state vs actual ODB state
 // This represents what the user has selected in the UI, not what's actually in ODB
@@ -286,7 +286,7 @@ function initializeMaskFolderSelection() {
             iterationInput.addEventListener('input', function(e) {
                 const iteration = this.value.trim();
                 if (iteration && !isNaN(iteration)) {
-                    const tuningPath = "/home/mu3e/mu3e/debug_online/online/userfiles/maskfiles/tuning/";
+                    const tuningPath = "/home/mu3e/musip/online/userfiles/maskfiles/tuning/";
                     updateDisplayState(tuningPath, parseInt(iteration), true);
                 }
             });
@@ -361,7 +361,7 @@ function initializeMaskFolderSelection() {
         // Sanity check - ensure path includes 'maskfiles'
         if (!displayState.selectedPath.includes('maskfiles')) {
             console.error("WARNING: Display path does not include 'maskfiles':", displayState.selectedPath);
-            displayState.selectedPath = "/home/mu3e/mu3e/debug_online/online/userfiles/maskfiles/";
+            displayState.selectedPath = "/home/mu3e/musip/online/userfiles/maskfiles/";
             console.log("Corrected display path to:", displayState.selectedPath);
         }
         

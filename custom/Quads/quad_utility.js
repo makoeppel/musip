@@ -275,10 +275,6 @@ function setup_odb() {
 
     let data_ids = getDataIds(999);
 
-    //let runPath = "/home/musip/online/userfiles/";
-    //let runPath = "/home/labor/online/online/userfiles/";
-    // SHOULD THIS NOT BE /home/mu3e/musip/online/userfiles/maskfiles ? LETS TRY
-    // WAS let runPath = "/home/mu3e/mu3e/debug_online/online/userfiles/";
     let runPath = "/home/mu3e/musip/online/userfiles/maskfiles/";
     for (let i = 0; i < data_ids.length; i++){
         let id = data_ids[i];
