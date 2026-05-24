@@ -126,8 +126,8 @@
               <pre id="lineNumbers1" class="edt_linenum"></pre>
               <pre id="editorTab1" class="edt_area" spellcheck="false" ondblclick="askToEdit();" contenteditable="false"></pre>
               <span id="infoColumn" class="info_column">
-                <span class="modb" data-odb-path="/Sequencer/Variables" onload="sessionStorage.setItem('variables',this.value);varTable('varContainer',JSON.parse(this.value));" onchange="sessionStorage.setItem('variables',this.value);varTable('varContainer',JSON.parse(this.value));"></span>
-                <span class="modb" data-odb-path="/Sequencer/Param" onload="sessionStorage.setItem('parameters',this.value);" onchange="sessionStorage.setItem('parameters',this.value);"></span>
+                <span class="modb" data-odb-path="/Sequencer/Variables" onload="sessionStorage.setItem('variables',JSON.stringify(this.value));varTable('varContainer',this.value);" onchange="sessionStorage.setItem('variables',JSON.stringify(this.value));varTable('varContainer',this.value);"></span>
+                <span class="modb" data-odb-path="/Sequencer/Param" onload="sessionStorage.setItem('parameters',JSON.stringify(this.value));" onchange="sessionStorage.setItem('parameters',JSON.stringify(this.value));"></span>
                 <span class="modb" data-odb-path="/Experiment/Edit on sequence" onload="sessionStorage.setItem('editonseq',this.value);" onchange="sessionStorage.setItem('editonseq',this.value);"></span>
                 <span style="display: none;" id="varContainer"></span>
 		<span style="display: none;" id="nextFNContainer"></span>
