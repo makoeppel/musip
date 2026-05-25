@@ -296,7 +296,8 @@ void sc_settings_changed(midas::odb o) {
         "module_power",
         "MutrigConfig",
         "DataGenEnable",
-        "DataGenDisable"
+        "DataGenDisable",
+        "debug_readout_feb"
     };
 
     std::vector<std::string> names_no_reset{
