@@ -331,6 +331,7 @@ void sc_settings_changed(midas::odb o) {
         }
 
         if (name == "debug_readout_feb" && o) {
+            cm_msg(MINFO, "sc_settings_changed", "Set FEB into debug readout");
             for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
                 bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
                 bool FEBsIsQuads = m_settings["DAQ"]["Links"]["FEBsQuads"][febIDx];
@@ -340,6 +341,7 @@ void sc_settings_changed(midas::odb o) {
         }
 
         if (name == "debug_readout_feb" && !o) {
+            cm_msg(MINFO, "sc_settings_changed", "Set FEB into normal readout");
             for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
                 bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
                 bool FEBsIsQuads = m_settings["DAQ"]["Links"]["FEBsQuads"][febIDx];
