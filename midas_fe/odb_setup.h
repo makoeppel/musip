@@ -39,7 +39,6 @@ midas::odb settings = {
       {"use_merger", false},
       {"max_requested_words", 0x80000},
       {"use_send_time", false},
-      {"debug_readout_feb", false},
       {"n_mevents", 10}}},
     {"DAQ",
      {
@@ -74,6 +73,7 @@ midas::odb settings = {
            {"DataGenFullSteam", false},
            {"DataGenRate", 0},
            {"Reset FEB Counters", false},
+           {"debug_readout_feb", false},
            {"MuTRiG",
             {{"init_tmb", false}, //If set, initializes the TMBs. Resets when finished
             {"module_power", false}, //Global power switch for the ASICs

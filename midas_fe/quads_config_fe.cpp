@@ -303,6 +303,7 @@ void sc_settings_changed(midas::odb o) {
         "module_power_mask",
         "module_power",
         "TestPulsesTDC",
+        "debug_readout_feb",
     };
 
     if( (name == "module_power_mask" || name == "module_power") ){
@@ -327,6 +328,24 @@ void sc_settings_changed(midas::odb o) {
 
         if (name == "ResetASICs" && o) {
             resetASICs(*feb_sc, m_settings);
+        }
+
+        if (name == "debug_readout_feb" && o) {
+            for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
+                bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
+                bool FEBsIsQuads = m_settings["DAQ"]["Links"]["FEBsQuads"][febIDx];
+                if (FEBActive && FEBsIsQuads)
+                    feb_sc->FEB_write(febIDx, MP_USE_ARRIVAL_TIME1_REGISTER_W, 0xFFFFFFFF);
+            }
+        }
+
+        if (name == "debug_readout_feb" && !o) {
+            for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
+                bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
+                bool FEBsIsQuads = m_settings["DAQ"]["Links"]["FEBsQuads"][febIDx];
+                if (FEBActive && FEBsIsQuads)
+                    feb_sc->FEB_write(febIDx, MP_USE_ARRIVAL_TIME1_REGISTER_W, 0x0);
+            }
         }
 
         // if (name == "ADC Continuous Readout" && o) {
