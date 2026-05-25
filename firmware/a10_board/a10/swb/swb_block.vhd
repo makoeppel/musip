@@ -365,6 +365,7 @@ begin
         i_rmask_n       => mask_n(3 downto 0),
 
         i_lookup_ctrl   => i_writeregs(SWB_LOOKUP_CTRL_REGISTER_W),
+        i_use_send_time => i_writeregs(SWB_READOUT_STATE_REGISTER_W)(USE_BIT_SEND_TIME),
 
         o_subh_cnt      => counter_mux(3 downto 0),
         o_hit_cnt       => counter_mux(7 downto 4),

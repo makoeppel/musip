@@ -24,6 +24,7 @@ port (
     i_rmask_n         : in  std_logic_vector(g_LINK_N-1 downto 0);
 
     i_lookup_ctrl     : in  std_logic_vector(31 downto 0);
+    i_use_send_time   : in  std_logic := '0';
 
     o_subh_cnt        : out slv64_array_t(g_LINK_N-1 downto 0) := (others => (others => '0'));
     o_hit_cnt         : out slv64_array_t(g_LINK_N-1 downto 0) := (others => (others => '0'));
@@ -59,7 +60,7 @@ architecture arch of musip_mux_4_1 is
     signal package_stage        : slv3_array_t(g_LINK_N-1 downto 0);
     signal we_write_this_package: std_logic_vector(g_LINK_N-1 downto 0);
 
-    signal ts_high              : slv32_array_t(g_LINK_N-1 downto 0);
+    signal ts_high, send_time   : slv32_array_t(g_LINK_N-1 downto 0);
     signal ts_low               : slv16_array_t(g_LINK_N-1 downto 0);
     signal last_subheader_time  : slv8_array_t(g_LINK_N-1 downto 0);
 
@@ -141,6 +142,7 @@ begin
                     elsif ( package_stage(i) = "010" ) then
                         package_stage(i) <= "011";
                     elsif ( package_stage(i) = "011" ) then
+                        send_time(i) <= i_rx(i).data(31 downto 0);
                         package_stage(i) <= "100";
                     elsif ( i_rx(i).eop = '1' ) then
                         s_package_cnt(i) <= s_package_cnt(i) + '1';
@@ -169,7 +171,11 @@ begin
                             -- Bits 41:37       ToT (timestamp 2)
                             next_64bit_word(i)(41 downto 37) <= i_rx(i).data(5 downto 1);
                             -- Bits 36:0        Hit time (8ns overflow in 1000s)     21 +                       5 +                                  7 +                          4
-                            next_64bit_word(i)(36 downto  0) <= ts_high(i)(20 downto 0) & ts_low(i)(15 downto 11) & last_subheader_time(i)(6 downto 0) & i_rx(i).data(31 downto 28);
+                            if ( i_use_send_time = '0' ) then
+                                next_64bit_word(i)(36 downto  0) <= ts_high(i)(20 downto 0) & ts_low(i)(15 downto 11) & last_subheader_time(i)(6 downto 0) & i_rx(i).data(31 downto 28);
+                            else
+                                next_64bit_word(i)(36 downto  0) <= "000000" & send_time(i)(30 downto 11) & last_subheader_time(i)(6 downto 0) & i_rx(i).data(31 downto 28);
+                            end if;
                         elsif ( data_type(i) = SCIFI_HEADER_ID or data_type(i) = TILE_HEADER_ID ) then
                             -- MuSiP-MuTRiG 64bit format
                             -- Bit 63           indication (1) for mutrig data

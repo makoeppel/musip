@@ -38,6 +38,8 @@ midas::odb settings = {
       {"mask_n_generic", 0x0},
       {"use_merger", false},
       {"max_requested_words", 0x80000},
+      {"use_send_time", false},
+      {"debug_readout_feb", false},
       {"n_mevents", 10}}},
     {"DAQ",
      {
