@@ -72,12 +72,12 @@ window.dqmInit = function() {
     let divElement = document.getElementById("globalPlotsOld");
 
     let globalPlotSources = [
-        {source: "quad/combined_hitmap_00000_00001_00002_00003", title: "Layer 0 (Sensor 0 - 3)", xTitle: "Combined Column", yTitle: "Combined Row", logZ: true, layer: 0, minZ: "0.1"},
-        {source: "quad/combined_hitmap_00004_00005_00006_00007", title: "Layer 1 (Sensor 4 - 7)", xTitle: "Combined Column", yTitle: "Combined Row", logZ: true, layer: 1, minZ: "0.1"},
-        {source: "quad/combined_hitmap_00008_00009_00010_00011", title: "Layer 2 (Sensor 8 - 11)", xTitle: "Combined Column", yTitle: "Combined Row", logZ: true, layer: 2, minZ: "0.1"},
-        {source: "quad/combined_hitmap_00012_00013_00014_00015", title: "Layer 3 (Sensor 12 - 15)", xTitle: "Combined Column", yTitle: "Combined Row", logZ: true, layer: 3, minZ: "0.1"},
-        {source: "quad/combined_hitmap_00016_00017_00018_00019", title: "Layer 4 (Sensor 16 - 19)", xTitle: "Combined Column", yTitle: "Combined Row", logZ: true, layer: 3, minZ: "0.1"},
-        {source: "quad/combined_hitmap_00020_00021_00022_00023", title: "Layer 5 (Sensor 20 - 23)", xTitle: "Combined Column", yTitle: "Combined Row", logZ: true, layer: 3, minZ: "0.1"},
+        {source: "quad/combined_hitmap_00016_00017_00018_00019", title: "Layer 0 (Sensor 16 - 19)", xTitle: "Combined Column", yTitle: "Combined Row", logZ: true, layer: 0, minZ: "0.1"},
+        {source: "quad/combined_hitmap_00010_00011_00002_00003", title: "Layer 1 (Sensor 10,11,2,3)", xTitle: "Combined Column", yTitle: "Combined Row", logZ: true, layer: 1, minZ: "0.1"},
+        {source: "quad/combined_hitmap_00008_00009_00020_00021", title: "Layer 2 (Sensor 8,9,20,21)", xTitle: "Combined Column", yTitle: "Combined Row", logZ: true, layer: 2, minZ: "0.1"},
+        {source: "quad/combined_hitmap_00006_00007_00004_00005", title: "Layer 3 (Sensor 4 - 7)", xTitle: "Combined Column", yTitle: "Combined Row", logZ: true, layer: 3, minZ: "0.1"},
+        {source: "quad/combined_hitmap_00022_00023_00000_00001", title: "Layer 4 (Sensor 22,23,0,1)", xTitle: "Combined Column", yTitle: "Combined Row", logZ: true, layer: 4, minZ: "0.1"},
+        {source: "quad/combined_hitmap_00012_00013_00014_00015", title: "Layer 5 (Sensor 12 - 15)", xTitle: "Combined Column", yTitle: "Combined Row", logZ: true, layer: 5, minZ: "0.1"},
     ];
 
     const createPlot = (parentDiv, source, title, xTitle, yTitle, logZ) => {
