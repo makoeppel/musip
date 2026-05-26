@@ -216,10 +216,10 @@ int begin_of_run() {
         cm_msg(MINFO, "readout_fe", "Use Stream Merger");
         readout_state_regs = SET_USE_BIT_STREAM(readout_state_regs);
     }
-    // if ((bool)m_settings["Readout"]["use_send_time"]) {
-    //     cm_msg(MINFO, "readout_fe", "Use send time as header time");
-    //     readout_state_regs = SET_USE_BIT_SEND_TIME(readout_state_regs);
-    // }
+    if ((bool)m_settings["Readout"]["use_send_time"]) {
+        cm_msg(MINFO, "readout_fe", "Use send time as header time");
+        readout_state_regs = SET_USE_BIT_SEND_TIME(readout_state_regs);
+    }
     readout_state_regs = SET_USE_BIT_GENERIC(readout_state_regs);
     use_software_dummy = (bool)m_settings["Readout"]["Software dummy"];
     n_mevents = (int)m_settings["Readout"]["n_mevents"];
