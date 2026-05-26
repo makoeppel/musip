@@ -169,7 +169,7 @@ begin
                         if ( i_use_send_time = '0' ) then
                             next_64bit_word(i)(36 downto  0) <= ts_high(i)(20 downto 0) & ts_low(i)(15 downto 11) & last_subheader_time(i)(6 downto 0) & i_rx(i).data(31 downto 28);
                         else
-                            next_64bit_word(i)(36 downto  0) <= send_time(i)(36 downto 11) & last_subheader_time(i)(6 downto 0) & i_rx(i).data(31 downto 28);
+                            next_64bit_word(i)(36 downto  0) <= send_time(i)(25 downto 0) & last_subheader_time(i)(6 downto 0) & i_rx(i).data(31 downto 28);
                         end if;
                     elsif ( data_type(i) = SCIFI_HEADER_ID or data_type(i) = TILE_HEADER_ID ) then
                         -- MuSiP-MuTRiG 64bit format
