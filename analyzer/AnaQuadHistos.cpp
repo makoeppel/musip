@@ -194,35 +194,35 @@ std::tuple<uint32_t, uint32_t> AnaQuadHistos::get_quad_global_col_row(pixelhit h
 		layer = 3;
 		break;
 	case 22:
-		chipPosition = 0;
+		chipPosition = 2;
 		layer = 4;
 		break;
 	case 23:
-		chipPosition = 1;
+		chipPosition = 3;
 		layer = 4;
 		break;
 	case 0:
-		chipPosition = 2;
+		chipPosition = 0;
 		layer = 4;
 		break;
 	case 1:
-		chipPosition = 3;
+		chipPosition = 1;
 		layer = 4;
 		break;
 	case 12:
-		chipPosition = 3;
-		layer = 5;
-		break;
-	case 13:
-		chipPosition = 2;
-		layer = 5;
-		break;
-	case 14:
 		chipPosition = 0;
 		layer = 5;
 		break;
-	case 15:
+	case 13:
 		chipPosition = 1;
+		layer = 5;
+		break;
+	case 14:
+		chipPosition = 2;
+		layer = 5;
+		break;
+	case 15:
+		chipPosition = 3;
 		layer = 5;
 		break;
     }
@@ -251,6 +251,7 @@ std::tuple<uint32_t, uint32_t> AnaQuadHistos::get_quad_global_col_row(pixelhit h
     switch(layer) {
         case 0: // Layer 0: 180° around z, then 180° around x
         case 2: // Layer 2: like layer 0
+	case 5:	// Layer 5: like layer 0
             // 180° around z: flip both col and row in the combined space
             finalCol = 511 - combinedCol;  // flip horizontally (0-511 range)
             finalRow = 499 - combinedRow;  // flip vertically (0-499 range)
@@ -259,6 +260,7 @@ std::tuple<uint32_t, uint32_t> AnaQuadHistos::get_quad_global_col_row(pixelhit h
             break;
         case 1: // Layer 1: 180° around z
         case 3: // Layer 3: like layer 1
+        case 4: // Layer 4: like layer 1
             // 180° around z: flip both col and row in the combined space
             finalCol = 511 - combinedCol;  // flip horizontally (0-511 range)
             finalRow = 499 - combinedRow;  // flip vertically (0-499 range)
