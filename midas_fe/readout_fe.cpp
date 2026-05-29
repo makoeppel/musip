@@ -285,7 +285,7 @@ int create_midas_events(uint32_t* dmaBuffer, uint32_t dmaBufSize, int rbh)
     };
     std::vector<HitWord> hits;
 
-    for (uint32_t i = 0; i < maxwords / 8; i += 2) {
+    for (uint32_t i = 0; i < maxwords * 4; i += 2) {
         uint32_t word0 = dmaBuffer[i];
         uint32_t word1 = dmaBuffer[i+1];
         uint64_t word =
@@ -359,9 +359,13 @@ int read_stream_thread(void*) {
     std::vector<uint32_t> dma_buf_dummy32;
     std::vector<uint64_t> dma_buf_dummy64;
 
+    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+
     // actuall readout loop
     while (is_readout_thread_enabled()) {
-        std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+
+        if (!timeout)
+            begin = std::chrono::steady_clock::now();
 
         // don't readout events if we are not running
         if (!readout_enabled()) {
@@ -427,61 +431,12 @@ int read_stream_thread(void*) {
         uint32_t last_written = mu.last_written_addr();
 
         std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+        double dma_time = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count();
         std::cout << "Time difference (DMA) = "
                   << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count()
                   << "[µs]" << std::endl;
 
         begin = std::chrono::steady_clock::now();
-
-        print_swb_counters(mu);
-        uint32_t maxwords = (uint32_t)m_settings["Readout"]["max_requested_words"];
-        printf("0x%08x 0x%08x 0x%08x 0x%08x 0x%08x 0x%08x\n", mu.last_written_addr(),
-               mu.last_endofevent_addr(), maxidx, size_dma_buf, maxwords, maxwords * 8);
-
-        // std::cout << std::endl;
-        // for(int i=0; i < 20; i++)
-        //     std::cout << std::hex << i << " 0x" <<  dma_buf[i] << " ";
-        // std::cout << std::endl;
-        // printf("last_written\n");
-        // for(int i=0; i < 20; i++)
-        //     std::cout << std::hex << last_written+i << " 0x" <<  dma_buf[last_written+i] << " ";
-        std::cout << std::endl;
-        for (int i = -20; i < 20; i++)
-            std::cout << std::hex << maxwords * 8 + i << " 0x" << dma_buf[maxwords * 8 + i]
-                      << std::endl;
-        // printf("maxidx\n");
-        // for(int i=0; i < 20; i++)
-        //     std::cout << std::hex << 0x3fbfff+i << " 0x" <<  dma_buf[0x3fbfff+i] << " ";
-        // std::cout << std::endl;
-        // int not_null = 0;
-        // for(int i=maxwords*8; i >= 0; i--) {
-        //     if (dma_buf[i] != 0) {
-        //         std::cout << std::hex << i << " 0x" <<  dma_buf[i] << std::endl;
-        //         not_null = i;
-        //         break;
-        //     }
-        // }
-        // for(int i=-20; i < 20; i++)
-        //     std::cout << std::hex << not_null+i << " 0x" <<  dma_buf[not_null+i] << std::endl;
-        // int not_one = 0;
-        // for(int i=not_null; i >= 0; i--) {
-        //     if (dma_buf[i] != 0xFFFFFFFF) {
-        //         std::cout << std::hex << i << " 0x" <<  dma_buf[i] << std::endl;
-        //         not_one = i;
-        //         break;
-        //     }
-        // }
-        // for(int i=-20; i < 20; i++)
-        //     std::cout << std::hex << not_one+i << " 0x" <<  dma_buf[not_one+i] << std::endl;
-
-        // std::cout << std::endl;
-
-        // for(int i=0; i < 10; i++)
-        //     std::cout << std::hex << " 0x" <<  dma_buf[i] << " ";
-        // std::cout << std::endl;
-        // std::cout << std::endl;
-
-        // while ( true ) {};
 
         if (size_dma_buf > MUDAQ_DMABUF_DATA_LEN) {
             cm_msg(MERROR, "ro_swb_fe", "Read invalid DMA buffer size %i!\n", size_dma_buf);
@@ -489,7 +444,8 @@ int read_stream_thread(void*) {
         }
         // [AK] NOTE: use direct copy as memcpy does not arantee
         //            non-optimization for volatile
-        for (uint32_t i = 0; i < size_dma_buf / 4; i++) {
+        // [MK] NOTE: max words is in 256bit words
+        for (uint32_t i = 0; i < maxwords * 8; i++) {
             dma_buf_local[i] = dma_buf[i];
         }
 
@@ -497,12 +453,12 @@ int read_stream_thread(void*) {
         create_midas_events(dma_buf_local, mu.last_endofevent_addr(), rbh);
 
         end = std::chrono::steady_clock::now();
+        double event_time = (double) std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count();
         std::cout << "Time difference (EVENT) = "
                   << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count()
                   << "[µs]" << std::endl;
 
-        printf("0x%08x\n", mu.read_register_ro(EVENT_BUILD_IDLE_NOT_HEADER_R));
-        printf("0x%08x\n", mu.read_register_ro(BUFFER_STATUS_REGISTER_R));
+        m_settings["Readout"]["HitRate"] = (double) maxwords * 4 / (dma_time / 1e6);
     }
 
     return SUCCESS;

@@ -66,8 +66,6 @@ async function load_dacs(id = "*", dacSetName = null){
 
 async function reset_all_asics() {
     await setODBValue("/Equipment/Quads/Settings/DAQ/Commands/ResetASICs", 1);
-    await setODBValue("/Equipment/Quads/Settings/DAQ/Commands/MupixConfig", 1);
-    await setODBValue("/Equipment/Quads/Settings/DAQ/Commands/ResetASICs", 0);
 }
 
 

@@ -39,6 +39,7 @@ midas::odb settings = {
       {"use_merger", false},
       {"max_requested_words", 0x80000},
       {"use_send_time", false},
+      {"HitRate", 0},
       {"n_mevents", 10}}},
     {"DAQ",
      {

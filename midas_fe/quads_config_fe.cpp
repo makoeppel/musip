@@ -63,6 +63,8 @@ uint8_t bitpattern_mupix[N_BYTES_MUPIX] = {};
 uint8_t bitpattern_mutrig[N_BYTES_MUTRIG] = {};
 mudaq::DmaMudaqDevice* mup = nullptr;
 std::vector<uint32_t> readout_banks = {};
+std::vector<uint32_t> feb_hits = {0,0,0,0};
+std::vector<uint32_t> feb_hits_last = {0,0,0,0};
 std::vector<uint32_t> lvds_banks = {};
 std::vector<uint32_t> matrix_banks = {};
 std::vector<uint32_t> adc_banks = {};
@@ -150,6 +152,7 @@ void init_banks() {
         names.push_back("SUB " + std::to_string(i) + " RATE");
         names.push_back("HIT " + std::to_string(i) + " CNT");
         names.push_back("HIT " + std::to_string(i) + " RATE");
+        names.push_back("FEB HIT " + std::to_string(i) + " RATE");
     }
     names.push_back("MUX CNT");
     names.push_back("MUX RATE");
@@ -157,6 +160,7 @@ void init_banks() {
     names.push_back("DMA RATE");
     names.push_back("DMA SKIP");
     names.push_back("DMA FULL");
+    names.push_back("READOUT RATE");
     quads_settings[namename] = names;
 
     // setup PCLS bank
@@ -328,6 +332,7 @@ void sc_settings_changed(midas::odb o) {
         }
 
         if (name == "ResetASICs" && o) {
+            cm_msg(MINFO, "sc_settings_changed", "Reset all ASICs");
             resetASICs(*feb_sc, m_settings);
         }
 
@@ -524,6 +529,37 @@ int frontend_init() {
 }
 
 int read_sc_event(char* pevent, int off) {
+
+    // fill lvds bank
+    lvds_banks.clear();
+    uint32_t offset = 1;
+    for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
+        bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
+        lvds_banks.push_back(febIDx);
+        lvds_banks.push_back(MAX_LVDS_LINKS_PER_FEB);
+        if (FEBActive) {
+            std::vector<uint32_t> status(offset + (MAX_LVDS_LINKS_PER_FEB * 4));
+            feb_sc->FEB_read(febIDx, LVDS_STATUS_START_REGISTER_W, status, false);
+            uint32_t hits_feb = 0;
+            for (uint32_t i = 0; i < MAX_LVDS_LINKS_PER_FEB; i++) {
+                lvds_banks.push_back(status[offset + i * 4]);
+                lvds_banks.push_back(status[offset + i * 4 + 1]);
+                lvds_banks.push_back(status[offset + i * 4 + 2]);
+                lvds_banks.push_back(status[offset + i * 4 + 3]);
+                hits_feb += status[offset + i * 4 + 3];
+            }
+            feb_hits[febIDx] = hits_feb;
+        } else {
+            for (uint32_t i = 0; i < MAX_LVDS_LINKS_PER_FEB; i++) {
+                lvds_banks.push_back(0);
+                lvds_banks.push_back(0);
+                lvds_banks.push_back(0);
+                lvds_banks.push_back(0);
+            }
+            feb_hits[febIDx] = 0;
+        }
+    }
+
     // fill counter banks for the readout
     readout_banks.clear();
     // read rate and counters for the for links
@@ -543,11 +579,13 @@ int read_sc_event(char* pevent, int off) {
         readout_banks.push_back(sub_rate);
         readout_banks.push_back(hit_cnt);
         readout_banks.push_back(hit_rate);
+        readout_banks.push_back(feb_hits[i] - feb_hits_last[i]);
+        feb_hits_last[i] = feb_hits[i];
     }
     // read MUX rate and cnts
     mup->write_register(SWB_COUNTER_REGISTER_W, 12);
-    uint32_t mux_cnt = mup->read_register_ro(SWB_COUNTER_REGISTER_R);
-    uint32_t mux_rate = mup->read_register_ro(SWB_LINK_COUNTER_REGISTER_R);
+    uint32_t mux_cnt = mup->read_register_ro(SWB_COUNTER_REGISTER_R) * 4;
+    uint32_t mux_rate = mup->read_register_ro(SWB_LINK_COUNTER_REGISTER_R) * 4;
     readout_banks.push_back(mux_cnt);
     readout_banks.push_back(mux_rate);
     // read DMA rate and cnts
@@ -559,32 +597,7 @@ int read_sc_event(char* pevent, int off) {
     readout_banks.push_back(dma_rate);
     readout_banks.push_back(dma_skip);
     readout_banks.push_back(dma_full);
-
-    // fill lvds bank
-    lvds_banks.clear();
-    uint32_t offset = 1;
-    for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
-        bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
-        lvds_banks.push_back(febIDx);
-        lvds_banks.push_back(MAX_LVDS_LINKS_PER_FEB);
-        if (FEBActive) {
-            std::vector<uint32_t> status(offset + (MAX_LVDS_LINKS_PER_FEB * 4));
-            feb_sc->FEB_read(febIDx, LVDS_STATUS_START_REGISTER_W, status, false);
-            for (uint32_t i = 0; i < MAX_LVDS_LINKS_PER_FEB; i++) {
-                lvds_banks.push_back(status[offset + i * 4]);
-                lvds_banks.push_back(status[offset + i * 4 + 1]);
-                lvds_banks.push_back(status[offset + i * 4 + 2]);
-                lvds_banks.push_back(status[offset + i * 4 + 3]);
-            }
-        } else {
-            for (uint32_t i = 0; i < MAX_LVDS_LINKS_PER_FEB; i++) {
-                lvds_banks.push_back(0);
-                lvds_banks.push_back(0);
-                lvds_banks.push_back(0);
-                lvds_banks.push_back(0);
-            }
-        }
-    }
+    readout_banks.push_back(m_settings["Readout"]["HitRate"]);
 
     // fill matrix bank
     matrix_banks.clear();
