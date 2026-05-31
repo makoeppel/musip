@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-* openSUSE Leap 15.6 (recommended)
+* RHEL 9 (recommended)
 * Root access required
 * Minimum:
   * 32 GB RAM (required for Arria 10 firmware compilation)
@@ -422,7 +422,6 @@ WantedBy=default.target
 If SELinux is active, than the service will probably not start unless a policy is added. On RHEL9 install `selinux-policy-devel` and with
 ```
 $ cat my-mhttpd.te
-
 module my-mhttpd 1.0;
 
 require {
@@ -431,20 +430,16 @@ require {
         type unconfined_t;
         type ephemeral_port_t;
         class file { append create execute execute_no_trans map open read write };
+        class lnk_file read;
         class sem { associate setattr };
         class tcp_socket name_connect;
 }
 
 #============= init_t ==============
-
-#!!!! This avc can be allowed using the boolean 'nis_enabled'
 allow init_t ephemeral_port_t:tcp_socket name_connect;
-
-#!!!! This avc is allowed in the current policy
 allow init_t unconfined_t:sem { associate setattr };
-
-#!!!! This avc is allowed in the current policy
 allow init_t user_home_t:file { append create execute execute_no_trans map open read write };
+allow init_t user_home_t:lnk_file read;
 ```
 Compile and load the policy via
 ```
