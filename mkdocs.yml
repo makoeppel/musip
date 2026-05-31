@@ -14,6 +14,7 @@ plugins:
 
 nav:
   - Home: README.md
+  - Setup: setup.md
   - Frontends:
       - Quad Config: musip/quads__config__fe_8cpp.md
       - Quad Readout: musip/quads__data__fe_8cpp.md
@@ -33,8 +34,13 @@ nav:
     - FEB Sorter: registers/sorter_registers.md
   - MIDAS: 
     - Banks: registers/midas_format.md
-  - configuration:
+  - Configuration:
     - Pixel Tuning: pixel_tuning.md
 
 theme:
   name: readthedocs
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences

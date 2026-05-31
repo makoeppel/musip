@@ -20,6 +20,8 @@ This is a MIDAS-based frontend for the Mupix11 based quad moduels.
 
 ## Build Instructions
 
+For a full installation guide go to: [Setup](setup.md)
+
 ### Prerequisites
 
 - CMake ≥ 3.15
