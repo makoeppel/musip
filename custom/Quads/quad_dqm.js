@@ -182,7 +182,7 @@ window.dqmInit = function() {
             }
         }
 
-        if (plotSource["source"] == "quad/combined_hitmap_00010_00011_00001_00003") {
+        if (plotSource["source"] == "quad/combined_hitmap_00010_00011_00002_00003") {
             mPlotGraph.canvas.onclick = function(event) {
                 click_on_histo(event, mPlotGraph, 1)
             }
