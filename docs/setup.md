@@ -147,24 +147,13 @@ setupROOT
 
 ```bash
 export MIDASSYS=$HOME/midas
-<<<<<<< HEAD
 export MIDAS_EXPTAB=$HOME/musip/online/exptab
-=======
-export MIDAS_EXPTAB=$HOME/online/online/exptab
->>>>>>> e08dfe0 (update docs)
 export MIDAS_EXPT_NAME=Mu3e
 export PATH=$PATH:$MIDASSYS/bin
 ```
 
 ### Online
 
-<<<<<<< HEAD
-=======
-```bash
-source $HOME/online/build/set_env.sh
-```
-
->>>>>>> e08dfe0 (update docs)
 Reload:
 
 ```bash
@@ -233,29 +222,6 @@ quartus
 
 ---
 
-<<<<<<< HEAD
-=======
-## FPGA Preparation
-
-### Compile MAX10 Firmware
-
-```bash
-cd ~/online/fe_board/fe_max10
-
-make flow
-make app
-```
-
-Verify output files exist:
-
-```text
-quartus-build/SEED_1/output_files/top.sof
-quartus-build/generated/software/app/main.elf
-```
-
----
-
->>>>>>> e08dfe0 (update docs)
 ## Udev Rules
 
 ### USB Blaster
@@ -299,23 +265,7 @@ Ff your a10 dev board is properly connected you should see something like this:
 Select board:
 
 ```bash
-<<<<<<< HEAD
 cd ~/musip/firmware/a10_board
-=======
-cd ~/online/switching_pc/a10_board
-```
-
-or
-
-```bash
-cd ~/online/switching_pc/a10_board_ddr4
-```
-
-or
-
-```bash
-cd ~/online/switching_pc/a10_lhcb
->>>>>>> e08dfe0 (update docs)
 ```
 
 Build:
