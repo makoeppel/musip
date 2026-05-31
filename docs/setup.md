@@ -24,7 +24,7 @@
 * Install on SSD
 * Disable snapshots
 * Do not create swap
-* Create user: `mu3e`
+* Create user: `musip`
 * Configure root password
 
 ---
@@ -66,7 +66,6 @@ Install packages required for:
 * Kernel driver
 * Geant4
 * Quartus
-* VS Code
 
 (Refer to package lists in the full documentation if dependencies are missing.)
 
@@ -77,7 +76,7 @@ Install packages required for:
 ### MIDAS
 
 ```bash
-git clone git@bitbucket.org:tmidas/midas.git
+git clone https://bitbucket.org/tmidas/midas.git
 cd midas
 git submodule update --init --recursive
 
@@ -92,8 +91,7 @@ make install
 ### Musip
 
 ```bash
-git clone git@github.com:makoeppel/musip.git
-cd musip
+git clone https://gitea.psi.ch/MuSiP/musip.git
 ```
 
 ---
@@ -101,37 +99,20 @@ cd musip
 ## ROOT Installation
 
 ```bash
-git clone --branch latest-stable --depth=1 https://github.com/root-project/root.git ~/root_src
+git clone https://github.com/root-project/root.git
+git checkout -b v6-40-00-patches origin/v6-40-00-patches
 
 mkdir -p ~/compiled_software/root_build
 cd ~/compiled_software/root_build
 ```
 
-Configure and build:
+Configure, build and install:
 
 ```bash
-cmake \
-  -DCMAKE_INSTALL_PREFIX=/opt/root \
-  -DCMAKE_CXX_STANDARD=17 \
-  -DLLVM_CXX_STD=c++17 \
-  -Dxrootd=OFF \
-  -DCMAKE_C_COMPILER=/usr/bin/gcc-12 \
-  ~/root_src
-
-make -j12
-```
-
-Verify:
-
-```bash
-root
-root-config --cflags
-```
-
-Expected:
-
-```text
--std=c++17
+mkdir build
+cmake -Dbuiltin_ftgl=off -Dbuiltin_glow=off -Dfftw3=on -Dmathmore=on -Dunfold=on -Dunuran=on -During=on -DPHYTHON_EXECUTABLE=/usr/bin/python3.14 -DCMAKE_C_FLAGS='-march=x86-64-v3' -DCMAKE_CXX_FLAGS='-march=x86-64-v3' -DCMAKE_INSTALL_PREFIX=/opt/root ../root
+chrt -b 0 cmake --build . -- -j96
+sudo cmake -P cmake_install.cmake
 ```
 
 ---
@@ -157,7 +138,9 @@ export LM_LICENSE_FILE="<license-server>"
 ### ROOT
 
 ```bash
-source /opt/root/bin/thisroot.sh
+# Alias to enable ROOT
+alias setupROOT='DIR=`pwd`; cd /opt/root; source bin/thisroot.sh; cd $DIR'
+setupROOT
 ```
 
 ### MIDAS
@@ -208,7 +191,7 @@ Test using example `B1`.
 
 Recommended version:
 
-* Quartus Prime Pro 18.1
+* Quartus Prime Standard 21.1.1
 
 Requirements:
 
@@ -221,7 +204,7 @@ Install:
 mkdir ~/programs
 cd ~/programs
 
-tar -xvf Quartus-18.1*.tar
+tar xf Quartus-21.1.1.850-linux.tar
 ./setup.sh
 ```
 
@@ -256,15 +239,6 @@ SUBSYSTEM=="usb", ATTR{idVendor}=="09fb", ATTR{idProduct}=="6003", MODE="0666"
 SUBSYSTEM=="usb", ATTR{idVendor}=="09fb", ATTR{idProduct}=="6010", MODE="0666"
 SUBSYSTEM=="usb", ATTR{idVendor}=="09fb", ATTR{idProduct}=="6810", MODE="0666"
 ```
-
-Create:
-```bash
-sudo nano 99-mudaq.rules
-```
-
-with:
-```bash
-KERNEL=="mudaq*", OWNER="root", GROUP="users", MODE="0666"
 ```
 
 Reload:
@@ -326,21 +300,11 @@ You should see the FPGA menu.
 
 ## Build Kernel Driver
 
+DKMS is used to manage the kernel driver, so that only needs to be installed once
+
 ```bash
 cd ~/musip/midas_fe/kerneldriver
-make
-```
-
-Load:
-
-```bash
-sudo ./recover_pcie.sh
-```
-
-Expected:
-
-```text
-loaded 'mudaq'
+sudo ./install.sh
 ```
 
 ---
@@ -388,6 +352,8 @@ make app_upload
 
 ### Load Driver
 
+Normally this should not be needed but for rare cases:
+
 ```bash
 cd ~/musip/midas_fe/kerneldriver
 sudo ./recover_pcie.sh
@@ -421,3 +387,87 @@ Start in this order:
 * [ ] MIDAS available at `localhost:8080`
 
 Once all checks pass, the DAQ machine is operational.
+
+## Make mhttpd autostart
+
+One can use `systemd` to autostart `mhttpd` on system start. For that, create the following unit:
+```
+$ cat /usr/local/lib/systemd/system/mhttpd@.service
+[Unit]
+Description=mhttpd for experiment %I
+Wants=network.target
+
+[Service]
+Type=forking
+Environment="PATH=/opt/root/bin:/bin:/usr/bin:/usr/local/bin:/home/musip/bin:/usr/local/sbin:/usr/sbin:/home/musip/midas/bin"
+Environment="ROOTSYS=/opt/root"
+Environment="LD_LIBRARY_PATH=/opt/root/lib"
+Environment="DYLD_LIBRARY_PATH=/opt/root/lib"
+Environment="SHLIB_PATH=/opt/root/lib"
+Environment="LIBPATH=/opt/root/lib"
+Environment="PYTHONPATH=/opt/root/lib:/home/musip/midas/python"
+Environment="ROOT_INCLUDE_PATH="
+Environment="MIDASSYS=/home/musip/midas"
+Environment="MIDAS_EXPTAB=/home/musip/musip/online/exptab"
+Environment="MIDAS_EXPT_NAME=Musip"
+Environment="MIDAS_WORK=/home/musip/midas_nemu"
+ExecStart=/home/musip/midas/bin/mhttpd -e %I -D
+User=musip
+Group=musip
+WorkingDirectory=~
+
+[Install]
+WantedBy=default.target
+```
+If SELinux is active, than the service will probably not start unless a policy is added. On RHEL9 install `selinux-policy-devel` and with
+```
+$ cat my-mhttpd.te
+
+module my-mhttpd 1.0;
+
+require {
+        type user_home_t;
+        type init_t;
+        type unconfined_t;
+        type ephemeral_port_t;
+        class file { append create execute execute_no_trans map open read write };
+        class sem { associate setattr };
+        class tcp_socket name_connect;
+}
+
+#============= init_t ==============
+
+#!!!! This avc can be allowed using the boolean 'nis_enabled'
+allow init_t ephemeral_port_t:tcp_socket name_connect;
+
+#!!!! This avc is allowed in the current policy
+allow init_t unconfined_t:sem { associate setattr };
+
+#!!!! This avc is allowed in the current policy
+allow init_t user_home_t:file { append create execute execute_no_trans map open read write };
+```
+Compile and load the policy via
+```
+$ make -f /usr/share/selinux/devel/Makefile my-mhttpd.pp
+$ semodule -i my-mhttpd.pp
+```
+
+Now you can start and enable the unit:
+```
+$ systemctl start mhttpd@Musip.service
+$ systemctl enable mhttpd@Musip.service
+```
+
+To allow the `musip` user to start/stop/etc. the service, add the following policy file:
+```
+$ cat /etc/polkit-1/rules.d/60-musip-systemd-mhttpd.rules
+// Allow musip to manage mhttpd@.service;
+// fall back to implicit authorization otherwise.
+polkit.addRule(function(action, subject) {
+        if (action.id == "org.freedesktop.systemd1.manage-units" &&
+            action.lookup("unit") == "mhttpd@Musip.service" &&
+            subject.user == "musip") {
+                return polkit.Result.YES;
+        }
+});
+```
