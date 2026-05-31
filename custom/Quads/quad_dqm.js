@@ -34,18 +34,42 @@ function click_on_histo(event, plot, layer) {
 
     if (clicked_x < 256 && clicked_y >= 250) {
         clicked_chip = 0 + 4 * layer;
+	if (layer == 0) clicked_chip = 17
+	else if (layer == 1) clicked_chip = 11
+	else if (layer == 2) clicked_chip = 9
+	else if (layer == 3) clicked_chip = 7
+	else if (layer == 4) clicked_chip = 23
+	else if (layer == 5) clicked_chip = 13
     }
 
     if (clicked_x >= 256 && clicked_y >= 250) {
         clicked_chip = 2 + 4 * layer;
+	if (layer == 0) clicked_chip = 16
+	else if (layer == 1) clicked_chip = 10
+	else if (layer == 2) clicked_chip = 8
+	else if (layer == 3) clicked_chip = 6
+	else if (layer == 4) clicked_chip = 22
+	else if (layer == 5) clicked_chip = 12
     }
 
     if (clicked_x < 256 && clicked_y < 250) {
         clicked_chip = 1 + 4 * layer;
+	if (layer == 0) clicked_chip = 19
+	else if (layer == 1) clicked_chip = 3
+	else if (layer == 2) clicked_chip = 21
+	else if (layer == 3) clicked_chip = 5
+	else if (layer == 4) clicked_chip = 1
+	else if (layer == 5) clicked_chip = 15
     }
 
     if (clicked_x >= 256 && clicked_y < 250) {
         clicked_chip = 3 + 4 * layer;
+	if (layer == 0) clicked_chip = 18
+	else if (layer == 1) clicked_chip = 2
+	else if (layer == 2) clicked_chip = 20
+	else if (layer == 3) clicked_chip = 4
+	else if (layer == 4) clicked_chip = 0
+	else if (layer == 5) clicked_chip = 14
     }
 
     get_selected_chip(clicked_chip);
@@ -72,12 +96,12 @@ window.dqmInit = function() {
     let divElement = document.getElementById("globalPlotsOld");
 
     let globalPlotSources = [
-        {source: "quad/combined_hitmap_00016_00017_00018_00019", title: "Layer 0 (Sensor 16 - 19)", xTitle: "Combined Column", yTitle: "Combined Row", logZ: true, layer: 0, minZ: "0.1"},
-        {source: "quad/combined_hitmap_00010_00011_00002_00003", title: "Layer 1 (Sensor 10,11,2,3)", xTitle: "Combined Column", yTitle: "Combined Row", logZ: true, layer: 1, minZ: "0.1"},
-        {source: "quad/combined_hitmap_00008_00009_00020_00021", title: "Layer 2 (Sensor 8,9,20,21)", xTitle: "Combined Column", yTitle: "Combined Row", logZ: true, layer: 2, minZ: "0.1"},
-        {source: "quad/combined_hitmap_00006_00007_00004_00005", title: "Layer 3 (Sensor 4 - 7)", xTitle: "Combined Column", yTitle: "Combined Row", logZ: true, layer: 3, minZ: "0.1"},
-        {source: "quad/combined_hitmap_00022_00023_00000_00001", title: "Layer 4 (Sensor 22,23,0,1)", xTitle: "Combined Column", yTitle: "Combined Row", logZ: true, layer: 4, minZ: "0.1"},
-        {source: "quad/combined_hitmap_00012_00013_00014_00015", title: "Layer 5 (Sensor 12 - 15)", xTitle: "Combined Column", yTitle: "Combined Row", logZ: true, layer: 5, minZ: "0.1"},
+        {source: "quad/combined_hitmap_00016_00017_00018_00019", title: "Layer 0 (Sensor 16 - 19) Upstream Outer", xTitle: "Combined Column", yTitle: "Combined Row", logZ: true, layer: 0, minZ: "0.1"},
+        {source: "quad/combined_hitmap_00010_00011_00002_00003", title: "Layer 1 (Sensor 10,11,2,3) Upstream Inner", xTitle: "Combined Column", yTitle: "Combined Row", logZ: true, layer: 1, minZ: "0.1"},
+        {source: "quad/combined_hitmap_00008_00009_00020_00021", title: "Layer 2 (Sensor 8,9,20,21) Downstream Inner", xTitle: "Combined Column", yTitle: "Combined Row", logZ: true, layer: 2, minZ: "0.1"},
+        {source: "quad/combined_hitmap_00006_00007_00004_00005", title: "Layer 3 (Sensor 4 - 7) Downstream Outer", xTitle: "Combined Column", yTitle: "Combined Row", logZ: true, layer: 3, minZ: "0.1"},
+        {source: "quad/combined_hitmap_00022_00023_00000_00001", title: "Layer 4 (Sensor 22,23,0,1) Top Inner", xTitle: "Combined Column", yTitle: "Combined Row", logZ: true, layer: 4, minZ: "0.1"},
+        {source: "quad/combined_hitmap_00012_00013_00014_00015", title: "Layer 5 (Sensor 12 - 15) Top Outer", xTitle: "Combined Column", yTitle: "Combined Row", logZ: true, layer: 5, minZ: "0.1"},
     ];
 
     const createPlot = (parentDiv, source, title, xTitle, yTitle, logZ) => {
@@ -152,37 +176,37 @@ window.dqmInit = function() {
             divElement.appendChild(document.createTextNode(" "));
         }
 
-        if (plotSource["source"] == "quad/combined_hitmap_00000_00001_00002_00003") {
+        if (plotSource["source"] == "quad/combined_hitmap_00016_00017_00018_00019") {
             mPlotGraph.canvas.onclick = function(event) {
                 click_on_histo(event, mPlotGraph, 0)
             }
         }
 
-        if (plotSource["source"] == "quad/combined_hitmap_00004_00005_00006_00007") {
+        if (plotSource["source"] == "quad/combined_hitmap_00010_00011_00001_00003") {
             mPlotGraph.canvas.onclick = function(event) {
                 click_on_histo(event, mPlotGraph, 1)
             }
         }
 
-        if (plotSource["source"] == "quad/combined_hitmap_00008_00009_00010_00011") {
+        if (plotSource["source"] == "quad/combined_hitmap_00008_00009_00020_00021") {
             mPlotGraph.canvas.onclick = function(event) {
                 click_on_histo(event, mPlotGraph, 2)
             }
         }
 
-        if (plotSource["source"] == "quad/combined_hitmap_00012_00013_00014_00015") {
+        if (plotSource["source"] == "quad/combined_hitmap_00006_00007_00004_00005") {
             mPlotGraph.canvas.onclick = function(event) {
                 click_on_histo(event, mPlotGraph, 3)
             }
         }
 
-        if (plotSource["source"] == "quad/combined_hitmap_00016_00017_00018_00019") {
+        if (plotSource["source"] == "quad/combined_hitmap_00022_00023_00000_00001") {
             mPlotGraph.canvas.onclick = function(event) {
                 click_on_histo(event, mPlotGraph, 4)
             }
         }
 
-        if (plotSource["source"] == "quad/combined_hitmap_00020_00021_00022_00023") {
+        if (plotSource["source"] == "quad/combined_hitmap_00012_00013_00014_00015") {
             mPlotGraph.canvas.onclick = function(event) {
                 click_on_histo(event, mPlotGraph, 5)
             }
