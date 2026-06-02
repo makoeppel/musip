@@ -249,18 +249,18 @@ std::tuple<uint32_t, uint32_t> AnaQuadHistos::get_quad_global_col_row(pixelhit h
     float finalRow = combinedRow;
 
     switch(layer) {
-        case 0: // Layer 0: 180° around z, then 180° around x
-        case 2: // Layer 2: like layer 0
-	case 5:	// Layer 5: like layer 0
+        case 1: // Layer 1: 180° around z, then 180° around x
+        case 3: // Layer 3: like layer 1
+	case 4:	// Layer 4: like layer 1
             // 180° around z: flip both col and row in the combined space
             finalCol = 511 - combinedCol;  // flip horizontally (0-511 range)
             finalRow = 499 - combinedRow;  // flip vertically (0-499 range)
             // 180° around x: flip row again (so row is back to normal, col stays flipped)
             finalRow = 499 - finalRow; // This makes finalRow = combinedRow again
             break;
-        case 1: // Layer 1: 180° around z
-        case 3: // Layer 3: like layer 1
-        case 4: // Layer 4: like layer 1
+        case 0: // Layer 0: 180° around z
+        case 2: // Layer 2: like layer 0
+        case 5: // Layer 5: like layer 0
             // 180° around z: flip both col and row in the combined space
             finalCol = 511 - combinedCol;  // flip horizontally (0-511 range)
             finalRow = 499 - combinedRow;  // flip vertically (0-499 range)
