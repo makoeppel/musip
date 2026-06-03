@@ -56,7 +56,7 @@ if __name__ == "__main__":
 
     th,r,temperatures,settings = escan.scan(seq,start_threshold=40, stop_threshold=200, step_threshold=1, wait_time=3)
     
-    filename = f'ethreshold_scan.json'
+    filename = f'eT_FP_adptrB.json'
     seq.msg("Scan complete. Writing output to "+filename)
     escan.write_json(filename,th,r,temperatures,settings);
 

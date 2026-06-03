@@ -19,11 +19,16 @@ def define_params(seq):
 
 
 def sequence(seq):
+    seq.set_py_logger_to_midas(True)
     start_threshold = seq.get_param("start_threshold");
     stop_threshold  = seq.get_param("stop_threshold");
     step_threshold  = seq.get_param("step_threshold");
     wait_time        = seq.get_param("wait_time");
-    scan(seq,start_threshold, stop_threshold, step_threshold, wait_time)
+
+    th, r, temperatures, settings = tscan.scan(seq, 0, 64, 1, 3)
+    filename = f'tthreshold_scan_260527.json'
+    seq.msg("Scan complete. Writing output to "+filename)
+    tscan.write_json(filename,th,r,temperatures,settings)
 
 # Standalone / Tests
 # Interrupt handler to restore settings
@@ -44,7 +49,7 @@ def _interrupt_handler(signum, frame):
 
 # Standalone / Tests main routine
 if __name__ == "__main__":
-    global seq;
+    global seq
     seq = client.MidasClient("MutrigTuning")
 
     # register handler for common termination signals
@@ -54,8 +59,8 @@ if __name__ == "__main__":
     #cfg.TEST_MODE = True
     #th,r,temperatures,settings = tscan.scan(seq,start_threshold=0, stop_threshold=63, step_threshold=1, wait_time=0.2, start_offset=0, stop_offset=2)
     
-    th,r,temperatures,settings = tscan.scan(seq,start_threshold=0, stop_threshold=63, step_threshold=1, wait_time=3, start_offset=0, stop_offset=2)
-    filename = f'tthreshold_scan.json'
+    th,r,temperatures,settings = tscan.scan(seq,start_threshold=0, stop_threshold=63, step_threshold=1, wait_time=3.0, start_offset=0, stop_offset=2)
+    filename = "/home/nemu/musip/scripts/MutrigScripts/data/FP_adptrB.json"
+    #filename = f'../data/tthreshold_scan.json'
     seq.msg("Scan complete. Writing output to "+filename)
-    tscan.write_json(filename,th,r,temperatures,settings);
-
+    tscan.write_json(filename,th,r,temperatures,settings)
