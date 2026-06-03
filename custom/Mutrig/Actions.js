@@ -81,7 +81,14 @@ async function set_mutrig_dtestout(selectedChannel){
 
 async function mutrig_configure_all() {
     console.log("Configuring all MuTrig chips");
-    setODBValue(eq_path+"/Settings/DAQ/Commands/MuTRiG/MutrigConfig", 1);
+    path = eq_path+"/Settings/DAQ/Commands/MuTRiG/MutrigConfig"
+    setODBValue(path, 1);
+    for (i = 100 ; i > 0 ; i--){
+	res = await getODBValue(path, false);
+	if (res == false)
+		break;
+    }
+    if (i == 0) alert("Timeout waiting for MuTRiG Config to finish")
 }
 
 //Mask channels on mutrig.

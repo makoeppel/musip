@@ -71,14 +71,13 @@ async function getODBValue(paths, print = true, errorMessageText = undefined) {
                 data = value.result.data;
             }
             if (print) console.log("getODBValue: " + paths + " = " + data);
-            console.log(data);
+
             return data;
         }
         else {
             let values = await mjsonrpc_db_get_values(paths);
             let data = values.result.data;
             if (print) console.log("getODBValues: " + paths + " = " + data);
-            console.log(data);
             return data;
         }
     }

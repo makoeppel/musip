@@ -1,7 +1,6 @@
-	const nFEBs = 1;
+const nFEBs = 1;
 
-
-	function updateBoardStatus(valuex){
+function updateBoardStatus(valuex){
         //temperature color mapping
         function Tcolor(T, ind){
             if (ind === undefined || ind === null) return;
@@ -26,54 +25,54 @@
 
         //unpack
 		var status = valuex;
-		if(typeof valuex == 'object'){
-		    status = JSON.parse(JSON.stringify(valuex));
+	if(typeof valuex == 'object'){
+	    status = JSON.parse(JSON.stringify(valuex));
         }else if(typeof valuex == 'string'){
 		    status = JSON.parse(valuex);
         }
         //console.log("updateBoardStatus: "+status);
 
-		var init_bit = new Array(nFEBs*2);
-		var inject_bit = new Array(nFEBs*2);
+        var init_bit = new Array(nFEBs*2);
+        var inject_bit = new Array(nFEBs*2);
         var vcca_bit = new Array(nFEBs*2);
         var vccd_bit = new Array(nFEBs*2);
         var pgood_bit = new Array(nFEBs*2);
-		var temperature = new Array(nFEBs*2);
-		for(var i=0; i < nFEBs; i++){
+        var temperature = new Array(nFEBs*2);
+        for(var i=0; i < nFEBs; i++){
             for(var j=0; j < 2; j++){
-        	    init_bit[i*2+j]   = status[i*4] & (0x01<<j*3);
+                init_bit[i*2+j]   = status[i*4] & (0x01<<j*3);
                 inject_bit[i*2+j] = status[i*4] & (0x02<<j*3);
                 pgood_bit[i*2+j]  = status[i*4] & (0x04<<j*3);
                 vcca_bit[i*2+j]   = status[i*4+1] & (1<<j);
                 vccd_bit[i*2+j]   = status[i*4+1] & (1<<(j+13));
                 temperature[i*2+j]= status[i*4+2+j]/100;    //TODO: check calibration
             }
-		}
+        }
 
         for(var i=0; i < nFEBs*2; i++){
             //Temperatures
-			document.getElementsByName("TMB_T")[i].innerHTML = temperature[i];
-			Tcolor(temperature[i], document.getElementsByName("TMB_T")[i]);
-
-			// Status Indicators
-			initlamp = document.getElementsByName("Init")[i];
-			injectlamp = document.getElementsByName("Inject")[i];
+            elem=document.getElementsByName("TMB_T");
+            if(elem != undefined) elem[i].innerHTML = temperature[i];
+            Tcolor(temperature[i], document.getElementsByName("TMB_T")[i]);
+            
+            // Status Indicators
+            initlamp = document.getElementsByName("Init")[i];
+            injectlamp = document.getElementsByName("Inject")[i];
             vccalamp = document.getElementsByName("vcca")[i];
             vccdlamp = document.getElementsByName("vccd")[i];
-			LampColor(initlamp,init_bit[i]);
+            LampColor(initlamp,init_bit[i]);
             LampColor(injectlamp,inject_bit[i]);
             LampColor(vccalamp,vcca_bit[i]);
             LampColor(vccdlamp,vccd_bit[i]);
-		}
+        }
 		
         //store maximum temperature for overall TMB indicator
-		Tmax = Math.max(...temperature);
+        Tmax = Math.max(...temperature);
         Tcolor(Tmax, document.getElementById("TMB_Tall"));
+    }
 
-	}
-
-    const COUNTER_TYPES  = ["TDCF", "TDCE", "TDCH"];
-    counterBoxes = { tdcf: [], tdce: [], tdch: [] };
+    const COUNTER_TYPES  = ["CF", "CE", "CH"];
+    counterBoxes = { cf: [], ce: [], ch: [] };
 
     function map_counter_tooltips() {
         COUNTER_TYPES.forEach((name) => {
@@ -127,18 +126,17 @@
 		else if(typeof values == 'string')
 		{value = JSON.parse(values);}
         values = value;
-        console.log("Applying colors for", type, "with values:", values);
+        //console.log("Applying colors for", type, "with values:", values);
 
 
         const boxes = counterBoxes[type];
-        //console.log("Found boxes for", type, ":", boxes);
-        if (!boxes.length) return;
+        if (boxes ==undefined || !boxes.length) return;
         for (let mod = 0; mod < boxes.length; mod++) {
             const slice = values.slice(mod * 2, (mod + 1) * 2);
             let color;
 
             switch (type) {
-                case "tdcf": {
+                case "cf": {
                     // 0 -> gray, 80865 -> green, else orange
                     const allZero     = slice.every((v) => v === 0);
                     const allGood    = slice.every((v) => Math.abs(v - 80645) <= 3);
@@ -148,7 +146,7 @@
                     break;
                 }
 
-                case "tdce": {
+                case "ce": {
                     // 0 -> green, <=1e5 -> yellow, >1e5 -> red
                     const max = Math.max(...slice);
                     if (max === 0)          color = "#8FED8F";
@@ -156,7 +154,7 @@
                     else                    color = "#FF0000";
                     break;
                 }
-                case "tdch": {
+                case "ch": {
                     // 0 -> gray, >0 -> green
                     const allZero = slice.every((v) => v === 0);
                     color = allZero ? "#AAAAAA" : "#8FED8F";
@@ -170,14 +168,35 @@
 
 
 
-	function init_boardtable()
-	{
+function init_boardtable(){
         body = document.getElementById("ModuleControl-body");
+
+        table = document.getElementById("ModuleControl");
+
+	listeners = {
+		"/Equipment/Quads/Variables/MTSM":"updateBoardStatus(this.value);"  ,
+               	"/Equipment/Quads/Variables/MTCF":"applyColors(this.value, 'cf');",
+               	"/Equipment/Quads/Variables/MTCE":"applyColors(this.value, 'ce');",
+               	"/Equipment/Quads/Variables/MTCH":"applyColors(this.value, 'ch');",
+	};
+
+	for (const path in listeners){
+           var thisdiv = document.createElement('div');
+            thisdiv.class="modb";
+            thisdiv.setAttribute('data-odb-path',path);
+            thisdiv.setAttribute('onchange',listeners[path]);
+            table.appendChild(thisdiv);
+	}
+
         if (!body) return;
         body.innerHTML = '';
 
         mjsonrpc_db_get_values(["/Equipment/Quads/Settings/DAQ/Links/FEBsActive","/Equipment/Quads/Settings/DAQ/Links/FEBsMutrig"]).then(function(rpc) {
+
+	    //febID and boardID are subsystem-centered, i.e. they count from zero
+            //feb is the global id corresponding to the QSFP link
             boardID = 0;
+	    febID = -1;
             for(let feb=0; feb<4; feb++) {
                 // Only include boards that are enabled
                 // only include Tile febs here
@@ -187,13 +206,13 @@
                 if(!rpc.result.data[1][feb]) {
                     continue;
                 }
-                febID = feb;
+                febID = febID+1;
                 //TODO: implement mapping from feb (port number) to module number (febID)
                 for (let board = 0; board < 2; board++) {
                     // Create a new row
                     var row = document.createElement('tr');    
                     row.innerHTML = `
-                        <td>${febID}.${board}</td>
+                        <td>${feb} : ${febID}.${board}</td>
                         <td style="text-align: center"><input type="checkbox" name="Power" class="modbcheckbox" data-odb-path="/Equipment/Qudas/Settings/DAQ/Commands/MuTRiG/module_power_mask[${febID}]" style="width:20px; height: 20px;"></td>
                         <!-- CheckBox for ASIC mask, per asic -->
                         <!-- CheckBox for LVDS mask, per asic -->
@@ -237,7 +256,7 @@ function initASICMaskCB(){
         value = document.getElementsByName("ASICMask")[feb].value;
         mask = 1<<board;
         bvalue = (value & mask) >> board;
-        //console.log("Index:", index, "FEB:", feb, " Board:", board, " Value:", value, " Mask:", mask, " Result:", bvalue);
+        console.log("Index:", index, "FEB-ID:", feb, " Board:", board, " Value:", value, " Mask:", mask, " Result:", bvalue);
         object.checked = bvalue;
         index += 1;
     }
@@ -251,7 +270,7 @@ function initLVDSMaskCB(){
         value = document.getElementsByName("LVDSMask")[feb].value;
         mask = 1<<board;
         bvalue = (value & mask) >> board;
-        console.log("Index:", index, "FEB:", feb, " Board:", board, " Value:", value, " Mask:", mask, " Result:", bvalue);
+        console.log("Index:", index, "FEB-ID:", feb, " Board:", board, " Value:", value, " Mask:", mask, " Result:", bvalue);
         object.checked = bvalue;
         index += 1;
     }
@@ -265,7 +284,7 @@ function updateASICmask(checkbox, feb, board){
     value = parseInt(obj.value);
     value &= ~mask;
     value |= checkbox.checked << board;
-    console.log("ASIC Mask for FEB ", feb, " Board ", board, " set to ", value);
+    console.log("ASIC Mask for FEB ", feb, " Board ", board, "ODB=",obj.dataset.odbPath," set to ", value);
     modbset(obj.dataset.odbPath, value)
 }
 
@@ -276,7 +295,7 @@ function updateLVDSmask(checkbox, feb, board){
     oldvalue = value;
     value &= ~mask;
     value |= checkbox.checked << board;
-    console.log("LVDS Mask for FEB ", feb, " Board ", board, " set from ", oldvalue, " to ", value);
+    console.log("LVDS Mask for FEB ", feb, " Board ", board, "odb=",obj.dataset.odbPath, " set from ", oldvalue, " to ", value);
     obj.setValue(value);
 }
 
@@ -289,12 +308,12 @@ function boardcontrol_init(){
         console.log("Initializing Board Control Module");
         path="/Equipment/Quads";
         //Initializing all functions to display current ODB
-        mjsonrpc_db_get_values(["/Equipment/Quads/DAQ/Links/FEBsActive"]).then(
+        mjsonrpc_db_get_values(["/Equipment/Quads/Settings/DAQ/Links/FEBsActive"]).then(
 		rpcL => {
-            init_boardtable();
-        	mjsonrpc_db_get_values([path.concat("/Variables/","MTCF")]).then(function(rpc){applyColors(rpc.result.data[0], "tdcf")});
-        	mjsonrpc_db_get_values([path.concat("/Variables/","MTCE")]).then(function(rpc){applyColors(rpc.result.data[0], "tdce")});
-        	mjsonrpc_db_get_values([path.concat("/Variables/","MTCH")]).then(function(rpc){applyColors(rpc.result.data[0], "tdch")});
+            	init_boardtable();
+        	mjsonrpc_db_get_values([path.concat("/Variables/","MTCF")]).then(function(rpc){applyColors(rpc.result.data[0], "cf")});
+        	mjsonrpc_db_get_values([path.concat("/Variables/","MTCE")]).then(function(rpc){applyColors(rpc.result.data[0], "ce")});
+        	mjsonrpc_db_get_values([path.concat("/Variables/","MTCH")]).then(function(rpc){applyColors(rpc.result.data[0], "ch")});
         	mjsonrpc_db_get_values([path.concat("/Variables/","MTSM")]).then(function(rpc){updateBoardStatus(rpc.result.data[0])});
         	mjsonrpc_db_get_values([path.concat("/Variables/", "Names MTTM")]).then(function(rpc){
         	    tmp_names = rpc.result.data[0];

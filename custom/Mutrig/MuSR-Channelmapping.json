@@ -8,8 +8,16 @@
     "detectors:DS.2": 37
   },
   "LV" : [
+    {
+       "device"  : "LVSUPPLY0",
+       "indices" : [2,3]
+    }
   ],
   "HV" : [
+    {
+       "device" : "SCSHV20",
+       "indices" : [1,2,3,4,5,6]
+    }
   ]
 
 }

@@ -43,7 +43,7 @@ function init_LVTable(config_url){
     var LV_devices = []; // device list (loaded from JSON)
 
     function buildTable() {
-        console.log('Building LV supply table from LV_devices');
+        //console.log('Building LV supply table from LV_devices');
         var body = document.getElementById('LVsupplies-body');
         if (!body) return;
         // Clear existing
@@ -139,7 +139,7 @@ function init_HVTable(config_url){
     var HV_devices = []; // device list (loaded from JSON)
 
     function buildTable() {
-        console.log('Building HV supply table from HV_devices');
+        //console.log('Building HV supply table from HV_devices');
         var body = document.getElementById('HVsupplies-body');
         if (!body) return;
         // Clear existing
