@@ -70,6 +70,7 @@ uint32_t n_mevents = 0;
 uint32_t readout_timeout = 1000;
 uint32_t use_timeout = true;
 uint32_t cnt_loop = 0;
+uint32_t maxwords = 0;
 mudaq::DmaMudaqDevice* mup = nullptr;
 mudaq::DmaMudaqDevice::DataBlock block;
 std::vector<uint32_t> lvds_banks;
@@ -215,6 +216,10 @@ int begin_of_run() {
         cm_msg(MINFO, "readout_fe", "Use Stream Merger");
         readout_state_regs = SET_USE_BIT_STREAM(readout_state_regs);
     }
+    if ((bool)m_settings["Readout"]["use_send_time"]) {
+        cm_msg(MINFO, "readout_fe", "Use send time as header time");
+        readout_state_regs = SET_USE_BIT_SEND_TIME(readout_state_regs);
+    }
     readout_state_regs = SET_USE_BIT_GENERIC(readout_state_regs);
     use_software_dummy = (bool)m_settings["Readout"]["Software dummy"];
     n_mevents = (int)m_settings["Readout"]["n_mevents"];
@@ -226,14 +231,15 @@ int begin_of_run() {
     mu.write_register(SWB_READOUT_STATE_REGISTER_W, readout_state_regs);
 
     // request to read blocks of 256 bits
+    maxwords = (uint32_t) m_settings["Readout"]["max_requested_words"];
     mu.write_register(GET_N_DMA_WORDS_REGISTER_W,
-                      (int)m_settings["Readout"]["max_requested_words"]);
+                      (uint32_t) m_settings["Readout"]["max_requested_words"]);
 
     // set event id for this frontend
     mu.write_register(FARM_EVENT_ID_REGISTER_W, eventID_data);
 
     // link masks
-    mu.write_register(SWB_GENERIC_MASK_REGISTER_W, (int)m_settings["Readout"]["mask_n_generic"]);
+    mu.write_register(SWB_GENERIC_MASK_REGISTER_W, (uint32_t) m_settings["Readout"]["mask_n_generic"]);
 
     // release reset
     mu.write_register_wait(RESET_REGISTER_W, 0x0, 100);
@@ -270,6 +276,28 @@ int create_midas_events(uint32_t* dmaBuffer, uint32_t dmaBufSize, int rbh)
     if (dmaBufSize < 2)
         return -1;
 
+    // sort hits
+    static constexpr uint64_t kTimestampMask = (1ULL << 37) - 1ULL; // bits 0..36
+    struct HitWord {
+        uint32_t word0;
+        uint32_t word1;
+        uint64_t ts;
+    };
+    std::vector<HitWord> hits;
+
+    for (uint32_t i = 0; i < maxwords * 4; i += 2) {
+        uint32_t word0 = dmaBuffer[i];
+        uint32_t word1 = dmaBuffer[i+1];
+        uint64_t word =
+             static_cast<uint64_t>(word0) |
+            (static_cast<uint64_t>(word1) << 32);
+        uint64_t ts = word & kTimestampMask;
+        hits.push_back({word0, word1, ts});
+    }
+    // Sort by timestamp
+    std::sort(hits.begin(), hits.end(),
+              [](const HitWord& a, const HitWord& b) { return a.ts < b.ts; });
+
     // create MIDAS event
     void* event = nullptr;
     int status = 0;
@@ -292,13 +320,18 @@ int create_midas_events(uint32_t* dmaBuffer, uint32_t dmaBufSize, int rbh)
     auto bankHeader = reinterpret_cast<BANK_HEADER*>(eventHeader + 1);
     bk_init32a(bankHeader); // create MIDAS bank
 
-    char* data = nullptr;
+    uint32_t* data = nullptr;
     std::string bank_name = "H000";
     bk_create(bankHeader, bank_name.c_str(), TID_UINT32, reinterpret_cast<void**>(&data));
     // memcpy(data, dmaBuffer, dmaBufSize * sizeof(uint32_t));
     // data += dmaBufSize * sizeof(uint32_t);
-    memcpy(data, dmaBuffer, 10000 * sizeof(uint32_t));
-    data += 10000 * sizeof(uint32_t);
+    // Store 64-bit words as two uint32_t words
+    for (size_t i = 0; i < hits.size(); ++i) {
+        data[2 * i]     = hits[i].word0;
+        data[2 * i + 1] = hits[i].word1;
+    }
+    memcpy(data, data, hits.size() / 2 * sizeof(uint32_t));
+    data += hits.size() / 2 * sizeof(uint32_t);
     bk_close(bankHeader, data);
 
     eventHeader->data_size = bk_size(bankHeader);
@@ -326,9 +359,13 @@ int read_stream_thread(void*) {
     std::vector<uint32_t> dma_buf_dummy32;
     std::vector<uint64_t> dma_buf_dummy64;
 
+    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+
     // actuall readout loop
     while (is_readout_thread_enabled()) {
-        std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+
+        if (!timeout)
+            begin = std::chrono::steady_clock::now();
 
         // don't readout events if we are not running
         if (!readout_enabled()) {
@@ -394,61 +431,12 @@ int read_stream_thread(void*) {
         uint32_t last_written = mu.last_written_addr();
 
         std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+        double dma_time = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count();
         std::cout << "Time difference (DMA) = "
                   << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count()
                   << "[µs]" << std::endl;
 
         begin = std::chrono::steady_clock::now();
-
-        print_swb_counters(mu);
-        uint32_t maxwords = (uint32_t)m_settings["Readout"]["max_requested_words"];
-        printf("0x%08x 0x%08x 0x%08x 0x%08x 0x%08x 0x%08x\n", mu.last_written_addr(),
-               mu.last_endofevent_addr(), maxidx, size_dma_buf, maxwords, maxwords * 8);
-
-        // std::cout << std::endl;
-        // for(int i=0; i < 20; i++)
-        //     std::cout << std::hex << i << " 0x" <<  dma_buf[i] << " ";
-        // std::cout << std::endl;
-        // printf("last_written\n");
-        // for(int i=0; i < 20; i++)
-        //     std::cout << std::hex << last_written+i << " 0x" <<  dma_buf[last_written+i] << " ";
-        std::cout << std::endl;
-        for (int i = -20; i < 20; i++)
-            std::cout << std::hex << maxwords * 8 + i << " 0x" << dma_buf[maxwords * 8 + i]
-                      << std::endl;
-        // printf("maxidx\n");
-        // for(int i=0; i < 20; i++)
-        //     std::cout << std::hex << 0x3fbfff+i << " 0x" <<  dma_buf[0x3fbfff+i] << " ";
-        // std::cout << std::endl;
-        // int not_null = 0;
-        // for(int i=maxwords*8; i >= 0; i--) {
-        //     if (dma_buf[i] != 0) {
-        //         std::cout << std::hex << i << " 0x" <<  dma_buf[i] << std::endl;
-        //         not_null = i;
-        //         break;
-        //     }
-        // }
-        // for(int i=-20; i < 20; i++)
-        //     std::cout << std::hex << not_null+i << " 0x" <<  dma_buf[not_null+i] << std::endl;
-        // int not_one = 0;
-        // for(int i=not_null; i >= 0; i--) {
-        //     if (dma_buf[i] != 0xFFFFFFFF) {
-        //         std::cout << std::hex << i << " 0x" <<  dma_buf[i] << std::endl;
-        //         not_one = i;
-        //         break;
-        //     }
-        // }
-        // for(int i=-20; i < 20; i++)
-        //     std::cout << std::hex << not_one+i << " 0x" <<  dma_buf[not_one+i] << std::endl;
-
-        // std::cout << std::endl;
-
-        // for(int i=0; i < 10; i++)
-        //     std::cout << std::hex << " 0x" <<  dma_buf[i] << " ";
-        // std::cout << std::endl;
-        // std::cout << std::endl;
-
-        // while ( true ) {};
 
         if (size_dma_buf > MUDAQ_DMABUF_DATA_LEN) {
             cm_msg(MERROR, "ro_swb_fe", "Read invalid DMA buffer size %i!\n", size_dma_buf);
@@ -456,7 +444,8 @@ int read_stream_thread(void*) {
         }
         // [AK] NOTE: use direct copy as memcpy does not arantee
         //            non-optimization for volatile
-        for (uint32_t i = 0; i < size_dma_buf / 4; i++) {
+        // [MK] NOTE: max words is in 256bit words
+        for (uint32_t i = 0; i < maxwords * 8; i++) {
             dma_buf_local[i] = dma_buf[i];
         }
 
@@ -464,12 +453,12 @@ int read_stream_thread(void*) {
         create_midas_events(dma_buf_local, mu.last_endofevent_addr(), rbh);
 
         end = std::chrono::steady_clock::now();
+        double event_time = (double) std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count();
         std::cout << "Time difference (EVENT) = "
                   << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count()
                   << "[µs]" << std::endl;
 
-        printf("0x%08x\n", mu.read_register_ro(EVENT_BUILD_IDLE_NOT_HEADER_R));
-        printf("0x%08x\n", mu.read_register_ro(BUFFER_STATUS_REGISTER_R));
+        m_settings["Readout"]["HitRate"] = (double) maxwords * 4 / (dma_time / 1e6);
     }
 
     return SUCCESS;

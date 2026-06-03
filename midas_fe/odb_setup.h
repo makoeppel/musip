@@ -38,6 +38,8 @@ midas::odb settings = {
       {"mask_n_generic", 0x0},
       {"use_merger", false},
       {"max_requested_words", 0x80000},
+      {"use_send_time", false},
+      {"HitRate", 0},
       {"n_mevents", 10}}},
     {"DAQ",
      {
@@ -72,6 +74,7 @@ midas::odb settings = {
            {"DataGenFullSteam", false},
            {"DataGenRate", 0},
            {"Reset FEB Counters", false},
+           {"debug_readout_feb", false},
            {"MuTRiG",
             {{"init_tmb", false}, //If set, initializes the TMBs. Resets when finished
             {"module_power", false}, //Global power switch for the ASICs
@@ -111,9 +114,10 @@ midas::odb settings = {
            {"FEBsActive", filled_array<bool, N_FEBS>(false)},
            {"FEBsQuads", filled_array<bool, N_FEBS>(false)},
            {"FEBsMutrig", filled_array<bool, N_FEBS>(false)},
-           {"Mapping", {1,  2,  3,  4,  5,  6,  7,  90, 91, 92, 93, 8,  9,  10, 11, 12,
-                        13, 14, 15, 90, 91, 92, 93, 99, 99, 99, 99, 99, 99, 99, 99, 99,
-                        99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99}}}},
+           {"Mapping", { 0,  1,  2,  3,  4,  5,  6,  7,
+                         8,  9, 10, 11, 12, 13, 14, 15,
+                        16, 17, 18, 19, 20, 21, 22, 23,
+                        24, 25, 26, 27, 28, 29, 30, 31}}}},
      }
     },
     {"Config",

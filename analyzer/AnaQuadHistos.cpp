@@ -32,10 +32,10 @@ void AnaQuadHistos::BeginRun(TARunInfo* runinfo) {
     using MD = musip::dqm::Metadata;
 
     /////////  1D histos  ///////////
-    chipID = pPlotCollection_->getOrCreateHistogram1DD("chipID", 16, -0.5, 16 - 0.5, error);
+    chipID = pPlotCollection_->getOrCreateHistogram1DD("chipID", 24, -0.5, 24 - 0.5, error);
 
     /////////  2D histos  ///////////
-    for (int i = 0; i < 16; i++) {
+    for (int i = 0; i < 24; i++) {
         mask_files.push_back({});
         char quadIDString[256];
         std::string directoryName = std::string("");
@@ -82,12 +82,32 @@ void AnaQuadHistos::BeginRun(TARunInfo* runinfo) {
             MD::AxisTitleY("Row")
         ));
     }
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 6; i++) {
         char quadIDString[256];
         std::string directoryName = std::string("");
-        // Create a name from the 4 chip IDs
-        snprintf(quadIDString, sizeof(quadIDString), "%05i_%05i_%05i_%05i", 
-                0+i*4, 1+i*4, 2+i*4, 3+i*4);
+        // Create a name from the 6 chip IDs
+	switch (i) {
+	case 0:
+		snprintf(quadIDString, sizeof(quadIDString), "00016_00017_00018_00019");
+		break;
+	case 1:
+		snprintf(quadIDString, sizeof(quadIDString), "00010_00011_00002_00003");
+		break;
+	case 2:
+		snprintf(quadIDString, sizeof(quadIDString), "00008_00009_00020_00021");
+		break;
+	case 3:
+		snprintf(quadIDString, sizeof(quadIDString), "00006_00007_00004_00005");
+		break;
+	case 4:
+		snprintf(quadIDString, sizeof(quadIDString), "00022_00023_00000_00001");
+		break;
+	case 5:
+		snprintf(quadIDString, sizeof(quadIDString), "00012_00013_00014_00015");
+		break;
+	default:
+		break;
+	}
         combinedHitmap.push_back(pPlotCollection_->getOrCreateHistogram2DF(
             directoryName + "combined_hitmap_" + quadIDString, 
             512, -0.5, 511.5,   // 2 * 256 columns
@@ -104,10 +124,108 @@ void AnaQuadHistos::BeginRun(TARunInfo* runinfo) {
 }
 
 std::tuple<uint32_t, uint32_t> AnaQuadHistos::get_quad_global_col_row(pixelhit hit) {
-    size_t chipPosition = hit.chipid() % 4;
+    size_t chipPosition;
+    size_t layer;
     float combinedCol = hit.col();
     float combinedRow = hit.row();
-    size_t layer = hit.chipid() / 4;
+    switch (hit.chipid()) {
+	case 16:
+		chipPosition = 0;
+		layer = 0;
+		break;
+	case 17:
+		chipPosition = 1;
+		layer = 0;
+		break;
+	case 18:
+		chipPosition = 2;
+		layer = 0;
+		break;
+	case 19:
+		chipPosition = 3;
+		layer = 0;
+		break;
+	case 10:
+		chipPosition = 2;
+		layer = 1;
+		break;
+	case 11:
+		chipPosition = 3;
+		layer = 1;
+		break;
+	case 2:
+		chipPosition = 0;
+		layer = 1;
+		break;
+	case 3:
+		chipPosition = 1;
+		layer = 1;
+		break;
+	case 8:
+		chipPosition = 0;
+		layer = 2;
+		break;
+	case 9:
+		chipPosition = 1;
+		layer = 2;
+		break;
+	case 20:
+		chipPosition = 2;
+		layer = 2;
+		break;
+	case 21:
+		chipPosition = 3;
+		layer = 2;
+		break;
+	case 6:
+		chipPosition = 2;
+		layer = 3;
+		break;
+	case 7:
+		chipPosition = 3;
+		layer = 3;
+		break;
+	case 4:
+		chipPosition = 0;
+		layer = 3;
+		break;
+	case 5:
+		chipPosition = 1;
+		layer = 3;
+		break;
+	case 22:
+		chipPosition = 2;
+		layer = 4;
+		break;
+	case 23:
+		chipPosition = 3;
+		layer = 4;
+		break;
+	case 0:
+		chipPosition = 0;
+		layer = 4;
+		break;
+	case 1:
+		chipPosition = 1;
+		layer = 4;
+		break;
+	case 12:
+		chipPosition = 0;
+		layer = 5;
+		break;
+	case 13:
+		chipPosition = 1;
+		layer = 5;
+		break;
+	case 14:
+		chipPosition = 2;
+		layer = 5;
+		break;
+	case 15:
+		chipPosition = 3;
+		layer = 5;
+		break;
+    }
 
     switch(chipPosition) {
         case 0: // upper left - rotated 180°
@@ -133,6 +251,7 @@ std::tuple<uint32_t, uint32_t> AnaQuadHistos::get_quad_global_col_row(pixelhit h
     switch(layer) {
         case 0: // Layer 0: 180° around z, then 180° around x
         case 2: // Layer 2: like layer 0
+	case 5:	// Layer 5: like layer 0
             // 180° around z: flip both col and row in the combined space
             finalCol = 511 - combinedCol;  // flip horizontally (0-511 range)
             finalRow = 499 - combinedRow;  // flip vertically (0-499 range)
@@ -140,9 +259,8 @@ std::tuple<uint32_t, uint32_t> AnaQuadHistos::get_quad_global_col_row(pixelhit h
             finalRow = 499 - finalRow; // This makes finalRow = combinedRow again
             break;
         case 1: // Layer 1: 180° around z
-            // if ( hit.chipid() == 4 )
-            //     finalCol = 255 - combinedCol;  // flip horizontally (0-511 range)
         case 3: // Layer 3: like layer 1
+        case 4: // Layer 4: like layer 1
             // 180° around z: flip both col and row in the combined space
             finalCol = 511 - combinedCol;  // flip horizontally (0-511 range)
             finalRow = 499 - combinedRow;  // flip vertically (0-499 range)
@@ -228,7 +346,7 @@ void AnaQuadHistos::EndRun(TARunInfo* runinfo) {
 
     // write mask file
     std::string path = "/home/mu3e/musip/output/maskfiles_analyzer";
-    for ( int index = 0; index < 16; index++ ) {
+    for ( int index = 0; index < 24; index++ ) {
         mask_files[index] = create_mask_file(hitmaps[index]->asRootObject("myHistogram", "My histogram title").get(), index, 0.5);
 
         std::string data = "/mask_" + std::to_string(index) + "_run_" + std::to_string(runinfo->fRunNo) + ".bin";
@@ -264,15 +382,51 @@ TAFlowEvent* AnaQuadHistos::AnalyzeFlowEvent(TARunInfo*, TAFlags* flags, TAFlowE
         auto hit = cur_hit.as_pixel();
         chipID->Fill(hit.chipid());
 
-        if (hit.chipid() >= 16) continue;
+        if (hit.chipid() >= 24) continue;
 
         // fill hitmap histograms
         uint32_t col, row;
         std::tie(col, row) = get_quad_global_col_row(hit);
-        if ( hit.chipid() < 4 ) combinedHitmap[0]->Fill(col, row);
-        if ( hit.chipid() >= 4 && hit.chipid() < 8 ) combinedHitmap[1]->Fill(col, row);
-        if ( hit.chipid() >= 8 && hit.chipid() < 12 ) combinedHitmap[2]->Fill(col, row);
-        if ( hit.chipid() >= 12 ) combinedHitmap[3]->Fill(col, row);
+	switch (hit.chipid()) {
+	case 16:
+	case 17:
+	case 18:
+	case 19:
+		combinedHitmap[0]->Fill(col,row);
+		break;
+	case 10:
+	case 11:
+	case 2:
+	case 3:
+		combinedHitmap[1]->Fill(col,row);
+		break;
+	case 8:
+	case 9:
+	case 20:
+	case 21:
+		combinedHitmap[2]->Fill(col,row);
+		break;
+	case 6:
+	case 7:
+	case 4:
+	case 5:
+		combinedHitmap[3]->Fill(col,row);
+		break;
+	case 22:
+	case 23:
+	case 0:
+	case 1:
+		combinedHitmap[4]->Fill(col,row);
+		break;
+	case 12:
+	case 13:
+	case 14:
+	case 15:
+		combinedHitmap[5]->Fill(col,row);
+		break;
+	default:
+		break;
+	}
         hitmaps[hit.chipid()]->Fill(hit.col(), hit.row());
 
         // fill timing histogram

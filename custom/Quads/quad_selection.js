@@ -68,7 +68,7 @@ function getRemainingSelection(){
 // DAC transfer functions moved to quad_actions.js
 
 function getSensorFromCoordinates(x, y) {
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 6; i++) {
         for (let j = 0; j < 4; j++) {
             const sensor = selection_setup.Quads[i].Sensors[j];
             if (x >= sensor.x && x <= sensor.x + sensor.dx && 
@@ -81,17 +81,17 @@ function getSensorFromCoordinates(x, y) {
 }
 
 function SetupSel(){
-    this.Quads = new Array(4);
+    this.Quads = new Array(6);
 
-    for(let i = 0; i < 4; i++) {
-        this.Quads[i] = new QuadSel(5+i*180,5,155,175, i); 
+    for(let i = 0; i < 6; i++) {
+        this.Quads[i] = new QuadSel(5+i%4*180,5+180*Math.floor(i/4),155,175, i);
     }
 
     this.draw = function(){
         //cc.fillStyle = "rgb(230,230,230)";
         //cc.fillRect(0, 0, canvas.width, canvas.height);
 
-        for(let i = 0; i < 4; i++ ){   
+        for(let i = 0; i < 6; i++ ){
             this.Quads[i].draw();
         }
     }
@@ -361,7 +361,7 @@ window.addEventListener('click', function(event) {
     let old_active = undefined;
 
     // toggle sensors between active and unactive if clicked:
-    for(let i = 0; i < 4; i++){
+    for(let i = 0; i < 6; i++){
         for(let j = 0; j < 4; j++){
             if (mouse.x > selection_setup.Quads[i].Sensors[j].x && mouse.x < selection_setup.Quads[i].Sensors[j].x + selection_setup.Quads[i].Sensors[j].dx && mouse.y > selection_setup.Quads[i].Sensors[j].y && mouse.y < selection_setup.Quads[i].Sensors[j].y + selection_setup.Quads[i].Sensors[j].dy){
                 selection_setup.Quads[i].Sensors[j].active = !selection_setup.Quads[i].Sensors[j].active;
@@ -454,7 +454,7 @@ function displaySelected(){
 
 function selectAll() {
     selected = new Array();
-    for(let i = 0; i < 4; i++){
+    for(let i = 0; i < 6; i++){
         for(let j = 0; j < 4; j++){
             selection_setup.Quads[i].Sensors[j].active = true;
             selected.splice(0, 0, selection_setup.Quads[i].Sensors[j].id);
@@ -467,7 +467,7 @@ function selectAll() {
 
 function deselectAll() {
     selected = new Array();
-    for(let i = 0; i < 4; i++){
+    for(let i = 0; i < 6; i++){
         for(let j = 0; j < 4; j++){
             selection_setup.Quads[i].Sensors[j].active = false;
         }

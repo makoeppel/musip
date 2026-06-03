@@ -175,7 +175,7 @@ async function clearOutputText(time = 2000) {
  * @param {string} script_path Sequencer script path
  */
 
-async function execute_sequencer_script(scriptName, id ="", scriptPath = "/home/mu3e/mu3e/debug_online/online/pixels/operation/") {
+async function execute_sequencer_script(scriptName, id ="", scriptPath = "/home/mu3e/musip/online/userfiles/sequencer/") {
     const paths = ["/Sequencer/State/Path", "/Sequencer/State/Filename"];
     const vals = [scriptPath, scriptName];
 
@@ -275,9 +275,7 @@ function setup_odb() {
 
     let data_ids = getDataIds(999);
 
-    //let runPath = "/home/musip/online/userfiles/";
-    //let runPath = "/home/labor/online/online/userfiles/";
-    let runPath = "/home/mu3e/mu3e/debug_online/online/userfiles/";
+    let runPath = "/home/mu3e/musip/online/userfiles/maskfiles/";
     for (let i = 0; i < data_ids.length; i++){
         let id = data_ids[i];
         let path = `/Equipment/Quads/Settings/Config/TDACS/TDACFILE[${id}]`;

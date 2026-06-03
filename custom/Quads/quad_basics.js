@@ -1,6 +1,6 @@
 //Load sequencer files
 
-function load_sequencer_script(script_name, script_path="/home/labor/online/online/pixels/operation/") {
+function load_sequencer_script(script_name, script_path="/home/mu3e/musip/online/userfiles/sequencer/") {
     paths = ["/Sequencer/State/Path", "/Sequencer/State/Filename"]
     vals = [script_path, script_name]
     mjsonrpc_db_paste(paths, vals).then(rpc => {

@@ -10,8 +10,8 @@
     <script src="controls.js"></script>
     <script src="midas.js"></script>
     <script src="mhttpd.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="dqm/onlineDQM.js"></script>
+    <script src="chart.js"></script>
+    <script src="onlineDQM.js"></script>
     <script src="mplot.js"></script>
 
     <link rel="stylesheet" type="text/css" href="Quads/tabs.css">
@@ -284,56 +284,30 @@
                 <th>Current (uA)</th>
                 <th>Description</th>
             </tr>
-            <!-- <tr>
-
-                <th>1</th>
-                <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px    ;" data-odb-path="/Equipment/LVSUPPLY1/Variables/State[3]" data-color="lightgreen" data-background-color="red"></div></td>
-                <td style="text-align: center"><input type="checkbox" name="CheckboxPixels" class="modbcheckbox" data-odb-path="/Equipment/LVSUPPLY1/Variables/Set State[3]"></input></td>
-
-                <th>1</th>
-                <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/Quad HV/Variables/Demand[4]" data-color="lightgreen" data-background-color="red"></div></td>
-                <td><div class="modbvalue" data-odb-path="/Equipment/Quad HV/Variables/Demand[4]" data-formula="-x" data-odb-editable="1"></div></td>
-                <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/Quad HV/Variables/Measured[4]" data-formula="-x"></div></td>
-                <td>none</td>
-                <td><div id="keithley_curr" data-format="f3" class="modbvalue" data-odb-path="/Equipment/Quad HV/Variables/Current[4]" data-formula="x"></div></td>
-                <td id="HVSUPPLY0_0" style="text-align: center">Quad 0 70 µm 80 Ohmcm</td>
-            </tr> -->
             <tr>
-                <th rowspan="4">1</th>
-                <td rowspan="4" style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/LVSUPPLY1/Variables/State[3]" data-color="lightgreen" data-background-color="red"></div></td>
-                <td rowspan="4" style="text-align: center"><input type="checkbox" name="CheckboxPixels" class="modbcheckbox" data-odb-path="/Equipment/LVSUPPLY1/Variables/Set State[3]"></input></td>
+                <th>1</th>
+                <td  style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/LVSUPPLY1/Variables/State[3]" data-color="lightgreen" data-background-color="red"></div></td>
+                <td  style="text-align: center"><input type="checkbox" name="CheckboxPixels" class="modbcheckbox" data-odb-path="/Equipment/LVSUPPLY1/Variables/Set State[3]"></input></td>
                 <th>0</th>
-                <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/Quad HV/Variables/Demand[0]" data-color="lightgreen" data-background-color="red"></div></td>
-                <td><div class="modbvalue" data-odb-path="/Equipment/Quad HV/Variables/Demand[0]" data-formula="-x" data-odb-editable="1"></div></td>
-                <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/Quad HV/Variables/Measured[0]" data-formula="-x"></div></td>
+                <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/Quad HV/Variables/Demand[7]" data-color="lightgreen" data-background-color="red"></div></td>
+                <td><div class="modbvalue" data-odb-path="/Equipment/Quad HV/Variables/Demand[7]" data-formula="-x" data-odb-editable="1"></div></td>
+                <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/Quad HV/Variables/Measured[7]" data-formula="-x"></div></td>
+                <td>none</td>
+                <td><div id="hv_curr" data-format="f3" class="modbvalue" data-odb-path="/Equipment/Quad HV/Variables/Current[7]" data-formula="-x"></div></td>
+                <td id="HVSUPPLY0_1" style="text-align: center">Old quads HV</td>
+            </tr>
+            <tr>
+                <th>Keithley</th>
+                <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/K2450/Variables/Output[0]" data-color="lightgreen" data-background-color="red"></div></td>
+                <td style="text-align: center"><input type="checkbox" name="CheckboxHVNewPixels" class="modbcheckbox" data-odb-path="/Equipment/K2450/Variables/Output[0]"></input></td>
+                <th>0</th>
+                <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/K2450/Variables/Output[0]" data-color="lightgreen" data-background-color="red"></div></td>
+                <td><div class="modbvalue" data-odb-path="/Equipment/K2450/Variables/Output[1]" data-formula="x" data-odb-editable="1"></div></td>
+                <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/K2450/Variables/Input[1]" data-formula="x"></div></td>
                 <td rowspan="4">none</td>
-                <td><div id="keithley_curr" data-format="f3" class="modbvalue" data-odb-path="/Equipment/Quad HV/Variables/Current[0]" data-formula="x"></div></td>
-                <td id="HVSUPPLY0_1" style="text-align: center">Quad 1 70 µm 370 Ohmcm</td>
+                <td><div id="keithley_curr" data-format="f3" class="modbvalue" data-odb-path="/Equipment/K2450/Variables/Input[4]" data-formula="x*1000000"></div></td>
+                <td id="HVSUPPLY1_0" style="text-align: center">New quads HV</td>
             </tr>
-            <tr>
-                <th>1</th>
-                <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/Quad HV/Variables/Demand[1]" data-color="lightgreen" data-background-color="red"></div></td>
-                <td><div class="modbvalue" data-odb-path="/Equipment/Quad HV/Variables/Demand[1]" data-formula="-x" data-odb-editable="1"></div></td>
-                <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/Quad HV/Variables/Measured[1]" data-formula="-x"></div></td>
-                <td><div id="keithley_curr" data-format="f3" class="modbvalue" data-odb-path="/Equipment/Quad HV/Variables/Current[1]" data-formula="x"></div></td>
-                <td id="HVSUPPLY1_0" style="text-align: center">Quad 2 70 µm 370 Ohmcm</td>
-            </tr>
-            <tr>
-                <th>2</th>
-                <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/Quad HV/Variables/Demand[2]" data-color="lightgreen" data-background-color="red"></div></td>
-                <td><div class="modbvalue" data-odb-path="/Equipment/Quad HV/Variables/Demand[2]" data-formula="-x" data-odb-editable="1"></div></td>
-                <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/Quad HV/Variables/Measured[2]" data-formula="-x"></div></td>
-                <td><div id="keithley_curr" data-format="f3" class="modbvalue" data-odb-path="/Equipment/Quad HV/Variables/Current[2]" data-formula="x"></div></td>
-                <td id="HVSUPPLY1_0" style="text-align: center">Quad 0 70 µm 370 Ohmcm</td>
-            </tr>
-            <tr>
-                <th>3</th>
-                <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/Quad HV/Variables/Demand[3]" data-color="lightgreen" data-background-color="red"></div></td>
-                <td><div class="modbvalue" data-odb-path="/Equipment/Quad HV/Variables/Demand[3]" data-formula="-x" data-odb-editable="1"></div></td>
-                <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/Quad HV/Variables/Measured[3]" data-formula="-x"></div></td>
-                <td><div id="keithley_curr" data-format="f3" class="modbvalue" data-odb-path="/Equipment/Quad HV/Variables/Current[3]" data-formula="x"></div></td>
-                <td id="HVSUPPLY1_1" style="text-align: center">Quad 3 70 µm 370 Ohmcm</td>
-	        </tr>
         </table>
 
     </div>
@@ -344,7 +318,7 @@
         <table class="mtable" id="sensorSelection">
             <tr><th colspan="3" class="mtableheader">Sensor selection</th></tr>
             <td>
-                <canvas width="700px" height="200px" id="SensorSelectionCanvas"></canvas>
+                <canvas width="700px" height="380px" id="SensorSelectionCanvas"></canvas>
 
                 <div class="container" style="justify-content: space-between; width: 100%;">
                     <span>selected sensors: <span id="sensor_selection">None</span></span>
@@ -527,7 +501,7 @@
                                     <div style="margin-top: 10px;">
                                         <input type="radio" name="maskFolder" id="maskFolder_custom" value="custom">
                                         <label for="maskFolder_custom">Custom Path:</label>
-                                        <input type="text" id="customMaskPath" value="/home/mu3e/mu3e/debug_online/online/userfiles/maskfiles/" 
+                                        <input type="text" id="customMaskPath" value="/home/mu3e/musip/online/userfiles/maskfiles/"
                                                style="margin-left: 5px; width: 400px;" disabled>
                                         <button id="applyCustomPath" onclick="applyCustomMaskPath()" disabled style="margin-left: 5px;">Apply</button>
                                     </div>

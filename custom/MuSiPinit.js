@@ -4,7 +4,7 @@
 var instrName     = "MuSiP";
 var instrColor    = "#FF0000";
 var elogLink      = "https://lem03.psi.ch:8000/Si-Pixel/";
-var autoRunPath   = "/home/mu3e/debug_online/online/userfiles/sequencer";
+var autoRunPath   = "/home/mu3e/musip/online/userfiles/sequencer/";
 
 // Make a Map for instrument specific ODBs
 var instrODB = {
@@ -14,12 +14,13 @@ var instrODB = {
     autorunStatus: "/Sequencer/State/Running",
     startTime:     "/Runinfo/Start time",
     stopTime:      "/Runinfo/Stop time",
-    eventRate:     "/Equipment/Scaler/Variables/RATE[3]",
+    eventRate:     "/Equipment/EPICS/Variables/Measured[36]",//"/Equipment/Scaler/Variables/RATE[3]",
     protonCurr:    "/Equipment/Scaler/Variables/RATE/Ip",
     totalStats:    "/Equipment/PixelsLabor/Statistics/Events sent",
     sampleName:    "/Info/Sample Name",
     // This depends on the used equipment
-    sampleTemp:    "/Equipment/SampleCryo/Variables/Input[1]",
+    //sampleTemp:    "/Equipment/SampleCryo/Variables/Input[1]",
+    sampleTemp:    "/Equipment/LS340/Variables/Input[1]",
     //magField:      "/Equipment/Danfysik_PABA_Magnet/Variables/Input[",
     impEnergy:     "/Info/Implantation Energy (keV)",
     pID:           "/Info/File_Header_Info/Proposal Number",
