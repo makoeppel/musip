@@ -1,11 +1,11 @@
 {   "mutrig": {
         "enabled": true,
-        "tot_channels": [1,2,3,4,5,6,7,8,9],
+        "tot_channels": [32,33,34,35,36,37],
         "channelpairs": {
-            "m_24": [2,4],
-            "m_35": [3,5],
-            "m_28": [2,8],
-            "m_48": [4,8]
+            "m_m1_up1": [32,34],
+            "m_m1_up2": [32,35],
+            "m_up": [34,35],
+            "m_bw": [36,37]
         },
 
         "tdiff_enabled": true,
