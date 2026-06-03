@@ -283,7 +283,8 @@
                 <th>
                     <div class="plot-container">
                         <div class="mplot" id="rates" style="height: 300px;width: 500px;"
-                            data-odb-path="/Equipment/Quads/Variables" data-y="TDCR"
+                            data-type="histogram"
+                            data-odb-path="/Equipment/Quads/Variables" data-x="TDCR"
                             data-x-text="channel" data-y-text="Rate [Hz]"
                             data-x-min=0 data-x-max=64
                             data-nx=32 data-y-log=true data-y-min=1 data-y-max=1e7
@@ -494,7 +495,7 @@
         init_HVTable('Mutrig/Matrix-Channelmapping.json');
         plots = [
             //{source: "mutrig/ChannelID", title: "Hits per channel", xTitle: "channel" , yTitle: "Entries"},
-            
+        /* 
             {source: "mutrig/h_tot_0", title: "Matrix CH 0", xTitle: "ToT" , yTitle: "Entries", },
             {source: "mutrig/h_tot_1", title: "Matrix CH 1", xTitle: "ToT" , yTitle: "Entries", },
             {source: "mutrig/h_tot_2", title: "Matrix CH 2", xTitle: "ToT" , yTitle: "Entries", },
@@ -511,6 +512,7 @@
             {source: "mutrig/h_tot_13", title: "Matrix CH 13", xTitle: "ToT" , yTitle: "Entries", },
             {source: "mutrig/h_tot_14", title: "Matrix CH 14", xTitle: "ToT" , yTitle: "Entries", },
             {source: "mutrig/h_tot_15", title: "Matrix CH 15", xTitle: "ToT" , yTitle: "Entries", },
+	 */
             //{source: "mutrig/h_tot_32", title: "ToT Muon L", xTitle: "ToT" , yTitle: "Entries", },
             //{source: "mutrig/h_tot_33", title: "ToT Muon R", xTitle: "ToT" , yTitle: "Entries", },
             //{source: "mutrig/h_tot_34", title: "ToT Backward L", xTitle: "ToT" , yTitle: "Entries", },

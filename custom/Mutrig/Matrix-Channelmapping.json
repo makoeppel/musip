@@ -24,15 +24,8 @@
     "detectors:DS.2": 37
   },
   "LV" : [
-    {
-        "device": "LVSupply0",
-        "indices": [2, 3]
-    }
-
   ],
   "HV" : [
-    {
-    }
   ]
 
 }
