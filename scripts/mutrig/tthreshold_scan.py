@@ -240,6 +240,9 @@ def scan_no_offset(seq, start_threshold, stop_threshold, step_threshold, wait_ti
         actual_thresholds = []
         for ch in range(NChannels):
             actual_th_midas = 63- current_tthreshold 
+            if (cfg.polarity_inverted == True):
+                actual_th_midas = current_tthreshold 
+
             actual_th = current_tthreshold + channel_offsets[ch] * 64
             actual_thresholds.append(actual_th)
         
@@ -415,6 +418,9 @@ def write_config_odb(tthresh, tth_offsets=None, **kwargs):
     }
     if tth_offsets is not None:
         outArray = [63 - x for x in np.array(tth_offsets).astype(np.uint32)]
+        if (cfg.polarity_inverted == True):
+            outArray = [x for x in np.array(tth_offsets).astype(np.uint32)]
+
         offsets = {"tthresh_offset": [f"0x{x:02X}" for x in np.array(tth_offsets).astype(int)]}
         output.update(offsets)
 
