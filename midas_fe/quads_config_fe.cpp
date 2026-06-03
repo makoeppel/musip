@@ -83,7 +83,7 @@ int init_mudaq(mudaq::MudaqDevice& mu) {
     // open mudaq
     if (!mu.open()) {
         std::cout << "Could not open device " << std::endl;
-        cm_msg(MERROR, "frontend_init", "Could not open device");
+        cm_msg1(MINFO, "quads", "frontend_init", "Could not open device");
         return FE_ERR_DRIVER;
     }
 
@@ -91,11 +91,11 @@ int init_mudaq(mudaq::MudaqDevice& mu) {
     if (!mu.is_ok())
         return FE_ERR_DRIVER;
     else {
-        cm_msg(MINFO, "frontend_init", "Mudaq device is ok");
+        cm_msg1(MINFO, "quads", "frontend_init", "Mudaq device is ok");
     }
 
 #ifdef NO_A10_BOARD
-    cm_msg(MINFO, "init_mudaq()", "We are running with NO_A10_BOARD");
+    cm_msg1(MINFO, "quads", "init_mudaq()", "We are running with NO_A10_BOARD");
     feb_sc = new DummyFEBSlowcontrolInterface(mu);
 #else
     feb_sc = new FEBSlowcontrolInterface(mu);
@@ -205,7 +205,7 @@ void init_banks() {
     int globalch = 0;
     int globalasic = 0;
     for (uint32_t i = 0; i < N_FEBS; i++) {
-        for(int asic = 0; asic < N_MUTRIGS_PER_FEB; asic++) {
+        for(uint32_t asic = 0; asic < N_MUTRIGS_PER_FEB; asic++) {
             namesMTCH.push_back("hits asic " + std::to_string(globalasic));
             namesMTCF.push_back("frame rate asic " + std::to_string(globalasic));
             namesMTCE.push_back("CRC errors asic " + std::to_string(globalasic));
@@ -247,7 +247,7 @@ int begin_of_run() {
     uint32_t link_active_from_odb = 0;
     for (int idx = 0; idx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); ++idx)
         if (m_settings["DAQ"]["Links"]["FEBsActive"][idx])
-            link_active_from_odb = link_active_from_odb || (1 << idx);
+            link_active_from_odb = link_active_from_odb || (0x1 << idx);
     printf("Waiting for run prepare acknowledge from all FEBs\n");
     // TODO: test this part of checking the run number
     do {
@@ -259,7 +259,7 @@ int begin_of_run() {
              (timeout_cnt > 0));
 
     if (timeout_cnt == 0) {
-        cm_msg(MERROR, "quad_fe", "Run %d start denied - check if FEBs alive", run_number);
+        cm_msg1(MINFO, "quads", "quad_fe", "Run %d start denied - check if FEBs alive", run_number);
         return CM_TRANSITION_CANCELED;
     }
     write_command_by_name("Sync");
@@ -299,6 +299,10 @@ void sc_settings_changed(midas::odb o) {
         "module_power_mask",
         "module_power",
         "MutrigConfig",
+	"reset_datapath",
+	"reset_asics",
+	"reset_lvds",
+	"reset_counters",
         "DataGenEnable",
         "DataGenDisable",
         "debug_readout_feb"
@@ -320,7 +324,7 @@ void sc_settings_changed(midas::odb o) {
 
     if (found && (o || no_reset)){
 
-        cm_msg(MINFO, "sc_settings_changed", "Setting changed (%s)", name.c_str());
+        cm_msg1(MINFO, "quads", "sc_settings_changed", "Setting changed (%s)", name.c_str());
 
         if (name == "MupixConfig" && o) {
             ConfigureASICs(*feb_sc, m_settings, bitpattern_mupix);
@@ -332,12 +336,12 @@ void sc_settings_changed(midas::odb o) {
         }
 
         if (name == "ResetASICs" && o) {
-            cm_msg(MINFO, "sc_settings_changed", "Reset all ASICs");
+            cm_msg1(MINFO, "quads", "sc_settings_changed", "Reset all ASICs");
             resetASICs(*feb_sc, m_settings);
         }
 
         if (name == "debug_readout_feb" && o) {
-            cm_msg(MINFO, "sc_settings_changed", "Set FEB into debug readout");
+            cm_msg1(MINFO, "quads", "sc_settings_changed", "Set FEB into debug readout");
             for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
                 bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
                 bool FEBsIsQuads = m_settings["DAQ"]["Links"]["FEBsQuads"][febIDx];
@@ -347,7 +351,7 @@ void sc_settings_changed(midas::odb o) {
         }
 
         if (name == "debug_readout_feb" && !o) {
-            cm_msg(MINFO, "sc_settings_changed", "Set FEB into normal readout");
+            cm_msg1(MINFO, "quads", "sc_settings_changed", "Set FEB into normal readout");
             for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
                 bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
                 bool FEBsIsQuads = m_settings["DAQ"]["Links"]["FEBsQuads"][febIDx];
@@ -372,7 +376,8 @@ void sc_settings_changed(midas::odb o) {
             usleep(500000);  // we sleep here to wait until the command is processed
             write_command_by_name("Start Run");
         }
-
+        // MUPIX Commands //
+	// ************** //
         if (name == "MupixTDACConfig" && o) {
             ConfigureTDACs(*feb_sc, m_settings);
         }
@@ -381,14 +386,14 @@ void sc_settings_changed(midas::odb o) {
             const std::vector<uint8_t> columns = m_settings["DAQ"]["Commands"]["Injection columns"];
             const std::vector<uint8_t> rows = m_settings["DAQ"]["Commands"]["Injection rows"];
             if (ConfigureInjectASICs(*feb_sc, columns, rows) != FE_SUCCESS)
-                cm_msg(MERROR, "on_settings_changed", "injection configuration failed!");
+                cm_msg1(MINFO, "quads", "on_settings_changed", "injection configuration failed!");
         }
 
         if (name == "Trigger injection" && o) {
             const uint32_t injection_pulse_duration =
                 m_settings["DAQ"]["Commands"]["Injection pulse duration"];
             if (InjectASICs(*feb_sc, injection_pulse_duration) != FE_SUCCESS)
-                cm_msg(MERROR, "on_settings_changed", "injection trigger failed!");
+                cm_msg1(MINFO, "quads", "on_settings_changed", "injection trigger failed!");
         }
 
         if (name == "Trigger injection loop" && o) {
@@ -399,7 +404,7 @@ void sc_settings_changed(midas::odb o) {
                 m_settings["DAQ"]["Commands"]["Wait time between pulses (ms)"];
             if (InjectASICsInLoop(*feb_sc, injection_pulse_duration, num_repetitions,
                                 wait_between_pulses) != FE_SUCCESS)
-                cm_msg(MERROR, "on_settings_changed", "injection trigger loop failed!");
+                cm_msg1(MINFO, "quads", "on_settings_changed", "injection trigger loop failed!");
         }
 
         if (name == "Full chip Injection" && o) {
@@ -415,11 +420,13 @@ void sc_settings_changed(midas::odb o) {
             if (FullChipInjection(*feb_sc, m_settings, min_columns, max_columns, min_rows, max_rows,
                                 injection_pulse_duration, num_repetitions,
                                 wait_between_pulses) != FE_SUCCESS)
-                cm_msg(MERROR, "on_settings_changed", "injection configuration failed!");
+                cm_msg1(MINFO, "quads", "on_settings_changed", "injection configuration failed!");
         }
 
+        // MUTRIG Commands //
+	// *************** //
         if(name == "init_tmb" && o){
-            TMBinit(*feb_sc, m_settings);
+            TBinit(*feb_sc, m_settings);
         }
         if(name == "TestPulsesTDC"){
             ChangeTDCTest(*feb_sc, m_settings);
@@ -432,7 +439,23 @@ void sc_settings_changed(midas::odb o) {
         if ( name == "MutrigConfig" && o) {
             ConfigureMuTRiGASICs(*feb_sc, m_settings, bitpattern_mutrig);
         }
+        if ( name == "reset_datapath" && o) {
+            MuTRiG_reset_datapath(*feb_sc, m_settings);
+        }
+        if ( name == "reset_asics" && o) {
+            MuTRiG_reset_asics(*feb_sc, m_settings);
+        }
+        if ( name == "reset_lvds" && o) {
+            MuTRiG_reset_lvds(*feb_sc, m_settings);
+        }
+        if ( name == "reset_counters" && o) {
+            MuTRiG_reset_counters(*feb_sc, m_settings);
+        }
 
+
+
+        // DAQ Commands //
+	// ************ //
         if (name == "DataGenEnable" && o) {
             midas::odb commands = m_settings["DAQ"]["Commands"];
             for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
@@ -450,7 +473,7 @@ void sc_settings_changed(midas::odb o) {
                 }
             }
 
-            cm_msg(MINFO, "on_settings_changed()" , "enable data generator on the FPGA");
+            cm_msg1(MINFO, "quads", "on_settings_changed()" , "enable data generator on the FPGA");
         }
 
         if (name == "DataGenDisable" && o) {
@@ -461,7 +484,7 @@ void sc_settings_changed(midas::odb o) {
                     feb_sc->FEB_write(febIDx, MP_DATA_GEN_CONTROL_REGISTER_W, 0x0);
             }
 
-            cm_msg(MINFO, "on_settings_changed()" , "disable data generator on the FPGA");
+            cm_msg1(MINFO, "quads", "on_settings_changed()" , "disable data generator on the FPGA");
 
         }
 
@@ -599,6 +622,10 @@ int read_sc_event(char* pevent, int off) {
     readout_banks.push_back(dma_full);
     readout_banks.push_back(m_settings["Readout"]["HitRate"]);
 
+    // *************************************
+    // ************ MUPIX BANKS  ***********
+    // *************************************
+
     // fill matrix bank
     matrix_banks.clear();
     for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
@@ -676,16 +703,30 @@ int read_sc_event(char* pevent, int off) {
         }
     }
 
+
+    // *************************************
+    // ************ MUTRIG BANKS ***********
+    // *************************************
+
     // fill counter banks
     counters_XXCH.clear();
     counters_XXCF.clear();
     counters_XXCE.clear();
     counters_XXCR.clear();
     counters_XXCP.clear();
+
+    //Note: febIDx is global, corresponding to the QSFP port
+    //Note: febSSIDx is subsystem-centric and starts from zero, corresponding to an increasing number of FEBs for the subsystem without any offset.
+    //For the subsystem, i.e. indices of MuTRiG channels and asics, febSSIDx is used
+    int32_t febSSIDx=-1;
     for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
         bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
         bool FEBsIsMutrig = m_settings["DAQ"]["Links"]["FEBsMutrig"][febIDx];
-        if (FEBActive && FEBsIsMutrig) {
+        if (FEBsIsMutrig)
+           febSSIDx++;
+	else
+           continue;
+        if (FEBActive) {
 
             // reset counter address
             feb_sc->FEB_write(febIDx, MUTRIG_CTRL_RESET_REGISTER_W, 0x10);
@@ -730,11 +771,17 @@ int read_sc_event(char* pevent, int off) {
     // fill mutrig temp banks
     values_XXTM.clear();
     std::vector<uint32_t> rval(N_TMB_MATRIX_TEMPERATURES, -1);
+    febSSIDx=-1;
     for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
         bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
         bool FEBsIsMutrig = m_settings["DAQ"]["Links"]["FEBsMutrig"][febIDx];
         int rpc_ret = -17;
         if (FEBsIsMutrig)
+           febSSIDx++;
+	else
+           continue;
+
+        if (FEBActive)
             rpc_ret = feb_sc->FEBsc_NiosRPC(febIDx, CMD_TILE_TEMPERATURES_READ, {});
         if (FEBActive && rpc_ret != -17) {
             feb_sc->FEB_read(febIDx, FEBSlowcontrolInterface::OFFSETS::FEBsc_RPC_DATAOFFSET, rval);
@@ -756,12 +803,17 @@ int read_sc_event(char* pevent, int off) {
     // fill TMB status
     values_XXSM.clear();
     std::vector<uint32_t> rval_SM(N_TMB_STATUS_VALUES, -1);
+    febSSIDx=-1;
     for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
         bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
         bool FEBsIsMutrig = m_settings["DAQ"]["Links"]["FEBsMutrig"][febIDx];
         int rpc_ret = -17;
         if (FEBsIsMutrig)
-            rpc_ret = feb_sc->FEBsc_NiosRPC(febIDx, CMD_TILE_TMB_STATUS, {});
+           febSSIDx++;
+	else
+           continue;
+
+        rpc_ret = feb_sc->FEBsc_NiosRPC(febIDx, CMD_TILE_TMB_STATUS, {});
         if (FEBActive && rpc_ret != -17) {
             feb_sc->FEB_read(febIDx, FEBSlowcontrolInterface::OFFSETS::FEBsc_RPC_DATAOFFSET, rval_SM);
             values_XXSM.push_back(rval_SM[0]);

@@ -184,7 +184,7 @@ int InitFEBs(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) {
         vector<uint32_t> data(1);
         feb_sc.FEB_read(febIDx, FPGA_ID_REGISTER_RW, data);
         if ((febIDx & 0xffff) == (data[0] & 0xffff))
-            cm_msg(MINFO, "InitFEBs()", "Successfully set FEBID of FEB %i to ID %i", febIDx,
+            cm_msg1(MINFO, "quads", "InitFEBs()", "Successfully set FEBID of FEB %i to ID %i", febIDx,
                    febIDx);
         feb_sc.FEB_write(febIDx, MP_LVDS_LINK_MASK_REGISTER_W,
                          (uint32_t)m_settings["DAQ"]["Links"]["LVDSLinkMask"][febIDx]);
@@ -203,11 +203,11 @@ int InitFEBs(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) {
         feb_sc.FEB_write(febIDx, SORTER_COUNTER_REGISTER_R + SORTER_INDEX_DELAY, delay);
 
         // chip mapping
-        cm_msg(MINFO, "InitFEBs()", "Set global ASIC ID mapping");
+        cm_msg1(MINFO, "quads", "InitFEBs()", "Set global ASIC ID mapping");
         for ( uint32_t chipID = febIDx * N_CHIPS; chipID < (febIDx + 1) * N_CHIPS; chipID++ ) {
             uint16_t globalChipID = (uint16_t) m_settings["DAQ"]["Links"]["Mapping"][chipID];
             uint16_t localChipID = chipID % N_CHIPS;
-            cm_msg(MINFO, "InitFEBs()", "Setup globalChipID-%i -> localASIC-%i on FEB-%i", globalChipID, localChipID, febIDx);
+            cm_msg1(MINFO, "quads", "InitFEBs()", "Setup globalChipID-%i -> localASIC-%i on FEB-%i", globalChipID, localChipID, febIDx);
             uint32_t command = (globalChipID << 9) | (0x1 << 7) | (febIDx << 4) | localChipID;
             feb_sc.write_register(SWB_LOOKUP_CTRL_REGISTER_W, command);
             //cout << hex << command << " i:" << hex << i << " v:" << hex << (uint16_t) asic_global_odb[i] << "FEB " << feb << endl;
@@ -228,7 +228,7 @@ int InitFEBs(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) {
  * @return FE_SUCCESS on success.
  */
 int resetASICs(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) {
-    cm_msg(MINFO, "resetASICs()", "Reset all ASICs");
+    cm_msg1(MINFO, "quads", "resetASICs()", "Reset all ASICs");
     for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
         bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
         if (!FEBActive)
@@ -263,7 +263,7 @@ int ConfigureASICs(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings, uint8
              asicMaskIDx++) {
             if (!((ASICMask >> (asicMaskIDx % N_CHIPS)) & 0x1))
                 continue;
-            cm_msg(MINFO, "ConfigureASICs()",
+            cm_msg1(MINFO, "quads", "ConfigureASICs()",
                    "/Settings/Config/ -> globalASIC-%i -> localASIC-%i on FEB-%i", asicMaskIDx,
                    asicMaskIDx % N_CHIPS, febIDx);
             get_BiasDACs_from_odb(m_settings["Config"], bitpattern_w, asicMaskIDx);
@@ -309,24 +309,35 @@ int ConfigureMuTRiGASICs(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings,
     int status = FE_SUCCESS;
 
     mutrig::Mutrig3Config config;
-
+    //Note: febIDx is global, corresponding to the QSFP port
+    //Note: febSSIDx is subsystem-centric and starts from zero, corresponding to an increasing number of FEBs for the subsystem without any offset.
+    //For the subsystem, i.e. indices of channels and asics within MutrigConfig, feb is used - so all channel numbers within mutrig start from zero
+    //
+    int32_t febSSIDx=-1;
     for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
         const bool febActive   = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
         const bool febIsMutrig = m_settings["DAQ"]["Links"]["FEBsMutrig"][febIDx];
         const uint16_t asicMask = m_settings["DAQ"]["Links"]["ASICMask"][febIDx];
 
-        if (!febActive || !febIsMutrig) {
+        if (!febIsMutrig) {
+            continue;
+        }
+	febSSIDx++;
+        if (!febActive) {
             continue;
         }
 
         for (uint32_t localAsic = 0; localAsic < N_MUTRIGS_PER_FEB; ++localAsic) {
+            const uint32_t globalAsic = febSSIDx * N_MUTRIGS_PER_FEB + localAsic;
             if (((asicMask >> localAsic) & 0x1u) == 0u) {
+                cm_msg1(MINFO, "quads", "ConfigureMuTRiGASICs",
+                   "/Settings/ConfigMuTRiG -> globalASIC-%u -> localASIC-%u on FEB-%u --> SKIPPED",
+                   globalAsic, localAsic, febIDx);
                 continue;
             }
 
-            const uint32_t globalAsic = febIDx * N_MUTRIGS_PER_FEB + localAsic;
 
-            cm_msg(MINFO, "ConfigureMuTRiGASICs",
+            cm_msg1(MINFO, "quads", "ConfigureMuTRiGASICs",
                    "/Settings/ConfigMuTRiG -> globalASIC-%u -> localASIC-%u on FEB-%u",
                    globalAsic, localAsic, febIDx);
 
@@ -336,9 +347,9 @@ int ConfigureMuTRiGASICs(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings,
             payload.push_back(vector<uint32_t>(reinterpret_cast<uint32_t*>(config.bitpattern_w),reinterpret_cast<uint32_t*>(config.bitpattern_w)+config.length_32bits));
             auto _status = feb_sc.FEBsc_NiosRPC(febIDx, CMD_MUTRIG_ASIC_CFG | (localAsic), payload );
             if (_status != FE_SUCCESS) {
-                cm_msg(MERROR, "ConfigureMuTRiGASICs",
+                cm_msg1(MERROR, "quads", "ConfigureMuTRiGASICs",
                        "Failed to configure ASIC %u on FEB %u", localAsic, febIDx);
-                return status;
+                continue;
             }
         }
     }
@@ -353,7 +364,7 @@ int ConfigureMuTRiGASICs(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings,
 
 //     // sanity check against constants.h
 //     if (!cfg.validate()) {
-//         cm_msg(MERROR, "ConfigureMuTRiGASICs",
+//         cm_msg1(MERROR, "quads", "ConfigureMuTRiGASICs",
 //                "MuTRiG layout mismatch: ODB layout gives %zu bits / %zu bytes, "
 //                "but constants.h expects %u bits / %u bytes",
 //                cfg.total_bits(), cfg.total_bytes(),
@@ -377,7 +388,7 @@ int ConfigureMuTRiGASICs(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings,
 
 //             const uint32_t globalAsic = febIDx * N_MUTRIGS_PER_FEB + localAsic;
 
-//             cm_msg(MINFO, "ConfigureMuTRiGASICs",
+//             cm_msg1(MINFO, "quads", "ConfigureMuTRiGASICs",
 //                    "/Settings/ConfigMuTRiG -> globalASIC-%u -> localASIC-%u on FEB-%u",
 //                    globalAsic, localAsic, febIDx);
 
@@ -385,7 +396,7 @@ int ConfigureMuTRiGASICs(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings,
 //             const auto bytes = cfg.generate(globalAsic);
 
 //             if (bytes.size() != N_BYTES_MUTRIG) {
-//                 cm_msg(MERROR, "ConfigureMuTRiGASICs",
+//                 cm_msg1(MERROR, "quads", "ConfigureMuTRiGASICs",
 //                        "Generated config size mismatch for ASIC %u: got %zu bytes, expected %u",
 //                        globalAsic, bytes.size(), N_BYTES_MUTRIG);
 //                 return FE_ERR_HW;
@@ -404,7 +415,7 @@ int ConfigureMuTRiGASICs(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings,
 //             payload.push_back(vector<uint32_t>(reinterpret_cast<uint32_t*>(bitpattern_w),reinterpret_cast<uint32_t*>(bitpattern_w)+bytes.size()/4));
 //             auto _status = feb_sc.FEBsc_NiosRPC(febIDx, CMD_MUTRIG_ASIC_CFG | (localAsic), payload );
 //             if (_status != FE_SUCCESS) {
-//                 cm_msg(MERROR, "ConfigureMuTRiGASICs",
+//                 cm_msg1(MERROR, "quads", "ConfigureMuTRiGASICs",
 //                        "Failed to configure ASIC %u on FEB %u", localAsic, febIDx);
 //                 return status;
 //             }
@@ -413,6 +424,71 @@ int ConfigureMuTRiGASICs(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings,
 
 //     return status;
 // }
+
+/**
+ * @brief Trigger Reset on MuTRiG FEB
+ *
+ * @param feb_sc : slow control interface
+ * @return FE_SUCCESS
+ */
+
+int MuTRiG_reset_datapath(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) {
+    int status = FE_SUCCESS;
+    for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
+        const bool febActive   = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
+        const bool febIsMutrig = m_settings["DAQ"]["Links"]["FEBsMutrig"][febIDx];
+        if (!febIsMutrig || !febActive) {
+            continue;
+        }
+        feb_sc.FEB_write(febIDx, MUTRIG_CTRL_RESET_REGISTER_W, 0x2);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        feb_sc.FEB_write(febIDx, MUTRIG_CTRL_RESET_REGISTER_W, 0x0);
+    }
+    return status;
+}
+
+int MuTRiG_reset_asics(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) {
+    int status = FE_SUCCESS;
+    for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
+        const bool febActive   = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
+        const bool febIsMutrig = m_settings["DAQ"]["Links"]["FEBsMutrig"][febIDx];
+        if (!febIsMutrig || !febActive) {
+            continue;
+        }
+        feb_sc.FEB_write(febIDx, MUTRIG_CTRL_RESET_REGISTER_W, 0x1);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        feb_sc.FEB_write(febIDx, MUTRIG_CTRL_RESET_REGISTER_W, 0x0);
+    }
+    return status;
+}
+
+int MuTRiG_reset_lvds(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) {
+    int status = FE_SUCCESS;
+    for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
+        const bool febActive   = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
+        const bool febIsMutrig = m_settings["DAQ"]["Links"]["FEBsMutrig"][febIDx];
+        if (!febIsMutrig || !febActive) {
+            continue;
+        }
+        feb_sc.FEB_write(febIDx, MUTRIG_CTRL_RESET_REGISTER_W, 0x4);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        feb_sc.FEB_write(febIDx, MUTRIG_CTRL_RESET_REGISTER_W, 0x0);
+    }
+    return status;
+}
+
+int MuTRiG_reset_counters(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) {
+    int status = FE_SUCCESS;
+    for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
+        const bool febActive   = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
+        const bool febIsMutrig = m_settings["DAQ"]["Links"]["FEBsMutrig"][febIDx];
+        if (!febIsMutrig || !febActive) {
+            continue;
+        }
+        auto rpc_ret = feb_sc.FEBsc_NiosRPC(febIDx, CMD_MUTRIG_CNT_RESET, {});
+    }
+    return status;
+}
 
 /**
  * @brief Read TDAC file from a given path.
@@ -428,7 +504,7 @@ int read_tdac_file(vector<uint32_t>& vec, std::string path) {
     std::ifstream file;
     file.open(path);
     if (file.fail()) {
-        cm_msg(MERROR, "read_tdac_file", "Could not find tdac file %s", path.c_str());
+        cm_msg1(MERROR, "quads", "read_tdac_file", "Could not find tdac file %s", path.c_str());
         vec.clear();
         for (int i = 0; i < 256 * 64; i++) {
             vec.push_back(0x47474747);  // has to be 47 as it send directly to the chip
@@ -479,7 +555,7 @@ int ConfigureTDACs(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) {
              asicMaskIDx++) {
             if (!((ASICMask >> (asicMaskIDx % N_CHIPS)) & 0x1))
                 continue;
-            cm_msg(MINFO, "WriteTDACs()",
+            cm_msg1(MINFO, "quads", "WriteTDACs()",
                    "/Settings/Config/ -> globalASIC-%i -> localASIC-%i on FEB-%i", asicMaskIDx,
                    asicMaskIDx % N_CHIPS, febIDx);
 
@@ -512,7 +588,7 @@ int ConfigureTDACs(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) {
         }
     }
 
-    cm_msg(MINFO, "ConfigureTDACs", "tdac write completed");
+    cm_msg1(MINFO, "quads", "ConfigureTDACs", "tdac write completed");
 
     return FE_SUCCESS;
 }
@@ -683,7 +759,7 @@ int InjectASICsInLoop(FEBSlowcontrolInterface& feb_sc, uint32_t injection_pulse_
     for (uint32_t i = 0; i < num_repetitions; i++) {
         // This method can lock the frontend for quite a long time, depending on the parameters
         // passed. So Print a status report every now and then.
-        // if((i % 10) == 9) cm_msg(MINFO, "InjectASICsInLoop" , "Sending injection trigger %u of
+        // if((i % 10) == 9) cm_msg1(MINFO, "quads", "InjectASICsInLoop" , "Sending injection trigger %u of
         // %u\n", i + 1, num_repetitions);
 
         int result = InjectASICs(feb_sc, injection_pulse_duration);
@@ -935,7 +1011,6 @@ int ChangeTDCTest(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) {
     bool setting = m_settings["DAQ"]["Commands"]["MuTRiG"]["TestPulsesTDC"];
 
     for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
-        uint16_t ASICMask = m_settings["DAQ"]["Links"]["ASICMask"][febIDx];
         bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
         bool FEBsIsMutrig = m_settings["DAQ"]["Links"]["FEBsMutrig"][febIDx];
         if (!FEBActive || !FEBsIsMutrig)
@@ -950,16 +1025,15 @@ int ChangeTDCTest(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) {
             febIDx,
             static_cast<unsigned long>(setting)
         );
-        cm_msg(MINFO, "ChangeTDCTest()", "%s", reportStr);
+        cm_msg1(MINFO, "quads", "ChangeTDCTest()", "%s", reportStr);
         if(_status != FEBSlowcontrolInterface::ERRCODES::OK) status = _status;
     }
     return status;
 }
 
-int TMBinit(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) {
+int TBinit(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) {
     int status = FE_SUCCESS;
     for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
-        uint16_t ASICMask = m_settings["DAQ"]["Links"]["ASICMask"][febIDx];
         bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
         bool FEBsIsMutrig = m_settings["DAQ"]["Links"]["FEBsMutrig"][febIDx];
         if (!FEBActive || !FEBsIsMutrig)
@@ -967,10 +1041,11 @@ int TMBinit(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) {
 
         status = feb_sc.FEBsc_NiosRPC(febIDx, CMD_TILE_TMB_INIT, {});
         if(status != FEB_REPLY_SUCCESS) {
-            cm_msg(
+            cm_msg1(
                 MERROR,
+                "Quads",
                 "TMBinit()",
-                "Failed to initialize TMB of FEB:%i\n",
+                "Failed to initialize Testboards on FEB:%i\n",
                 febIDx
             );
             continue;
@@ -981,7 +1056,7 @@ int TMBinit(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) {
             (status == FEB_REPLY_SUCCESS? "Successfully " : "Failed to "),
             febIDx
         );
-        cm_msg(MINFO, "TMBinit()", "%s", reportStr);
+        cm_msg1(MINFO, "quads", "TMBinit()", "%s", reportStr);
     }
     //Update Inject as well to stay consistent with ODB
     ChangeTDCTest(feb_sc, m_settings);
@@ -996,8 +1071,9 @@ int UpdatePowerOverride(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) 
     uint32_t m_override_ana_power_mask = m_settings["DAQ"]["Commands"]["MuTRiG"]["override_ana_power_mask"];
 
     if(febIDx < 0 || febIDx > N_FEBS ){
-        cm_msg(
+        cm_msg1(
             MINFO,
+            "Quads",
             "UpdatePowerOverride()",
             "ID out of bounds (0 <= %i < %i)",
             febIDx,
@@ -1006,12 +1082,12 @@ int UpdatePowerOverride(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) 
         return status;
     }
 
-    uint16_t ASICMask = m_settings["DAQ"]["Links"]["ASICMask"][febIDx];
     bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
     bool FEBsIsMutrig = m_settings["DAQ"]["Links"]["FEBsMutrig"][febIDx];
     if (!FEBActive || !FEBsIsMutrig) {
-        cm_msg(
+        cm_msg1(
             MERROR,
+            "Quads",
             "UpdatePowerOverride()",
             "Failed to update power ASIC setting on TMB of FEB:%i active:%i mutrig:%i",
             febIDx,
@@ -1024,8 +1100,9 @@ int UpdatePowerOverride(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) 
     status = feb_sc.FEBsc_NiosRPC(febIDx, CMD_TILE_ASIC_PWROR, { { m_override_ana_power_mask, m_override_dig_power_mask } });
     
     if(status != FEB_REPLY_SUCCESS) {
-        cm_msg(
+        cm_msg1(
             MERROR,
+            "Quads",
             "UpdatePowerOverride()",
             "Failed to update power ASIC setting on TMB of FEB:%i to %12.12x || %12.12x",
             febIDx,
@@ -1033,8 +1110,9 @@ int UpdatePowerOverride(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) 
             m_override_dig_power_mask
         );
     } else {
-        cm_msg(
+        cm_msg1(
             MINFO,
+            "Quads",
             "UpdatePowerOverride()",
             "Update power ASIC setting on TMB of FEB:%i to %12.12x || %12.12x",
             febIDx,
@@ -1048,35 +1126,46 @@ int UpdatePowerOverride(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) 
 
 int UpdatePower(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) {
     int status = FE_SUCCESS;
-    uint32_t m_override_dig_power_mask = m_settings["DAQ"]["Commands"]["MuTRiG"]["override_dig_power_mask"];
-    uint32_t m_override_ana_power_mask = m_settings["DAQ"]["Commands"]["MuTRiG"]["override_ana_power_mask"];
+    //Note: Indices below correspond to subdetector module numbers starting from zero
+    //uint32_t m_override_dig_power_mask = m_settings["DAQ"]["Commands"]["MuTRiG"]["override_dig_power_mask"];
+    //uint32_t m_override_ana_power_mask = m_settings["DAQ"]["Commands"]["MuTRiG"]["override_ana_power_mask"];
     std::vector<bool> m_module_power_mask = m_settings["DAQ"]["Commands"]["MuTRiG"]["module_power_mask"];
     bool m_module_power = m_settings["DAQ"]["Commands"]["MuTRiG"]["module_power"];
 
+    //Note: febIDx is global, corresponding to the QSFP port
+    //Note: febSSIDx is subsystem-centric and starts from zero, corresponding to an increasing number of FEBs for the subsystem without any offset.
+    //For the subsystem, i.e. indices of channels and asics within MutrigConfig, feb is used - so all channel numbers within mutrig start from zero
+    //
+    int32_t febSSIDx=-1;
     for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
         uint16_t ASICMask = m_settings["DAQ"]["Links"]["ASICMask"][febIDx];
         bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
         bool FEBsIsMutrig = m_settings["DAQ"]["Links"]["FEBsMutrig"][febIDx];
-        if (!FEBActive || !FEBsIsMutrig)
+        if (!FEBsIsMutrig)
+            continue;
+	febSSIDx++;
+        if (!FEBActive)
             continue;
 
         if(m_module_power == false)
             ASICMask = 0;
-        if(m_module_power_mask[febIDx] == false)
+        if(m_module_power_mask[febSSIDx] == false)
             ASICMask = 0;
 
         status = feb_sc.FEBsc_NiosRPC(febIDx, CMD_TILE_ASIC_PWR, { { ASICMask } });
         if(status != FEB_REPLY_SUCCESS) {
-            cm_msg(
+            cm_msg1(
                 MERROR,
+                "Quads",
                 "UpdatePower()",
                 "Failed to update power ASIC setting on TMB of FEB:%i to %12.12x",
                 febIDx,
                 ASICMask
             );
         } else {
-            cm_msg(
+            cm_msg1(
                 MINFO,
+                "Quads",
                 "UpdatePower()",
                 "Update power ASIC setting on TMB of FEB:%i to %12.12x",
                 febIDx,

@@ -146,7 +146,7 @@ int init_mudaq(mudaq::MudaqDevice& mu) {
 #endif
 
     if (dma_buf == MAP_FAILED) {
-        cm_msg(MERROR, "frontend_init", "mmap failed: dmabuf = %p\n", MAP_FAILED);
+        cm_msg1(MERROR, "quads", "frontend_init", "mmap failed: dmabuf = %p\n", MAP_FAILED);
         return FE_ERR_DRIVER;
     }
     dma_buf_local = new (std::align_val_t(8)) uint32_t[MUDAQ_DMABUF_DATA_LEN];
@@ -154,7 +154,7 @@ int init_mudaq(mudaq::MudaqDevice& mu) {
     // open mudaq
     if (!mu.open()) {
         std::cout << "Could not open device " << std::endl;
-        cm_msg(MERROR, "frontend_init", "Could not open device");
+        cm_msg1(MERROR, "quads", "frontend_init", "Could not open device");
         return FE_ERR_DRIVER;
     }
 
@@ -162,7 +162,7 @@ int init_mudaq(mudaq::MudaqDevice& mu) {
     if (!mu.is_ok())
         return FE_ERR_DRIVER;
     else {
-        cm_msg(MINFO, "frontend_init", "Mudaq device is ok");
+        cm_msg1(MINFO, "quads", "frontend_init", "Mudaq device is ok");
     }
 
     // switch off the data generator (just in case ..)
@@ -199,7 +199,7 @@ int begin_of_run() {
 #else
     if ((bool)m_settings["Readout"]["Datagen Enable"]) {
         // setup data generator
-        cm_msg(MINFO, "readout_fe", "Use datagenerator with divider register %i",
+        cm_msg1(MINFO, "quads", "readout_fe", "Use datagenerator with divider register %i",
                (int)m_settings["Readout"]["Datagen Divider"]);
         mu.write_register(DATAGENERATOR_DIVIDER_REGISTER_W,
                           (int)m_settings["Readout"]["Datagen Divider"]);
@@ -209,15 +209,15 @@ int begin_of_run() {
 
     if ((bool)m_settings["Readout"]["use_merger"]) {
         // readout merger
-        cm_msg(MINFO, "readout_fe", "Use Time Merger");
+        cm_msg1(MINFO, "quads", "readout_fe", "Use Time Merger");
         readout_state_regs = SET_USE_BIT_MERGER(readout_state_regs);
     } else {
         // readout stream
-        cm_msg(MINFO, "readout_fe", "Use Stream Merger");
+        cm_msg1(MINFO, "quads", "readout_fe", "Use Stream Merger");
         readout_state_regs = SET_USE_BIT_STREAM(readout_state_regs);
     }
     if ((bool)m_settings["Readout"]["use_send_time"]) {
-        cm_msg(MINFO, "readout_fe", "Use send time as header time");
+        cm_msg1(MINFO, "quads", "readout_fe", "Use send time as header time");
         readout_state_regs = SET_USE_BIT_SEND_TIME(readout_state_regs);
     }
     readout_state_regs = SET_USE_BIT_GENERIC(readout_state_regs);
@@ -304,7 +304,7 @@ int create_midas_events(uint32_t* dmaBuffer, uint32_t dmaBufSize, int rbh)
     do {
         if(!is_readout_thread_enabled()) return -1;
         if(!readout_enabled()) {
-            cm_msg(MERROR, "create_midas_events()", "we are not running");
+            cm_msg1(MERROR, "quads", "create_midas_events()", "we are not running");
             return -1;
         }
         status = rb_get_wp(rbh, &event, 0);
@@ -312,7 +312,7 @@ int create_midas_events(uint32_t* dmaBuffer, uint32_t dmaBufSize, int rbh)
         else if(status != DB_SUCCESS) return -1;
     } while(status == DB_TIMEOUT);
     if(!event) {
-        cm_msg(MERROR, "create_midas_events", "unexpected nullptr from rb_get_wp\n");
+        cm_msg1(MERROR, "quads", "create_midas_events", "unexpected nullptr from rb_get_wp\n");
         return -1;
     }
     auto eventHeader = reinterpret_cast<EVENT_HEADER*>(event);
@@ -439,7 +439,7 @@ int read_stream_thread(void*) {
         begin = std::chrono::steady_clock::now();
 
         if (size_dma_buf > MUDAQ_DMABUF_DATA_LEN) {
-            cm_msg(MERROR, "ro_swb_fe", "Read invalid DMA buffer size %i!\n", size_dma_buf);
+            cm_msg1(MERROR, "quads", "ro_swb_fe", "Read invalid DMA buffer size %i!\n", size_dma_buf);
             continue;
         }
         // [AK] NOTE: use direct copy as memcpy does not arantee
