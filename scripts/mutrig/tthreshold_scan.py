@@ -111,7 +111,9 @@ def scan(seq, start_threshold, stop_threshold, step_threshold, wait_time, start_
 
     # Scan Threshold
     for thr_iteration, current_threshold in enumerate(th_list_extended):
-        current_tthreshold = 63-(current_threshold % 64)
+        current_tthreshold = current_threshold
+        if (cfg.polarity_inverted == False):
+            current_tthreshold = 63-(current_threshold % 64)
         current_offset = (current_threshold // 64)
 
         # Set e-threshold
