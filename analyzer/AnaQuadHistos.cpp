@@ -257,6 +257,7 @@ std::tuple<uint32_t, uint32_t> AnaQuadHistos::get_quad_global_col_row(pixelhit h
             finalRow = 499 - combinedRow;  // flip vertically (0-499 range)
             // 180° around x: flip row again (so row is back to normal, col stays flipped)
             finalRow = 499 - finalRow; // This makes finalRow = combinedRow again
+            finalCol = 511 - combinedCol;  // flip horizontally (0-511 range)
             break;
         case 1: // Layer 1: 180° around z
         case 3: // Layer 3: like layer 1
@@ -264,6 +265,7 @@ std::tuple<uint32_t, uint32_t> AnaQuadHistos::get_quad_global_col_row(pixelhit h
             // 180° around z: flip both col and row in the combined space
             finalCol = 511 - combinedCol;  // flip horizontally (0-511 range)
             finalRow = 499 - combinedRow;  // flip vertically (0-499 range)
+            finalCol = 511 - combinedCol;  // flip horizontally (0-511 range)
             break;
         default:
             // No rotation
