@@ -112,7 +112,9 @@ def scan(seq, start_threshold, stop_threshold, step_threshold, wait_time, start_
     # Scan Threshold
     for thr_iteration, current_threshold in enumerate(th_list_extended):
         current_tthreshold = current_threshold
-        if (cfg.polarity_inverted == False):
+        if (cfg.polarity_inverted == True):
+            current_tthreshold = (current_threshold % 64)
+        else:
             current_tthreshold = 63-(current_threshold % 64)
         current_offset = (current_threshold // 64)
 
@@ -228,7 +230,11 @@ def scan_no_offset(seq, start_threshold, stop_threshold, step_threshold, wait_ti
     rates = [ [] for i in range(NChannels) ]
 
     # Set system up for scan
-    tmp_ethresh = [0] * NChannels
+    if (cfg.polarity_inverted == True):
+        tmp_ethresh = [0] * NChannels
+    else:
+        tmp_ethresh = [0] * NChannels
+
     m.Set_eth(seq,tmp_ethresh)
     m.Mutrig_TorE_ASIC_configure(seq)
 

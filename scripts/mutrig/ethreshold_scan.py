@@ -89,7 +89,10 @@ def scan(seq, start_threshold, stop_threshold, step_threshold, wait_time, do_sta
     # Scan Threshold
     for thr_iteration in range(n_steps):
         current_threshold = start_threshold + step_threshold * thr_iteration
-        current_ethreshold = 255 - current_threshold
+        if (cfg.polarity_inverted == True):
+            current_ethreshold = current_threshold
+        else:
+            current_ethreshold = 255 - current_threshold
 
         # Set e-threshold
         path_threshold = m.Get_channel_odb_path("ethresh")
@@ -126,9 +129,9 @@ def scan(seq, start_threshold, stop_threshold, step_threshold, wait_time, do_sta
         temp_value = current_temp[0]
 
         # Store output
-        seq.odb_set(f"{path_this_scan}/Output/thresh{thr_iteration}", [current_threshold] * len(current_rate))
-        seq.odb_set(f"{path_this_scan}/Output/rate{thr_iteration}", current_rate)
-        seq.odb_set(f"{path_this_scan}/Output/temp{thr_iteration}", temp_value)
+        #seq.odb_set(f"{path_this_scan}/Output/thresh{thr_iteration}", [current_threshold] * len(current_rate))
+        #seq.odb_set(f"{path_this_scan}/Output/rate{thr_iteration}", current_rate)
+        #seq.odb_set(f"{path_this_scan}/Output/temp{thr_iteration}", temp_value)
         # Store output as python array, to return later, in the form of th[channel][th_iteration]
         temperatures.append(temp_value)
         for i in range(len(current_rate)):
@@ -272,7 +275,10 @@ def write_config_odb(ethresh, settings, **kwargs):
         print("No valid filename specified, setting it to", output_path)
     
     # Add e-thresholds to output dict, converting from threshold to actual e-threshold value (255-x)
-    output = {"/ODB path": f"{cfg.path_asicsettings}/Channels","ethresh": [int(255-x) for x in np.array(ethresh).astype(int)]}
+    if (cfg.polarity_inverted == True):
+        output = {"/ODB path": f"{cfg.path_asicsettings}/Channels","ethresh": [int(x) for x in np.array(ethresh).astype(int)]}
+    else:
+        output = {"/ODB path": f"{cfg.path_asicsettings}/Channels","ethresh": [int(255-x) for x in np.array(ethresh).astype(int)]}
     ebias = settings["Channels"]["ebias"]
     ebias_dict = {'ebias':ebias}
     energy_c_en = settings["Channels"]["energy_c_en"]

@@ -18,8 +18,8 @@ def find_max_value_limit(selected_list,limit_value,offset_value):
     max_value_index = 0
     max_value = 0
     if(limit_value > len(selected_list)):
-        print("limit value is larger than size of the list!")
-        return
+        print(f"limit value is larger than size of the list ({limit_value}>{len(selected_list)})")
+        return 0
     for i in range(limit_value):
         index = i + offset_value*limit_value
         if(selected_list[index] > max_value):
@@ -31,7 +31,7 @@ def cut_rate(rates, dim_tth, offset, rate_cut):
     low_rate_channels = []
     for i in range(len(rates)):
         index_max = find_max_value_limit(rates[i],dim_tth,offset)
-        if(rates[i][index_max] < rate_cut):
+        if(index_max > 0 and rates[i][index_max] < rate_cut):
             low_rate_channels.append(i)    
     return low_rate_channels
 

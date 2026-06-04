@@ -296,7 +296,10 @@
                     </div>
                 </th>
                 <th>
+                </th>
                     <div class="mjshistory" data-group="MuTRiG" data-panel="CRC Errors" style="width: 500px; height: 300px;" ></div>
+                <th>
+                    <div class="mjshistory" data-group="MuTRiG" data-panel="ASIC Rate" style="width: 500px; height: 300px;" ></div>
                 </th>
                 <th>
                     <div class="mjshistory" data-group="MuTRiG" data-panel="HV Currents" style="width: 500px; height: 300px;" ></div>
@@ -518,13 +521,16 @@
             {source: "mutrig/h_tot_14", title: "Matrix CH 14", xTitle: "ToT" , yTitle: "Entries", },
             {source: "mutrig/h_tot_15", title: "Matrix CH 15", xTitle: "ToT" , yTitle: "Entries", },
 	 */
-            {source: "mutrig/h_tot_33", title: "ToT UP.1", xTitle: "ToT" , yTitle: "Entries", },
-            {source: "mutrig/h_tot_35", title: "ToT UP.2", xTitle: "ToT" , yTitle: "Entries", },
-            {source: "mutrig/h_tot_32", title: "ToT M.1", xTitle: "ToT" , yTitle: "Entries", },
-            {source: "mutrig/h_tot_36", title: "ToT BW.1", xTitle: "ToT" , yTitle: "Entries", },
-            {source: "mutrig/h_tot_37", title: "ToT BW.2", xTitle: "ToT" , yTitle: "Entries", },
+            {source: "mutrig/h_tot_32", title: "ToT M.1 (32)", xTitle: "ToT" , yTitle: "Entries", },
+            {source: "mutrig/h_tot_34", title: "ToT UP.1 (34)", xTitle: "ToT" , yTitle: "Entries", },
+            {source: "mutrig/h_tot_35", title: "ToT UP.2 (35)", xTitle: "ToT" , yTitle: "Entries", },
+            {source: "mutrig/h_tot_36", title: "ToT BW.1 (36)", xTitle: "ToT" , yTitle: "Entries", },
+            {source: "mutrig/h_tot_37", title: "ToT BW.2 (37)", xTitle: "ToT" , yTitle: "Entries", },
             
-            //{source: "mutrig/TimeStampDelta_m_internal", title: "Muon intra timing", xTitle: "dT [ns]" , yTitle: "Entries", },
+            {source: "mutrig/TimeStampDelta_bw", title: "Backward coincidences timing", xTitle: "dT [ns]" , yTitle: "Entries", },
+            {source: "mutrig/TimeStampDelta_up", title: "Upward coincidences timing", xTitle: "dT [ns]" , yTitle: "Entries", },
+            {source: "mutrig/TimeStampDelta_m1_up1", title: "M - UP.1 coincidences timing", xTitle: "dT [ns]" , yTitle: "Entries", },
+            {source: "mutrig/TimeStampDelta_m1_bw1", title: "M - BW.1 coincidences timing", xTitle: "dT [ns]" , yTitle: "Entries", },
             //{source: "mutrig/TimeStampDelta_backward_internal", title: "Backward intra timing", xTitle: "dT [ns]" , yTitle: "Entries", },
             //{source: "mutrig/TimeStampDelta_forward_internal", title: "Forward intra timing", xTitle: "dT [ns]" , yTitle: "Entries", },
             //{source: "mutrig/TimeStampDelta_det2_internal", title: "Detector 2 intra timing", xTitle: "dT [ns]" , yTitle: "Entries", },
