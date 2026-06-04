@@ -14,8 +14,8 @@ import os
 # Standalone / Tests main routine
 if __name__ == "__main__":
     global seq;
-    filename = "/home/nemu/musip/scripts/MutrigScripts/data/FP_adptrB.json"
-    filename_output = "/home/nemu/musip/scripts/MutrigScripts/data/FP_tth.json"
+    filename = "../data/tthreshold_scan.json"
+    filename_output = "../data/tthreshold_scan.config.json"
 
         
     tths_arr, offsets_arr, bad_channels, channels_details = rc.select_tth(filename,constrate=True,constrate_value=100000,high_to_low = False,debug = False)

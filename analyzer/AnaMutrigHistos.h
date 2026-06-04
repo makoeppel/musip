@@ -86,6 +86,7 @@ private:
     */
     std::map<std::pair<int,int>,std::string> channelpairs_; // filled from config mutrig.tdiff_channelpairs
     std::vector<int> tot_channels_; // filled from config mutrig.tot_channels
+    std::vector<std::string> channelnames_; // filled from config mutrig.channelnames
     bool tdiff_enabled_ = true; // filled from config mutrig.tdiff_enabled
     bool ecorrelation_enabled_ = true; // filled from config mutrig.ecorrelation_enabled
     bool timewalk_enabled_ = true; // filled from config mutrig.timewalk_enabled

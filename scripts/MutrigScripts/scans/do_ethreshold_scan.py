@@ -55,7 +55,7 @@ if __name__ == "__main__":
     cfg.Print()
     #th,r,temperatures,settings = escan.scan(seq,start_threshold=40, stop_threshold=200, step_threshold=1, wait_time=0.2)
 
-    th,r,temperatures,settings = escan.scan(seq,start_threshold=40, stop_threshold=200, step_threshold=1, wait_time=3)
+    th,r,temperatures,settings = escan.scan(seq,start_threshold=100, stop_threshold=175, step_threshold=1, wait_time=3)
     
     filename = f'../data/ethreshold_scan.json'
     seq.msg("Scan complete. Writing output to "+filename)

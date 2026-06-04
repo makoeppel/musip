@@ -44,7 +44,7 @@ struct mutrighit {
     [[nodiscard]] bool is_mutrig() const { return ((hitdata >> 63) & 0x1) == 1; }
     [[nodiscard]] uint8_t chipid() const { return (hitdata >> 61) & 0x3; }
     [[nodiscard]] uint8_t asic() const { return chipid(); }
-    [[nodiscard]] uint8_t channel() const { return (hitdata >> 56) & 0x1F; }
+    [[nodiscard]] uint8_t channel() const { return (hitdata >> 56) & 0x3F; }
     [[nodiscard]] uint16_t et() const { return (hitdata >> 47) & 0x1FF; }
     [[nodiscard]] bool eflag() const { return et() == 0x1FF; }
     [[nodiscard]] uint16_t tot() const { return et(); }

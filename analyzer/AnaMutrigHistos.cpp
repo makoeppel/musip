@@ -59,6 +59,17 @@ AnaMutrigHistos::AnaMutrigHistos(const boost::property_tree::ptree& config, TARu
         }
     }
 
+    // parse mutrig -> channelnames into vector<int>
+    if (auto tot_opt = config.get_child_optional("channelnames")) {
+        const boost::property_tree::ptree &tot = *tot_opt;
+        for (const auto &elem : tot) {
+            try {
+                channelnames_.push_back(elem.second.get_value<string>());
+            } catch (...) {
+                // ignore malformed element
+            }
+        }
+    }
     //parse enable flags for histograms
     tdiff_enabled_ = config.get<bool>("tdiff_enabled", true);
     timewalk_enabled_ = config.get<bool>("timewalk_enabled", false);

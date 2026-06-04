@@ -61,7 +61,7 @@ if __name__ == "__main__":
 
     #th,r,temperatures,settings = tscan.scan(seq,start_threshold=0, stop_threshold=63, step_threshold=1, wait_time=0.2, start_offset=0, stop_offset=2)
     
-    th,r,temperatures,settings = tscan.scan(seq,start_threshold=0, stop_threshold=63, step_threshold=1, wait_time=3.0, start_offset=0, stop_offset=2)
+    th,r,temperatures,settings = tscan.scan(seq,start_threshold=0, stop_threshold=63, step_threshold=1, wait_time=3.0, start_offset=0, stop_offset=0)
     filename = f'../data/tthreshold_scan.json'
     seq.msg("Scan complete. Writing output to "+filename)
     tscan.write_json(filename,th,r,temperatures,settings)
