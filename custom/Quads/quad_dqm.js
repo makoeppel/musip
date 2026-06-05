@@ -32,7 +32,7 @@ function click_on_histo(event, plot, layer) {
     clicked_x = Math.floor(plot.screenToX(event.offsetX));
     clicked_y = Math.floor(plot.screenToY(event.offsetY));
 
-    if (clicked_x < 256 && clicked_y < 250) {
+    if (clicked_x < 256 && clicked_y >= 250) {
         clicked_chip = 0 + 4 * layer;
 	if (layer == 0) clicked_chip = 17
 	else if (layer == 1) clicked_chip = 11
@@ -42,7 +42,7 @@ function click_on_histo(event, plot, layer) {
 	else if (layer == 5) clicked_chip = 13
     }
 
-    if (clicked_x >= 256 && clicked_y < 250) {
+    if (clicked_x >= 256 && clicked_y >= 250) {
         clicked_chip = 2 + 4 * layer;
 	if (layer == 0) clicked_chip = 16
 	else if (layer == 1) clicked_chip = 10
@@ -52,7 +52,7 @@ function click_on_histo(event, plot, layer) {
 	else if (layer == 5) clicked_chip = 12
     }
 
-    if (clicked_x < 256 && clicked_y >= 250) {
+    if (clicked_x < 256 && clicked_y < 250) {
         clicked_chip = 1 + 4 * layer;
 	if (layer == 0) clicked_chip = 19
 	else if (layer == 1) clicked_chip = 3
@@ -62,7 +62,7 @@ function click_on_histo(event, plot, layer) {
 	else if (layer == 5) clicked_chip = 15
     }
 
-    if (clicked_x >= 256 && clicked_y >= 250) {
+    if (clicked_x >= 256 && clicked_y < 250) {
         clicked_chip = 3 + 4 * layer;
 	if (layer == 0) clicked_chip = 18
 	else if (layer == 1) clicked_chip = 2
