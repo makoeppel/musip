@@ -124,6 +124,7 @@ window.dqmInit = function() {
         let mPlotGraph = new MPlotGraph(plotDiv);
         mPlotGraph.addPlot({"zeroColor": "white"})
         mPlotGraph.param.plot[0].bgcolor = "white";
+        mPlotGraph.param.stats.show = false;
         // Set custom tooltip text when the mouse is over the data area.
         // The function we're setting looks for a function xAxisText or yAxisText and
         // uses that if it's there. Otherwise it does the same as the Midas default.
