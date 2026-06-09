@@ -11,7 +11,6 @@
  * Key functionalities:
  * - Initializes and maps a DMA buffer for high-throughput data acquisition.
  * - Manages device communication through `mudaq::DmaMudaqDevice`.
- * - Handles multiple event streams via software buffering (`mevents`).
  * - Provides run-time configuration through MIDAS Online Database (ODB).
  * - Supports both real hardware and dummy simulation via preprocessor flags.
  *
@@ -66,7 +65,6 @@ uint32_t reset_regs = 0;
 uint16_t eventID_data = 301;
 uint32_t readout_state_regs = 0;
 bool use_software_dummy = false;
-uint32_t n_mevents = 0;
 uint32_t readout_timeout = 1000;
 uint32_t use_timeout = true;
 uint32_t cnt_loop = 0;
@@ -74,9 +72,7 @@ uint32_t maxwords = 0;
 mudaq::DmaMudaqDevice* mup = nullptr;
 mudaq::DmaMudaqDevice::DataBlock block;
 std::vector<uint32_t> lvds_banks;
-std::map<uint64_t, std::list<mevent_t>> mevents;
 midas::odb m_settings;
-bool saw_readout_enabled = false;
 
 static void print_swb_counters(mudaq::DmaMudaqDevice& mu) {
     // counter / rate
@@ -190,8 +186,8 @@ int begin_of_run() {
     // set all in reset
     mu.write_register_wait(RESET_REGISTER_W, reset_regs, 100);
 
-    // empty dma buffer
-    for (uint32_t i = 0; i < dma_buf_nwords; i++) dma_buf[i] = 0;
+    // fill dma buffer
+    for (uint32_t i = 0; i < maxwords * 8; i++) dma_buf[i] = 0xffffffff;
 #endif
 
 #ifdef NO_A10_BOARD
@@ -222,7 +218,6 @@ int begin_of_run() {
     }
     readout_state_regs = SET_USE_BIT_GENERIC(readout_state_regs);
     use_software_dummy = (bool)m_settings["Readout"]["Software dummy"];
-    n_mevents = (int)m_settings["Readout"]["n_mevents"];
 
 #ifdef NO_A10_BOARD
 
@@ -244,10 +239,6 @@ int begin_of_run() {
     // release reset
     mu.write_register_wait(RESET_REGISTER_W, 0x0, 100);
 #endif
-
-    mevents.clear();
-
-    saw_readout_enabled = false;
 
     return SUCCESS;
 }
@@ -295,8 +286,8 @@ int create_midas_events(uint32_t* dmaBuffer, uint32_t dmaBufSize, int rbh)
         hits.push_back({word0, word1, ts});
     }
     // Sort by timestamp
-    std::sort(hits.begin(), hits.end(),
-              [](const HitWord& a, const HitWord& b) { return a.ts < b.ts; });
+    // std::sort(hits.begin(), hits.end(),
+    //           [](const HitWord& a, const HitWord& b) { return a.ts < b.ts; });
 
     // create MIDAS event
     void* event = nullptr;
@@ -403,14 +394,21 @@ int read_stream_thread(void*) {
         }
 
         // start dma
-        if (!timeout)
-            mu.enable_continous_readout(0);
+        // fill dma buffer
+        for (uint32_t i = 0; i < maxwords * 8; i++) dma_buf[i] = 0xffffffff;
+        // printf("timeout %x %x\n", dma_buf[0], dma_buf[maxwords * 8 - 1]);
+        mu.enable_continous_readout(0);
+
         // wait for requested data
         cnt_loop = 0;
         timeout = false;
         while ((mu.read_register_ro(EVENT_BUILD_STATUS_REGISTER_R) & 1) == 0) {
             if (use_timeout && cnt_loop++ >= readout_timeout) {
                 timeout = true;
+                // just wait a bit longer to tune the timeout
+                // printf("timeout %x %x %x\n", dma_buf[0], dma_buf[maxwords * 8 - 1], dma_buf[maxwords * 8]);
+                // readout_timeout++;
+                mu.disable();
                 break;
             }
             if (!readout_enabled())
@@ -419,8 +417,8 @@ int read_stream_thread(void*) {
         }
 
         // dont read from the buffer if the status is not done
-        if (timeout)
-            continue;
+        // if (timeout)
+        //     continue;
 
         // disable dma
         mu.disable();
@@ -505,6 +503,9 @@ int frontend_init() {
 
     // set write cache to 10MB
     // set_cache_size("SYSTEM", 10000000);
+
+    // get max words
+    maxwords = (uint32_t) m_settings["Readout"]["max_requested_words"];
 
     return SUCCESS;
 }

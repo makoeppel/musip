@@ -186,7 +186,11 @@ begin
                         -- Bits 43:39        Fine time
                         next_64bit_word(i)(43 downto 39) <= i_rx(i).data(13 downto 9);
                         -- Bits 38:0         Hit time (8ns overflow in 4000s)   23 +                       4 +                      8 +                          4
-                        next_64bit_word(i)(38 downto 0) <= ts_high(i)(22 downto 0) & ts_low(i)(15 downto 12) & last_subheader_time(i) & i_rx(i).data(31 downto 28);
+                        if ( i_use_send_time = '0' ) then
+                            next_64bit_word(i)(38 downto 0) <= ts_high(i)(22 downto 0) & ts_low(i)(15 downto 12) & last_subheader_time(i) & i_rx(i).data(31 downto 28);
+                        else
+                            next_64bit_word(i)(38 downto 0) <= send_time(i)(27 downto 1) & last_subheader_time(i) & i_rx(i).data(31 downto 28);
+                        end if;
                     end if;
                 end if;
             end if;

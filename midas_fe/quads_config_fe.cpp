@@ -65,6 +65,7 @@ mudaq::DmaMudaqDevice* mup = nullptr;
 std::vector<uint32_t> readout_banks = {};
 std::vector<uint32_t> feb_hits = {0,0,0,0};
 std::vector<uint32_t> feb_hits_last = {0,0,0,0};
+std::vector<uint32_t> feb_rates_mutrig = {0,0,0,0};
 std::vector<uint32_t> lvds_banks = {};
 std::vector<uint32_t> matrix_banks = {};
 std::vector<uint32_t> adc_banks = {};
@@ -587,6 +588,8 @@ int read_sc_event(char* pevent, int off) {
     readout_banks.clear();
     // read rate and counters for the for links
     for (int i = 0; i <= 3; ++i) {
+        bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][i];
+        bool FEBsIsMutrig = m_settings["DAQ"]["Links"]["FEBsMutrig"][i];
         mup->write_register(SWB_COUNTER_REGISTER_W, i);
         uint32_t sub_cnt = mup->read_register_ro(SWB_COUNTER_REGISTER_R);
         uint32_t sub_rate = mup->read_register_ro(SWB_LINK_COUNTER_REGISTER_R);
@@ -602,8 +605,12 @@ int read_sc_event(char* pevent, int off) {
         readout_banks.push_back(sub_rate);
         readout_banks.push_back(hit_cnt);
         readout_banks.push_back(hit_rate);
-        readout_banks.push_back(feb_hits[i] - feb_hits_last[i]);
-        feb_hits_last[i] = feb_hits[i];
+        if (FEBsIsMutrig) {
+            readout_banks.push_back(feb_rates_mutrig[i]);
+        } else {
+            readout_banks.push_back(feb_hits[i] - feb_hits_last[i]);
+            feb_hits_last[i] = feb_hits[i];
+        }
     }
     // read MUX rate and cnts
     mup->write_register(SWB_COUNTER_REGISTER_W, 12);
@@ -740,8 +747,10 @@ int read_sc_event(char* pevent, int off) {
             feb_sc->FEB_write(febIDx, MUTRIG_CTRL_RESET_REGISTER_W, 0x10);
             feb_sc->FEB_write(febIDx, MUTRIG_CTRL_RESET_REGISTER_W, 0x0);
 
+            uint32_t total_rate = 0;
             for(int asic = 0; asic < N_MUTRIGS_PER_FEB; asic++) {
                 counters_XXCH.push_back(counter[2+asic*64+3]);
+                total_rate += counter[2+asic*64+3];
                 counters_XXCE.push_back(counter[2+asic*64+6]);
                 counters_XXCF.push_back(counter[2+asic*64+7]);
                 for ( size_t ch = 0; ch < NMUTRIGCHANNELS; ch++ )
@@ -756,6 +765,7 @@ int read_sc_event(char* pevent, int off) {
                     counters_XXCP.push_back((time8ns_cur * 160 + finetime_extended_cur) - (time8ns_last * 160 + finetime_extended_last));
                 else counters_XXCP.push_back(0);
             }
+            feb_rates_mutrig[febIDx] = total_rate;
         } else { // fill with zero to keep the size
             for(int asic = 0; asic < N_MUTRIGS_PER_FEB; asic++) {
                 counters_XXCH.push_back(0);

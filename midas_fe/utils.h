@@ -176,6 +176,12 @@ int InitFEBs(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) {
         if (FEBsIsMutrig) {
             feb_sc.FEB_write(febIDx, MUTRIG_CTRL_DP_REGISTER_W, 0x0FFFFFFF);
             feb_sc.FEB_write(febIDx, MUTRIG_CTRL_DUMMY_REGISTER_W, 0x0);
+            // taken from mu3ebe
+            uint32_t low = 10640;
+            uint32_t high = 22127;
+            uint32_t delay = 6000;
+            feb_sc.FEB_write(febIDx, MUTRIG_CTRL_LAPSE_COUNTER_REGISTER_W, (1<<31) | ((low&0x7fff)<<0) | ((high&0x7fff)<<15));
+            feb_sc.FEB_write(febIDx, MUTRIG_CTRL_LAPSE_DELAY_W, delay);
         }
         if (!FEBActive)
             continue;
