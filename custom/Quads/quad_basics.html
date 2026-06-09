@@ -311,6 +311,37 @@
         </table>
 
     </div>
+    
+    <h2>Temperature Control</h2>
+    
+    <div class="container">
+    <table class="mtable" id="chillerMonitor">
+    <tr><th colspan="6" class="mtableheader">Chiller</th></tr>
+    <tr><th>Running</th><th>On / Off</th><th>Set temp (°C)</th><th>Readback (°C)</th><th>Pressure (bar)</th><th></th></tr>
+    <tr>
+        <td style="text-align:center">
+        <div class="modbbox" style="width:20px;height:20px;"
+            data-odb-path="/Equipment/Chiller/Variables/Input[0]"
+            data-color="lightgreen" data-background-color="red"></div></td>
+        <td style="text-align:center">
+        <input type="checkbox" class="modbcheckbox"
+                data-odb-path="/Equipment/Chiller/Variables/Output[0]"></td>
+        <td style="text-align:center">
+        <div class="modbvalue" data-format="f2"
+            data-odb-path="/Equipment/Chiller/Variables/Output[1]"
+            data-odb-editable="1"></div></td>
+        <td style="text-align:center">
+        <div class="modbvalue" data-format="f2"
+            data-odb-path="/Equipment/Chiller/Variables/Input[2]"></div></td>
+        <td style="text-align:center">
+        <div class="modbvalue" data-format="f2"
+            data-odb-path="/Equipment/Chiller/Variables/Input[3]"></div></td>
+        <td style="text-align:center">
+        <a href="?cmd=eqtable&amp;eq=Chiller" target="_blank">
+            <button class="mbutton">Open chiller page</button></a></td>
+    </tr>
+    </table>
+    </div>
 
     <h2>Configuration</h2>
 
@@ -332,7 +363,6 @@
             </td>
 
         </table>
-
 
         <table class="mtable" id="sequencerActionNew">
             <tr><th colspan="3" class="mtableheader">Actions</th></tr>
