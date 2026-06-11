@@ -16,7 +16,7 @@ MuPix hit format
 | 36–16 | 21    | ts_high        | `time()` (part)            | Timestamp high          |
 | 15–11 | 5     | ts_low         | `time()` (part)            | Timestamp mid           |
 | 10–4  | 7     | subheader_time | `time()` (part)            | Subheader timing        |
-| 3–0   | 4     | ts_sorterhit   | `time()` (part)            | Hit timestamp sorter    |
+| 3–0   | 4     | ts_sorterhit   | `time()` (part)            | Hit timestamp sorter in 8ns    |
 
 MuTRiG hit format
 ----
@@ -29,10 +29,12 @@ MuTRiG hit format
 | 55–47 | 9     | e-t            | `tot()` / `eflag()`          | Energy or short-hit flag |
 | 46–44 | 3     | time_remainder | —                            | 1.6 ns remainder bits    |
 | 43–39 | 5     | fine_time      | —                            | Fine timestamp           |
-| 38–16 | 23    | ts_high        | `time()` (part)              | Timestamp high           |
-| 15–12 | 4     | ts_low         | `time()` (part)              | Timestamp mid            |
-| 11–4  | 8     | subheader_time | `time()` (part)              | Subheader timing         |
-| 3–0   | 4     | ts_sorterhit   | `time()` (part)              | Hit timestamp sorter     |
+| 38–16 | 23    | ts_high        | `time8ns()` (part)           | Timestamp high           |
+| 15–12 | 4     | ts_low         | `time8ns()` (part)           | Timestamp mid            |
+| 11–4  | 8     | subheader_time | `time8ns()` (part)           | Subheader timing         |
+| 3–0   | 4     | ts_sorterhit   | `time8ns()` (part)           | Hit timestamp sorter in 8ns    |
+|       |       | combined 50 ps time   | `timestamp()`         | time8ns()*160 + finetime_extended()    |
+|       |       | combined ns time   | `time()`                 | timestamp()*50e-3    |
 
 
 And in structs:
@@ -77,7 +79,7 @@ struct mutrighit {
     [[nodiscard]] bool is_mutrig() const { return ((hitdata >> 63) & 0x1) == 1; }
     [[nodiscard]] uint8_t chipid() const { return (hitdata >> 61) & 0x3; }
     [[nodiscard]] uint8_t asic() const { return chipid(); }
-    [[nodiscard]] uint8_t channel() const { return (hitdata >> 56) & 0x1F; }
+    [[nodiscard]] uint8_t channel() const { return (hitdata >> 56) & 0x3F; }
     [[nodiscard]] uint16_t et() const { return (hitdata >> 47) & 0x1FF; }
     [[nodiscard]] bool eflag() const { return et() == 0x1FF; }
     [[nodiscard]] uint16_t tot() const { return et(); }
@@ -87,7 +89,10 @@ struct mutrighit {
     [[nodiscard]] uint8_t ts_low() const { return (hitdata >> 12) & 0xF; }
     [[nodiscard]] uint8_t subheader_time() const { return (hitdata >> 4) & 0xFF; }
     [[nodiscard]] uint8_t ts_sorterhit() const { return hitdata & 0xF; }
-    [[nodiscard]] uint64_t time() const { return hitdata & 0x7FFFFFFFFFULL; }
+    [[nodiscard]] uint64_t time8ns() const { return hitdata & 0x7FFFFFFFFFULL; }
+    [[nodiscard]] uint8_t finetime_extended() const {return (hitdata >> 39) & 0xFF;}
+    [[nodiscard]] uint64_t timestamp() const {return time8ns()*160 + finetime_extended();} //returns time in units of 50ps
+    [[nodiscard]] uint32_t time() const {return timestamp()*50e-3;} //returns time in ns
 
     void Print() const {
         std::printf(
