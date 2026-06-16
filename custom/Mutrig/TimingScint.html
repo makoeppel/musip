@@ -26,7 +26,10 @@
     <div id="msidenav"></div>
 
     <div id="mmain">
+
     <h2>Power Managment</h2>
+
+    <details class="container" id="div_LVHV" close>
     <div class="container" id="div_LVHV">
         <table class="mtable" id="LVsupplies">
             <tr><th colspan="9" class="mtableheader">LV SUPPLIES</th></tr>
@@ -60,22 +63,9 @@
             <tbody id="HVsupplies-body">
             <!-- rows will be populated dynamically from TimingScint_config.js LV_devices -->
             </tbody>
-	    <!--
-            <tr>
-                <th>0</th>
-                <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/HVSUPPLY0/Variables/State[0]" data-color="lightgreen" data-background-color="red"></div></td>
-                <td style="text-align: center"><input type="checkbox" name="CheckboxPixels" class="modbcheckbox" data-odb-path="/Equipment/HVSUPPLY0/Variables/Set State[0]"></input></td>
-                <td><div class="modbvalue" data-odb-path="/Equipment/HVSUPPLY0/Variables/Demand Voltage[0]" data-odb-editable="1"></div></td>
-                <td><div class="modbvalue" data-format="e3" data-odb-path="/Equipment/HVSUPPLY0/Variables/Voltage[0]"></div></td>
-                <td><div class="modbvalue" data-format="e3" data-odb-path="/Equipment/HVSUPPLY0/Variables/Current Limit[0]" data-odb-editable="1" data-formula="x"></div></td>
-                <td><div id="keithley_curr" data-format="e3" class="modbvalue" data-odb-path="/Equipment/HVSUPPLY0/Variables/Current[0]" data-formula="1000000*x"></div></td>
-                <td id="HVSUPPLY0_0" style="text-align: center">Quad 3 (70µm)</td>
-            </tr>
-	    -->
         </table>
-
-
     </div>
+    </details>
 
     <h2>System control</h2>
 
@@ -297,13 +287,13 @@
                 </th>
                 <th>
                 </th>
-                    <div class="mjshistory" data-group="MuTRiG" data-panel="CRC Errors" style="width: 500px; height: 300px;" ></div>
+                    <div class="mjshistory" data-group="MuTRiG" data-panel="FEB 0 CRC Rate" style="width: 500px; height: 300px;" ></div>
                 <th>
-                    <div class="mjshistory" data-group="MuTRiG" data-panel="ASIC Rate" style="width: 500px; height: 300px;" ></div>
+                    <div class="mjshistory" data-group="MuTRiG" data-panel="FEB 0 ASIC Rate" style="width: 500px; height: 300px;" ></div>
                 </th>
-                <th>
+                <!-- <th>
                     <div class="mjshistory" data-group="MuTRiG" data-panel="HV Currents" style="width: 500px; height: 300px;" ></div>
-                </th>
+                </th> -->
         </tr>
         </table>
     </div>
@@ -323,153 +313,7 @@
             </td>
         </table>
     </div>
-<!--
-    <div class="container" id="div_sensorSelection2">
-        <table class="mtable" id="sensorSelection2">
-            <tr><th colspan="3" class="mtableheader">Sensor selection</th></tr>
-            <td>
-                <object type="image/svg+xml" data="Mutrig/MuSR-Scint1.svg" id="svg-object" height=300px aria-label="MuSR Scintillator diagram">
-                    <p>Your browser does not support inline SVG.</p>
-                </object>
-            </td>
-            <td>
-                <div class="chip_settings_containerNew">
-                    <span>Selected channel: <span id="channel_selection">None</span></span>
-                    <br>
-                    <button class="mbutton" id="unmask-btn" onclick="maskUnmaskChannelAll(true)">Mask all</button>
-                    <button class="mbutton" id="unmask-btn" onclick="maskUnmaskChannelAll(false)">Unmask all</button>
-                    <button class="mbutton" id="config-btn" onclick="mutrig_configure_all()">Configure</button>
-                    <label><input type='checkbox' onclick='mutrig_configureImmediateUpdate(this.checked);'>Direct config</label>
-                    <br>
-                    <table class="mtable" name="DACsChannelSettingsNew">
-                        <tr><th colspan="4" class="mtableheader">Channel Settings</th></tr>
-                        <tr>
-                            <th class="style_setting_name">Setting</th>
-                            <th class="style_setting_type">value</th>
-                            <th class="style_setting_type">scale</th>
-                            <th class="style_setting_type">offset</th>
-                        </tr>
-                        <tbody>
-                            <tr>
-                                <td><div>Timing threshold</div></td>
-                                <td><input type="range"    name="tthresh" min="0" max="63" title="Timing threshold setting. For positive pulses, lower values mean higher thresholds"  list="tth_markers"/><div class="modbvalue" name="tthresh" style="width: 3em"/></td>
-                                <td><div class="modbvalue" name="tthresh_sc" title="T-Threshold current scaling. 0=1:1 4=1:2 (1:2 means higher maximum threshold)"></div></td>
-                                <td><input type="range"    name="tthresh_offset" min="0" max="7" title="Timing threshold offset. For positive pulses only. , higher values mean higher thresholds"/><div class="modbvalue" name="tthresh_offset" style="width: 3em" /></td>
-                                <datalist id="tth_markers">
-                                    <option value="15""></option>
-                                    <option value="31""></option>
-                                </datalist>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td><div>Energy threshold</div></td>
-                                <td><input type="range" id="i_ethresh" name="ethresh" min="0" max="255" title="Energy threshold setting. For positive pulses, lower values mean higher thresholds"/><div class="modbvalue" name="ethresh" style="width: 3em"/></td>
-                                <td></td>
-                                <td>
-                                    <input type="range" id="i_ebias" name="ebias" min="0" max="7" title="EBIAS: Adjust Energy branch discharge current" list="ebias_markers" /><div class="modbvalue" name="ebias" style="width: 3em"/></td>
-                                    <datalist id="ebias_markers">
-                                        <option value="0""></option>
-                                        <option value="1""></option>
-                                        <option value="2""></option>
-                                        <option value="3""></option>
-                                        <option value="7""></option>
-                                    </td>
-                            </tr>
-                            <tr>
-                                <td><label for="mask">Mask Channel</label></td>
-                                <td><input type="checkbox" name="mask" id="mask" title="Setting to true disables the channel" onClick="maskUnmaskChannel(this.checked)"/></td>
-                                <td></td>
-                                <td></td>
-                            </tr>
-                            <tr>
-                                <td><label for="INPUTBIAS">Input stage bias</label></td>
-                                <td><div class="modbvalue" name="inputbias" title="Main bias current of the input stage, affects all later stages (i.e. also thresholds, SiPM voltage) and general performance. higher values means higher current."/></td>
-                                <td></td>
-                                <td></td>
-                            </tr>
-                            <tr>
-                                <td><label for="SIPM">SiPM bias adjust</label></td>
-                                <td><div class="modbvalue" name="sipm" title="Adjust voltage at the input terminals of the chip."/></td>
-                                <td></td>
-                                <td></td>
-                            </tr>
-                            <tr>
-                                <td><label for="tdctest_n">Disable TDC inject</label></td>
-                                <td><input type="checkbox" name="tdctest_n" id="tdctest_n"
-                                        title="1: disable TDC test input to this channel. (0 enables TDC input and shorts with the normal hitlogic output. Note that
-                                            DMON and tdc test signals are shared, so only one can be used at a time."
-                                    />
-                                <td></td>
-                                <td></td>                                
-                            </tr>
-                            <tr>
-                                <td><label for="recv_all">Disable E-Validation</label></td>
-                                <td><input type="checkbox" name="recv_all" id="recv_all"/></td>
-                                <td></td>
-                                <td></td>
-                            </tr>
-                            <tr>
-                                <td colspan="4" style="text-align: center;">
-                                    <button class="mbutton" id="mask-btn"   onclick="maskUnmaskChannel(true)">Mask</button>
-                                    <button class="mbutton" id="unmask-btn" onclick="maskUnmaskChannel(false)">Unmask</button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </td>
-        </table>
-    </div>
--->
-<!--
-    <div class="wrapper" id="div_tabs">
-        <div class="tabs">
-            <div class="tab">
-                <input type="radio" name="css-tabs" id="tab-dacs" checked class="tab-switch">
-                <label for="tab-dacs" class="tab-label">DACs</label>
-                <div class="tab-content" class="chip_settings_container">
-                    <div class="tab-description">
-                        <table class="mtable" id="DACsGlobalSettings">
-                            <tr><th colspan="2" class="mtableheader">Global Settings</th></tr>
-                            <td id="GlobalSettingsTable"></td>
-                        </table>
-                        <br>
-                        <table class="mtable" id="DACsASICSettings">
-                            <tr><th colspan="2" class="mtableheader">ASIC Settings</th></tr>
-                            <td id="ASICSettingsTable"></td>
-                        </table>
-                        <br>
-                        <table class="mtable" id="DACsChannelSettings">
-                            <tr><th colspan="4" class="mtableheader">Channel Settings</th></tr>
-                        </table>
-                    </div>
-                    <div class="table-container">
-                    </div>
-                </div>
-            </div>
-            <div class="tab">
-                <input type="radio" name="css-tabs" id="tab-masking" class="tab-switch">
-                <label for="tab-masking" class="tab-label">Masking</label>
-                <div class="tab-content">
-                    <table class="mtable" id="Masking">
-                        <tr><th colspan="2" class="mtableheader">Masking</th></tr>
-                        <td id="MaskingTable"></td>
-                    </table>
-                </div>
-            </div>
-            <div class="tab">
-                <input type="radio" name="css-tabs" id="tab-hitmap" class="tab-switch">
-                <label for="tab-hitmap" class="tab-label">HitMap</label>
-                <div class="tab-content">
-                    <table class="mtable" id="HitMap">
-                        <tr><th colspan="2" class="mtableheader">HitMap</th></tr>
-                        <td id="HitMapTable"></td>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
--->
+
     <!-- <script src="../pixel_lvds.js" defer></script> -->
     <script src="Mutrig/Utility.js"></script>
     <script src="Mutrig/LVSuppliesTable.js"></script>

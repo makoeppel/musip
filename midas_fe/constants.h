@@ -33,6 +33,9 @@
 /* Maximum number of incoming LVDS data links per FEB */
 constexpr uint32_t MAX_LVDS_LINKS_PER_FEB = 36;
 
+/* Maximum number of incoming LVDS data links for Quads FEB */
+constexpr uint32_t MAX_LVDS_LINKS_QUAD_FEB = 24;
+
 /* Maximum number of total FEBs */
 constexpr uint32_t N_FEBS = 4;
 
@@ -47,6 +50,9 @@ constexpr uint32_t NMUTRIGCHANNELS = 32;
 
 /* Maximum number of quad chips FEBs */
 constexpr uint32_t N_CHIPS = 8;
+
+/* Maximum number of LVDS links per chip */
+constexpr uint32_t N_LINKS_CHIP = 3;
 
 /* Maximum number of chips FEBs */
 constexpr uint32_t N_CHIPS_MAX = 12;
