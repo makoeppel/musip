@@ -17,7 +17,18 @@
 #include <linux/dma-map-ops.h>
 #endif
 
+#ifdef RHEL_RELEASE_CODE
 #if RHEL_RELEASE_CODE >= RHEL_RELEASE_VERSION(9, 8)
+#else
+  #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 3, 0) // `vm_flags_set`
+  static inline void vm_flags_set(struct vm_area_struct* vma, vm_flags_t flags) {
+      vma->vm_flags |= flags;
+  }
+  static inline void vm_flags_clear(struct vm_area_struct* vma, vm_flags_t flags) {
+      vma->vm_flags &= ~flags;
+  }
+  #endif
+#endif
 #else
   #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 3, 0) // `vm_flags_set`
   static inline void vm_flags_set(struct vm_area_struct* vma, vm_flags_t flags) {
