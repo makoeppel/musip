@@ -64,7 +64,7 @@ AnaMutrigHistos::AnaMutrigHistos(const boost::property_tree::ptree& config, TARu
         const boost::property_tree::ptree &tot = *tot_opt;
         for (const auto &elem : tot) {
             try {
-                channelnames_.push_back(elem.second.get_value<string>());
+                channelnames_.push_back(elem.second.get_value<std::string>());
             } catch (...) {
                 // ignore malformed element
             }

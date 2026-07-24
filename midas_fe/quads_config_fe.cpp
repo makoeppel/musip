@@ -35,9 +35,11 @@
 
 #include <iostream>
 #include <list>
+#include <pwd.h>
 
 // clang-format off
 #include "midas.h"
+#include "history.h"
 // clang-format on
 #include "DummyFEBSlowcontrolInterface.h"
 #include "FEBSlowcontrolInterface.h"
@@ -66,7 +68,9 @@ std::vector<uint32_t> readout_banks = {};
 std::vector<uint32_t> feb_hits = {0,0,0,0};
 std::vector<uint32_t> feb_hits_last = {0,0,0,0};
 std::vector<uint32_t> feb_rates_mutrig = {0,0,0,0};
+std::vector<uint32_t> feb_prev_lvds_err(N_FEBS*MAX_LVDS_LINKS_PER_FEB, 0);
 std::vector<uint32_t> lvds_banks = {};
+std::vector<float> ssfe_banks = {};
 std::vector<uint32_t> matrix_banks = {};
 std::vector<uint32_t> adc_banks = {};
 std::vector<uint32_t> counters_XXCR = {};
@@ -142,9 +146,27 @@ int write_command_by_name(const char* name, uint32_t payload = 0, uint16_t addre
 void init_banks() {
     midas::odb quads_settings("/Equipment/Quads/Settings", true);
 
-    // setup RCNT bank
-    std::string namename = std::string("Names RCNT");
+    // setup FEB Bank
+    std::string namename = std::string("Names SSFE");
     std::vector<std::string> names;
+    // get minimal information
+    for (int i = 0; i <= 3; ++i) {
+        names.push_back("Arria Temp F" + std::to_string(i));
+        names.push_back("MAX Temp F" + std::to_string(i));
+        names.push_back("FF1 RX1 Power F" + std::to_string(i));
+        names.push_back("FF1 RX2 Power F" + std::to_string(i));
+        names.push_back("FF1 RX3 Power F" + std::to_string(i));
+        names.push_back("FF1 RX4 Power F" + std::to_string(i));
+        names.push_back("FF2 RX1 Power F" + std::to_string(i));
+        names.push_back("FF2 RX2 Power F" + std::to_string(i));
+        names.push_back("FF2 RX3 Power F" + std::to_string(i));
+        names.push_back("FF2 RX4 Power F" + std::to_string(i));
+    }
+    quads_settings[namename] = names;
+
+    // setup RCNT bank
+    namename = std::string("Names RCNT");
+    names.clear();
     // read rate and counters for the for links
     for (int i = 0; i <= 3; ++i) {
         names.push_back("SOP " + std::to_string(i) + " CNT");
@@ -221,6 +243,101 @@ void init_banks() {
     quads_settings[nameMTCH] = namesMTCH;
     quads_settings[nameMTCF] = namesMTCF;
     quads_settings[nameMTCE] = namesMTCE;
+}
+
+void setup_history() {
+
+    // readout
+    std::vector<std::string> feb_hit_rate;
+    std::vector<std::string> swb_hit_rate;
+    std::vector<std::string> swb_sop_rate;
+    std::vector<std::string> swb_sub_rate;
+    std::vector<std::string> swb_eop_rate;
+    for ( int i= 0; i < N_FEBS; i++ ) {
+        feb_hit_rate.push_back("Quads/RCNT:FEB HIT " + std::to_string(i) + " RATE");
+        swb_hit_rate.push_back("Quads/RCNT:HIT " + std::to_string(i) + " RATE");
+        swb_sop_rate.push_back("Quads/RCNT:SOP " + std::to_string(i) + " RATE");
+        swb_sub_rate.push_back("Quads/RCNT:SUP " + std::to_string(i) + " RATE");
+        swb_eop_rate.push_back("Quads/RCNT:EOP " + std::to_string(i) + " RATE");
+    }
+    hs_define_panel("Readout", "FEB Hit Rates", feb_hit_rate);
+    hs_define_panel("Readout", "SWB Hit Rates", swb_hit_rate);
+    hs_define_panel("Readout", "SWB SOP Rates", swb_sop_rate);
+    hs_define_panel("Readout", "SWB SUB Rates", swb_sub_rate);
+    hs_define_panel("Readout", "SWB EOP Rates", swb_eop_rate);
+
+    std::vector<std::string> readout_rate;
+    readout_rate.push_back("Quads/RCNT:MUX RATE");
+    readout_rate.push_back("Quads/RCNT:DMA RATE");
+    readout_rate.push_back("Quads/RCNT:READOUT RATE");
+    hs_define_panel("Readout", "SWB DMA/Event Rate", swb_eop_rate);
+
+    std::vector<std::string> readout_error;
+    readout_error.push_back("Quads/RCNT:DMA FULL");
+    readout_error.push_back("Quads/RCNT:DMA SKIP");
+    hs_define_panel("Readout", "SWB DMA/Event Errors", readout_error);
+
+    // lvds
+    for (uint32_t i = 0; i < N_FEBS; i++) {
+        for (uint32_t j = 0; j < N_CHIPS; j++) {
+            std::vector<std::string> chip_lvds_error_rate;
+            for (uint32_t k = 0; k < N_LINKS_CHIP; k++) {
+                chip_lvds_error_rate.push_back("Quads/PCLS:F" + std::to_string(i) + "L" + std::to_string(j * N_LINKS_CHIP + k) + " 8b/10b Errors");
+            }
+            std::string panelname("FEB" + std::to_string(i) + "Chip" + std::to_string(j));
+            hs_define_panel("LVDS Link", panelname.c_str(), chip_lvds_error_rate);
+        }
+    }
+
+    // febs
+    for (uint32_t i = 0; i < N_FEBS; i++) {
+        std::vector<std::string> feb_temp;
+        std::vector<std::string> firefly_power;
+        feb_temp.push_back("Quads/SSFE:Arria Temp F" + std::to_string(i));
+        feb_temp.push_back("Quads/SSFE:MAX Temp F" + std::to_string(i));
+        firefly_power.push_back("Quads/SSFE:FF1 RX1 Power F" + std::to_string(i));
+        firefly_power.push_back("Quads/SSFE:FF1 RX2 Power F" + std::to_string(i));
+        firefly_power.push_back("Quads/SSFE:FF1 RX3 Power F" + std::to_string(i));
+        firefly_power.push_back("Quads/SSFE:FF1 RX4 Power F" + std::to_string(i));
+        firefly_power.push_back("Quads/SSFE:FF2 RX1 Power F" + std::to_string(i));
+        firefly_power.push_back("Quads/SSFE:FF2 RX2 Power F" + std::to_string(i));
+        firefly_power.push_back("Quads/SSFE:FF2 RX3 Power F" + std::to_string(i));
+        firefly_power.push_back("Quads/SSFE:FF2 RX4 Power F" + std::to_string(i));
+        std::string panelname("FEB " + std::to_string(i) + " Temp");
+        hs_define_panel("FEBs", panelname.c_str(), feb_temp);
+        panelname = "FEB " + std::to_string(i) + " Firefly Power";
+        hs_define_panel("FEBs", panelname.c_str(), firefly_power);
+    }
+
+    // mutrig
+    for (uint32_t i = 0; i < N_FEBS; i++) {
+        std::vector<std::string> ch_rate;
+        std::vector<std::string> asic_rate;
+        std::vector<std::string> crc_rate;
+
+        for (uint32_t c = 0; c < NMUTRIGCHANNELS; c++) {
+            ch_rate.push_back("Quads/MTCR:rate channel " + std::to_string(c));
+        }
+
+        for (uint32_t a = 0; a < N_MUTRIGS_PER_FEB; a++) {
+            asic_rate.push_back("Quads/MTCH:hits asic " + std::to_string(a));
+            crc_rate.push_back("Quads/MTCE:CRC errors asic " + std::to_string(a));  
+        }
+        std::string panelname("FEB " + std::to_string(i) + " Channel Rate");
+        hs_define_panel("MuTRiG", panelname.c_str(), ch_rate);
+        panelname = "FEB " + std::to_string(i) + " ASIC Rate";
+        hs_define_panel("MuTRiG", panelname.c_str(), asic_rate);
+        panelname = "FEB " + std::to_string(i) + " CRC Rate";
+        hs_define_panel("MuTRiG", panelname.c_str(), crc_rate);
+    }
+
+    std::vector<std::string> temp;
+    temp.push_back("Quads/MTTM:MTTM[0]");
+    temp.push_back("Quads/MTTM:MTTM[1]");
+    temp.push_back("Quads/MTTM:MTTM[2]");
+    temp.push_back("Quads/MTTM:MTTM[3]");
+    hs_define_panel("MuTRiG", "Temperatures", temp);
+
 }
 
 int begin_of_run() {
@@ -300,10 +417,10 @@ void sc_settings_changed(midas::odb o) {
         "module_power_mask",
         "module_power",
         "MutrigConfig",
-	"reset_datapath",
-	"reset_asics",
-	"reset_lvds",
-	"reset_counters",
+        "reset_datapath",
+        "reset_asics",
+        "reset_lvds",
+        "reset_counters",
         "DataGenEnable",
         "DataGenDisable",
         "debug_readout_feb"
@@ -539,6 +656,9 @@ int frontend_init() {
     // init banks
     init_banks();
 
+    // setup history
+    setup_history();
+
     // start ADC readout
     adcContinuousReadout(*feb_sc, m_settings);
 
@@ -546,13 +666,45 @@ int frontend_init() {
     settings["DAQ/Commands"].watch(sc_settings_changed);
 
     midas::odb custom("/Custom", true);
+    struct passwd *pw = getpwuid(getuid());
+    const char *homedir = pw->pw_dir;
+    custom["Path"] = std::string (homedir).append("/musip/custom");
     custom["Quads"] = "Quads/quad_basics.html";
     custom["MuTRiG"] = "Mutrig/TimingScint.html";
+    custom["LVDS"] = "lvds.html";
 
     return SUCCESS;
 }
 
 int read_sc_event(char* pevent, int off) {
+
+    // fill SSFE bank
+    ssfe_banks.clear();
+    for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
+        bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
+        if (FEBActive) {
+            vector<uint32_t> adcdata(5);
+            // read the MAX10 ADC
+            feb_sc->FEB_read(febIDx, MAX10_ADC_0_1_REGISTER_R, adcdata);
+            ssfe_banks.push_back(Max10ExternalTemeperatureConversion(adcdata[3] & 0xFFFF));
+            ssfe_banks.push_back(Max10TempConversion(adcdata[4]>>16));
+            // read firefly
+            vector<uint32_t> fireflydata(14);
+            feb_sc->FEB_read(febIDx, FIREFLY_STATUS_REGISTER_R, fireflydata);
+            ssfe_banks.push_back(((float)fireflydata[FIREFLY1_INDEX_RX1_POW])/1E7f);
+            ssfe_banks.push_back(((float)fireflydata[FIREFLY1_INDEX_RX2_POW])/1E7f);
+            ssfe_banks.push_back(((float)fireflydata[FIREFLY1_INDEX_RX3_POW])/1E7f);
+            ssfe_banks.push_back(((float)fireflydata[FIREFLY1_INDEX_RX4_POW])/1E7f);
+            ssfe_banks.push_back(((float)fireflydata[FIREFLY2_INDEX_RX1_POW])/1E7f);
+            ssfe_banks.push_back(((float)fireflydata[FIREFLY2_INDEX_RX2_POW])/1E7f);
+            ssfe_banks.push_back(((float)fireflydata[FIREFLY2_INDEX_RX3_POW])/1E7f);
+            ssfe_banks.push_back(((float)fireflydata[FIREFLY2_INDEX_RX4_POW])/1E7f);
+        } else {
+            for (uint32_t i = 0; i < 10; i++) {
+                ssfe_banks.push_back(0);
+            }
+        }
+    }
 
     // fill lvds bank
     lvds_banks.clear();
@@ -569,6 +721,8 @@ int read_sc_event(char* pevent, int off) {
                 lvds_banks.push_back(status[offset + i * 4]);
                 lvds_banks.push_back(status[offset + i * 4 + 1]);
                 lvds_banks.push_back(status[offset + i * 4 + 2]);
+                // lvds_banks.push_back(feb_prev_lvds_err[febIDx * MAX_LVDS_LINKS_PER_FEB + i] - status[offset + i * 4 + 2]);
+                // feb_prev_lvds_err.push_back(status[offset + i * 4 + 2]);
                 lvds_banks.push_back(status[offset + i * 4 + 3]);
                 hits_feb += status[offset + i * 4 + 3];
             }
@@ -788,7 +942,7 @@ int read_sc_event(char* pevent, int off) {
         int rpc_ret = -17;
         if (FEBsIsMutrig)
            febSSIDx++;
-	else
+	    else
            continue;
 
         if (FEBActive)
@@ -845,6 +999,11 @@ int read_sc_event(char* pevent, int off) {
     // create bank, pdata
     bk_init32a(pevent);
     DWORD* pdata = NULL;
+
+    // create a bank with the FEB status
+    bk_create(pevent, "SSFE", TID_FLOAT, (void**)&pdata);
+    for (auto data : ssfe_banks) *(float*)pdata++ = data;
+    bk_close(pevent, pdata);
 
     // create a bank with readout status
     bk_create(pevent, "RCNT", TID_DWORD, (void**)&pdata);
