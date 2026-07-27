@@ -77,7 +77,7 @@ Install packages required for:
 ### MIDAS
 
 ```bash
-git clone git@bitbucket.org:tmidas/midas.git
+git clone https://bitbucket.org/tmidas/midas.git
 cd midas
 git submodule update --init --recursive
 
@@ -92,8 +92,7 @@ make install
 ### Musip
 
 ```bash
-git clone git@github.com:makoeppel/musip.git
-cd musip
+git clone https://gitea.psi.ch/MuSiP/musip.git
 ```
 
 ---
@@ -101,37 +100,20 @@ cd musip
 ## ROOT Installation
 
 ```bash
-git clone --branch latest-stable --depth=1 https://github.com/root-project/root.git ~/root_src
+git clone https://github.com/root-project/root.git
+git checkout -b v6-40-00-patches origin/v6-40-00-patches
 
 mkdir -p ~/compiled_software/root_build
 cd ~/compiled_software/root_build
 ```
 
-Configure and build:
+Configure, build and install:
 
 ```bash
-cmake \
-  -DCMAKE_INSTALL_PREFIX=/opt/root \
-  -DCMAKE_CXX_STANDARD=17 \
-  -DLLVM_CXX_STD=c++17 \
-  -Dxrootd=OFF \
-  -DCMAKE_C_COMPILER=/usr/bin/gcc-12 \
-  ~/root_src
-
-make -j12
-```
-
-Verify:
-
-```bash
-root
-root-config --cflags
-```
-
-Expected:
-
-```text
--std=c++17
+mkdir build
+cmake -Dbuiltin_ftgl=off -Dbuiltin_glow=off -Dfftw3=on -Dmathmore=on -Dunfold=on -Dunuran=on -During=on -DPHYTHON_EXECUTABLE=/usr/bin/python3.14 -DCMAKE_C_FLAGS='-march=x86-64-v3' -DCMAKE_CXX_FLAGS='-march=x86-64-v3' -DCMAKE_INSTALL_PREFIX=/opt/root ../root
+chrt -b 0 cmake --build . -- -j96
+sudo cmake -P cmake_install.cmake
 ```
 
 ---
@@ -157,7 +139,9 @@ export LM_LICENSE_FILE="<license-server>"
 ### ROOT
 
 ```bash
-source /opt/root/bin/thisroot.sh
+# Alias to enable ROOT
+alias setupROOT='DIR=`pwd`; cd /opt/root; source bin/thisroot.sh; cd $DIR'
+setupROOT
 ```
 
 ### MIDAS
@@ -326,21 +310,11 @@ You should see the FPGA menu.
 
 ## Build Kernel Driver
 
+DKMS is used to manage the kernel driver, so that only needs to be installed once
+
 ```bash
 cd ~/musip/midas_fe/kerneldriver
-make
-```
-
-Load:
-
-```bash
-sudo ./recover_pcie.sh
-```
-
-Expected:
-
-```text
-loaded 'mudaq'
+sudo ./install.sh
 ```
 
 ---

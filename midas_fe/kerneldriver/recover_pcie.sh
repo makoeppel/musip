@@ -11,5 +11,7 @@ fi
 
 echo 1 > /sys/bus/pci/rescan
 sleep 1
-./load_mudaq.sh
 
+modprobe mudaq
+udevadm trigger --subsystem-match=misc || true
+ls -l /dev/mudaq* 2> /dev/null || true
