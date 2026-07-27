@@ -4,17 +4,6 @@ add_subdirectory(libmudaq)
 add_subdirectory(power)
 add_subdirectory(hv_control)
 
-if(APPLE)
-    message(WARNING "[online] we dont build kerneldriver")
-    message(STATUS "[online] APPLE=${APPLE}")
-elseif(BUILD_KERNEL)
-    add_subdirectory(kerneldriver)
-else()
-    message(WARNING "[online] we dont build kerneldriver")
-    message(STATUS "[online] BUILD_KERNEL=${BUILD_KERNEL}")
-endif()
-
-
 add_executable(quads_config_fe quads_config_fe.cpp)
 add_executable(readout_fe readout_fe.cpp)
 

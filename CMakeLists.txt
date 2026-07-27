@@ -19,9 +19,6 @@ add_compile_options(
     #"-Werror"
 )
 
-# build options
-option(BUILD_KERNEL "Build kerneldriver" ON)
-
 find_package(Git 1.8 REQUIRED)
 execute_process(
     COMMAND ${GIT_EXECUTABLE} describe --long --dirty --abbrev=16 --all
