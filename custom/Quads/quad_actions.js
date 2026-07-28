@@ -1,4 +1,5 @@
 // constants //
+// TODO: should be moved to quad_configuration.js?
 
 TESTOUT_VALUES = [0, 3,2,1, 6,5,4, 7,8, 9,10, 0]
 
@@ -48,7 +49,9 @@ async function executeSensorCommand(odbPath, id = -1, time = 1, errorMessageText
 }
 
 
-// Load DACs //
+// --------------------------------------------------------------------------------------
+// Load DACs
+// --------------------------------------------------------------------------------------
 
 async function load_dacs(id = "*", dacSetName = null){
     // Get the current DAC set from the DACManager if not explicitly provided
@@ -91,7 +94,8 @@ async function load_dacs_selected(){
     console.log("ids", ids);
     setOutputText("Loading DACs selected sensors:" + list_to_string(ids));
     let config_ids_loc = getConfigIds(ids);
-    
+    console.log("thomas debug", config_ids_loc, ids);
+
     // Get the current DAC set from the DACManager if it exists
     let currentDACSet = "Quads"; // Default fallback
     if (typeof dacManager !== 'undefined') {
