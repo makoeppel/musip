@@ -1,9 +1,16 @@
-// Constants:
+// --------------------------------------------------------------------------------------
+// Constants
+// --------------------------------------------------------------------------------------
 
+//Arrangement of chips on a quad
 const alignment = [[0,0], [1,0], [0,1], [1,1]];
 
+//Sensor IDs (depend on cabling of the data cables, default --> consecutive but due to FEB sync issue, soemtimes also cables differently
 // Re-cabled
 const sensor_ids = [[16,17, 18,19], [2,3, 10,11], [8,9, 20,21], [4,5, 6,7], [0,1, 22,23], [12,13, 14,15]];
+
+// Number of quads (based on sensor_ids)
+const numQuads = sensor_ids.length;
 
 // Re-cabled
 const conf_ids = [0,1,2,3, 4,5,6,7, 8,9,10,11, 12,13,14,15, 16,17,18,19, 20,21,22,23];
@@ -11,6 +18,8 @@ const data_ids = [0,1,2,3, 4,5,6,7, 8,9,10,11, 12,13,14,15, 16,17,18,19, 20,21,2
 //const conf_ids = [16,17,18,19, 2,3,10,11, 8,9,20,21, 4,5,6,7, 0,1,22,23, 12,13,14,15];
 //const data_ids = [16,17,18,19, 2,3,10,11, 8,9,20,21, 4,5,6,7, 0,1,22,23, 12,13,14,15];
 
+// 4 chips per quad, 1st number FEB, 2nd config ID
+// TODO: obsolete? since it's only used in the "wrong" implementation fo getFEBLink in utilities
 const sensor_links = [[[0, 0],[0, 1],[0, 2],[0, 3]],
                       [[0, 4],[0, 5],[0, 6],[0, 7]],
                       [[1, 8],[1, 9],[1,10],[1,11]],
@@ -28,6 +37,7 @@ const hexColors = [
     "#890000"  // Dark Red Magenta
 ]
 
+// Default DAC values
 const Mupix_DACs = {
     "BIASDACS" : {
         "PLL" : {
