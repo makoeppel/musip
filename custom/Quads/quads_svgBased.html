@@ -9,7 +9,7 @@
    <title>Quads SVG</title>
 
    <style>
-      .mtable td { padding: 10px; }
+      .mtable td { padding: 2px; }
    </style>
 </head>
 
@@ -24,6 +24,19 @@
     <!-- Values to be monitored (modb values with onchange or onload commands) -->
 
     <!-- Should become a tab for power-->
+
+    <div class="mtabs">
+        <div class="mtab active"
+             data-target="quad_power">
+            Power
+        </div>
+        <div class="mtab"
+             data-target="quad_cooling">
+            Cooling
+        </div>
+    </div>
+    
+    <div id="quad_power" class="mpanel active">
 
     <table class="mtable">
         <tr>
@@ -135,6 +148,11 @@
         </tr>
     </table>
 
+    </div>
+
+      <div id="quad_cooling" class="mpanel">
+
+      </div>
 </div>
 
 </body>
