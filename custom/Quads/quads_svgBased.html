@@ -179,8 +179,8 @@
         </tr>
         <tr>
             <th><input type="number" id="node_hv0" value="2" min="1" max="2" onchange="updateHV(0)"></th>
-            <td  style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/LVSUPPLY1/Variables/State[3]" data-color="lightgreen" data-background-color="red"></div></td>
-            <td  style="text-align: center"><input type="checkbox" name="CheckboxPixels" class="modbcheckbox" data-odb-path="/Equipment/LVSUPPLY1/Variables/Set State[3]"></input></td>
+            <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/LVSUPPLY1/Variables/State[3]" data-color="lightgreen" data-background-color="red"></div></td>
+            <td style="text-align: center"><input type="checkbox" name="CheckboxPixels" class="modbcheckbox" data-odb-path="/Equipment/LVSUPPLY1/Variables/Set State[3]"></input></td>
             <th><input type="number" id="channel_hv0" value="2" min="0" max="3" onchange="updateHV(0)"></th>
             <td style="text-align: center">
                 <div class="modbbox" style="width: 20px; height: 20px;"
@@ -204,18 +204,35 @@
                      data-odb-path="/Equipment/Quad HV/Variables/Current[6]" 
                      data-formula="-x">
                 </div></td>
-            <td id="HVSUPPLY0_1" style="text-align: center">MSCB382 - Layer 5</td>
+            <td id="HVSUPPLY0_0" style="text-align: center">MSCB382 - Layer 5</td>
         </tr>
         <tr>
             <th><input type="number" id="node_hv1" value="2" min="1" max="2" onchange="updateHV(1)"></th>
-            <td  style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/LVSUPPLY1/Variables/State[3]" data-color="lightgreen" data-background-color="red"></div></td>
-            <td  style="text-align: center"><input type="checkbox" name="CheckboxPixels" class="modbcheckbox" data-odb-path="/Equipment/LVSUPPLY1/Variables/Set State[3]"></input></td>
+            <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/LVSUPPLY1/Variables/State[3]" data-color="lightgreen" data-background-color="red"></div></td>
+            <td style="text-align: center"><input type="checkbox" name="CheckboxPixels" class="modbcheckbox" data-odb-path="/Equipment/LVSUPPLY1/Variables/Set State[3]"></input></td>
             <th><input type="number" id="channel_hv1" value="3" min="0" max="3" onchange="updateHV(1)"></th>
-            <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/Quad HV/Variables/Demand[7]" data-color="lightgreen" data-background-color="red"></div></td>
-            <td><div class="modbvalue" data-odb-path="/Equipment/Quad HV/Variables/Demand[7]" data-formula="-x" data-odb-editable="1"></div></td>
-            <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/Quad HV/Variables/Measured[7]" data-formula="-x"></div></td>
+            <td style="text-align: center">
+                <div class="modbbox" style="width: 20px; height: 20px;" 
+                     data-hvrow="1" data-odb-template="/Equipment/Quad HV/Variables/Demand[%i]"
+                     data-odb-path="/Equipment/Quad HV/Variables/Demand[7]" 
+                     data-color="lightgreen" data-background-color="red">
+                </div></td>
+            <td><div class="modbvalue" 
+                data-hvrow="1" data-odb-template="/Equipment/Quad HV/Variables/Demand[%i]"
+                data-odb-path="/Equipment/Quad HV/Variables/Demand[7]" 
+                data-formula="-x" data-odb-editable="1">
+            </div></td>
+            <td><div class="modbvalue" data-format="f2" 
+                data-hvrow="1" data-odb-template="/Equipment/Quad HV/Variables/Measured[%i]"
+                data-odb-path="/Equipment/Quad HV/Variables/Measured[7]" 
+                data-formula="-x">
+            </div></td>
             <td>none</td>
-            <td><div id="hv_curr" data-format="f3" class="modbvalue" data-odb-path="/Equipment/Quad HV/Variables/Current[7]" data-formula="-x"></div></td>
+            <td><div id="hv_curr" data-format="f3" class="modbvalue" 
+                data-hvrow="1" data-odb-template="/Equipment/Quad HV/Variables/Current[%i]"
+                data-odb-path="/Equipment/Quad HV/Variables/Current[7]" 
+                data-formula="-x">
+            </div></td>
             <td id="HVSUPPLY0_1" style="text-align: center">MSCB382 - Layer 1</td>
         </tr>
         <tr>
