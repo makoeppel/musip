@@ -165,4 +165,4 @@ constexpr size_t N_TxTM_VALUES = 26;
 constexpr size_t N_TMB_TEMPERATURES_VALUES = 26+1;
 constexpr size_t N_TMB_TEMPERATURE_IDS_VALUES = 26*2+1;
 constexpr float TMB_TEMPERATURE_FACTOR = 0.0078125;
-constexpr size_t N_TMB_STATUS_VALUES = 4;
+constexpr size_t N_TMB_STATUS_VALUES = 2+4; //2 words + 1 per board

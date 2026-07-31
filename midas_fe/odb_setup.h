@@ -77,8 +77,7 @@ midas::odb settings = {
            {"debug_readout_feb", false},
            {"MuTRiG",
             {{"init_tmb", false}, //If set, initializes the TMBs. Resets when finished
-            {"module_power", false}, //Global power switch for the ASICs
-            {"module_power_mask", filled_array<bool, 2>(false) }, //Selects modules that will be powered (ASICs which will be powered)
+            {"module_power", false}, //Global power update trigger for the MuTRiG ASICs
             {"temperatures_read", false},
             {"temperature_IDs_read", false},
             {"powermonitors_read", false},

@@ -30,6 +30,7 @@
 #include "mutrig_config.h"
 #include "Mutrig3Config.h"
 #include "bits_utils.h"
+#include <libgen.h>
 
 /**
  * @brief Gets the index of a named key in a MIDAS ODB object.
@@ -1037,8 +1038,11 @@ int ChangeTDCTest(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) {
     return status;
 }
 
-int TBinit(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) {
+int TBinit(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings, midas::odb m_variables) {
     int status = FE_SUCCESS;
+    const size_t nboardsMax = m_settings["DAQ"]["Links"]["FEBsActive"].size() * N_MUTRIGS_PER_FEB;
+    std::vector<uint32_t> boardIDs_all(nboardsMax, 0xffffffff);
+    std::vector<uint32_t> boardIDs;
     for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
         bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
         bool FEBsIsMutrig = m_settings["DAQ"]["Links"]["FEBsMutrig"][febIDx];
@@ -1056,6 +1060,27 @@ int TBinit(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) {
             );
             continue;
         }
+        //Read back board IDs and store them in ODB
+        std::vector<uint32_t> boardIDs(N_MUTRIGS_PER_FEB, 0xffffffff);
+        status = feb_sc.FEB_read(febIDx, FEBSlowcontrolInterface::OFFSETS::FEBsc_RPC_DATAOFFSET, boardIDs);
+        if(status != FEB_REPLY_SUCCESS) {
+            cm_msg1(
+                MERROR,
+                "Quads",
+                "TMBinit()",
+                "Failed to read back Testboard IDs on FEB:%i\n",
+                febIDx
+            );
+            continue;
+        }
+        for(size_t i = 0; i < boardIDs.size(); i++) {
+            boardIDs_all[febIDx * N_MUTRIGS_PER_FEB + i] = boardIDs[i];
+        }
+            
+        
+    
+        m_variables["MutrigTestboardIDs"] = boardIDs_all;
+
         char reportStr[255];
         sprintf(reportStr,
             "%s initialized TMB of FEB:%i",
@@ -1135,8 +1160,7 @@ int UpdatePower(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) {
     //Note: Indices below correspond to subdetector module numbers starting from zero
     //uint32_t m_override_dig_power_mask = m_settings["DAQ"]["Commands"]["MuTRiG"]["override_dig_power_mask"];
     //uint32_t m_override_ana_power_mask = m_settings["DAQ"]["Commands"]["MuTRiG"]["override_ana_power_mask"];
-    std::vector<bool> m_module_power_mask = m_settings["DAQ"]["Commands"]["MuTRiG"]["module_power_mask"];
-    bool m_module_power = m_settings["DAQ"]["Commands"]["MuTRiG"]["module_power"];
+
 
     //Note: febIDx is global, corresponding to the QSFP port
     //Note: febSSIDx is subsystem-centric and starts from zero, corresponding to an increasing number of FEBs for the subsystem without any offset.
@@ -1145,19 +1169,16 @@ int UpdatePower(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) {
     int32_t febSSIDx=-1;
     for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
         uint16_t ASICMask = m_settings["DAQ"]["Links"]["ASICMask"][febIDx];
+
         bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
         bool FEBsIsMutrig = m_settings["DAQ"]["Links"]["FEBsMutrig"][febIDx];
         if (!FEBsIsMutrig)
             continue;
-	febSSIDx++;
+	    febSSIDx++;
+        printf("FEB:%i SSIDx:%i ASICMask: %12.12x [%s]\n", febIDx, febSSIDx, ASICMask, FEBActive ? "Active" : "Inactive");
+
         if (!FEBActive)
             continue;
-
-        if(m_module_power == false)
-            ASICMask = 0;
-        if(m_module_power_mask[febSSIDx] == false)
-            ASICMask = 0;
-
         status = feb_sc.FEBsc_NiosRPC(febIDx, CMD_TILE_ASIC_PWR, { { ASICMask } });
         if(status != FEB_REPLY_SUCCESS) {
             cm_msg1(

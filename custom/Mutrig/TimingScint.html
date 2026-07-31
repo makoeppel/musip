@@ -28,8 +28,6 @@
     <div id="mmain">
 
     <h2>Power Managment</h2>
-
-    <details class="container" id="div_LVHV" close>
     <div class="container" id="div_LVHV">
         <table class="mtable" id="LVsupplies">
             <tr><th colspan="9" class="mtableheader">LV SUPPLIES</th></tr>
@@ -79,7 +77,7 @@
             <tr><th colspan="14" class="mtableheader">Module Control, Status & Monitoring</th></tr>
             <tr>
                 <th> Board </th>
-                <th >MuTriG Power</th>
+                <th >Board ID</th>
                 <th>Init</th>
                 <th>Inj</th>
                 <th colspan="2"> ASIC VCC</th>
@@ -93,15 +91,15 @@
 
             <tr>
             <th></th>
-            <th style="text-align: center">
-                <button class="mbutton" id="Pall" name="Power_all" onclick="setGlobalASICpower(true);" >Enable Power</button>
-                <button class="mbutton" id="Pall" name="Power_all_n" onclick="setGlobalASICpower(false);" >Disable Power</button>
-                </th>
+            <th><!-- Board ID cells are populated by BoardControl.js. --></th>
             <th style="text-align: center"><input type="checkbox" class="modbcheckbox" data-odb-path="/Equipment/Quads/Settings/DAQ/Commands/MuTRiG/init_tmb" style="width:20px; height: 20px;" data-odb-editable="false"></input></th>
             <th style="text-align: center"><input type="checkbox" class="modbcheckbox" data-odb-path="/Equipment/Quads/Settings/DAQ/Commands/MuTRiG/TestPulsesTDC" style="width:20px; height: 20px;" data-odb-editable="false"></input></th>
             <th>A</th>
             <th>D</th>
-	    <th colspan=8></th>
+	    <th colspan=2>
+            <button class="mbutton" id="Pall" name="Power_all" onclick="setGlobalASICpower();" >Update Power</button>
+        </th>
+	    <th colspan=6></th>
             <tbody id="ModuleControl-body">
             <!-- rows will be populated dynamically from BoardControl.js -->
             </tbody>
@@ -180,8 +178,7 @@
         <table class="mtable" id="sensorSelection">
             <tr><th colspan="3" class="mtableheader">Sensor selection</th></tr>
             <td>
-		    <object type="image/svg+xml" data="Mutrig/MuSR-Scint1.svg" id="svg-object" height=300px aria-label="MuSR Scintillator diagram">
-	       <!--<object type="image/svg+xml" data="Mutrig/matrix.svg" id="svg-object" height=300px aria-label="Matrix SiPM diagram">-->
+	            <object type="image/svg+xml" data="Mutrig/setup.svg" id="svg-object" height=300px aria-label="Scintillators diagram">
                     <!-- Fallback content for browsers that don't support <object> or SVG -->
                     <p>Your browser does not support inline SVG.</p>
                 </object>
@@ -278,7 +275,7 @@
                             data-odb-path="/Equipment/Quads/Variables"
 			    data-h="MTCR"
                             data-x-text="channel" data-y-text="Rate [Hz]"
-                            data-x-min=0 data-x-max=64
+                            data-x-min=0 data-x-max=128
                             data-nx=32 data-y-log=true data-y-min=1 data-y-max=1e7
                             data-title="Rate Hitmap"
                         >
@@ -333,8 +330,7 @@
     <script src="Quads/quad_masking.js" defer></script>
     <script src="Quads/quad_dacs.js" defer></script>-->
     <script defer>
-        mappingfile='Mutrig/Matrix-Channelmapping.json';
-        mappingfile='Mutrig/MuSR-Channelmapping.json';
+        mappingfile='Mutrig/setup.json';
 
 	//init();
         mhttpd_init('Timing Sytem', 100);
@@ -346,8 +342,8 @@
         init_LVTable(mappingfile);
         init_HVTable(mappingfile);
         plots = [
-            {source: "mutrig/ChannelID", title: "Hits per channel", xTitle: "channel" , yTitle: "Entries"},
         /* 
+            {source: "mutrig/ChannelID", title: "Hits per channel", xTitle: "channel" , yTitle: "Entries"},
             {source: "mutrig/h_tot_0", title: "Matrix CH 0", xTitle: "ToT" , yTitle: "Entries", },
             {source: "mutrig/h_tot_1", title: "Matrix CH 1", xTitle: "ToT" , yTitle: "Entries", },
             {source: "mutrig/h_tot_2", title: "Matrix CH 2", xTitle: "ToT" , yTitle: "Entries", },
@@ -364,7 +360,6 @@
             {source: "mutrig/h_tot_13", title: "Matrix CH 13", xTitle: "ToT" , yTitle: "Entries", },
             {source: "mutrig/h_tot_14", title: "Matrix CH 14", xTitle: "ToT" , yTitle: "Entries", },
             {source: "mutrig/h_tot_15", title: "Matrix CH 15", xTitle: "ToT" , yTitle: "Entries", },
-	 */
             {source: "mutrig/h_tot_32", title: "ToT M.1 (32)", xTitle: "ToT" , yTitle: "Entries", },
             {source: "mutrig/h_tot_34", title: "ToT UP.1 (34)", xTitle: "ToT" , yTitle: "Entries", },
             {source: "mutrig/h_tot_35", title: "ToT UP.2 (35)", xTitle: "ToT" , yTitle: "Entries", },
@@ -375,6 +370,7 @@
             {source: "mutrig/TimeStampDelta_up", title: "Upward coincidences timing", xTitle: "dT [ns]" , yTitle: "Entries", logY:"True", minY:"0.1"},
             {source: "mutrig/TimeStampDelta_m1_up1", title: "M - UP.1 coincidences timing", xTitle: "dT [ns]" , yTitle: "Entries",  logY:"True", minY:"0.1"},
             {source: "mutrig/TimeStampDelta_m1_bw1", title: "M - BW.1 coincidences timing", xTitle: "dT [ns]" , yTitle: "Entries",  logY:"True", minY:"0.1"},
+	 */
             //{source: "mutrig/TimeStampDelta_backward_internal", title: "Backward intra timing", xTitle: "dT [ns]" , yTitle: "Entries", },
             //{source: "mutrig/TimeStampDelta_forward_internal", title: "Forward intra timing", xTitle: "dT [ns]" , yTitle: "Entries", },
             //{source: "mutrig/TimeStampDelta_det2_internal", title: "Detector 2 intra timing", xTitle: "dT [ns]" , yTitle: "Entries", },

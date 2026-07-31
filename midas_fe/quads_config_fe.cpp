@@ -38,8 +38,8 @@
 #include <pwd.h>
 
 // clang-format off
-#include "midas.h"
-#include "history.h"
+#include <midas.h>
+#include <history.h>
 // clang-format on
 #include "DummyFEBSlowcontrolInterface.h"
 #include "FEBSlowcontrolInterface.h"
@@ -61,6 +61,8 @@ BOOL equipment_common_overwrite = TRUE;
 // configuration variables
 FEBSlowcontrolInterface* feb_sc;
 midas::odb m_settings;
+midas::odb m_variables;
+
 uint8_t bitpattern_mupix[N_BYTES_MUPIX] = {};
 uint8_t bitpattern_mutrig[N_BYTES_MUTRIG] = {};
 mudaq::DmaMudaqDevice* mup = nullptr;
@@ -253,7 +255,7 @@ void setup_history() {
     std::vector<std::string> swb_sop_rate;
     std::vector<std::string> swb_sub_rate;
     std::vector<std::string> swb_eop_rate;
-    for ( int i= 0; i < N_FEBS; i++ ) {
+    for ( auto i= 0; i < N_FEBS; i++ ) {
         feb_hit_rate.push_back("Quads/RCNT:FEB HIT " + std::to_string(i) + " RATE");
         swb_hit_rate.push_back("Quads/RCNT:HIT " + std::to_string(i) + " RATE");
         swb_sop_rate.push_back("Quads/RCNT:SOP " + std::to_string(i) + " RATE");
@@ -365,7 +367,7 @@ int begin_of_run() {
     uint32_t link_active_from_odb = 0;
     for (int idx = 0; idx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); ++idx)
         if (m_settings["DAQ"]["Links"]["FEBsActive"][idx])
-            link_active_from_odb = link_active_from_odb || (0x1 << idx);
+            link_active_from_odb = link_active_from_odb | (0x1 << idx);
     printf("Waiting for run prepare acknowledge from all FEBs\n");
     // TODO: test this part of checking the run number
     do {
@@ -414,7 +416,6 @@ void sc_settings_changed(midas::odb o) {
         "init_tmb",
         "TestPulsesTDC",
         "override_power_moduleid",
-        "module_power_mask",
         "module_power",
         "MutrigConfig",
         "reset_datapath",
@@ -427,13 +428,11 @@ void sc_settings_changed(midas::odb o) {
     };
 
     std::vector<std::string> names_no_reset{
-        "module_power_mask",
-        "module_power",
         "TestPulsesTDC",
         "debug_readout_feb",
     };
 
-    if( (name == "module_power_mask" || name == "module_power") ){
+    if( name == "module_power" ){
         UpdatePower(*feb_sc, m_settings);
     }
 
@@ -460,7 +459,7 @@ void sc_settings_changed(midas::odb o) {
 
         if (name == "debug_readout_feb" && o) {
             cm_msg1(MINFO, "quads", "sc_settings_changed", "Set FEB into debug readout");
-            for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
+            for (auto febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
                 bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
                 bool FEBsIsQuads = m_settings["DAQ"]["Links"]["FEBsQuads"][febIDx];
                 if (FEBActive && FEBsIsQuads)
@@ -470,7 +469,7 @@ void sc_settings_changed(midas::odb o) {
 
         if (name == "debug_readout_feb" && !o) {
             cm_msg1(MINFO, "quads", "sc_settings_changed", "Set FEB into normal readout");
-            for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
+            for (auto febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
                 bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
                 bool FEBsIsQuads = m_settings["DAQ"]["Links"]["FEBsQuads"][febIDx];
                 if (FEBActive && FEBsIsQuads)
@@ -544,7 +543,7 @@ void sc_settings_changed(midas::odb o) {
         // MUTRIG Commands //
 	// *************** //
         if(name == "init_tmb" && o){
-            TBinit(*feb_sc, m_settings);
+            TBinit(*feb_sc, m_settings, m_variables);
         }
         if(name == "TestPulsesTDC"){
             ChangeTDCTest(*feb_sc, m_settings);
@@ -616,6 +615,7 @@ int frontend_init() {
     // create ODB copy for settings
     settings.connect_and_fix_structure("/Equipment/Quads/Settings/");
     m_settings.connect("/Equipment/Quads/Settings");
+    m_variables.connect("/Equipment/Quads/Variables");
 
     // end and start of run
     install_begin_of_run(begin_of_run);
@@ -668,7 +668,10 @@ int frontend_init() {
     midas::odb custom("/Custom", true);
     struct passwd *pw = getpwuid(getuid());
     const char *homedir = pw->pw_dir;
-    custom["Path"] = std::string (homedir).append("/musip/custom");
+    if(getenv("MIDAS_EXPTAB"))
+        custom["Path"] = std::string (dirname(getenv("MIDAS_EXPTAB"))).append("/../custom");
+    else
+    	custom["Path"] = std::string (homedir).append("/musip/custom");
     custom["Quads"] = "Quads/quad_basics.html";
     custom["MuTRiG"] = "Mutrig/TimingScint.html";
     custom["LVDS"] = "lvds.html";
@@ -676,7 +679,7 @@ int frontend_init() {
     return SUCCESS;
 }
 
-int read_sc_event(char* pevent, int off) {
+int read_sc_event(char* pevent, [[maybe_unused]] int off) {
 
     // fill SSFE bank
     ssfe_banks.clear();
@@ -759,6 +762,10 @@ int read_sc_event(char* pevent, int off) {
         readout_banks.push_back(sub_rate);
         readout_banks.push_back(hit_cnt);
         readout_banks.push_back(hit_rate);
+        if(FEBActive){
+            readout_banks.push_back(0);
+            continue;
+        }
         if (FEBsIsMutrig) {
             readout_banks.push_back(feb_rates_mutrig[i]);
         } else {
@@ -984,10 +991,14 @@ int read_sc_event(char* pevent, int off) {
             values_XXSM.push_back(rval_SM[1]);
             values_XXSM.push_back((int)roundf(TMB_TEMPERATURE_FACTOR * to_signed_16b(rval_SM[2]) * 100));
             values_XXSM.push_back((int)roundf(TMB_TEMPERATURE_FACTOR * to_signed_16b(rval_SM[3]) * 100));
+            values_XXSM.push_back((int)roundf(TMB_TEMPERATURE_FACTOR * to_signed_16b(rval_SM[4]) * 100));
+            values_XXSM.push_back((int)roundf(TMB_TEMPERATURE_FACTOR * to_signed_16b(rval_SM[5]) * 100));
         } else {
             for (size_t idx=0; idx < N_TMB_MATRIX_TEMPERATURES; idx++) {
                 values_XXSM.push_back(0);
                 values_XXSM.push_back(0);
+                values_XXSM.push_back(0xFFFFFFFF);
+                values_XXSM.push_back(0xFFFFFFFF);
                 values_XXSM.push_back(0xFFFFFFFF);
                 values_XXSM.push_back(0xFFFFFFFF);
             }
