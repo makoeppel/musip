@@ -148,11 +148,73 @@
         </tr>
     </table>
 
+    <table class="mtable">
+        <tr><th colspan="10" class="mtableheader">HV Box & Keithley HV supplies</th></tr>
+        <tr>
+            <th colspan="2">Node</th>
+            <td>State</td>
+            <th colspan="2" >Channel</th>
+            <th>Demand Voltage</th>
+            <th>Voltage</th>
+            <th>Current Limit (A)</th>
+            <th>Current (&mu;A)</th>
+            <th>Description</th>
+        </tr>
+        <tr>
+            <th><input type="number" id="node_hv0" value="2" min="1" max="2"></th>
+            <td  style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/LVSUPPLY1/Variables/State[3]" data-color="lightgreen" data-background-color="red"></div></td>
+            <td  style="text-align: center"><input type="checkbox" name="CheckboxPixels" class="modbcheckbox" data-odb-path="/Equipment/LVSUPPLY1/Variables/Set State[3]"></input></td>
+            <th><input type="number" id="channel_hv0" value="2" min="0" max="3"></th>
+            <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/Quad HV/Variables/Demand[6]" data-color="lightgreen" data-background-color="red"></div></td>
+            <td><div class="modbvalue" data-odb-path="/Equipment/Quad HV/Variables/Demand[6]" data-formula="-x" data-odb-editable="1"></div></td>
+            <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/Quad HV/Variables/Measured[6]" data-formula="-x"></div></td>
+            <td>none</td>
+            <td><div id="hv_curr" data-format="f3" class="modbvalue" data-odb-path="/Equipment/Quad HV/Variables/Current[6]" data-formula="-x"></div></td>
+            <td id="HVSUPPLY0_1" style="text-align: center">MSCB382 - Layer 5</td>
+        </tr>
+        <tr>
+            <th><input type="number" id="node_hv1" value="2" min="1" max="2"></th>
+            <td  style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/LVSUPPLY1/Variables/State[3]" data-color="lightgreen" data-background-color="red"></div></td>
+            <td  style="text-align: center"><input type="checkbox" name="CheckboxPixels" class="modbcheckbox" data-odb-path="/Equipment/LVSUPPLY1/Variables/Set State[3]"></input></td>
+            <th><input type="number" id="channel_hv1" value="3" min="0" max="3"></th>
+            <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/Quad HV/Variables/Demand[7]" data-color="lightgreen" data-background-color="red"></div></td>
+            <td><div class="modbvalue" data-odb-path="/Equipment/Quad HV/Variables/Demand[7]" data-formula="-x" data-odb-editable="1"></div></td>
+            <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/Quad HV/Variables/Measured[7]" data-formula="-x"></div></td>
+            <td>none</td>
+            <td><div id="hv_curr" data-format="f3" class="modbvalue" data-odb-path="/Equipment/Quad HV/Variables/Current[7]" data-formula="-x"></div></td>
+            <td id="HVSUPPLY0_1" style="text-align: center">MSCB382 - Layer 1</td>
+        </tr>
+        <tr>
+            <th>Keithley</th>
+            <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/K2450/Variables/Output[0]" data-color="lightgreen" data-background-color="red"></div></td>
+            <td style="text-align: center"><input type="checkbox" name="CheckboxHVNewPixels" class="modbcheckbox" data-odb-path="/Equipment/K2450/Variables/Output[0]"></input></td>
+            <th>0</th>
+            <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/K2450/Variables/Output[0]" data-color="lightgreen" data-background-color="red"></div></td>
+            <td><div class="modbvalue" data-odb-path="/Equipment/K2450/Variables/Output[1]" data-formula="x" data-odb-editable="1"></div></td>
+            <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/K2450/Variables/Input[1]" data-formula="x"></div></td>
+            <td><div class="modbvalue" data-format="e2" data-odb-path="/Equipment/K2450/Variables/Output[6]" data-formula="x" data-odb-editable="1"></div></td>
+            <td><div id="keithley_curr" data-format="f3" class="modbvalue" data-odb-path="/Equipment/K2450/Variables/Input[4]" data-formula="x*1000000"></div></td>
+            <td id="HVSUPPLY1_0" style="text-align: center">New quads HV</td>
+        </tr>
+        <tr>
+            <th>Keithley B</th>
+            <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/K2450B/Variables/Output[0]" data-color="lightgreen" data-background-color="red"></div></td>
+            <td style="text-align: center"><input type="checkbox" name="CheckboxHVNewPixels2" class="modbcheckbox" data-odb-path="/Equipment/K2450B/Variables/Output[0]"></input></td>
+            <th>0</th>
+            <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/K2450B/Variables/Output[0]" data-color="lightgreen" data-background-color="red"></div></td>
+            <td><div class="modbvalue" data-odb-path="/Equipment/K2450B/Variables/Output[1]" data-formula="x" data-odb-editable="1"></div></td>
+            <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/K2450B/Variables/Input[1]" data-formula="x"></div></td>
+            <td><div class="modbvalue" data-format="e2" data-odb-path="/Equipment/K2450B/Variables/Output[6]" data-formula="x" data-odb-editable="1"></div></td>
+            <td><div id="keithleyb_curr" data-format="f3" class="modbvalue" data-odb-path="/Equipment/K2450B/Variables/Input[4]" data-formula="x*1000000"></div></td>
+            <td id="HVSUPPLY2_0" style="text-align: center">Second Keithley</td>
+        </tr>
+    </table>
+
     </div>
 
-      <div id="quad_cooling" class="mpanel">
+    <div id="quad_cooling" class="mpanel">
 
-      </div>
+    </div>
 </div>
 
 </body>
