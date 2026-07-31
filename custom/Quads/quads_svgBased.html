@@ -11,6 +11,23 @@
    <style>
       .mtable td { padding: 2px; }
    </style>
+
+   <script>
+
+        // Update the ODB path for the HV box based on the selected node and channel
+        function updateHV(row){
+            const node = Number(document.getElementById("node_hv"+row).value);
+            const channel = Number(document.getElementById("channel_hv"+row).value);
+            const index = (node-1)*4 + channel;
+
+            document.querySelectorAll(`[data-hvrow="${row}"]`).forEach(elem => {
+                elem.dataset.odbPath =
+                    elem.dataset.odbTemplate.replace("%i", index);
+            });
+            mhttpd_refresh();
+        }
+
+   </script>
 </head>
 
 <body class="mcss" onload="mhttpd_init('Quads SVG');">
@@ -161,11 +178,16 @@
             <th>Description</th>
         </tr>
         <tr>
-            <th><input type="number" id="node_hv0" value="2" min="1" max="2"></th>
+            <th><input type="number" id="node_hv0" value="2" min="1" max="2" onchange="updateHV(0)"></th>
             <td  style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/LVSUPPLY1/Variables/State[3]" data-color="lightgreen" data-background-color="red"></div></td>
             <td  style="text-align: center"><input type="checkbox" name="CheckboxPixels" class="modbcheckbox" data-odb-path="/Equipment/LVSUPPLY1/Variables/Set State[3]"></input></td>
-            <th><input type="number" id="channel_hv0" value="2" min="0" max="3"></th>
-            <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/Quad HV/Variables/Demand[6]" data-color="lightgreen" data-background-color="red"></div></td>
+            <th><input type="number" id="channel_hv0" value="2" min="0" max="3" onchange="updateHV(0)"></th>
+            <td style="text-align: center">
+                <div class="modbbox" style="width: 20px; height: 20px;"
+                     data-hvrow="0" data-odb-template="/Equipment/Quad HV/Variables/Demand[%i]"
+                     data-odb-path="/Equipment/Quad HV/Variables/Demand[6]" 
+                     data-color="lightgreen" data-background-color="red">
+                </div></td>
             <td><div class="modbvalue" data-odb-path="/Equipment/Quad HV/Variables/Demand[6]" data-formula="-x" data-odb-editable="1"></div></td>
             <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/Quad HV/Variables/Measured[6]" data-formula="-x"></div></td>
             <td>none</td>
@@ -173,10 +195,10 @@
             <td id="HVSUPPLY0_1" style="text-align: center">MSCB382 - Layer 5</td>
         </tr>
         <tr>
-            <th><input type="number" id="node_hv1" value="2" min="1" max="2"></th>
+            <th><input type="number" id="node_hv1" value="2" min="1" max="2" onchange="updateHV(1)"></th>
             <td  style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/LVSUPPLY1/Variables/State[3]" data-color="lightgreen" data-background-color="red"></div></td>
             <td  style="text-align: center"><input type="checkbox" name="CheckboxPixels" class="modbcheckbox" data-odb-path="/Equipment/LVSUPPLY1/Variables/Set State[3]"></input></td>
-            <th><input type="number" id="channel_hv1" value="3" min="0" max="3"></th>
+            <th><input type="number" id="channel_hv1" value="3" min="0" max="3" onchange="updateHV(1)"></th>
             <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/Quad HV/Variables/Demand[7]" data-color="lightgreen" data-background-color="red"></div></td>
             <td><div class="modbvalue" data-odb-path="/Equipment/Quad HV/Variables/Demand[7]" data-formula="-x" data-odb-editable="1"></div></td>
             <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/Quad HV/Variables/Measured[7]" data-formula="-x"></div></td>
