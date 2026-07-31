@@ -23,6 +23,8 @@
 
     <!-- Values to be monitored (modb values with onchange or onload commands) -->
 
+    <!-- Should become a tab for power-->
+
     <table class="mtable">
         <tr>
             <th colspan="8" class="mtableheader">LV SUPPLY 0: FEB und MuTrig</th>
@@ -76,7 +78,61 @@
             <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY0/Variables/Current[3]"></div></td>
             <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY0/Settings/Channel Names[3]" data-odb-editable="1"></div></td>
         </tr>
+    </table>
 
+    <table class="mtable">
+        <tr>
+            <th colspan="8" class="mtableheader">LV SUPPLY 1: Quads & HV Box</th>
+        </tr>
+        <tr>
+            <th colspan="2"> Channel: </th>
+            <th>State</th>
+            <th>Demand Voltage</th>
+            <th>Voltage</th>
+            <th>Current Limit</th>
+            <th>Current</th>
+            <th>Description</th>
+        </tr>
+        <tr>
+            <th>0</th>
+            <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/LVSUPPLY1/Variables/State[0]" data-color="lightgreen" data-background-color="red"></div></td>
+            <td style="text-align: center"><input type="checkbox" name="CheckboxPixels" class="modbcheckbox" data-odb-path="/Equipment/LVSUPPLY1/Variables/Set State[0]"></input></td>
+            <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/LVSUPPLY1/Variables/Demand Voltage[0]" data-odb-editable="1"></div></td>
+            <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/LVSUPPLY1/Variables/Voltage[0]"></div></td>
+            <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY1/Variables/Current Limit[0]" data-odb-editable="1"></div></td>
+            <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY1/Variables/Current[0]"></div></td>
+            <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY1/Settings/Channel Names[0]" data-odb-editable="1"></div></td>
+        </tr>
+        <tr>
+            <th>1</th>
+            <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/LVSUPPLY1/Variables/State[1]" data-color="lightgreen" data-background-color="red"></div></td>
+            <td style="text-align: center"><input type="checkbox" name="CheckboxPixels" class="modbcheckbox" data-odb-path="/Equipment/LVSUPPLY1/Variables/Set State[1]"></input></td>
+            <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/LVSUPPLY1/Variables/Demand Voltage[1]" data-odb-editable="1"></div></td>
+            <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/LVSUPPLY1/Variables/Voltage[1]"></div></td>
+            <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY1/Variables/Current Limit[1]" data-odb-editable="1"></div></td>
+            <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY1/Variables/Current[1]"></div></td>
+            <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY1/Settings/Channel Names[1]" data-odb-editable="1"></div></td>
+        </tr>
+        <tr>
+            <th>2</th>
+            <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/LVSUPPLY1/Variables/State[2]" data-color="lightgreen" data-background-color="red"></div></td>
+            <td style="text-align: center"><input type="checkbox" name="CheckboxPixels" class="modbcheckbox" data-odb-path="/Equipment/LVSUPPLY1/Variables/Set State[2]"></input></td>
+            <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/LVSUPPLY1/Variables/Demand Voltage[2]" data-odb-editable="1"></div></td>
+            <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/LVSUPPLY1/Variables/Voltage[2]"></div></td>
+            <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY1/Variables/Current Limit[2]" data-odb-editable="1"></div></td>
+            <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY1/Variables/Current[2]"></div></td>
+            <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY1/Settings/Channel Names[2]" data-odb-editable="1"></div></td>
+        </tr>
+        <tr>
+            <th>3</th>
+            <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/LVSUPPLY1/Variables/State[3]" data-color="lightgreen" data-background-color="red"></div></td>
+            <td style="text-align: center"><input type="checkbox" name="CheckboxPixels" class="modbcheckbox" data-odb-path="/Equipment/LVSUPPLY1/Variables/Set State[3]"></input></td>
+            <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/LVSUPPLY1/Variables/Demand Voltage[3]" data-odb-editable="1"></div></td>
+            <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/LVSUPPLY1/Variables/Voltage[3]"></div></td>
+            <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY1/Variables/Current Limit[3]" data-odb-editable="1"></div></td>
+            <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY1/Variables/Current[3]"></div></td>
+            <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY1/Settings/Channel Names[3]" data-odb-editable="1"></div></td>
+        </tr>
     </table>
 
 </div>
