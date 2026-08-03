@@ -1,7 +1,7 @@
-[![Build Documentation](https://github.com/makoeppel/musip/actions/workflows/docs.yml/badge.svg?branch=main)](https://github.com/makoeppel/musip/actions/workflows/docs.yml)
-[![Build and Test Software](https://github.com/makoeppel/musip/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/makoeppel/musip/actions/workflows/tests.yml)
-[![GHDL testbenches](https://github.com/makoeppel/musip/actions/workflows/ghdl.yml/badge.svg)](https://github.com/makoeppel/musip/actions/workflows/ghdl.yml)
-[![Readthedocs](https://app.readthedocs.org/projects/musip/badge/?version=latest)](https://musip.readthedocs.io/)
+[![Build Documentation]](https://gitea.psi.ch/MuSiP/musip/actions?workflow=docs.yml)
+[![Build and Test Software]](https://github.com/makoeppel/musip/actions/workflows/tests.yml)
+[![GHDL testbenches]](https://github.com/makoeppel/musip/actions/workflows/ghdl.yml)
+[![Documentation]](https://musip.pages.psi.ch/musip/)
 
 # musip-midas
 
@@ -20,7 +20,7 @@ This is a MIDAS-based frontend for the Mupix11 based quad moduels.
 
 ## Build Instructions
 
-For a full installation guide go to: [Setup](setup.md)
+For a full installation guide go to: [Setup](https://musip.pages.psi.ch/musip/setup/)
 
 ### Prerequisites
 
