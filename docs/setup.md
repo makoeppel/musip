@@ -66,7 +66,6 @@ Install packages required for:
 * Kernel driver
 * Geant4
 * Quartus
-* VS Code
 
 (Refer to package lists in the full documentation if dependencies are missing.)
 
@@ -192,7 +191,7 @@ Test using example `B1`.
 
 Recommended version:
 
-* Quartus Prime Pro 18.1
+* Quartus Prime Standard 21.1.1
 
 Requirements:
 
@@ -205,7 +204,7 @@ Install:
 mkdir ~/programs
 cd ~/programs
 
-tar -xvf Quartus-18.1*.tar
+tar xf Quartus-21.1.1.850-linux.tar
 ./setup.sh
 ```
 
