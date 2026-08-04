@@ -1,0 +1,496 @@
+{
+  "ext_trig_mode": {
+    "section": "Global",
+    "description": "External validation trigger enable.",
+    "comments": "Set to 0."
+  },
+  "ext_trig_endtime_sign": {
+    "section": "Global",
+    "description": "Sign of the external trigger end time.",
+    "comments": "Controls whether the end time is interpreted forward or backward relative to the trigger."
+  },
+  "ext_trig_offset": {
+    "section": "Global",
+    "description": "Configuration of external trigger offset.",
+    "comments": ""
+  },
+  "ext_trig_endtime": {
+    "section": "Global",
+    "description": "Configuration of external trigger end time.",
+    "comments": ""
+  },
+  "gen_idle": {
+    "section": "Global",
+    "description": "Enable comma word in LVDS data stream.",
+    "comments": ""
+  },
+  "ms_debug": {
+    "section": "Global",
+    "description": "Debug setting for multi-switch / coarse-counter selection logic.",
+    "comments": ""
+  },
+  "tx_mode": {
+    "section": "Global",
+    "description": "Combined transmit mode setting introduced in MuTRiG3.",
+    "comments": "Replaces older PRBS and short-event related flags."
+  },
+  "sync_ch_rst": {
+    "section": "Global",
+    "description": "Synchronized PLL reset selection.",
+    "comments": "'1': use internally synchronized reset signal for PLL reset. '0': feed reset input directly to PLL."
+  },
+  "disable_coarse": {
+    "section": "Global",
+    "description": "Disable coarse counter output.",
+    "comments": "Not connected; leave at 1. CC clock output enable in Timebase/CoarseCounter block."
+  },
+  "pll_setcoarse": {
+    "section": "Global",
+    "description": "Coarse counter latch override.",
+    "comments": "Leave at 0."
+  },
+  "pll_envomonitor": {
+    "section": "Global",
+    "description": "Enable PLL monitor output on pin pll_mon.",
+    "comments": "Leave at 0."
+  },
+  "pll_lol_dbg": {
+    "section": "Global",
+    "description": "PLL loss-of-lock debug setting.",
+    "comments": ""
+  },
+  "en_ch_evt_cnt": {
+    "section": "Global",
+    "description": "Enable channel event counters.",
+    "comments": ""
+  },
+  "ms_limits": {
+    "section": "Global",
+    "description": "Coarse-counter selection range based on fine-counter value.",
+    "comments": "Tune if side peaks at ±16 are seen."
+  },
+  "ms_switch_sel": {
+    "section": "Global",
+    "description": "Polarity / selection behavior for coarse-counter selection range.",
+    "comments": "Tune together with ms_limits if side peaks at ±16 are seen."
+  },
+  "dmon_sel": {
+    "section": "Global",
+    "description": "Digital monitor selection added in MuTRiG3.",
+    "comments": "5-bit selection field placed in the header / global part of the stream."
+  },
+  "dmon_sel_enable": {
+    "section": "Global",
+    "description": "Enable digital monitor selection field.",
+    "comments": "Added in MuTRiG3."
+  },
+  "dmon_sw": {
+    "section": "Global",
+    "description": "Digital monitor output mode selector.",
+    "comments": "In MuTRiG3 this is moved out of the per-channel settings and placed with the global / header settings."
+  },
+
+  "vnpfc": {
+    "section": "TDCs",
+    "description": "PLL phase detector bias.",
+    "comments": ""
+  },
+  "vnpfc_offset": {
+    "section": "TDCs",
+    "description": "Offset trim for VNPFC.",
+    "comments": ""
+  },
+  "vnpfc_scale": {
+    "section": "TDCs",
+    "description": "Scale bit for VNPFC.",
+    "comments": ""
+  },
+  "vncnt": {
+    "section": "TDCs",
+    "description": "Coarse counter internal logic bias.",
+    "comments": "If spikes are seen in the coarse counter distribution, increase this. Set to 0 to unlock PLL."
+  },
+  "vncnt_offset": {
+    "section": "TDCs",
+    "description": "Offset trim for VNCnt.",
+    "comments": ""
+  },
+  "vncnt_scale": {
+    "section": "TDCs",
+    "description": "Scale bit for VNCnt.",
+    "comments": ""
+  },
+  "vnvcobuffer": {
+    "section": "TDCs",
+    "description": "Fine counter driver bias.",
+    "comments": ""
+  },
+  "vnvcobuffer_offset": {
+    "section": "TDCs",
+    "description": "Offset trim for VNVCOBuffer.",
+    "comments": ""
+  },
+  "vnvcobuffer_scale": {
+    "section": "TDCs",
+    "description": "Scale bit for VNVCOBuffer.",
+    "comments": ""
+  },
+  "vnd2c": {
+    "section": "TDCs",
+    "description": "TDC CML-to-CMOS bias.",
+    "comments": "Applied after CC/FC timestamp latch."
+  },
+  "vnd2c_offset": {
+    "section": "TDCs",
+    "description": "Offset trim for VND2C.",
+    "comments": ""
+  },
+  "vnd2c_scale": {
+    "section": "TDCs",
+    "description": "Scale bit for VND2C.",
+    "comments": ""
+  },
+  "vnpcp": {
+    "section": "TDCs",
+    "description": "PLL charge pump bias.",
+    "comments": ""
+  },
+  "vnpcp_offset": {
+    "section": "TDCs",
+    "description": "Offset trim for VNPCP.",
+    "comments": ""
+  },
+  "vnpcp_scale": {
+    "section": "TDCs",
+    "description": "Scale bit for VNPCP.",
+    "comments": ""
+  },
+  "vnhitlogic": {
+    "section": "TDCs",
+    "description": "Bias of TDC latch control.",
+    "comments": "Adjust if side peaks or analog-independent noise hits are seen."
+  },
+  "vnhitlogic_offset": {
+    "section": "TDCs",
+    "description": "Offset trim for VNHitLogic.",
+    "comments": ""
+  },
+  "vnhitlogic_scale": {
+    "section": "TDCs",
+    "description": "Scale bit for VNHitLogic.",
+    "comments": ""
+  },
+  "vncntbuffer": {
+    "section": "TDCs",
+    "description": "Coarse counter driver bias.",
+    "comments": ""
+  },
+  "vncntbuffer_offset": {
+    "section": "TDCs",
+    "description": "Offset trim for VNCntBuffer.",
+    "comments": ""
+  },
+  "vncntbuffer_scale": {
+    "section": "TDCs",
+    "description": "Scale bit for VNCntBuffer.",
+    "comments": ""
+  },
+  "vnvcodelay": {
+    "section": "TDCs",
+    "description": "VCO base current via charge pump.",
+    "comments": "Used to tune PLL locking at wrong frequencies."
+  },
+  "vnvcodelay_offset": {
+    "section": "TDCs",
+    "description": "Offset trim for VNVCOdelay.",
+    "comments": ""
+  },
+  "vnvcodelay_scale": {
+    "section": "TDCs",
+    "description": "Scale bit for VNVCOdelay.",
+    "comments": ""
+  },
+  "latchbias": {
+    "section": "TDCs",
+    "description": "Timestamp latch bias voltage.",
+    "comments": ""
+  },
+  "amon_en": {
+    "section": "TDCs",
+    "description": "Enable analog monitor.",
+    "comments": "Monitor driver setting. Not connected on SMB2."
+  },
+  "amon_dac": {
+    "section": "TDCs",
+    "description": "Analog monitor bias / DAC setting.",
+    "comments": "Monitor driver setting. Not connected on SMB2."
+  },
+  "dmon_1_en": {
+    "section": "TDCs",
+    "description": "Enable digital monitor 1.",
+    "comments": "Q/T digital monitor."
+  },
+  "dmon_1_dac": {
+    "section": "TDCs",
+    "description": "Bias current for digital monitor 1.",
+    "comments": "Higher value means higher current."
+  },
+  "dmon_2_en": {
+    "section": "TDCs",
+    "description": "Enable digital monitor 2.",
+    "comments": "Flag/E digital monitor."
+  },
+  "dmon_2_dac": {
+    "section": "TDCs",
+    "description": "Bias current for digital monitor 2.",
+    "comments": "Higher value means higher current."
+  },
+  "lvds_tx_vcm": {
+    "section": "TDCs",
+    "description": "LVDS driver common-mode voltage.",
+    "comments": "Typical value around 155 = 1.1 V. Range 0..255 corresponds to 0..1.8 V."
+  },
+  "lvds_tx_bias": {
+    "section": "TDCs",
+    "description": "Additional LVDS TX bias current.",
+    "comments": "Default 0. Used only if higher driving strength is needed. 63 corresponds to about 4.5 mA additional current."
+  },
+  "coin_xbar_lower_rx_ena": {
+    "section": "Footer",
+    "description": "Enable coincidence passout LVDS RX on lower side.",
+    "comments": ""
+  },
+  "coin_xbar_lower_tx_ena": {
+    "section": "Footer",
+    "description": "Enable coincidence passout LVDS TX on lower side.",
+    "comments": ""
+  },
+  "coin_xbar_lower_tx_vdac": {
+    "section": "Footer",
+    "description": "LVDS common voltage DAC for lower TX coincidence passout.",
+    "comments": "0..1.8 V, 8-bit, ascending. Nominal value 155 is about 1.1 V."
+  },
+  "coin_xbar_lower_tx_idac": {
+    "section": "Footer",
+    "description": "LVDS TX bias current for lower TX coincidence passout.",
+    "comments": "Nominal value 0; nonzero only if higher driving strength is required. Maximum 63 corresponds to about 4.5 mA additional current."
+  },
+  "coin_mat_xbl": {
+    "section": "Footer",
+    "description": "Lower-side coincidence matrix boundary / neighbor configuration.",
+    "comments": "Typical values: 0x0c for 1 neighbour, 0x1e for 2 neighbours, 0x3f for 3 neighbours."
+  },
+  "coin_mat_xbu": {
+    "section": "Footer",
+    "description": "Upper-side coincidence matrix boundary / neighbor configuration.",
+    "comments": "Called COIN_MAT_XBH in some documentation. Typical values: 0x0c for 1 neighbour, 0x1e for 2 neighbours, 0x3f for 3 neighbours."
+  },
+  "coin_wnd": {
+    "section": "Footer",
+    "description": "Coincidence window setting.",
+    "comments": "No detailed description provided in the source markdown."
+  },
+  "coin_xbar_upper_rx_ena": {
+    "section": "Footer",
+    "description": "Enable coincidence passout LVDS RX on upper side.",
+    "comments": ""
+  },
+  "coin_xbar_upper_tx_ena": {
+    "section": "Footer",
+    "description": "Enable coincidence passout LVDS TX on upper side.",
+    "comments": ""
+  },
+  "coin_xbar_upper_tx_vdac": {
+    "section": "Footer",
+    "description": "LVDS common voltage DAC for upper TX coincidence passout.",
+    "comments": "0..1.8 V, 8-bit, ascending. Nominal value 155 is about 1.1 V."
+  },
+  "coin_xbar_upper_tx_idac": {
+    "section": "Footer",
+    "description": "LVDS TX bias current for upper TX coincidence passout.",
+    "comments": "Nominal value 0; nonzero only if higher driving strength is required. Maximum 63 corresponds to about 4.5 mA additional current."
+  },
+  "coin_mat": {
+    "section": "Footer",
+    "description": "Per-channel coincidence matrix value.",
+    "comments": "There are 32 values per ASIC, one for each channel. In this project the values are stored under TDCs even though conceptually they are channel-wise."
+  },
+
+  "mask": {
+    "section": "Channels",
+    "description": "Mask a channel so it is not read out.",
+    "comments": "Useful for noisy channels."
+  },
+  "recv_all": {
+    "section": "Channels",
+    "description": "Send the hit structure of long events, but the energy timestamp is actually the next T timestamp.",
+    "comments": ""
+  },
+  "tthresh": {
+    "section": "Channels",
+    "description": "Timing threshold setting.",
+    "comments": "0..63. Lower values are higher thresholds. Zero-noise region is around 32."
+  },
+  "tthresh_sc": {
+    "section": "Channels",
+    "description": "Timing-threshold current scaling.",
+    "comments": "MuTRiG3 uses 2 bits: 00->2, 01->4, 10->0.5, 11->1."
+  },
+  "tthresh_offset_0": {
+    "section": "Channels",
+    "description": "Bit 0 of split timing-threshold offset field.",
+    "comments": "Derived from tthresh_offset. Repurposed from inputbias_sc in MuTRiG2."
+  },
+  "tthresh_offset_1": {
+    "section": "Channels",
+    "description": "Bit 1 of split timing-threshold offset field.",
+    "comments": "Derived from tthresh_offset. Repurposed from sipm_sc in MuTRiG2."
+  },
+  "tthresh_offset_2": {
+    "section": "Channels",
+    "description": "Bit 2 of split timing-threshold offset field.",
+    "comments": "Derived from tthresh_offset. Introduced by reusing one bit from the old 3-bit MuTRiG2 tthresh_sc."
+  },
+  "ethresh": {
+    "section": "Channels",
+    "description": "Energy threshold setting.",
+    "comments": "0 corresponds to 1.8 V, 255 to 0 V. For SiPM signals usually around 90..150."
+  },
+  "ebias": {
+    "section": "Channels",
+    "description": "E-comparator discharge current.",
+    "comments": "Use 0..3 for small signals / better linearity, 4..7 for larger signals and shorter ToT."
+  },
+  "sipm": {
+    "section": "Channels",
+    "description": "Voltage tuning at SiPM input terminal.",
+    "comments": "0 = low voltage, 63 = high voltage. Keep near the middle, around 15 to low 20s."
+  },
+  "inputbias": {
+    "section": "Channels",
+    "description": "Main bias current of the input stage.",
+    "comments": "Higher values mean higher current. Changes bandwidth, input impedance, terminal voltage, timing and energy resolution."
+  },
+  "pole": {
+    "section": "Channels",
+    "description": "DAC setting for pole-zero cancellation feature.",
+    "comments": "Usually leave this off."
+  },
+  "pole_sc": {
+    "section": "Channels",
+    "description": "Scale / auxiliary control for pole setting.",
+    "comments": ""
+  },
+  "ampcom": {
+    "section": "Channels",
+    "description": "Amplifier bias-current tuning to change gain and comparator hysteresis.",
+    "comments": "For now often set value to 0 and scale to 2 to effectively turn off."
+  },
+  "ampcom_sc": {
+    "section": "Channels",
+    "description": "Scale setting for AMPCOM.",
+    "comments": "Changes how AMPCOM affects gain and hysteresis."
+  },
+  "cml": {
+    "section": "Channels",
+    "description": "Current Mode Logic driving strength.",
+    "comments": "Usually keep near middle values, around 8, with scale 0. For TDC injection set to 0."
+  },
+  "cml_sc": {
+    "section": "Channels",
+    "description": "Scale setting for CML.",
+    "comments": ""
+  },
+  "amonctrl": {
+    "section": "Channels",
+    "description": "Analog monitor selection.",
+    "comments": "0 none; 1 top_monitor; 2 input stage cascode; 3 timing trigger P; 4 SiPM_vbias / cascode bias; 5 timing trigger N; 6 fb_pbias; 7 energy trigger N."
+  },
+  "comp_spi": {
+    "section": "Channels",
+    "description": "Tail compensation setting.",
+    "comments": "1 = moderate compensation, 2 = aggressive compensation."
+  },
+  "tdctest_n": {
+    "section": "Channels",
+    "description": "Disable TDC test input to this channel.",
+    "comments": "0 enables TDC test input and shorts it with the normal hitlogic output."
+  },
+  "sswitch": {
+    "section": "Channels",
+    "description": "Select single-ended or differential signals.",
+    "comments": "Set to 0."
+  },
+  "delay": {
+    "section": "Channels",
+    "description": "Delay control bit.",
+    "comments": "Set to 0."
+  },
+  "pole_en_n": {
+    "section": "Channels",
+    "description": "Enable DAC for pole-zero cancellation when 0.",
+    "comments": "Only controls the DAC, not the feature itself."
+  },
+  "energy_c_en": {
+    "section": "Channels",
+    "description": "Enable capacitor in the low-pass filter before the E-comparator.",
+    "comments": ""
+  },
+  "energy_r_en": {
+    "section": "Channels",
+    "description": "Enable resistor in the low-pass filter before the E-comparator.",
+    "comments": ""
+  },
+  "cm_sensing_high_r": {
+    "section": "Channels",
+    "description": "Enable high-impedance source in the feedback path.",
+    "comments": "Should be set to 0."
+  },
+  "amon_en_n": {
+    "section": "Channels",
+    "description": "Disable analog monitor output from this channel when 1.",
+    "comments": "Only up to one channel per chip should enable analog monitor output."
+  },
+  "edge": {
+    "section": "Channels",
+    "description": "Select polarity of E-branch comparator.",
+    "comments": "See also edge_cml."
+  },
+  "edge_cml": {
+    "section": "Channels",
+    "description": "Invert polarity of digital signals to hitlogic in the channel.",
+    "comments": ""
+  },
+
+  "dmon_en": {
+    "section": "Channels",
+    "description": "Enable digital monitor for this channel.",
+    "comments": "MuTRiG2 field; removed in MuTRiG3 and moved out of channel settings."
+  },
+  "dmon_sw_channel_legacy": {
+    "section": "Channels",
+    "description": "Digital monitor output mode for a channel.",
+    "comments": "MuTRiG2 field; removed from channel settings in MuTRiG3 and moved to global/header logic."
+  },
+
+  "dummy_config": {
+    "section": "DAQ",
+    "description": "Ignore different replies from ASICs when configuring via SPI.",
+    "comments": ""
+  },
+  "dummy_data": {
+    "section": "DAQ",
+    "description": "Enable FPGA dummy data generator.",
+    "comments": ""
+  },
+  "dummy_data_fast": {
+    "section": "DAQ",
+    "description": "Produce short events in FPGA dummy data generator.",
+    "comments": ""
+  },
+  "dummy_data_n": {
+    "section": "DAQ",
+    "description": "Number of hits generated per ASIC by the FPGA dummy data generator.",
+    "comments": ""
+  }
+}
