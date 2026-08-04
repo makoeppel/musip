@@ -24,7 +24,7 @@
 * Install on SSD
 * Disable snapshots
 * Do not create swap
-* Create user: `mu3e`
+* Create user: `musip`
 * Configure root password
 
 ---
@@ -394,3 +394,35 @@ Start in this order:
 * [ ] MIDAS available at `localhost:8080`
 
 Once all checks pass, the DAQ machine is operational.
+
+## Make mhttpd autostart
+
+One can use `systemd` to autostart `mhttpd` on system start. For that, create the following unit:
+```
+$ cat .config/systemd/user/mhttpd@.service
+[Unit]
+Description=mhttpd for experiment %I
+Wants=network.target
+
+[Service]
+Type=forking
+Environment=FIXME
+ExecStart=/home/musip/midas/bin/mhttpd -e %I -D
+
+[Install]
+WantedBy=default.target
+```
+
+To set the correct environmont, parse your `.bashrc`/`.zshrc` via
+```
+$ env -i -- $SHELL --login -c "source .zshrc.local && env" | grep -vE '^(_|SHLVL|PWD|OLDPWD)=' | sed -e 's/^/Environment="/;s/$/"/'
+```
+And add these lines in the systemd unit. Start and enable the unit
+```
+$ systemctl --user start mhttpd@Musip.service
+$ systemctl --user enable mhttpd@Musip.service
+```
+And enable lingering, so that the service always gets started regardless of the user being logged in or not:
+```
+$ loginctl enable-linger
+```
