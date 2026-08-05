@@ -239,15 +239,6 @@ SUBSYSTEM=="usb", ATTR{idVendor}=="09fb", ATTR{idProduct}=="6003", MODE="0666"
 SUBSYSTEM=="usb", ATTR{idVendor}=="09fb", ATTR{idProduct}=="6010", MODE="0666"
 SUBSYSTEM=="usb", ATTR{idVendor}=="09fb", ATTR{idProduct}=="6810", MODE="0666"
 ```
-
-Create:
-```bash
-sudo nano 99-mudaq.rules
-```
-
-with:
-```bash
-KERNEL=="mudaq*", OWNER="root", GROUP="users", MODE="0666"
 ```
 
 Reload:
@@ -360,6 +351,8 @@ make app_upload
 ```
 
 ### Load Driver
+
+Normally this should not be needed but for rare cases:
 
 ```bash
 cd ~/musip/midas_fe/kerneldriver
