@@ -424,7 +424,6 @@ ExecStart=/home/musip/midas/bin/mhttpd -e %I -D
 User=musip
 Group=musip
 WorkingDirectory=~
-ExecStart=/home/musip/midas/bin/mhttpd -e %I -D
 
 [Install]
 WantedBy=default.target
