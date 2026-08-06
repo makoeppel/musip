@@ -392,30 +392,92 @@ Once all checks pass, the DAQ machine is operational.
 
 One can use `systemd` to autostart `mhttpd` on system start. For that, create the following unit:
 ```
-$ cat .config/systemd/user/mhttpd@.service
+$ cat /usr/local/lib/systemd/system/mhttpd@.service
 [Unit]
 Description=mhttpd for experiment %I
 Wants=network.target
 
 [Service]
 Type=forking
-Environment=FIXME
+Environment="PATH=/opt/root/bin:/usr/share/Modules/bin:/bin:/usr/bin:/usr/ucb:/usr/local/bin:/home/musip/bin:/usr/local/sbin:/usr/sbin:/opt/puppetlabs/bin:/home/musip/midas/bin:/home/musip/intelFPGA/21.1/quartus/bin:/home/musip/intelFPGA/21.1/quartus/bin:/home/musip/intelFPGA/21.1/quartus/sopc_builder/bin:/home/musip/intelFPGA/21.1/quartus/../nios2eds/bin:/home/musip/intelFPGA/21.1/quartus/../nios2eds/sdk2/bin:/home/musip/intelFPGA/21.1/quartus/../nios2eds/bin/gnu/H-x86_64-pc-linux-gnu/bin:/home/musip/intelFPGA/21.1/quartus/../hls/bin"
+Environment="QSYS_ROOTDIR=/home/musip/intelFPGA/21.1/quartus/sopc_builder/bin"
+Environment="ROOTSYS=/opt/root"
+Environment="LD_LIBRARY_PATH=/opt/root/lib"
+Environment="DYLD_LIBRARY_PATH=/opt/root/lib"
+Environment="SHLIB_PATH=/opt/root/lib"
+Environment="LIBPATH=/opt/root/lib"
+Environment="PYTHONPATH=/opt/root/lib:/home/musip/midas/python"
+Environment="CMAKE_PREFIX_PATH=/opt/root"
+Environment="JUPYTER_PATH=/opt/root/etc/notebook"
+Environment="JUPYTER_CONFIG_PATH=/opt/root/etc/notebook"
+Environment="ROOT_INCLUDE_PATH="
+Environment="MIDASSYS=/home/musip/midas"
+Environment="MIDAS_EXPTAB=/home/musip/musip/online/exptab"
+Environment="MIDAS_EXPT_NAME=Musip"
+Environment="MIDAS_WORK=/home/musip/midas_nemu"
+Environment="ALTERAPATH=/home/musip/intelFPGA/21.1"
+Environment="QUARTUS_ROOTDIR=/home/musip/intelFPGA/21.1/quartus"
+Environment="ALTERAD_LICENSE_FILE=27001@localhost"
+Environment="QUARTUS_64BIT=1"
+Environment="SOPC_KIT_NIOS2=/home/musip/intelFPGA/21.1/quartus/../nios2eds"
+ExecStart=/home/musip/midas/bin/mhttpd -e %I -D
+User=musip
+Group=musip
+WorkingDirectory=~
 ExecStart=/home/musip/midas/bin/mhttpd -e %I -D
 
 [Install]
 WantedBy=default.target
 ```
+If SELinux is active, than the service will probably not start unless a policy is added. On RHEL9 install `selinux-policy-devel` and with
+```
+$ cat my-mhttpd.te
 
-To set the correct environmont, parse your `.bashrc`/`.zshrc` via
+module my-mhttpd 1.0;
+
+require {
+        type user_home_t;
+        type init_t;
+        type unconfined_t;
+        type ephemeral_port_t;
+        class file { append create execute execute_no_trans map open read write };
+        class sem { associate setattr };
+        class tcp_socket name_connect;
+}
+
+#============= init_t ==============
+
+#!!!! This avc can be allowed using the boolean 'nis_enabled'
+allow init_t ephemeral_port_t:tcp_socket name_connect;
+
+#!!!! This avc is allowed in the current policy
+allow init_t unconfined_t:sem { associate setattr };
+
+#!!!! This avc is allowed in the current policy
+allow init_t user_home_t:file { append create execute execute_no_trans map open read write };
 ```
-$ env -i -- $SHELL --login -c "source .zshrc.local && env" | grep -vE '^(_|SHLVL|PWD|OLDPWD)=' | sed -e 's/^/Environment="/;s/$/"/'
+Compile and load the policy via
 ```
-And add these lines in the systemd unit. Start and enable the unit
+$ make -f /usr/share/selinux/devel/Makefile my-mhttpd.pp
+$ semodule -i my-mhttpd.pp
 ```
-$ systemctl --user start mhttpd@Musip.service
-$ systemctl --user enable mhttpd@Musip.service
+
+Now you can start and enable the unit:
 ```
-And enable lingering, so that the service always gets started regardless of the user being logged in or not:
+$ systemctl start mhttpd@Musip.service
+$ systemctl enable mhttpd@Musip.service
 ```
-$ loginctl enable-linger
+
+To allow the `musip` user to start/stop/etc. the service, add the following policy file:
+```
+$ cat /etc/polkit-1/rules.d/60-musip-systemd-mhttpd.rules
+// Allow musip to manage mhttpd@.service;
+// fall back to implicit authorization otherwise.
+polkit.addRule(function(action, subject) {
+        if (action.id == "org.freedesktop.systemd1.manage-units" &&
+            action.lookup("unit") == "mhttpd@Musip.service" &&
+            subject.user == "musip") {
+                return polkit.Result.YES;
+        }
+});
 ```
