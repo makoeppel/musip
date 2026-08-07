@@ -5,6 +5,15 @@ let boardIDs = [];
 let initializedBoards = [];
 
 function renderBoardIDs() {
+    mjsonrpc_db_get_values([path.concat("/Variables/MutrigTestboardIDs")]).then(function(rpc){
+        if (rpc.result && Array.isArray(rpc.result.data) && Array.isArray(rpc.result.data[0])) {
+            boardIDs = rpc.result.data[0];
+        }
+    }).catch(function(error){
+        console.warn("Could not read Mutrig testboard IDs:", error);
+        renderBoardIDs();
+    });
+
     const cells = document.getElementsByName("BoardID");
     for (let i = 0; i < cells.length; i++) {
         const boardIndex = Number(cells[i].dataset.boardIndex);
@@ -81,6 +90,7 @@ function updateBoardStatus(valuex){
             LampColor(vccalamp,vcca_bit[i]);
             LampColor(vccdlamp,vccd_bit[i]);
         }
+
         renderBoardIDs();
 		
         //store maximum temperature for overall TMB indicator
@@ -342,16 +352,8 @@ function boardcontrol_init(){
         	mjsonrpc_db_get_values([path.concat("/Variables/", "Names MTPM")]).then(function(rpc){
         	    power_names = rpc.result.data[0];
             });
-            mjsonrpc_db_get_values([path.concat("/Variables/MutrigTestboardIDs")]).then(function(rpc){
-                if (rpc.result && Array.isArray(rpc.result.data) && Array.isArray(rpc.result.data[0])) {
-                    boardIDs = rpc.result.data[0];
-                }
-                renderBoardIDs();
-            }).catch(function(error){
-                console.warn("Could not read Mutrig testboard IDs:", error);
-                renderBoardIDs();
-            });
-            initASICMaskCB()
+	    renderBoardIDs();
+	    initASICMaskCB()
             initLVDSMaskCB()
         });
 }
