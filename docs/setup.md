@@ -399,27 +399,18 @@ Wants=network.target
 
 [Service]
 Type=forking
-Environment="PATH=/opt/root/bin:/usr/share/Modules/bin:/bin:/usr/bin:/usr/ucb:/usr/local/bin:/home/musip/bin:/usr/local/sbin:/usr/sbin:/opt/puppetlabs/bin:/home/musip/midas/bin:/home/musip/intelFPGA/21.1/quartus/bin:/home/musip/intelFPGA/21.1/quartus/bin:/home/musip/intelFPGA/21.1/quartus/sopc_builder/bin:/home/musip/intelFPGA/21.1/quartus/../nios2eds/bin:/home/musip/intelFPGA/21.1/quartus/../nios2eds/sdk2/bin:/home/musip/intelFPGA/21.1/quartus/../nios2eds/bin/gnu/H-x86_64-pc-linux-gnu/bin:/home/musip/intelFPGA/21.1/quartus/../hls/bin"
-Environment="QSYS_ROOTDIR=/home/musip/intelFPGA/21.1/quartus/sopc_builder/bin"
+Environment="PATH=/opt/root/bin:/bin:/usr/bin:/usr/local/bin:/home/musip/bin:/usr/local/sbin:/usr/sbin:/home/musip/midas/bin"
 Environment="ROOTSYS=/opt/root"
 Environment="LD_LIBRARY_PATH=/opt/root/lib"
 Environment="DYLD_LIBRARY_PATH=/opt/root/lib"
 Environment="SHLIB_PATH=/opt/root/lib"
 Environment="LIBPATH=/opt/root/lib"
 Environment="PYTHONPATH=/opt/root/lib:/home/musip/midas/python"
-Environment="CMAKE_PREFIX_PATH=/opt/root"
-Environment="JUPYTER_PATH=/opt/root/etc/notebook"
-Environment="JUPYTER_CONFIG_PATH=/opt/root/etc/notebook"
 Environment="ROOT_INCLUDE_PATH="
 Environment="MIDASSYS=/home/musip/midas"
 Environment="MIDAS_EXPTAB=/home/musip/musip/online/exptab"
 Environment="MIDAS_EXPT_NAME=Musip"
 Environment="MIDAS_WORK=/home/musip/midas_nemu"
-Environment="ALTERAPATH=/home/musip/intelFPGA/21.1"
-Environment="QUARTUS_ROOTDIR=/home/musip/intelFPGA/21.1/quartus"
-Environment="ALTERAD_LICENSE_FILE=27001@localhost"
-Environment="QUARTUS_64BIT=1"
-Environment="SOPC_KIT_NIOS2=/home/musip/intelFPGA/21.1/quartus/../nios2eds"
 ExecStart=/home/musip/midas/bin/mhttpd -e %I -D
 User=musip
 Group=musip
