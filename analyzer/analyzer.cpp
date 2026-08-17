@@ -4,6 +4,7 @@
 
 #include "AnaQuadHistos.h"
 #include "AnaMutrigHistos.h"
+#include "AnaTriggerHistos.h"
 #include "AnaFillHits.h"
 #include "AnaHitTree.h"
 //#include "AnaMusip.h"
@@ -365,6 +366,7 @@ int main(int argc, char* argv[]) {
     TARegister hitTree(new TAFactoryTemplateWithConfig<AnaHitTree>("hitTree", false));
     TARegister quad(new TAFactoryTemplateWithConfig<AnaQuadHistos>("quad", true));
     TARegister mutrig(new TAFactoryTemplateWithConfig<AnaMutrigHistos>("mutrig", true));
+    TARegister trigger(new TAFactoryTemplateWithConfig<AnaTriggerHistos>("trigger", true));
     //TARegister musip(new TAFactoryWrapper<AnaMusipFactory>("musip", true));
 
     // We want to save all plots at the end of each run. So create a new TARunObject
