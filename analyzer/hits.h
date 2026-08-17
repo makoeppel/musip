@@ -74,6 +74,35 @@ struct mutrighit {
 
 };
 
+
+struct triggerhit {
+    triggerhit() noexcept : hitdata(0x0) {}
+    triggerhit(uint64_t h) noexcept : hitdata(h) {}
+
+    uint64_t hitdata;
+
+    [[nodiscard]] bool is_trigger() const { return ((hitdata >> 63) & 0x1) == 1; }
+    [[nodiscard]] uint8_t channel() const { return (hitdata >> 56) & 0xF; }
+    [[nodiscard]] uint8_t tot() const { return (hitdata >> 48) & 0xFF; }
+    [[nodiscard]] uint32_t time_8ns() const { return (hitdata >> 20) & 0xFFFFFFF; }
+    [[nodiscard]] uint32_t time_1ns() const { return hitdata & 0xFFFFF; }
+    [[nodiscard]] uint64_t time() const {return (time_8ns()*8) || time_1ns();} //returns time in ns
+
+    void Print() const {
+        std::printf(
+            "x64:%016llx channel:%u tot:%u 8ns:%u 1ns:%u time:%010llx\n",
+            (unsigned long long)hitdata,
+            channel(),
+            tot(),
+            time_8ns(),
+            time_1ns(),
+            (unsigned long long)time()
+        );
+    }
+
+};
+
+
 struct hit {
     hit() noexcept : hitdata(0x0) {}
     explicit hit(uint64_t h) noexcept : hitdata(h) {}
@@ -83,10 +112,12 @@ struct hit {
     // Common discriminator
     [[nodiscard]] bool is_pixel() const  { return ((hitdata >> 63) & 0x1) == 0; }
     [[nodiscard]] bool is_mutrig() const { return ((hitdata >> 63) & 0x1) == 1; }
+    [[nodiscard]] bool is_trigger() const { return ((hitdata >> 63) & 0x1) == 1; }
 
     // Convert to typed views
     [[nodiscard]] pixelhit as_pixel() const { return pixelhit(hitdata); }
     [[nodiscard]] mutrighit as_mutrig() const { return mutrighit(hitdata); }
+    [[nodiscard]] triggerhit as_trigger() const { return triggerhit(hitdata); }
 
     // helper
     [[nodiscard]] uint64_t raw() const { return hitdata; }
@@ -94,6 +125,8 @@ struct hit {
     void Print() const {
         if(is_pixel()) {
             as_pixel().Print();
+        } else if (is_trigger()) {
+            as_trigger().Print();
         } else {
             as_mutrig().Print();
         }

@@ -4,6 +4,7 @@
 
 #include "AnaQuadHistos.h"
 #include "AnaMutrigHistos.h"
+#include "AnaTriggerHistos.h"
 #include "AnaFillHits.h"
 //#include "AnaMusip.h"
 #include "musip/dqm/DQMManager.hpp"
@@ -362,6 +363,7 @@ int main(int argc, char* argv[]) {
     TARegister fillhits(new TAFactoryTemplateWithConfig<AnaFillHits>("fillhits", true));
     TARegister quad(new TAFactoryTemplateWithConfig<AnaQuadHistos>("quad", true));
     TARegister mutrig(new TAFactoryTemplateWithConfig<AnaMutrigHistos>("mutrig", true));
+    TARegister trigger(new TAFactoryTemplateWithConfig<AnaTriggerHistos>("trigger", true));
     //TARegister musip(new TAFactoryWrapper<AnaMusipFactory>("musip", true));
 
     // We want to save all plots at the end of each run. So create a new TARunObject
