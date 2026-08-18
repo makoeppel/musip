@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="250"
+   height="250"
+   viewBox="0 0 66.145832 66.145833"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.4.4 (dcaf3e7, 2026-05-05)"
+   sodipodi:docname="Quad_sketch.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     inkscape:zoom="1.4142136"
+     inkscape:cx="118.08683"
+     inkscape:cy="134.70384"
+     inkscape:window-width="1512"
+     inkscape:window-height="848"
+     inkscape:window-x="0"
+     inkscape:window-y="33"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer2" />
+  <defs
+     id="defs1" />
+  <g
+     inkscape:label="PCB"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <rect
+       style="fill:#00751e;fill-opacity:1;stroke-width:0.46694"
+       id="pcb"
+       width="66.145836"
+       height="66.145836"
+       x="0.26458332"
+       y="0"
+       inkscape:label="PCB" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer2"
+     inkscape:label="Chips">
+    <rect
+       style="fill:#c8c8c8;fill-opacity:1;stroke-width:0.264583"
+       id="chip0"
+       width="26.458334"
+       height="26.458334"
+       x="5.2916665"
+       y="5.2916665"
+       inkscape:label="Chip0" />
+    <rect
+       style="fill:#c8c8c8;fill-opacity:1;stroke-width:0.264583"
+       id="chip1"
+       width="26.458334"
+       height="26.458334"
+       x="34.395832"
+       y="5.2916665"
+       inkscape:label="Chip1" />
+    <rect
+       style="fill:#c8c8c8;fill-opacity:1;stroke-width:0.264583"
+       id="chip2"
+       width="26.458334"
+       height="26.458334"
+       x="5.2916665"
+       y="34.395832"
+       inkscape:label="Chip2" />
+    <rect
+       style="fill:#c8c8c8;fill-opacity:1;stroke-width:0.264583"
+       id="chip3"
+       width="26"
+       height="26.458334"
+       x="34.395832"
+       y="34.395832"
+       inkscape:label="Chip3" />
+  </g>
+</svg>
