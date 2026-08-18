@@ -420,13 +420,17 @@
     </table>
 
     <table class="mtable">
-        <tr>
-            <th colspan="2">Chip Control</th>
-        </tr>
-        <tr>
-            <td colspan="2">
-                <!-- External SVG Image -->
-                <img src="Quad_sketch.svg" alt="Chip Control Image">
+	<tr><th class="mtableheader">Chip selection</th></tr>
+	<tr><td>
+	    <div style="position:relative;width:100%;margin_auto">
+                <div style="display:flex;justify-content:center;">
+                <!-- Layer 0 -->
+		<object id="quad0" type="image/svg+xml" data="Quads/Quad_sketch.svg" style="width:250px;"></object>
+	        <!-- Gap between Layers -->
+		<div style="width:20px;"></div>
+		<!-- Layer 1 -->
+                <object id="quad1" type="image/svg+xml" data="Quads/Quad_sketch.svg" style="width:250px;"></object>
+	    </div>
             </td>
         </tr>
     </table>
