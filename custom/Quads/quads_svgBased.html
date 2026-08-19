@@ -42,6 +42,81 @@
 	    }
 	});
 
+	// ------------------------------------------------------------------------------
+	// Chip selection routines 
+	// -------------------------------------------------------------------------------
+
+        color_sel = 'black';
+	color_unsel = '#c8c8c8';
+
+        function color_chips(mask, feb) {
+            //console.log('mask:', mask, 'feb:', feb);
+
+            // Determine the base quad ID based on the value of feb
+            const baseQuadId = 'quad';
+ 	    // Loop over the two relevant quads
+            for (let i = 0; i < 2; i++) {
+                const address_byte = (mask >> (0+i*4)) & 0xF; // Extract the correct byte
+		const quadIdNum = i + feb*2;    
+                const quadId = baseQuadId + quadIdNum;
+		console.log(quadId);
+                const svgDoc = document.getElementById(quadId).contentDocument;
+
+                // Loop over the four chips in each quad
+                for (let j = 0; j < 4; j++) {
+                    const chipId = 'chip' + (j + (feb * 4));
+                    const chip = svgDoc.getElementById(chipId);
+
+                    if (chip) {
+                        // Check if the mask corresponds to this chip
+                        if ((address_byte & (1 << j)) !== 0) {
+                            chip.style.fill = color_sel; // Assuming color_sel is defined
+                        } else {
+                            chip.style.fill = color_unsel;
+                        }
+                    } else {
+                        console.error('Element with id ' + chipId + ' not found.');
+                    }
+                }
+            }
+        }
+
+        // ------------------------------------------------------------------------------
+        // SVG Page loader
+        // -------------------------------------------------------------------------------
+
+        document.addEventListener("DOMContentLoaded", function () {
+            // Get all <object> elements with the class 'svgObject'
+            const svgObjects = document.querySelectorAll(".svgObject");
+
+            // Iterate over each <object> element
+            svgObjects.forEach(function (obj, index) {
+                // Add a load event listener to each <object>
+                obj.addEventListener("load", function () {
+                    // Check for pairs (=2) since two quads connect to one FEB
+		    const svgDoc = obj.contentDocument;
+		    const quadTest = svgDoc.getElementById("chip0");
+		    console.log(quadTest);
+		    if (quadTest) {
+                        quadTest.setAttribute("onclick", "console.log('Quad clicked!');");
+                    }
+                    if (index % 2 === 0) {
+                        // Get the internal document of the loaded SVG
+			// TODO: check that asicMaskIndex is number!!!
+                        const asicMaskIndex = Math.floor(index / 2);
+			console.log("asic Mask Index: ", asicMaskIndex);
+               	        mjsonrpc_db_get_value(`/Equipment/Quads/Settings/DAQ/Links/ASICMask[${asicMaskIndex}]`).then(function (rpc) {
+	                    let value = rpc.result.data[0];
+			    console.log(asicMaskIndex, value);
+		            color_chips(value, asicMaskIndex);
+	                 });
+		    }	    
+		});
+            });
+        });
+	
+
+	
    </script>
 </head>
 
@@ -58,7 +133,7 @@
     <!-- Should become a tab for power-->
 
     <div class="mtabs">
-        <div class="mtab active"
+        <div class="mtab"
              data-target="quad_power">
             Power
         </div>
@@ -66,13 +141,13 @@
              data-target="quad_cooling">
             Cooling
         </div>
-	<div class="mtab"
+	<div class="mtab active"
              data-target="quad_control">
             Chip control
         </div>
     </div>
     
-    <div id="quad_power" class="mpanel active">
+    <div id="quad_power" class="mpanel">
 
     <table class="mtable">
         <tr>
@@ -322,7 +397,9 @@
 
     <!-- 3rd tab: Chip control ------------------------------------------------>
 
-    <div id="quad_control" class="mpanel">
+    <div id="quad_control" class="mpanel active">
+
+    <div class="modb" id="feb0_chipMask" data-odb-path="/Equipment/Quads/Settings/DAQ/Links/ASICMask[0]" onchange="color_chips(this.value, 0);"></div>
 
     <table class="mtable">
 	<tr><th class="mtableheader">Chip selection</th></tr>
@@ -330,11 +407,13 @@
 	    <div style="position:relative;width:100%;margin_auto">
                 <div style="display:flex;justify-content:center;">
                 <!-- Layer 0 -->
-		<object id="quad0" type="image/svg+xml" data="Quads/Quad_sketch.svg" style="width:250px;"></object>
+		<object id="quad0" type="image/svg+xml" class="svgObject"
+			data="Quads/Quad_sketch.svg" style="width:250px;"></object>
 	        <!-- Gap between Layers -->
 		<div style="width:20px;"></div>
 		<!-- Layer 1 -->
-                <object id="quad1" type="image/svg+xml" data="Quads/Quad_sketch.svg" style="width:250px;"></object>
+                <object id="quad1" type="image/svg+xml" class="svgObject"
+			data="Quads/Quad_sketch.svg" style="width:250px;"></object>
 	    </div>
             </td>
         </tr>
