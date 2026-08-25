@@ -159,71 +159,141 @@ void get_VDACs_from_odb(midas::odb m_config, uint8_t* bitpattern_w, uint32_t asi
                       "ref_Vss", false);
 }
 
+
+
 /**
- * @brief Initializes all active Front-End Boards (FEBs) using slow control.
- *
- * Writes unique FPGA IDs and configures LVDS link settings for each active FEB.
- *
+ * @brief Programs FLASH memory on a FEB.
+ * 
  * @param feb_sc Reference to the FEB slow control interface.
- * @param m_settings MIDAS ODB object containing DAQ link configuration.
- * @return FE_SUCCESS on success.
+ * @param febIDx Index of the FEB to program.
+ * @param filename Path to the firmware file to load.
+ * @param emergencyImage Flag indicating whether to load an emergency image.
+ * @return int Status code indicating success or failure of the operation.
  */
-int InitFEBs(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) {
-    // set FEB enable regs
-    feb_sc.FEBEnable();
-    for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
-        bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
-        bool FEBsIsMutrig = m_settings["DAQ"]["Links"]["FEBsMutrig"][febIDx];
-        if (FEBsIsMutrig) {
-            feb_sc.FEB_write(febIDx, MUTRIG_CTRL_DP_REGISTER_W, 0x0FFFFFFF);
-            feb_sc.FEB_write(febIDx, MUTRIG_CTRL_DUMMY_REGISTER_W, 0x0);
-            // taken from mu3ebe
-            uint32_t low = 10640;
-            uint32_t high = 22127;
-            uint32_t delay = 6000;
-            feb_sc.FEB_write(febIDx, MUTRIG_CTRL_LAPSE_COUNTER_REGISTER_W, (1<<31) | ((low&0x7fff)<<0) | ((high&0x7fff)<<15));
-            feb_sc.FEB_write(febIDx, MUTRIG_CTRL_LAPSE_DELAY_W, delay);
-        }
-        if (!FEBActive)
-            continue;
-        // set FPGA ID
-        feb_sc.FEB_write(febIDx, FPGA_ID_REGISTER_RW, febIDx);
-        vector<uint32_t> data(1);
-        feb_sc.FEB_read(febIDx, FPGA_ID_REGISTER_RW, data);
-        if ((febIDx & 0xffff) == (data[0] & 0xffff))
-            cm_msg1(MINFO, "quads", "InitFEBs()", "Successfully set FEBID of FEB %i to ID %i", febIDx,
-                   febIDx);
-        feb_sc.FEB_write(febIDx, MP_LVDS_LINK_MASK_REGISTER_W,
-                         (uint32_t)m_settings["DAQ"]["Links"]["LVDSLinkMask"][febIDx]);
-        feb_sc.FEB_write(
-            febIDx, MP_LVDS_LINK_MASK2_REGISTER_W,
-            (uint32_t)(((uint64_t)m_settings["DAQ"]["Links"]["LVDSLinkMask"][febIDx]) >> 32));
-        feb_sc.FEB_write(febIDx, MP_LVDS_INVERT_0_REGISTER_W,
-                         (uint32_t)m_settings["DAQ"]["Links"]["LVDSLinkInvert"][febIDx]);
-        feb_sc.FEB_write(
-            febIDx, MP_LVDS_INVERT_1_REGISTER_W,
-            (uint32_t)(((uint64_t)m_settings["DAQ"]["Links"]["LVDSLinkInvert"][febIDx]) >> 32));
-        feb_sc.FEB_write(febIDx, MP_CTRL_SPI_ENABLE_REGISTER_W, 0x00000000);
-        feb_sc.FEB_write(febIDx, MP_CTRL_DIRECT_SPI_ENABLE_REGISTER_W, 0x00000000);
-        feb_sc.FEB_write(febIDx, MP_CTRL_SLOW_DOWN_REGISTER_W, 0x0000001F);
-        uint32_t delay = m_settings["Readout"]["Sorter Delay"][febIDx];
-        feb_sc.FEB_write(febIDx, SORTER_COUNTER_REGISTER_R + SORTER_INDEX_DELAY, delay);
+int LoadFirmware(FEBSlowcontrolInterface& feb_sc, uint32_t febIDx, std::string filename, bool emergencyImage, midas::odb m_variables) {
+   // Check if the userfiles folder exists
+   std::string path =  "online/firmware";
+   if (access(path.c_str(), F_OK) != 0) {
+      cm_msg1(MERROR, "Quads_Config_FE","MuFEB::LoadFirmware", "Firmware directory (%s) does not exist, will not load!", path.c_str());
+      return FE_SUCCESS;
+   }
+    
+   path += DIR_SEPARATOR_STR;
+   path += filename; 
 
-        // chip mapping
-        cm_msg1(MINFO, "quads", "InitFEBs()", "Set global ASIC ID mapping");
-        for ( uint32_t chipID = febIDx * N_CHIPS; chipID < (febIDx + 1) * N_CHIPS; chipID++ ) {
-            uint16_t globalChipID = (uint16_t) m_settings["DAQ"]["Links"]["Mapping"][chipID];
-            uint16_t localChipID = chipID % N_CHIPS;
-            cm_msg1(MINFO, "quads", "InitFEBs()", "Setup globalChipID-%i -> localASIC-%i on FEB-%i", globalChipID, localChipID, febIDx);
-            uint32_t command = (globalChipID << 9) | (0x1 << 7) | (febIDx << 4) | localChipID;
-            feb_sc.write_register(SWB_LOOKUP_CTRL_REGISTER_W, command);
-            //cout << hex << command << " i:" << hex << i << " v:" << hex << (uint16_t) asic_global_odb[i] << "FEB " << feb << endl;
-        }
+    FILE * f = fopen(path.c_str(), "rb");
+    auto progress = m_variables["FirmwareLoadProgress"];
+    if(!f){
+       cm_msg1(MERROR, "Quads_Config_FE","MuFEB::LoadFirmware", "Failed to open %s", filename.c_str());
+       return FE_SUCCESS;
     }
-    feb_sc.write_register(SWB_LOOKUP_CTRL_REGISTER_W, 0x0);
+    // Get the file size
+    fseek (f , 0 , SEEK_END);
+    long fsize = ftell(f);
+    rewind (f);
 
+    if(emergencyImage == false && fsize > FEBSlowcontrolInterface::EMERGENCY_IMAGE_START_ADDRESS){
+        cm_msg1(MERROR, "Quads_Config_FE","MuFEB::LoadFirmware", "Programming file %s of size %ld does not fit into primary image area", filename.c_str(), fsize);
+        fclose(f);
+        return FE_SUCCESS;
+    }
+
+    if(emergencyImage == true && fsize > (FEBSlowcontrolInterface::FLASH_MAX_ADDRESS -  FEBSlowcontrolInterface::EMERGENCY_IMAGE_START_ADDRESS)){
+        cm_msg1(MERROR, "Quads_Config_FE","MuFEB::LoadFirmware", "Programming file %s of size %ld does not fit into emergency image area", filename.c_str(), fsize);
+        fclose(f);
+        return FE_SUCCESS;
+    }
+
+    cm_msg1(MINFO, "Quads_Config_FE","MuFEB::LoadFirmware", "Programming %s of size %ld", filename.c_str(), fsize);
+    cm_yield(1);
+    printf("Programming %s of size %ld\n",filename.c_str(), fsize);
+
+    //clear the FIFO
+    feb_sc.FEB_write(febIDx,PROGRAMMING_CTRL_REGISTER_W,2); // set reset bit
+    feb_sc.FEB_write(febIDx,PROGRAMMING_CTRL_REGISTER_W,0); // clear reset bit
+
+    feb_sc.FEB_write(febIDx,PROGRAMMING_CTRL_REGISTER_W,1);
+
+
+    long pos =0;
+    uint32_t addr=0;
+    if(emergencyImage)
+        addr = FEBSlowcontrolInterface::EMERGENCY_IMAGE_START_ADDRESS;
+
+    while(pos*4 < fsize){
+        uint32_t buffer[256];
+        if (fread(buffer, sizeof(uint32_t), 256, f) < 256)
+            std::cerr << "Warning: fread() read fewer bytes than expected.\n";
+        vector<uint32_t> data(buffer, buffer+256);
+        feb_sc.FEB_write(febIDx,PROGRAMMING_DATA_REGISTER_W,data,true);
+
+        for(int i=0; i < 4; i++){
+            feb_sc.FEB_write(febIDx,PROGRAMMING_ADDR_REGISTER_W,addr);
+            uint32_t readback = 2;
+            uint32_t count = 0;
+            uint32_t limit = 1e6;
+            if((addr & 0xFFFF) == 0)
+                limit = 1e5;
+            while((readback & 0x2) && count < limit){
+                int ec = feb_sc.FEB_read(febIDx,PROGRAMMING_STATUS_REGISTER_R,readback);
+                if(ec != FEBSlowcontrolInterface::ERRCODES::OK){
+                    printf("Error reading back!\n");
+                    feb_sc.FEB_write(febIDx,PROGRAMMING_CTRL_REGISTER_W,0);
+                }
+                count++;
+                usleep(100);
+            }
+            addr += 256;
+            if(count == limit){
+                printf("Timeout\n");
+                feb_sc.FEB_write(febIDx,PROGRAMMING_CTRL_REGISTER_W,0);
+            }
+        }
+        pos  += 256;
+        if(pos%(4096)==0){
+            float fraction = (float)pos*4/fsize;
+            printf("Loaded %f of file\n", fraction);
+            progress = fraction;
+        }
+
+    }
+
+    feb_sc.FEB_write(febIDx,PROGRAMMING_CTRL_REGISTER_W,0);
+
+    feb_sc.FEB_write(febIDx,PROGRAMMING_CTRL_REGISTER_W,0);
+
+    cm_msg1(MINFO, "Quads_Config_FE","MuFEB::LoadFirmware", "Done programming");
+    cm_yield(1);
+
+    fclose(f);
     return FE_SUCCESS;
 }
+
+/**
+ * @brief Loads firmware onto all active FEBs based on ODB configuration.
+ * The firmware image is selected based on the FEB type (MuPix or MuTRiG) and the emergency image flag.
+ * File names are retrieved from the ODB under /Settings/Commands/Firmware File XXXX.
+ */
+int LoadFirmwareAll(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings, midas::odb m_variables, bool emergencyImage) {
+    int status = FE_SUCCESS;
+    for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
+        if (!static_cast<bool>(m_settings["DAQ"]["Links"]["FEBsActive"][febIDx]))
+            continue;
+        std::string filename = m_settings["DAQ"]["Commands"]["Firmware File Mupix"];
+        bool is_mutrig = static_cast<bool>(m_settings["DAQ"]["Links"]["FEBsMutrig"][febIDx]);
+        if (is_mutrig)
+            filename = m_settings["DAQ"]["Commands"]["Firmware File Mutrig"];
+        if(filename.empty()){
+            cm_msg1(MINFO, "Quads_Config_FE","LoadFirmwareAll", "No firmware file specified for FEB %i (%s)", febIDx, is_mutrig ? "MuTRiG" : "MuPix");
+            continue;
+        }
+        const int febStatus = LoadFirmware(feb_sc, febIDx, filename, emergencyImage, m_variables);
+        if (febStatus != FE_SUCCESS)
+            status = febStatus;
+    }
+    return status;
+}
+
 
 /**
  * @brief Sends a reset to all MuPix chips.
@@ -497,8 +567,97 @@ int MuTRiG_reset_counters(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings
     return status;
 }
 
+int MuTRiG_energy_update(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) {
+    int status = FE_SUCCESS;
+    for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
+        const bool febActive   = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
+        const bool febIsMutrig = m_settings["DAQ"]["Links"]["FEBsMutrig"][febIDx];
+        if (!febIsMutrig || !febActive) {
+            continue;
+        }
+
+        uint32_t energy_scale = m_settings["DAQ"]["Commands"]["MuTRiG"]["energy_scale"];
+        uint32_t energy_offset = m_settings["DAQ"]["Commands"]["MuTRiG"]["energy_offset"];
+        uint32_t value = ((energy_offset & 0x7fff)<< 4) | energy_scale & 0xf;
+        feb_sc.FEB_write(febIDx, value, MUTRIG_CTRL_ENERGY_REGISTER_W);
+    }
+    return status;
+}
+
+int MuTRiG_dummy_data(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) {
+    int status = FE_SUCCESS;
+    midas::odb dummy = m_settings["DAQ"]["Commands"]["MuTRiG"];
+    const uint32_t value = (static_cast<uint32_t>(dummy["dummy_data"]) << 0) |
+                           (static_cast<uint32_t>(dummy["dummy_data_fast"]) << 2) |
+                           ((static_cast<uint32_t>(dummy["dummy_data_n"]) & 0x3ff) << 3);
+
+    for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); ++febIDx) {
+        if (!static_cast<bool>(m_settings["DAQ"]["Links"]["FEBsActive"][febIDx]) ||
+            !static_cast<bool>(m_settings["DAQ"]["Links"]["FEBsMutrig"][febIDx]))
+            continue;
+        status = feb_sc.FEB_write(febIDx, MUTRIG_CTRL_DUMMY_REGISTER_W, value);
+    }
+    return status;
+}
+
+int MuTRiG_lapse_update(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) {
+    int status = FE_SUCCESS;
+    midas::odb dummy = m_settings["DAQ"]["Commands"]["MuTRiG"];
+    const auto boundary = static_cast<std::vector<uint16_t>>(dummy["lapse_boundary"]);
+    const uint32_t low = boundary.size() > 0 ? boundary[0] : 0;
+    const uint32_t high = boundary.size() > 1 ? boundary[1] : 0;
+    const uint32_t counter = (1u << 31) | (low & 0x7fff) | ((high & 0x7fff) << 15);
+    const uint32_t delay = dummy["lapse_delay"];
+    const uint32_t replace_latency = dummy["lapse_replace_latency"];
+
+    for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); ++febIDx) {
+        if (!static_cast<bool>(m_settings["DAQ"]["Links"]["FEBsActive"][febIDx]) ||
+            !static_cast<bool>(m_settings["DAQ"]["Links"]["FEBsMutrig"][febIDx]))
+            continue;
+        status = feb_sc.FEB_write(febIDx, MUTRIG_CTRL_LAPSE_COUNTER_REGISTER_W, counter);
+        status = feb_sc.FEB_write(febIDx, MUTRIG_CTRL_LAPSE_DELAY_W, ( (replace_latency&1) << 15) | delay & 0x7fff);
+    }
+    return status;
+}
+
+int MuTRiG_resetskew(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) {
+    int status = FE_SUCCESS;
+    const auto skew = static_cast<std::vector<uint32_t>>(
+        m_settings["DAQ"]["Commands"]["MuTRiG"]["resetskew"]);
+
+    size_t moduleIDx=0;
+    for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); ++febIDx) {
+
+        if (!static_cast<bool>(m_settings["DAQ"]["Links"]["FEBsActive"][febIDx]) ||
+            !static_cast<bool>(m_settings["DAQ"]["Links"]["FEBsMutrig"][febIDx]))
+            continue;
+        const uint32_t value = skew.empty() ? 0 : skew[moduleIDx];
+        status = feb_sc.FEB_write(febIDx, MUTRIG_CTRL_RESETDELAY_REGISTER_W, value);
+    }
+    return status;
+}
+
+int MuTRiG_temperature_IDs_read(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings,
+                                 midas::odb m_variables) {
+    int status = FE_SUCCESS;
+    std::vector<uint32_t> temperatureIDs;
+    for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); ++febIDx) {
+        if (!static_cast<bool>(m_settings["DAQ"]["Links"]["FEBsActive"][febIDx]) ||
+            !static_cast<bool>(m_settings["DAQ"]["Links"]["FEBsMutrig"][febIDx]))
+            continue;
+        status = feb_sc.FEBsc_NiosRPC(febIDx, CMD_TILE_TEMPERATURES_READ_IDS, {});
+        if (status != FEB_REPLY_SUCCESS)
+            continue;
+        std::vector<uint32_t> ids(N_TMB_TEMPERATURE_IDS_VALUES);
+        status = feb_sc.FEB_read(febIDx, FEBSlowcontrolInterface::OFFSETS::FEBsc_RPC_DATAOFFSET, ids);
+        temperatureIDs.insert(temperatureIDs.end(), ids.begin(), ids.end());
+    }
+    m_variables["MuTRiGTemperatureIDs"] = temperatureIDs;
+    return status;
+}
+
 /**
- * @brief Read TDAC file from a given path.
+ * @brief Read TDAC file from a given sizzpath.
  *
  * Tries to read a TDAC file from a given path. If the path is not present an empty
  * TDAC configuration (no pixel is masked) is created.
@@ -1221,6 +1380,79 @@ int MuTRiGResetLVDSAddr(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) 
 
 int to_signed_12b(uint32_t i){ if ((i & 0x800 ) != 0){ i = 0x7ff & (~i); return -i;} else return 0x7ff&i;}
 int to_signed_16b(uint32_t i){ if ((i & 0x8000) != 0){ i = 0x7fff & (~i); return -i-1;} else return 0x7fff&i;}
+
+
+/**
+ * @brief Initializes all active Front-End Boards (FEBs) using slow control.
+ *
+ * Writes unique FPGA IDs and configures LVDS link settings for each active FEB.
+ *
+ * @param feb_sc Reference to the FEB slow control interface.
+ * @param m_settings MIDAS ODB object containing DAQ link configuration.
+ * @return FE_SUCCESS on success.
+ */
+int InitFEBs(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) {
+    // set FEB enable regs
+    feb_sc.FEBEnable();
+    for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
+        bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
+        bool FEBsIsMutrig = m_settings["DAQ"]["Links"]["FEBsMutrig"][febIDx];
+        if (FEBsIsMutrig) {
+            feb_sc.FEB_write(febIDx, MUTRIG_CTRL_DP_REGISTER_W, 0x0FFFFFFF);
+            feb_sc.FEB_write(febIDx, MUTRIG_CTRL_DUMMY_REGISTER_W, 0x0);
+            // taken from mu3ebe
+            uint32_t low = 10640;
+            uint32_t high = 22127;
+            uint32_t delay = 6000;
+            feb_sc.FEB_write(febIDx, MUTRIG_CTRL_LAPSE_COUNTER_REGISTER_W, (1<<31) | ((low&0x7fff)<<0) | ((high&0x7fff)<<15));
+            feb_sc.FEB_write(febIDx, MUTRIG_CTRL_LAPSE_DELAY_W, delay);
+
+        }
+        if (!FEBActive)
+            continue;
+        // set FPGA ID
+        feb_sc.FEB_write(febIDx, FPGA_ID_REGISTER_RW, febIDx);
+        vector<uint32_t> data(1);
+        feb_sc.FEB_read(febIDx, FPGA_ID_REGISTER_RW, data);
+        if ((febIDx & 0xffff) == (data[0] & 0xffff))
+            cm_msg1(MINFO, "quads", "InitFEBs()", "Successfully set FEBID of FEB %i to ID %i", febIDx,
+                   febIDx);
+        feb_sc.FEB_write(febIDx, MP_LVDS_LINK_MASK_REGISTER_W,
+                         (uint32_t)m_settings["DAQ"]["Links"]["LVDSLinkMask"][febIDx]);
+        feb_sc.FEB_write(
+            febIDx, MP_LVDS_LINK_MASK2_REGISTER_W,
+            (uint32_t)(((uint64_t)m_settings["DAQ"]["Links"]["LVDSLinkMask"][febIDx]) >> 32));
+        feb_sc.FEB_write(febIDx, MP_LVDS_INVERT_0_REGISTER_W,
+                         (uint32_t)m_settings["DAQ"]["Links"]["LVDSLinkInvert"][febIDx]);
+        feb_sc.FEB_write(
+            febIDx, MP_LVDS_INVERT_1_REGISTER_W,
+            (uint32_t)(((uint64_t)m_settings["DAQ"]["Links"]["LVDSLinkInvert"][febIDx]) >> 32));
+        feb_sc.FEB_write(febIDx, MP_CTRL_SPI_ENABLE_REGISTER_W, 0x00000000);
+        feb_sc.FEB_write(febIDx, MP_CTRL_DIRECT_SPI_ENABLE_REGISTER_W, 0x00000000);
+        feb_sc.FEB_write(febIDx, MP_CTRL_SLOW_DOWN_REGISTER_W, 0x0000001F);
+        uint32_t delay = m_settings["Readout"]["Sorter Delay"][febIDx];
+        feb_sc.FEB_write(febIDx, SORTER_COUNTER_REGISTER_R + SORTER_INDEX_DELAY, delay);
+
+        // chip mapping
+        cm_msg1(MINFO, "quads", "InitFEBs()", "Set global ASIC ID mapping");
+        for ( uint32_t chipID = febIDx * N_CHIPS; chipID < (febIDx + 1) * N_CHIPS; chipID++ ) {
+            uint16_t globalChipID = (uint16_t) m_settings["DAQ"]["Links"]["Mapping"][chipID];
+            uint16_t localChipID = chipID % N_CHIPS;
+            cm_msg1(MINFO, "quads", "InitFEBs()", "Setup globalChipID-%i -> localASIC-%i on FEB-%i", globalChipID, localChipID, febIDx);
+            uint32_t command = (globalChipID << 9) | (0x1 << 7) | (febIDx << 4) | localChipID;
+            feb_sc.write_register(SWB_LOOKUP_CTRL_REGISTER_W, command);
+            //cout << hex << command << " i:" << hex << i << " v:" << hex << (uint16_t) asic_global_odb[i] << "FEB " << feb << endl;
+        }
+    }
+    feb_sc.write_register(SWB_LOOKUP_CTRL_REGISTER_W, 0x0);
+
+    MuTRiG_energy_update(feb_sc, m_settings);
+    MuTRiG_lapse_update(feb_sc, m_settings);
+    MuTRiG_resetskew(feb_sc, m_settings);
+    MuTRiG_dummy_data(feb_sc, m_settings);
+
+    return FE_SUCCESS;
+}
 
 const vector<uint32_t> maxadcvals ={3431,
                                            3432,

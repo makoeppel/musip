@@ -46,9 +46,8 @@ midas::odb settings = {
         {"Commands",
           {{"InitFEBs", false},
            {"Load Firmware", false},
-           {"Firmware File", ""},
-           {"Firmware FEB ID", 0},
-           {"FirmwareLoadProgress", 0.0},
+           {"Firmware File Mupix", ""},
+           {"Firmware File Mutrig", ""},
            {"Reset SWB Counters", false},
            {"Run Cycle FEB", false},
            {"Configure injection", false},
@@ -78,14 +77,10 @@ midas::odb settings = {
            {"MuTRiG",
             {{"init_tmb", false}, //If set, initializes the TMBs. Resets when finished
             {"module_power", false}, //Global power update trigger for the MuTRiG ASICs
-            {"temperatures_read", false},
             {"temperature_IDs_read", false},
-            {"powermonitors_read", false},
-            {"tmbstatus_read", false},
             {"override_power_moduleid", 0},      //selects module to which the override is applied
-            {"override_ana_power_mask", 0x0000}, //selects analog power domains to be enabled
+                       {"override_ana_power_mask", 0x0000}, //selects analog power domains to be enabled
             {"override_dig_power_mask", 0x0000}, //selects digital power domains to be enabled
-            {"dummy_config", false},
             {"dummy_data", false},
             {"dummy_data_n", 200},
             {"dummy_data_fast", false},
@@ -93,15 +88,13 @@ midas::odb settings = {
             {"reset_asics", false},
             {"reset_lvds", false},
             {"reset_counters", false},
-            {"lapse_boundary", filled_array<uint16_t, 2>(0)},
-            {"lapse_delay", 0},
-            {"lapse_replace_latency", 0},
-            {"is_mutrig_3", 1},
-            {"resetskew", {0}},
+            {"lapse_boundary", std::array<uint16_t, 2>({10640,22127})},
+            {"lapse_delay", 6000},
+            {"lapse_replace_latency", false},
+            {"resetskew", filled_array<uint16_t, 4>(0)},
             {"energy_scale", 0},
             {"energy_offset", 0},
             {"MutrigConfig", false},
-            {"MutrigConfigAllOff", false},
             {"TestPulsesTDC", false}
             }},
           }

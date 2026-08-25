@@ -413,6 +413,7 @@ void sc_settings_changed(midas::odb o) {
         "Configure injection",
         "Trigger injection loop",
         "Full chip Injection",
+        "Load Firmware",
         "init_tmb",
         "TestPulsesTDC",
         "override_power_moduleid",
@@ -424,22 +425,40 @@ void sc_settings_changed(midas::odb o) {
         "reset_counters",
         "DataGenEnable",
         "DataGenDisable",
-        "debug_readout_feb"
+        "debug_readout_feb",
+        "energy_scale",
+        "energy_offset",
+        "temperature_IDs_read",
+        "dummy_data",
+        "dummy_data_n",
+        "dummy_data_fast",
+        "lapse_boundary",
+        "lapse_delay",
+        "lapse_replace_latency",
+        "resetskew"
+
     };
 
     std::vector<std::string> names_no_reset{
         "TestPulsesTDC",
         "debug_readout_feb",
+        "dummy_data",
+        "dummy_data_n",
+        "dummy_data_fast",
+        "lapse_boundary",
+        "lapse_delay",
+        "lapse_replace_latency",
+        "resetskew",
+        "energy_scale",
+        "energy_offset"
     };
 
-    if( name == "module_power" ){
-        UpdatePower(*feb_sc, m_settings);
-    }
+
 
     bool found = (std::find(names.begin(), names.end(), name) != names.end());
     bool no_reset = (std::find(names_no_reset.begin(), names_no_reset.end(), name) != names_no_reset.end());
 
-    if (found && (o || no_reset)){
+    if (found && (no_reset || o)){
 
         cm_msg1(MINFO, "quads", "sc_settings_changed", "Setting changed (%s)", name.c_str());
 
@@ -493,7 +512,7 @@ void sc_settings_changed(midas::odb o) {
             usleep(500000);  // we sleep here to wait until the command is processed
             write_command_by_name("Start Run");
         }
-        // MUPIX Commands //
+    // MUPIX Commands //
 	// ************** //
         if (name == "MupixTDACConfig" && o) {
             ConfigureTDACs(*feb_sc, m_settings);
@@ -540,14 +559,34 @@ void sc_settings_changed(midas::odb o) {
                 cm_msg1(MINFO, "quads", "on_settings_changed", "injection configuration failed!");
         }
 
-        // MUTRIG Commands //
+            if (name == "Load Firmware" && o) {
+                const int status = LoadFirmwareAll(*feb_sc, m_settings, m_variables, false);
+                if (status != FE_SUCCESS)
+                cm_msg1(MERROR, "Quads", "sc_settings_changed", "Firmware loading failed");
+            }
+
+    // MUTRIG Commands //
 	// *************** //
         if(name == "init_tmb" && o){
             TBinit(*feb_sc, m_settings, m_variables);
         }
+
         if(name == "TestPulsesTDC"){
             ChangeTDCTest(*feb_sc, m_settings);
         }
+
+        if( name == "module_power"  && o){
+            UpdatePower(*feb_sc, m_settings);
+        }
+
+        if (name == "temperature_IDs_read" && o)
+            MuTRiG_temperature_IDs_read(*feb_sc, m_settings, m_variables);
+        if (name == "dummy_data" || name == "dummy_data_n" || name == "dummy_data_fast")
+            MuTRiG_dummy_data(*feb_sc, m_settings);
+        if (name == "lapse_boundary" || name == "lapse_delay" || name == "lapse_replace_latency")
+            MuTRiG_lapse_update(*feb_sc, m_settings);
+        if (name == "resetskew")
+            MuTRiG_resetskew(*feb_sc, m_settings);
 
         if( name == "override_power_moduleid" && o){
             UpdatePowerOverride(*feb_sc, m_settings);
@@ -568,10 +607,12 @@ void sc_settings_changed(midas::odb o) {
         if ( name == "reset_counters" && o) {
             MuTRiG_reset_counters(*feb_sc, m_settings);
         }
+        if (( name == "energy_scale") || ( name == "energy_offset")) {
+            MuTRiG_energy_update(*feb_sc, m_settings);
+        }
+        
 
-
-
-        // DAQ Commands //
+    // DAQ Commands //
 	// ************ //
         if (name == "DataGenEnable" && o) {
             midas::odb commands = m_settings["DAQ"]["Commands"];
@@ -681,6 +722,9 @@ int frontend_init() {
 
 int read_sc_event(char* pevent, [[maybe_unused]] int off) {
 
+// *************************************
+// ************* DAQ BANKS  ************
+// *************************************
     // fill SSFE bank
     ssfe_banks.clear();
     for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
@@ -790,9 +834,9 @@ int read_sc_event(char* pevent, [[maybe_unused]] int off) {
     readout_banks.push_back(dma_full);
     readout_banks.push_back(m_settings["Readout"]["HitRate"]);
 
-    // *************************************
-    // ************ MUPIX BANKS  ***********
-    // *************************************
+// *************************************
+// ************ MUPIX BANKS  ***********
+// *************************************
 
     // fill matrix bank
     matrix_banks.clear();
@@ -872,9 +916,9 @@ int read_sc_event(char* pevent, [[maybe_unused]] int off) {
     }
 
 
-    // *************************************
-    // ************ MUTRIG BANKS ***********
-    // *************************************
+// *************************************
+// ************ MUTRIG BANKS ***********
+// *************************************
 
     // fill counter banks
     counters_XXCH.clear();
