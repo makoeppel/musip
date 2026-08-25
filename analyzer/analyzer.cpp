@@ -5,6 +5,7 @@
 #include "AnaQuadHistos.h"
 #include "AnaMutrigHistos.h"
 #include "AnaFillHits.h"
+#include "AnaHitTree.h"
 //#include "AnaMusip.h"
 #include "musip/dqm/DQMManager.hpp"
 
@@ -160,6 +161,7 @@ public:
         // First see if the module has any kind of config. If there is one, then we enable
         // it even if it does not have an "enabled" entry.
         const bool hasConfig = config.get_child_optional(moduleName_).has_value();
+        std::cout << "Module " << moduleName_ << " has config: " << hasConfig << " enabled_by_default: " << enabledByDefault << std::endl;
         const bool enabled = config.get<bool>(moduleName_ + ".enabled", hasConfig || enabledByDefault);
 
         // We write this back into the config, so that the child entry exists if it didn't before.
@@ -360,6 +362,7 @@ int main(int argc, char* argv[]) {
     // The first parameter in the constructor is the name of the config file entry for that module.
     // The second parameter is whether the module is enabled by default when not otherwise specified.
     TARegister fillhits(new TAFactoryTemplateWithConfig<AnaFillHits>("fillhits", true));
+    TARegister hitTree(new TAFactoryTemplateWithConfig<AnaHitTree>("hitTree", false));
     TARegister quad(new TAFactoryTemplateWithConfig<AnaQuadHistos>("quad", true));
     TARegister mutrig(new TAFactoryTemplateWithConfig<AnaMutrigHistos>("mutrig", true));
     //TARegister musip(new TAFactoryWrapper<AnaMusipFactory>("musip", true));

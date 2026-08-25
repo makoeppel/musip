@@ -17,16 +17,12 @@ AnaMutrigHistos::AnaMutrigHistos(const boost::property_tree::ptree& config, TARu
     : TARunObject(runinfo)
 {
     fModuleName = "MutrigHistos";
-
-    enabled_ = config.get<bool>("enabled", true);
     
 
-    printf("<Beginning of %s Module configuration>\n", fModuleName.c_str());
-    boost::property_tree::write_json(std::cout, config);
-    printf("<End of %s Module configuration>\n", fModuleName.c_str());
-    
-    // If this module is disabled, don't do anything else.
-    if(!enabled_) return;
+    //printf("<Beginning of %s Module configuration>\n", fModuleName.c_str());
+    //boost::property_tree::write_json(std::cout, config);
+    //printf("<End of %s Module configuration>\n", fModuleName.c_str());
+
 
     // parse mutrig -> channelpairs into vector<pair<int,int>> using boost::property_tree
     if (auto pairs_opt = config.get_child_optional("channelpairs")) {
@@ -110,11 +106,6 @@ AnaMutrigHistos::AnaMutrigHistos(const boost::property_tree::ptree& config, TARu
 AnaMutrigHistos::~AnaMutrigHistos() {};
 
 void AnaMutrigHistos::BeginRun(TARunInfo* runinfo) {
-    // If this module is disabled, don't do anything.
-    if(!enabled_) {
-        printf("AnaMutrigHistos::BeginRun, run %d - module is disabled\n", runinfo->fRunNo);
-        return;
-    }
 
     printf("MutrigHistos::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
 
@@ -212,18 +203,10 @@ void AnaMutrigHistos::BeginRun(TARunInfo* runinfo) {
 }
 
 void AnaMutrigHistos::EndRun(TARunInfo* runinfo) {
-    // If this module is disabled, don't do anything.
-    if(!enabled_) return;
-
     printf("MutrigHistos::EndRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
 }
 
 TAFlowEvent* AnaMutrigHistos::AnalyzeFlowEvent(TARunInfo*, TAFlags* flags, TAFlowEvent* flow) {
-    // If this module is disabled, don't do anything.
-    if(!enabled_) {
-        *flags |= TAFlag_SKIP_PROFILE; // Set the profiler to ignore this module
-        return flow;
-    }
 
     if(!flow) return flow;
 
@@ -259,7 +242,6 @@ TAFlowEvent* AnaMutrigHistos::AnalyzeFlowEvent(TARunInfo*, TAFlags* flags, TAFlo
 
     //loop over hits
     for(auto& hit : mutrighits) {
-        int cnt =0;
         auto last_hit = last_hits[hit.channel()];
 
         h_asic->Fill(hit.asic());
