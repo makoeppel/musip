@@ -235,6 +235,9 @@ TAFlowEvent* AnaMutrigHistos::AnalyzeFlowEvent(TARunInfo*, TAFlags* flags, TAFlo
         if (cur_hit.is_mutrig())
             mutrighits.push_back(cur_hit.as_mutrig());
 
+    if(mutrighits.size() == 0)
+        return flow;
+
     //calculate event-based observables
     double average_timestamp = std::accumulate(
            mutrighits.begin(),
