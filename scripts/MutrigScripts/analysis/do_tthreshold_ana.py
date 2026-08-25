@@ -14,7 +14,7 @@ import os
 # Standalone / Tests main routine
 if __name__ == "__main__":
     global seq;
-    filename = "../data/tthreshold_scan.json"
+    filename = "../data/tthreshold_scan_.json"
     filename_output = "../data/tthreshold_scan.config.json"
 
         

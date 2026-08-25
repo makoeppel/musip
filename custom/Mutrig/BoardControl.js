@@ -1,4 +1,28 @@
 const nFEBs = 1;
+const boardsPerFeb = 4;
+const INVALID_BOARD_ID = 0xffffffff;
+let boardIDs = [];
+let initializedBoards = [];
+
+function renderBoardIDs() {
+    mjsonrpc_db_get_values([path.concat("/Variables/MutrigTestboardIDs")]).then(function(rpc){
+        if (rpc.result && Array.isArray(rpc.result.data) && Array.isArray(rpc.result.data[0])) {
+            boardIDs = rpc.result.data[0];
+        }
+    }).catch(function(error){
+        console.warn("Could not read Mutrig testboard IDs:", error);
+        renderBoardIDs();
+    });
+
+    const cells = document.getElementsByName("BoardID");
+    for (let i = 0; i < cells.length; i++) {
+        const boardIndex = Number(cells[i].dataset.boardIndex);
+        const boardID = boardIDs[boardIndex];
+        const isValid = initializedBoards[boardIndex] && boardID !== undefined && boardID !== null &&
+            Number(boardID) !== INVALID_BOARD_ID;
+        cells[i].textContent = isValid ? "0x" + Number(boardID).toString(16).toUpperCase() : "Invalid";
+    }
+}
 
 function updateBoardStatus(valuex){
         //temperature color mapping
@@ -32,24 +56,25 @@ function updateBoardStatus(valuex){
         }
         //console.log("updateBoardStatus: "+status);
 
-        var init_bit = new Array(nFEBs*2);
-        var inject_bit = new Array(nFEBs*2);
-        var vcca_bit = new Array(nFEBs*2);
-        var vccd_bit = new Array(nFEBs*2);
-        var pgood_bit = new Array(nFEBs*2);
-        var temperature = new Array(nFEBs*2);
+        var init_bit = new Array(nFEBs*boardsPerFeb);
+        var inject_bit = new Array(nFEBs*boardsPerFeb);
+        var vcca_bit = new Array(nFEBs*boardsPerFeb);
+        var vccd_bit = new Array(nFEBs*boardsPerFeb);
+        var pgood_bit = new Array(nFEBs*boardsPerFeb);
+        var temperature = new Array(nFEBs*boardsPerFeb);
         for(var i=0; i < nFEBs; i++){
-            for(var j=0; j < 2; j++){
-                init_bit[i*2+j]   = status[i*4] & (0x01<<j*3);
-                inject_bit[i*2+j] = status[i*4] & (0x02<<j*3);
-                pgood_bit[i*2+j]  = status[i*4] & (0x04<<j*3);
-                vcca_bit[i*2+j]   = status[i*4+1] & (1<<j);
-                vccd_bit[i*2+j]   = status[i*4+1] & (1<<(j+13));
-                temperature[i*2+j]= status[i*4+2+j]/100;    //TODO: check calibration
+            for(var j=0; j < boardsPerFeb; j++){
+                init_bit[i*boardsPerFeb+j]   = status[i*4] & (0x01<<j*3);
+                inject_bit[i*boardsPerFeb+j] = status[i*4] & (0x02<<j*3);
+                pgood_bit[i*boardsPerFeb+j]  = status[i*4] & (0x04<<j*3);
+                vcca_bit[i*boardsPerFeb+j]   = status[i*4+1] & (1<<j);
+                vccd_bit[i*boardsPerFeb+j]   = status[i*4+1] & (1<<(j+13));
+                temperature[i*boardsPerFeb+j]= status[i*4+2+j]/100;    //TODO: check calibration
             }
         }
 
-        for(var i=0; i < nFEBs*2; i++){
+        for(var i=0; i < nFEBs*boardsPerFeb; i++){
+            initializedBoards[i] = Boolean(init_bit[i]);
             //Temperatures
             elem=document.getElementsByName("TMB_T");
             if(elem != undefined) elem[i].innerHTML = temperature[i];
@@ -65,6 +90,8 @@ function updateBoardStatus(valuex){
             LampColor(vccalamp,vcca_bit[i]);
             LampColor(vccdlamp,vccd_bit[i]);
         }
+
+        renderBoardIDs();
 		
         //store maximum temperature for overall TMB indicator
         Tmax = Math.max(...temperature);
@@ -208,12 +235,12 @@ function init_boardtable(){
                 }
                 febID = febID+1;
                 //TODO: implement mapping from feb (port number) to module number (febID)
-                for (let board = 0; board < 2; board++) {
+                for (let board = 0; board < boardsPerFeb; board++) {
                     // Create a new row
                     var row = document.createElement('tr');    
                     row.innerHTML = `
                         <td>${feb} : ${febID}.${board}</td>
-                        <td style="text-align: center"><input type="checkbox" name="Power" class="modbcheckbox" data-odb-path="/Equipment/Qudas/Settings/DAQ/Commands/MuTRiG/module_power_mask[${febID}]" style="width:20px; height: 20px;"></td>
+                        <td style="text-align: center"><div class="modbvalue" name="BoardID" data-board-index="${feb * boardsPerFeb + board}" style="width:80px; height: 20px;">Invalid</div></td>
                         <!-- CheckBox for ASIC mask, per asic -->
                         <!-- CheckBox for LVDS mask, per asic -->
                         <td style="text-align: center"><div class="modbbox" name="Init" style="width:25px; height: 20px;"></div></td>
@@ -244,6 +271,7 @@ function init_boardtable(){
             //map_dcdc();
             //map_hv();
             map_counter_tooltips();
+            renderBoardIDs();
         });
 	}
 
@@ -251,8 +279,8 @@ function init_boardtable(){
 function initASICMaskCB(){
     index = 0;
     for(object of document.getElementsByName("ASICMaskCB")){
-        feb = Math.floor(index/2);
-        board = index % 2;
+        feb = Math.floor(index/boardsPerFeb);
+        board = index % boardsPerFeb;
         value = document.getElementsByName("ASICMask")[feb].value;
         mask = 1<<board;
         bvalue = (value & mask) >> board;
@@ -265,8 +293,8 @@ function initASICMaskCB(){
 function initLVDSMaskCB(){
     index = 0;
     for(object of document.getElementsByName("LVDSMaskCB")){
-        feb = Math.floor(index/2);
-        board = index % 2;
+        feb = Math.floor(index/boardsPerFeb);
+        board = index % boardsPerFeb;
         value = document.getElementsByName("LVDSMask")[feb].value;
         mask = 1<<board;
         bvalue = (value & mask) >> board;
@@ -290,23 +318,26 @@ function updateASICmask(checkbox, feb, board){
 
 function updateLVDSmask(checkbox, feb, board){
     const mask = 1<<board;
-    obj = document.getElementsByName("LVDSMask")[0];
-    value = parseInt(obj.value);
+    obj = document.getElementsByName("LVDSMaskCB")[0];
+    value = parseInt(checkbox.value);
     oldvalue = value;
     value &= ~mask;
     value |= checkbox.checked << board;
     console.log("LVDS Mask for FEB ", feb, " Board ", board, "odb=",obj.dataset.odbPath, " set from ", oldvalue, " to ", value);
-    obj.setValue(value);
+    modbset(obj.dataset.odbPath, value)
+    //obj.setValue(value);
 }
 
 
-function setGlobalASICpower( flag = false ){
-    setODBValue("/Equipment/Quads/Settings/DAQ/Commands/MuTRiG/module_power", flag, false);
+function setGlobalASICpower(){
+    setODBValue("/Equipment/Quads/Settings/DAQ/Commands/MuTRiG/module_power", true, false);
 }
 
 function boardcontrol_init(){
         console.log("Initializing Board Control Module");
         path="/Equipment/Quads";
+    boardIDs = new Array(nFEBs * boardsPerFeb).fill(INVALID_BOARD_ID);
+    initializedBoards = new Array(nFEBs * boardsPerFeb).fill(false);
         //Initializing all functions to display current ODB
         mjsonrpc_db_get_values(["/Equipment/Quads/Settings/DAQ/Links/FEBsActive"]).then(
 		rpcL => {
@@ -321,7 +352,8 @@ function boardcontrol_init(){
         	mjsonrpc_db_get_values([path.concat("/Variables/", "Names MTPM")]).then(function(rpc){
         	    power_names = rpc.result.data[0];
             });
-            initASICMaskCB()
+	    renderBoardIDs();
+	    initASICMaskCB()
             initLVDSMaskCB()
         });
 }

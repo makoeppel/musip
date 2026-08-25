@@ -130,13 +130,9 @@ def scan(seq, start_threshold, stop_threshold, step_threshold, wait_time, start_
         if do_start_run_on_step:
             # === MIDAS Run start if requested ===
             run_number = seq.odb_get("/RunInfo/Run number")
-            seq.msg(f"Starting Run {run_number} for E-Threshold {current_ethreshold}")
+            seq.msg(f"Starting Run {run_number} for T-Threshold {current_tthreshold}")
             seq.odb_exec(f"/RunControl/start now")
-
-            # Warten, damit Hitdaten gesammelt werden
             time.sleep(wait_time)
-
-            # Run stoppen
             seq.msg(f"Stopping Run {run_number}")
             seq.odb_exec("/RunControl/stop")
         else:
@@ -314,7 +310,7 @@ def write_json(path, th, rates, temperatures, original_settings):
         })
 
 
-# Readout e-threshold scan results
+# Readout t-threshold scan results
 
 # Read in Data from json
 def read_json(path, **kwargs):
