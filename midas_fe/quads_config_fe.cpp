@@ -61,6 +61,8 @@ BOOL equipment_common_overwrite = TRUE;
 // configuration variables
 FEBSlowcontrolInterface* feb_sc;
 midas::odb m_settings;
+midas::odb m_variables;
+
 uint8_t bitpattern_mupix[N_BYTES_MUPIX] = {};
 uint8_t bitpattern_mutrig[N_BYTES_MUTRIG] = {};
 mudaq::DmaMudaqDevice* mup = nullptr;
@@ -362,7 +364,7 @@ int begin_of_run() {
     uint32_t link_active_from_odb = 0;
     for (int idx = 0; idx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); ++idx)
         if (m_settings["DAQ"]["Links"]["FEBsActive"][idx])
-            link_active_from_odb = link_active_from_odb || (0x1 << idx);
+            link_active_from_odb = link_active_from_odb | (0x1 << idx);
     printf("Waiting for run prepare acknowledge from all FEBs\n");
     // TODO: test this part of checking the run number
     do {
@@ -408,10 +410,10 @@ void sc_settings_changed(midas::odb o) {
         "Configure injection",
         "Trigger injection loop",
         "Full chip Injection",
+        "Load Firmware",
         "init_tmb",
         "TestPulsesTDC",
         "override_power_moduleid",
-        "module_power_mask",
         "module_power",
         "MutrigConfig",
         "reset_datapath",
@@ -420,24 +422,40 @@ void sc_settings_changed(midas::odb o) {
         "reset_counters",
         "DataGenEnable",
         "DataGenDisable",
-        "debug_readout_feb"
+        "debug_readout_feb",
+        "energy_scale",
+        "energy_offset",
+        "temperature_IDs_read",
+        "dummy_data",
+        "dummy_data_n",
+        "dummy_data_fast",
+        "lapse_boundary",
+        "lapse_delay",
+        "lapse_replace_latency",
+        "resetskew"
+
     };
 
     std::vector<std::string> names_no_reset{
-        "module_power_mask",
-        "module_power",
         "TestPulsesTDC",
         "debug_readout_feb",
+        "dummy_data",
+        "dummy_data_n",
+        "dummy_data_fast",
+        "lapse_boundary",
+        "lapse_delay",
+        "lapse_replace_latency",
+        "resetskew",
+        "energy_scale",
+        "energy_offset"
     };
 
-    if( (name == "module_power_mask" || name == "module_power") ){
-        UpdatePower(*feb_sc, m_settings);
-    }
+
 
     bool found = (std::find(names.begin(), names.end(), name) != names.end());
     bool no_reset = (std::find(names_no_reset.begin(), names_no_reset.end(), name) != names_no_reset.end());
 
-    if (found && (o || no_reset)){
+    if (found && (no_reset || o)){
 
         cm_msg1(MINFO, "quads", "sc_settings_changed", "Setting changed (%s)", name.c_str());
 
@@ -457,7 +475,7 @@ void sc_settings_changed(midas::odb o) {
 
         if (name == "debug_readout_feb" && o) {
             cm_msg1(MINFO, "quads", "sc_settings_changed", "Set FEB into debug readout");
-            for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
+            for (auto febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
                 bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
                 bool FEBsIsQuads = m_settings["DAQ"]["Links"]["FEBsQuads"][febIDx];
                 if (FEBActive && FEBsIsQuads)
@@ -467,7 +485,7 @@ void sc_settings_changed(midas::odb o) {
 
         if (name == "debug_readout_feb" && !o) {
             cm_msg1(MINFO, "quads", "sc_settings_changed", "Set FEB into normal readout");
-            for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
+            for (auto febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
                 bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
                 bool FEBsIsQuads = m_settings["DAQ"]["Links"]["FEBsQuads"][febIDx];
                 if (FEBActive && FEBsIsQuads)
@@ -491,7 +509,7 @@ void sc_settings_changed(midas::odb o) {
             usleep(500000);  // we sleep here to wait until the command is processed
             write_command_by_name("Start Run");
         }
-        // MUPIX Commands //
+    // MUPIX Commands //
 	// ************** //
         if (name == "MupixTDACConfig" && o) {
             ConfigureTDACs(*feb_sc, m_settings);
@@ -538,14 +556,34 @@ void sc_settings_changed(midas::odb o) {
                 cm_msg1(MINFO, "quads", "on_settings_changed", "injection configuration failed!");
         }
 
-        // MUTRIG Commands //
+            if (name == "Load Firmware" && o) {
+                const int status = LoadFirmwareAll(*feb_sc, m_settings, m_variables, false);
+                if (status != FE_SUCCESS)
+                cm_msg1(MERROR, "Quads", "sc_settings_changed", "Firmware loading failed");
+            }
+
+    // MUTRIG Commands //
 	// *************** //
         if(name == "init_tmb" && o){
-            TBinit(*feb_sc, m_settings);
+            TBinit(*feb_sc, m_settings, m_variables);
         }
+
         if(name == "TestPulsesTDC"){
             ChangeTDCTest(*feb_sc, m_settings);
         }
+
+        if( name == "module_power"  && o){
+            UpdatePower(*feb_sc, m_settings);
+        }
+
+        if (name == "temperature_IDs_read" && o)
+            MuTRiG_temperature_IDs_read(*feb_sc, m_settings, m_variables);
+        if (name == "dummy_data" || name == "dummy_data_n" || name == "dummy_data_fast")
+            MuTRiG_dummy_data(*feb_sc, m_settings);
+        if (name == "lapse_boundary" || name == "lapse_delay" || name == "lapse_replace_latency")
+            MuTRiG_lapse_update(*feb_sc, m_settings);
+        if (name == "resetskew")
+            MuTRiG_resetskew(*feb_sc, m_settings);
 
         if( name == "override_power_moduleid" && o){
             UpdatePowerOverride(*feb_sc, m_settings);
@@ -566,10 +604,12 @@ void sc_settings_changed(midas::odb o) {
         if ( name == "reset_counters" && o) {
             MuTRiG_reset_counters(*feb_sc, m_settings);
         }
+        if (( name == "energy_scale") || ( name == "energy_offset")) {
+            MuTRiG_energy_update(*feb_sc, m_settings);
+        }
+        
 
-
-
-        // DAQ Commands //
+    // DAQ Commands //
 	// ************ //
         if (name == "DataGenEnable" && o) {
             midas::odb commands = m_settings["DAQ"]["Commands"];
@@ -613,6 +653,7 @@ int frontend_init() {
     // create ODB copy for settings
     settings.connect_and_fix_structure("/Equipment/Quads/Settings/");
     m_settings.connect("/Equipment/Quads/Settings");
+    m_variables.connect("/Equipment/Quads/Variables");
 
     // end and start of run
     install_begin_of_run(begin_of_run);
@@ -665,7 +706,10 @@ int frontend_init() {
     midas::odb custom("/Custom", true);
     struct passwd *pw = getpwuid(getuid());
     const char *homedir = pw->pw_dir;
-    custom["Path"] = std::string (homedir).append("/musip/custom");
+    if(getenv("MIDAS_EXPTAB"))
+        custom["Path"] = std::string (dirname(getenv("MIDAS_EXPTAB"))).append("/../custom");
+    else
+    	custom["Path"] = std::string (homedir).append("/musip/custom");
     custom["Quads"] = "Quads/quad_basics.html";
     custom["MuTRiG"] = "Mutrig/TimingScint.html";
     custom["LVDS"] = "lvds.html";
@@ -673,11 +717,11 @@ int frontend_init() {
     return SUCCESS;
 }
 
-int read_sc_event(char* pevent, int off) {
+int read_sc_event(char* pevent, [[maybe_unused]] int off) {
 
-    // read error for mux
-    m_settings["Readout"]["MUX_ERROR"] = mup->read_register_ro(MUSIP_MUX_ERROR_REGISTER_R);
-
+// *************************************
+// ************* DAQ BANKS  ************
+// *************************************
     // fill SSFE bank
     ssfe_banks.clear();
     for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
@@ -759,6 +803,10 @@ int read_sc_event(char* pevent, int off) {
         readout_banks.push_back(sub_rate);
         readout_banks.push_back(hit_cnt);
         readout_banks.push_back(hit_rate);
+        if(FEBActive){
+            readout_banks.push_back(0);
+            continue;
+        }
         if (FEBsIsMutrig) {
             readout_banks.push_back(feb_rates_mutrig[i]);
         } else {
@@ -783,9 +831,9 @@ int read_sc_event(char* pevent, int off) {
     readout_banks.push_back(dma_full);
     readout_banks.push_back(m_settings["Readout"]["HitRate"]);
 
-    // *************************************
-    // ************ MUPIX BANKS  ***********
-    // *************************************
+// *************************************
+// ************ MUPIX BANKS  ***********
+// *************************************
 
     // fill matrix bank
     matrix_banks.clear();
@@ -865,9 +913,9 @@ int read_sc_event(char* pevent, int off) {
     }
 
 
-    // *************************************
-    // ************ MUTRIG BANKS ***********
-    // *************************************
+// *************************************
+// ************ MUTRIG BANKS ***********
+// *************************************
 
     // fill counter banks
     counters_XXCH.clear();
@@ -984,10 +1032,14 @@ int read_sc_event(char* pevent, int off) {
             values_XXSM.push_back(rval_SM[1]);
             values_XXSM.push_back((int)roundf(TMB_TEMPERATURE_FACTOR * to_signed_16b(rval_SM[2]) * 100));
             values_XXSM.push_back((int)roundf(TMB_TEMPERATURE_FACTOR * to_signed_16b(rval_SM[3]) * 100));
+            values_XXSM.push_back((int)roundf(TMB_TEMPERATURE_FACTOR * to_signed_16b(rval_SM[4]) * 100));
+            values_XXSM.push_back((int)roundf(TMB_TEMPERATURE_FACTOR * to_signed_16b(rval_SM[5]) * 100));
         } else {
             for (size_t idx=0; idx < N_TMB_MATRIX_TEMPERATURES; idx++) {
                 values_XXSM.push_back(0);
                 values_XXSM.push_back(0);
+                values_XXSM.push_back(0xFFFFFFFF);
+                values_XXSM.push_back(0xFFFFFFFF);
                 values_XXSM.push_back(0xFFFFFFFF);
                 values_XXSM.push_back(0xFFFFFFFF);
             }
