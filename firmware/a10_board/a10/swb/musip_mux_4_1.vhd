@@ -35,6 +35,7 @@ port (
     o_hit_rate        : out slv32_array_t(g_LINK_N-1 downto 0);
     o_package_rate    : out slv32_array_t(g_LINK_N-1 downto 0);
     o_word_rate       : out std_logic_vector(31 downto 0);
+    o_error           : out std_logic_vector(31 downto 0);
 
     o_data            : out std_logic_vector(255 downto 0);
     o_valid           : out std_logic;
@@ -73,7 +74,8 @@ architecture arch of musip_mux_4_1 is
     signal index_256            : int_0_3_array_t(g_LINK_N-1 downto 0);
 
     -- internal counters
-    signal s_subh_cnt           : slv64_array_t(g_LINK_N-1 downto 0) := (others => (others => '0'));
+    signal s_error              : std_logic_vector(31 downto 0) := (others => '0');
+    signal s_subh_cnt, subh_cnt : slv64_array_t(g_LINK_N-1 downto 0) := (others => (others => '0'));
     signal s_hit_cnt            : slv64_array_t(g_LINK_N-1 downto 0) := (others => (others => '0'));
     signal s_package_cnt        : slv64_array_t(g_LINK_N-1 downto 0) := (others => (others => '0'));
 
@@ -82,6 +84,7 @@ begin
     o_subh_cnt    <= s_subh_cnt;
     o_hit_cnt     <= s_hit_cnt;
     o_package_cnt <= s_package_cnt;
+    o_error       <= s_error;
 
     gen_links_to_256bit : for i in 0 to g_LINK_N-1 GENERATE
 
@@ -115,10 +118,13 @@ begin
             ts_low(i) <= (others => '0');
             s_hit_cnt(i) <= (others => '0');
             s_subh_cnt(i) <= (others => '0');
+            subh_cnt(i) <= (others => '0');
             s_package_cnt(i) <= (others => '0');
             last_subheader_time(i) <= (others => '0');
             next_64bit_word(i) <= (others => '0');
             next_64bit_word_valid(i) <= '0';
+            s_error(i+i*2) <= '0';
+            s_error(i+1+i*2) <= '0';
             --
         elsif rising_edge(i_clk) then
 
@@ -143,8 +149,15 @@ begin
                     s_package_cnt(i) <= s_package_cnt(i) + '1';
                     we_write_this_package(i) <= '0';
                     package_stage(i) <= "111";
+                    if ( subh_cnt(i) > 128 ) then
+                        s_error(i+i*2) <= '1';
+                    elsif ( subh_cnt(i) < 128 ) then
+                        s_error(i+1+i*2) <= '1';
+                    end if;
+                    subh_cnt(i) <= (others => '0');
                 elsif ( package_stage(i) = "100" and i_rx(i).sbhdr = '1' ) then
                     s_subh_cnt(i) <= s_subh_cnt(i) + '1';
+                    subh_cnt(i) <= subh_cnt(i) + '1';
                     last_subheader_time(i) <= i_rx(i).data(31 downto 24);
                 elsif ( package_stage(i) = "100" ) then
                     -- count hits per FEB

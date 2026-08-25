@@ -40,6 +40,7 @@ midas::odb settings = {
       {"max_requested_words", 0x80000},
       {"use_send_time", false},
       {"HitRate", 0},
+      {"MUX_ERROR", 0},
       {"n_mevents", 10}}},
     {"DAQ",
      {
