@@ -29,17 +29,17 @@ void AnaHitTree::BeginRun(TARunInfo* runinfo) {
     runinfo->fRoot->fOutputFile->cd();
     tree_ = new TTree("hits", "MuPix and MuTRIG hits");
 
-        tree_->Branch("mutrig_channel", &mutrig_channel_); //global channel number
-        tree_->Branch("mutrig_tot", &mutrig_tot_); //tot in 1.6ns && scaled by FPGA
-        tree_->Branch("mutrig_time", &mutrig_time_); //time in nano seconds
-        tree_->Branch("mutrig_timestamp", &mutrig_timestamp_); //time in 50ps bins
+    tree_->Branch("mutrig_channel", &mutrig_channel_); //global channel number
+    tree_->Branch("mutrig_tot", &mutrig_tot_); //tot in 1.6ns && scaled by FPGA
+    tree_->Branch("mutrig_time", &mutrig_time_); //time in nano seconds
+    tree_->Branch("mutrig_timestamp", &mutrig_timestamp_); //time in 50ps bins
 
-        tree_->Branch("pixel_chipid", &pixel_chipid_); //chip id
-        tree_->Branch("pixel_col", &pixel_col_); //column number
-        tree_->Branch("pixel_row", &pixel_row_); //row number
-        tree_->Branch("pixel_tot", &pixel_tot_);
-        tree_->Branch("pixel_time", &pixel_time_); //time in 8 nano seconds (?)
-        tree_->Branch("pixel_timestamp", &pixel_timestamp_); //time in 8 nano seconds (?)
+    tree_->Branch("pixel_chipid", &pixel_chipid_); //chip id
+    tree_->Branch("pixel_col", &pixel_col_); //column number
+    tree_->Branch("pixel_row", &pixel_row_); //row number
+    tree_->Branch("pixel_tot", &pixel_tot_);
+    tree_->Branch("pixel_time", &pixel_time_); //time in 8 nano seconds (?)
+    tree_->Branch("pixel_timestamp", &pixel_timestamp_); //time in 8 nano seconds (?)
 }
 
 void AnaHitTree::EndRun(TARunInfo* runinfo) {
@@ -85,7 +85,7 @@ TAFlowEvent* AnaHitTree::AnalyzeFlowEvent(TARunInfo*, TAFlags* flags, TAFlowEven
             pixel_col_.push_back(spHit.col());
             pixel_row_.push_back(spHit.row());
             pixel_tot_.push_back(spHit.tot());
-            pixel_time_.push_back(spHit.time()); //convert to nano seconds
+            pixel_time_.push_back(spHit.time()*8); //convert to nano seconds
             pixel_timestamp_.push_back(spHit.timestamp());
         }
         if(write_mutrighits_ && currentHit.is_mutrig()) {

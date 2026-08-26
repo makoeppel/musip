@@ -33,7 +33,7 @@ private:
     std::vector<uint8_t> pixel_col_;
     std::vector<uint8_t> pixel_row_;
     std::vector<uint8_t> pixel_tot_;
-    std::vector<uint64_t> pixel_time_;
+    std::vector<double> pixel_time_;
     std::vector<uint64_t> pixel_timestamp_;
 
 };
