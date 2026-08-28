@@ -1,0 +1,45 @@
+{
+  "channelmap": {
+    "matrix:00": 0,
+    "matrix:01": 1,
+    "matrix:02": 2,
+    "matrix:03": 3,
+    "matrix:04": 4,
+    "matrix:05": 5,
+    "matrix:06": 6,
+    "matrix:07": 7,
+    "matrix:08": 8,
+    "matrix:09": 9,
+    "matrix:10": 10,
+    "matrix:11": 11,
+    "matrix:12": 12,
+    "matrix:13": 13,
+    "matrix:14": 14,
+    "matrix:15": 15,
+    "matrix2:00": 31,
+    "matrix2:01": 32,
+    "matrix2:02": 33,
+    "matrix2:03": 34,
+    "matrix2:04": 35,
+    "matrix2:05": 36,
+    "matrix2:06": 37,
+    "matrix2:07": 38,
+    "matrix2:08": 39,
+    "matrix2:09": 40,
+    "matrix2:10": 41,
+    "matrix2:11": 42,
+    "matrix2:12": 43,
+    "matrix2:13": 44,
+    "matrix2:14": 45,
+    "matrix2:15": 46
+  },
+  "LV" : [
+    {
+       "device"  : "LVSUPPLY0",
+       "indices" : [0,1,2,3]
+    }
+  ],
+  "HV" : [
+  ]
+
+}
