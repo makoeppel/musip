@@ -20,7 +20,8 @@ struct pixelhit {
     [[nodiscard]] uint8_t ts_low() const { return (hitdata >> 11) & 0x1F; }
     [[nodiscard]] uint8_t subheader_time() const { return (hitdata >> 4) & 0x7F; }
     [[nodiscard]] uint8_t ts_sorterhit() const { return hitdata & 0xF; }
-    [[nodiscard]] uint64_t time() const { return hitdata & 0x1FFFFFFFFFULL; }
+    [[nodiscard]] uint64_t timestamp() const { return hitdata & 0x1FFFFFFFFFULL; }
+    [[nodiscard]] double time() const { return timestamp()*8; }
 
     void Print() const {
         std::printf(
@@ -30,7 +31,7 @@ struct pixelhit {
             col(),
             row(),
             tot(),
-            (unsigned long long)time()
+            (unsigned long long)timestamp()
         );
     }
 };
@@ -43,8 +44,9 @@ struct mutrighit {
 
     [[nodiscard]] bool is_mutrig() const { return ((hitdata >> 63) & 0x1) == 1; }
     [[nodiscard]] uint8_t chipid() const { return (hitdata >> 61) & 0x3; }
+    [[nodiscard]] uint8_t channelid() const { return (hitdata >> 56) & 0x1F;}
     [[nodiscard]] uint8_t asic() const { return chipid(); }
-    [[nodiscard]] uint8_t channel() const { return (hitdata >> 56) & 0x3F; }
+    [[nodiscard]] uint16_t channel() const { return chipid() << 5 | channelid(); }
     [[nodiscard]] uint16_t et() const { return (hitdata >> 47) & 0x1FF; }
     [[nodiscard]] bool eflag() const { return et() == 0x1FF; }
     [[nodiscard]] uint16_t tot() const { return et(); }
@@ -57,18 +59,18 @@ struct mutrighit {
     [[nodiscard]] uint64_t time8ns() const { return hitdata & 0x7FFFFFFFFFULL; }
     [[nodiscard]] uint8_t finetime_extended() const {return (hitdata >> 39) & 0xFF;}
     [[nodiscard]] uint64_t timestamp() const {return time8ns()*160 + finetime_extended();} //returns time in units of 50ps
-    [[nodiscard]] uint32_t time() const {return timestamp()*50e-3;} //returns time in ns
+    [[nodiscard]] double time() const {return timestamp()*50e-3;} //returns time in ns
 
     void Print() const {
         std::printf(
-            "x64:%016llx chipid:%u channel:%u et:%u rem:%u fine:%u time:%010llx\n",
+            "x64:%016llx chipid:%u channel:%u et:%u rem:%u fine:%u \t timestamp:%llx\n",
             (unsigned long long)hitdata,
             chipid(),
             channel(),
             et(),
             time_remainder(),
             fine_time(),
-            (unsigned long long)time()
+            timestamp()
         );
     }
 
