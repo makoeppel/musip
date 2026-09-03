@@ -70,6 +70,7 @@ std::vector<uint32_t> feb_hits_last = {0,0,0,0};
 std::vector<uint32_t> feb_rates_mutrig = {0,0,0,0};
 std::vector<uint32_t> feb_prev_lvds_err(N_FEBS*MAX_LVDS_LINKS_PER_FEB, 0);
 std::vector<uint32_t> lvds_banks = {};
+std::vector<uint32_t> sma_counter_banks = {};
 std::vector<float> ssfe_banks = {};
 std::vector<uint32_t> matrix_banks = {};
 std::vector<uint32_t> adc_banks = {};
@@ -243,6 +244,20 @@ void init_banks() {
     quads_settings[nameMTCH] = namesMTCH;
     quads_settings[nameMTCF] = namesMTCF;
     quads_settings[nameMTCE] = namesMTCE;
+
+    std::string nameSMCR = std::string("Names SMCR");
+    std::vector<std::string> namesSMCR;
+    for (uint32_t i = 0; i < N_FEBS_SMA; i++) {
+        for (uint32_t trigger = 0; trigger < N_INPUT_SMA; trigger++) {
+            namesSMCR.push_back("MUX rate F" + std::to_string(i) + " T" + std::to_string(trigger));
+            namesSMCR.push_back("MUX skip F" + std::to_string(i) + " T" + std::to_string(trigger));
+            for (uint32_t chain = 0; chain < N_CHAINS_SMA; chain++) {
+                namesSMCR.push_back("rate F" + std::to_string(i) + " T" + std::to_string(trigger) + " C"  + std::to_string(chain));
+                namesSMCR.push_back("skip F" + std::to_string(i) + " T" + std::to_string(trigger) + " C"  + std::to_string(chain));
+            }
+        }
+    }
+    quads_settings[nameSMCR] = namesSMCR;
 }
 
 void setup_history() {
@@ -364,8 +379,9 @@ int begin_of_run() {
     uint16_t timeout_cnt = 300;
     uint32_t link_active_from_odb = 0;
     for (int idx = 0; idx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); ++idx)
-        if (m_settings["DAQ"]["Links"]["FEBsActive"][idx])
-            link_active_from_odb = link_active_from_odb || (0x1 << idx);
+        if (m_settings["DAQ"]["Links"]["FEBsActive"][idx]) {
+            link_active_from_odb += (0x1 << idx);
+        }
     printf("Waiting for run prepare acknowledge from all FEBs\n");
     // TODO: test this part of checking the run number
     do {
@@ -628,6 +644,13 @@ int frontend_init() {
     int status = init_mudaq(*mup);
     if (status != SUCCESS)
         return FE_ERR_DRIVER;
+
+    // check if PCIE is working
+    uint32_t val = mup->read_register_ro(VERSION_REGISTER_R);
+    if(val == 0xFFFFFFFF){
+        cm_msg(MERROR, "frontend_init()", "PCIe Error, swb pcie reg reading not working");
+        return FE_ERR_DRIVER;
+    }
 
     // Set our transition sequence. The default is 500.
     cm_set_transition_sequence(TR_START, 400);
@@ -974,7 +997,7 @@ int read_sc_event(char* pevent, int off) {
         int rpc_ret = -17;
         if (FEBsIsMutrig)
            febSSIDx++;
-	else
+        else
            continue;
 
         rpc_ret = feb_sc->FEBsc_NiosRPC(febIDx, CMD_TILE_TMB_STATUS, {});
@@ -995,6 +1018,47 @@ int read_sc_event(char* pevent, int off) {
     }
 
     MuTRiGResetLVDSAddr(*feb_sc, m_settings);
+
+    // SMA banks
+    // VHDL
+    // counters(N_INPUT_SMA*N_CHAINS_SMA-1 downto 0) <= hit_rate;
+    // counters(2*N_INPUT_SMA*N_CHAINS_SMA-1 downto N_INPUT_SMA*N_CHAINS_SMA) <= skip_cnt;
+    // counters(2*N_INPUT_SMA*N_CHAINS_SMA+g_N-1 downto 2*N_INPUT_SMA*N_CHAINS_SMA) <= mux_rate;
+    // counters(2*N_INPUT_SMA*N_CHAINS_SMA+2*g_N-1 downto 2*N_INPUT_SMA*N_CHAINS_SMA+4) <= mux_skip;
+    sma_counter_banks.clear();
+    uint32_t sma_febs = 0;
+    offset = 0;
+    for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
+        bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
+        bool FEBsIsSMA = m_settings["DAQ"]["Links"]["FEBsSMA"][febIDx];
+        if (FEBsIsSMA && FEBActive && (sma_febs < N_FEBS_SMA)) {
+            // reset counter addr
+            feb_sc->FEB_write(febIDx, SMA_CTRL_REGISTER_W, 1);
+            feb_sc->FEB_write(febIDx, SMA_CTRL_REGISTER_W, 0);
+            // readout counters
+            std::vector<uint32_t> counters(offset + (2*N_INPUT_SMA*N_CHAINS_SMA+2*N_INPUT_SMA));
+            feb_sc->FEB_read(febIDx, SMA_COUNTER_REGISTER_R, counters, false);
+            for (uint32_t trigger = 0; trigger < N_INPUT_SMA; trigger++) {
+                sma_counter_banks.push_back(counters[2*N_INPUT_SMA*N_CHAINS_SMA+trigger]); // mux rate
+                sma_counter_banks.push_back(counters[2*N_INPUT_SMA*N_CHAINS_SMA+trigger+4]); // mux skip
+                for (uint32_t chain = 0; chain < N_CHAINS_SMA; chain++) {
+                    sma_counter_banks.push_back(counters[trigger*N_CHAINS_SMA+chain]); // hit rate
+                    sma_counter_banks.push_back(counters[trigger*N_CHAINS_SMA+chain+N_INPUT_SMA*N_CHAINS_SMA]); // hit skip
+                }
+            }
+            sma_febs++;
+        } 
+    }
+    if (sma_febs < N_FEBS_SMA) {
+        for (uint32_t trigger = 0; trigger < N_INPUT_SMA; trigger++) {
+            sma_counter_banks.push_back(0);
+            sma_counter_banks.push_back(0);
+            for (uint32_t chain = 0; chain < N_CHAINS_SMA; chain++) {
+                sma_counter_banks.push_back(0);
+                sma_counter_banks.push_back(0);
+            }
+        }
+    }
 
     // create bank, pdata
     bk_init32a(pevent);
@@ -1060,6 +1124,11 @@ int read_sc_event(char* pevent, int off) {
     // create a bank with the TMB status
     bk_create(pevent, "MTSM", TID_DWORD, (void**)&pdata);
     for (auto data : values_XXSM) *pdata++ = data;
+    bk_close(pevent, pdata);
+
+    // create a bank with the SMA counter
+    bk_create(pevent, "SMCR", TID_DWORD, (void**)&pdata);
+    for (auto data : sma_counter_banks) *pdata++ = data;
     bk_close(pevent, pdata);
 
     return bk_size(pevent);

@@ -86,7 +86,22 @@ struct triggerhit {
     [[nodiscard]] uint8_t tot() const { return (hitdata >> 48) & 0xFF; }
     [[nodiscard]] uint32_t time_8ns() const { return (hitdata >> 20) & 0xFFFFFFF; }
     [[nodiscard]] uint32_t time_1ns() const { return hitdata & 0xFFFFF; }
-    [[nodiscard]] uint64_t time() const {return (time_8ns()*8) || time_1ns();} //returns time in ns
+    //[[nodiscard]] uint64_t time() const {return (time_8ns()*8) + time_1ns();} //returns time in ns
+    [[nodiscard]] uint64_t time() const {
+        const uint32_t coarse = time_8ns();
+        const uint32_t fine   = time_1ns();
+
+        const uint32_t coarse_ns = coarse * 8;
+        const uint32_t coarse_ns_in_fine_range = coarse_ns & 0xFFFFF;
+
+        // std::printf(
+        //     "8ns:%u 1ns:%u\n",
+        //     coarse_ns_in_fine_range,
+        //     fine
+        // );
+
+        return (coarse_ns & 0xFF00000) + fine;
+    }
 
     void Print() const {
         std::printf(

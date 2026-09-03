@@ -45,6 +45,15 @@ constexpr uint32_t N_FEBS_QUAD = 4;
 /* Maximum number of mutrigs FEBs */
 constexpr uint32_t N_MUTRIGS_PER_FEB = 4;
 
+/* Maximum number of SMA FEBs */
+constexpr uint32_t N_FEBS_SMA = 1;
+
+/* Maximum number of inputs per SMA FEBs */
+constexpr uint32_t N_INPUT_SMA = 4;
+
+/* Maximum number of trigger chains per FEBs */
+constexpr uint32_t N_CHAINS_SMA = 8;
+
 /* Maximum number of mutrigs channels */
 constexpr uint32_t NMUTRIGCHANNELS = 32;
 

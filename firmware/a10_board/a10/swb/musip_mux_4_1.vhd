@@ -191,6 +191,20 @@ begin
                         else
                             next_64bit_word(i)(38 downto 0) <= send_time(i)(27 downto 1) & last_subheader_time(i) & i_rx(i).data(31 downto 28);
                         end if;
+                    elsif ( data_type(i) = SMA_HEADER_ID) then
+                        -- SMA 64bit format
+                        -- Bit 63           indication (1) for SMA data
+                        next_64bit_word(i)(63) <= '1';
+                        -- Bit 62:61
+                        next_64bit_word(i)(62 downto 60) <= (others => '0');
+                        -- Bits 59:56       Channel ID
+                        next_64bit_word(i)(59 downto 56) <= i_rx(i).data(23 downto 20);
+                        -- Bits 55:48       ToT in ns
+                        next_64bit_word(i)(55 downto 48) <= i_rx(i).data(31 downto 24);
+                        -- Bits 47:20       8ns time
+                        next_64bit_word(i)(47 downto 20) <= ts_high(i)(11 downto 0) & ts_low(i)(15 downto 0);
+                        -- Bits 19:0        rising edge time in ns
+                        next_64bit_word(i)(19 downto 0) <= i_rx(i).data(19 downto 0);
                     end if;
                 end if;
             end if;

@@ -140,7 +140,7 @@ int main(int argc, char *argv[])
                 count++;
             }
             if (count >= 10000) {
-                cout << "Timeout for reading sc scondary" << endl;
+                cout << "Timeout for reading sc secondary" << endl;
                 cout << "State " << mu.read_register_ro(SC_STATE_REGISTER_R) << endl;
                 break;
             }

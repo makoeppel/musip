@@ -27,6 +27,7 @@
 #include "registers/mupix_registers.h"
 #include "registers/mutrig_registers.h"
 #include "registers/sorter_registers.h"
+#include "registers/sma_registers.h"
 
 // MUDAQ registers
 // register banks
