@@ -29,7 +29,7 @@ public:
 
 private:
     bool enabled_;
-    static const int n_CHANNELS = 4;
+    static const int n_CHANNELS = 12;
 
     musip::dqm::PlotCollection* pPlotCollection_ {};
 
@@ -39,11 +39,12 @@ private:
     musip::dqm::Histogram1DD* h_timeStampDeltaSameChannel {}; //time difference t-t_prev for the same channel, all combined
 
     std::unordered_map<int, musip::dqm::Histogram1DD*> h_tot_; //ToT of hits per channel
+    std::unordered_map<int, musip::dqm::Histogram1DD*> h_time_diff_; //time diff of hits per channel
     //2D histos
-    musip::dqm::Histogram2DF* h_channel_tot {}; //ToT vs channel
-    musip::dqm::Histogram2DF* h_channel_8ns {}; //course time vs channel id
-    musip::dqm::Histogram2DF* h_channel_1ns {}; //fine time vs channel id
-    musip::dqm::Histogram2DF* h_channel_TimeStampDeltaSameChannel {}; //time difference t-t_prev for the same channel
+    musip::dqm::Histogram2DI* h_channel_tot {}; //ToT vs channel
+    musip::dqm::Histogram2DI* h_channel_8ns {}; //course time vs channel id
+    musip::dqm::Histogram2DI* h_channel_1ns {}; //fine time vs channel id
+    musip::dqm::Histogram2DI* h_channel_TimeStampDeltaSameChannel {}; //time difference t-t_prev for the same channel
     std::map<std::pair<int,int>, musip::dqm::Histogram2DF*> h_timewalk_; //timewalk histograms for each channel
 
     std::map<uint16_t, triggerhit> last_hits;

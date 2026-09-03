@@ -1,0 +1,12 @@
+
+#ifndef SMA_REGISTERS__H
+#define SMA_REGISTERS__H
+
+#define SMA_COUNTER_REGISTER_R 0x0400
+#define SMA_CTRL_REGISTER_W 0x0401
+#define RESET_COUNTER_BIT 0
+#define GET_RESET_COUNTER_BIT(REG) ((REG >> 0) & 0x1)
+#define SET_RESET_COUNTER_BIT(REG) ((1 << 0) | REG)
+#define UNSET_RESET_COUNTER_BIT(REG) ((~(1 << 0)) & REG)
+
+#endif  // #ifndef SMA_REGISTERS__H
