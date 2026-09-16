@@ -353,6 +353,24 @@ void setup_history() {
     temp.push_back("Quads/MTTM:MTTM[3]");
     hs_define_panel("MuTRiG", "Temperatures", temp);
 
+    // sma
+    for (uint32_t feb = 0; feb < N_FEBS_SMA; feb++) {
+        std::vector<std::string> ch_rate;
+        std::vector<std::string> ch_skip;
+        for (uint32_t trigger = 0; trigger < N_INPUT_SMA; trigger++) {
+            for (uint32_t chain = 0; chain < N_CHAINS_SMA; chain++) {
+                ch_rate.push_back("Quads/SMCR:rate F" + std::to_string(feb) + " T" + std::to_string(trigger) + " C" + std::to_string(chain));
+                ch_skip.push_back("Quads/SMCR:skip F" + std::to_string(feb) + " T" + std::to_string(trigger) + " C" + std::to_string(chain));
+            }
+            std::string panelname("F " + std::to_string(feb) + " Ch " + std::to_string(trigger) + " rate");
+            hs_define_panel("Trigger", panelname.c_str(), ch_rate);
+            panelname = "F " + std::to_string(feb) + " Ch " + std::to_string(trigger) + " skip";
+            hs_define_panel("Trigger", panelname.c_str(), ch_skip);
+            ch_rate.clear();
+            ch_skip.clear();
+        }
+    }
+
 }
 
 int begin_of_run() {
@@ -394,6 +412,14 @@ int begin_of_run() {
 
     if (timeout_cnt == 0) {
         cm_msg1(MINFO, "quads", "quad_fe", "Run %d start denied - check if FEBs alive", run_number);
+
+        for (int idx = 0; idx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); ++idx) {
+            if (m_settings["DAQ"]["Links"]["FEBsActive"][idx]) {
+                mup->write_register_wait(RUN_NR_ADDR_REGISTER_W, idx, 1000);
+                uint32_t val = mup->read_register_ro(RUN_NR_REGISTER_R);
+                printf("PREP_ACK=%u STOP_ACK=%u RNo=0x%8.8x\n", (val>>25) & 1, (val>>24) & 1,(val>>0) & 0xffffff);
+            }
+        }
         return CM_TRANSITION_CANCELED;
     }
     write_command_by_name("Sync");
@@ -673,8 +699,14 @@ int frontend_init() {
     usleep(500000);  // we sleep here to wait until the command is processed
     mup->write_register(RESET_LINK_CTL_REGISTER_W, 0x0);
 
-    // init FEBs
+    // usleep(500000);
+    // feb_sc->FEBsc_resetMain();
+    // feb_sc->FEBsc_resetSecondary();
+
+    printf("Reset FEBs by sending Abort Run and Stop Reset\n");
     InitFEBs(*feb_sc, m_settings);
+    printf("Reset FEBs by sending Abort Run and Stop Reset\n");
+
 
     // init banks
     init_banks();
@@ -1037,7 +1069,8 @@ int read_sc_event(char* pevent, int off) {
             feb_sc->FEB_write(febIDx, SMA_CTRL_REGISTER_W, 0);
             // readout counters
             std::vector<uint32_t> counters(offset + (2*N_INPUT_SMA*N_CHAINS_SMA+2*N_INPUT_SMA));
-            feb_sc->FEB_read(febIDx, SMA_COUNTER_REGISTER_R, counters, false);
+
+            feb_sc->FEB_read(febIDx, SMA_COUNTER_REGISTER_R, counters, true);
             for (uint32_t trigger = 0; trigger < N_INPUT_SMA; trigger++) {
                 sma_counter_banks.push_back(counters[2*N_INPUT_SMA*N_CHAINS_SMA+trigger]); // mux rate
                 sma_counter_banks.push_back(counters[2*N_INPUT_SMA*N_CHAINS_SMA+trigger+4]); // mux skip
