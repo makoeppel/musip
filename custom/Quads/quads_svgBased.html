@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html class="mcss">
+<head>
+   <meta charset="UTF-8">
+   <link rel="stylesheet" href="midas.css">
+   <script src="controls.js"></script>
+   <script src="midas.js"></script>
+   <script src="mhttpd.js"></script>
+   <script src="mhistory.js"></script>
+   <script src="Quads/config_quads_svgBased.js"></script>
+   <title>Quads SVG</title>
+
+   <style>
+      .mtable td { padding: 2px; }
+
+      .chip-action-cell {
+          text-align: left;
+      }
+
+      .chip-action-sequence {
+          display: flex;
+          align-items: center;
+	  justify-content: flex-start;
+          gap: 8px;
+      }
+
+      .chip-action-arrow {
+          font-size: 1.4em;
+      }
+
+      #htmlTooltip {
+          position: fixed;
+          background-color: rgba(0, 0, 0, 0.5);
+          color: white;
+          padding: 3px 6px;
+	  border-radius: 2px;
+          font-size: 16px;
+          font-family: sans-serif;
+          pointer-events: none;
+          z-index: 1000;
+          visibility: hidden;
+	  white-space: pre-line;
+          max-width: 250px;
+      }
+
+   </style>
+
+   <script>
+
+	// TODO list:
+	// DONE1. Labels (maybe tooltip) for quad/chip selection
+	// 2. Define actions properly with confirmation/busy routine
+	// 3. Mask visualization 
+	// 4. Mask creation via python?
+	// 5. DQM
+	// DONE6. Config file for PIONEER vs. muSR
+
+        // ------------------------------------------------------------------------------
+	// Initialization
+        // ------------------------------------------------------------------------------
+	// Get setup from config file (config_quads_svgBased.js)
+        function applySetup() {
+            document.querySelectorAll("[data-setup]").forEach(element => {
+                //console.log("found one data setup", cfg.features);
+                element.style.display =
+                    cfg.features.includes(element.dataset.setup) ? "" : "none";
+            });
+
+	    // Add History Panel for Musip setup (with cooling)
+	    if (cfg.features.includes("cooling")) {
+        	document.getElementById("coolingHistory").innerHTML = `
+                    <div class="mjshistory"
+                         data-group="Quads"
+                         data-panel="BlockTemp"
+                         style="width: 500px; height: 300px; margin:0 auto;">
+                    </div>
+        	`;
+            }
+        }
+
+	// Get setup from config file (config_quads_svgBased.js)
+	document.addEventListener("DOMContentLoaded", function () {   
+	    applySetup();
+	    // Set some titles:
+            document.getElementById("lvSupply0Title").textContent = cfg.lv_supply_0_title;
+ 	    document.getElementById("lvSupply1Title").textContent = cfg.lv_supply_1_title;
+	    // Set some channels:
+            document.getElementById("node_hv0").value = cfg.node_hv0_def;
+            document.getElementById("node_hv0").max = cfg.node_hv_max;
+	    document.getElementById("node_hv1").value = cfg.node_hv1_def;
+            document.getElementById("node_hv1").max = cfg.node_hv_max;
+            document.getElementById("channel_hv0").value = cfg.channel_hv0_def;
+            document.getElementById("channel_hv1").value = cfg.channel_hv1_def;
+            document.getElementById("channel_hv0_name").textContent = cfg.channel_hv0_name;
+            document.getElementById("channel_hv1_name").textContent = cfg.channel_hv1_name;
+	    document.getElementById("hv0_supplyChannel").dataset.odbPath = cfg.hvBox_supplyChannel;
+            document.getElementById("hv0_supplyChannelSet").dataset.odbPath = cfg.hvBox_supplyChannelSet;
+            document.getElementById("hv1_supplyChannel").dataset.odbPath = cfg.hvBox_supplyChannel;
+            document.getElementById("hv1_supplyChannelSet").dataset.odbPath = cfg.hvBox_supplyChannelSet;
+	    // Below should depennd on config file aka. how many HV cannels we have
+	    updateHV(0);
+	    updateHV(1);
+	});
+
+        // Update the ODB path for the HV box based on the selected node and channel
+        function updateHV(row){
+            const node = Number(document.getElementById("node_hv"+row).value);
+            const channel = Number(document.getElementById("channel_hv"+row).value);
+            const index = (node-1)*4 + channel;
+
+            document.querySelectorAll(`[data-hvrow="${row}"]`).forEach(elem => {
+                elem.dataset.odbPath =
+                    elem.dataset.odbTemplate.replace("%i", index);
+            });
+            mhttpd_refresh();
+        }
+
+	//Workaround to resize hidden mjshistory plots when changing tabs
+	document.addEventListener('click', e => {
+	    const tab = e.target.closest('.mtab');
+	    if (tab) {
+	        console.log("clicked tab:", tab.dataset.target);
+	        setTimeout(() => {
+	            document.querySelectorAll('.mjshistory').forEach(h => {
+	                if (h.resize)
+	                    h.resize();
+	            });
+	        }, 50);
+
+		applySetup();
+	    }
+	});
+
+	// ------------------------------------------------------------------------------
+	// Chip selection routines 
+	// ------------------------------------------------------------------------------
+
+        color_sel = 'black';
+	color_unsel = '#c8c8c8';
+
+        function color_chips(mask, feb) {
+            //console.log('mask:', mask, 'feb:', feb);
+
+            // Determine the base quad ID based on the value of feb
+            const baseQuadId = 'quad';
+ 	    // Loop over the two relevant quads // TODO: 2 should not be hardcoded!
+            for (let i = 0; i < 2; i++) {
+                const address_byte = (mask >> (0+i*4)) & 0xF; // Extract the correct byte
+		const quadIdNum = i + feb*2;    
+                const quadId = baseQuadId + quadIdNum;
+		//console.log(quadId);
+                const svgDoc = document.getElementById(quadId).contentDocument;
+
+                // Loop over the four chips in each quad
+                for (let j = 0; j < 4; j++) {
+                    const chipId = 'chip' + (j + (feb * 4));
+                    const chip = svgDoc.getElementById(chipId);
+
+                    if (chip) {
+                        // Check if the mask corresponds to this chip
+                        if ((address_byte & (1 << j)) !== 0) {
+                            chip.style.fill = color_sel; // Assuming color_sel is defined
+                        } else {
+                            chip.style.fill = color_unsel;
+                        }
+
+	                // Add tooltip only once, otherwise mulitple redundant eventListeners
+        	        if (!chip.dataset.tooltipInitialized) {
+
+                	    chip.dataset.tooltip = "Quad " + i + " - Chip " + (j + feb * 4);
+
+	                    chip.addEventListener("mouseenter", function (event) {
+	                        showHtmlTooltip(event, chip.dataset.tooltip);
+	                    });
+
+	                    chip.addEventListener("mousemove", function (event) {
+	                        showHtmlTooltip(event, chip.dataset.tooltip);
+	                    });
+
+	                    chip.addEventListener("mouseleave", hideHtmlTooltip);
+
+	                    chip.dataset.tooltipInitialized = "true";
+	                }
+
+                    } else {
+                        console.error('Element with id ' + chipId + ' not found.');
+                    }
+                }
+            }
+        }
+
+	// ASIC mask selection, not individual chip masking
+	function mask_selection(asicMaskIndex, quad, chip) {
+	    //console.log('Quad clicked!');
+	    const tmp_path = `/Equipment/Quads/Settings/DAQ/Links/ASICMask[${asicMaskIndex}]`
+	    mjsonrpc_db_get_value(tmp_path).then(function (rpc) {
+                let mask = rpc.result.data[0];
+
+                // Position of the chip bit in the complete mask
+                const bit = quad * 4 + chip;
+
+	        // Toggle the bit
+                mask ^= (1 << bit);
+
+		modbset(tmp_path, mask);
+		color_chips(mask, asicMaskIndex);
+            });
+	}
+
+        function selectAll(bool_sel) {
+	    return function(button) {
+                // count quads:
+	        const svgObjects = document.querySelectorAll(".svgObject");
+	        const nQuads = svgObjects.length;
+	        console.log(nQuads, bool_sel);
+
+		if (bool_sel == 0) {
+		    // Assume max. 3 pixel FEBs
+		    modbset("/Equipment/Quads/Settings/DAQ/Links/ASICMask[0]", "0x0000");
+                    modbset("/Equipment/Quads/Settings/DAQ/Links/ASICMask[1]", "0x0000");
+                    modbset("/Equipment/Quads/Settings/DAQ/Links/ASICMask[2]", "0x0000");
+		}
+		else {
+		    const nMasks = Math.ceil(nQuads / 2);
+
+		    for (let i = 0; i < nMasks; i++) {
+		        const nQuadsInMask = Math.min(2, nQuads - 2 * i);
+		        const mask = (1 << (4 * nQuadsInMask)) - 1;
+
+		        modbset(
+		            `/Equipment/Quads/Settings/DAQ/Links/ASICMask[${i}]`,
+		            `0x${mask.toString(16).padStart(4, "0").toUpperCase()}`
+		        );
+		    }
+		}
+
+	    };
+
+	}
+
+
+        // ------------------------------------------------------------------------------
+        // Chip actions
+        // ------------------------------------------------------------------------------
+
+	// 1) Check if configuration or masking isn't executed at the same time
+
+	let mupixBusy = false;
+
+	let mupixConfigRunning = false;
+	let mupixTDACConfigRunning = false;
+
+	function oc_mupixconfig(value, element) {
+	    const path = element.dataset.odbPath;
+
+	    if (path.endsWith("/MupixConfig")) {
+	        mupixConfigRunning = value;
+	    }
+	    else if (path.endsWith("/MupixTDACConfig")) {
+	        mupixTDACConfigRunning = value;
+	    }
+
+	    mupixBusy = mupixConfigRunning || mupixTDACConfigRunning;
+	}
+
+	// 2) Actions
+
+	let chipOriginalThreshold = null;
+	const ThHigh_highValue = 200;
+
+	function chipAction(command) {
+ 
+	    if (mupixBusy) {
+	        console.log("MuPix configuration is busy.");
+	        return;
+	    }
+
+	    const paths = {
+	        configure: "/Equipment/Quads/Settings/DAQ/Commands/MupixConfig",
+        	uploadTDACs: "/Equipment/Quads/Settings/DAQ/Commands/MupixTDACConfig",
+                highThreshold: "/Equipment/Quads/Settings/Config/VDACS/ThHigh",
+		nomThreshold: "/Equipment/Quads/Settings/Config/VDACS/ThHigh"
+	    };
+
+	    const tmp_path = paths[command];
+
+	    if (!tmp_path) {
+	        console.error("Unknown chip action:", command);
+	        return;
+	    }
+	    if (command === "configure" || command === "uploadTDACs") {
+	        modbset(tmp_path, true);
+	    }
+
+	    else if (command === "highThreshold") {
+
+		mjsonrpc_db_get_value(tmp_path).then(function (rpc) {
+                        let value = rpc.result.data[0];
+
+			chipOriginalThreshold = [...value];
+		        let highValue = Array(value.length).fill(ThHigh_highValue);
+		        modbset(tmp_path, highValue);
+
+			// Set also ThLow (also ThHigh - 1)
+			let lowValue = highValue.map(value => value -1);
+			let lowPath = tmp_path.replace("/ThHigh", "/ThLow");
+			modbset(lowPath, lowValue);
+		});
+	    }
+
+	    else if (command === "nomThreshold") {
+	        if (chipOriginalThreshold === null) {
+	            console.warn("No original threshold stored.");
+	            return;
+	        }
+
+	        modbset(tmp_path, chipOriginalThreshold);
+
+                // Set also ThLow (also ThHigh - 1)
+                let lowValue = chipOriginalThreshold.map(value => value -1);
+                let lowPath = tmp_path.replace("/ThHigh", "/ThLow");
+                modbset(lowPath, lowValue);
+	    }
+
+	    console.log("Executed chips action: " + command);
+	}
+
+	// Testing ground for masking maps
+	// TODO: Missing: Differentiate between quads 
+document.addEventListener("DOMContentLoaded", function () {
+
+    const svgObjects = document.querySelectorAll(".svgObjectMask");
+
+    svgObjects.forEach(function (obj, index) {
+
+        obj.addEventListener("load", function () {
+
+            const svgDoc = obj.contentDocument;
+
+            for (let chip = 0; chip < 4; chip++) {
+
+                const chipElement = svgDoc.getElementById(`chip${chip}`);
+
+                if (!chipElement)
+                    continue;
+
+                // Get the position and size of the chip rectangle
+                const x = chipElement.getAttribute("x");
+                const y = chipElement.getAttribute("y");
+                const width = chipElement.getAttribute("width");
+                const height = chipElement.getAttribute("height");
+
+                // Create an SVG image
+                const image = svgDoc.createElementNS(
+                    "http://www.w3.org/2000/svg",
+                    "image"
+                );
+
+                image.setAttribute("x", x);
+                image.setAttribute("y", y);
+                image.setAttribute("width", width);
+                image.setAttribute("height", height);
+
+                // Store chip number
+                image.setAttribute("data-chip", chip);
+
+                // Load the binary mask
+                loadMask(image, chip);
+
+                // Put image on top of the rectangle
+                chipElement.parentNode.appendChild(image);
+            }
+        });
+    });
+});
+
+
+function loadMask(image, chip) {
+
+    fetch(`userfiles/maskfiles/mask_${chip}.bin`)
+        .then(r => r.arrayBuffer())
+        .then(buffer => {
+
+            const data = new Uint8Array(buffer);
+
+            // Create temporary canvas for the 256 x 250 mask
+            const canvas = document.createElement("canvas");
+            canvas.width = 256;
+            canvas.height = 250;
+
+            const ctx = canvas.getContext("2d");
+            const img = ctx.createImageData(256, 250);
+
+            for (let y = 0; y < 256; y++) {
+                for (let x = 0; x < 256; x++) {
+
+                    const value = data[y * 256 + x] ? 0 : 255;
+
+                    // Rotate 90° counter-clockwise
+                    const nx = y;
+                    const ny = 255 - x;
+
+                    // Remove the 6 non-existing rows
+                    if (ny < 6)
+                        continue;
+
+                    const newY = ny - 6;
+
+                    const i = (newY * 256 + nx) * 4;
+
+                    img.data[i]     = value;
+                    img.data[i + 1] = value;
+                    img.data[i + 2] = value;
+                    img.data[i + 3] = 255;
+                }
+            }
+
+            ctx.putImageData(img, 0, 0);
+
+            // Convert canvas to an image
+            image.setAttribute("href", canvas.toDataURL());
+
+        });
+}
+
+fetch("userfiles/maskfiles/mask_2.bin")
+//fetch("/home/pinky/bt2026/musip/output/maskfiles_analyzer/mask_2_run_156.bin")
+    // Read the binary file
+    .then(r => r.arrayBuffer())
+    .then(buffer => {
+	console.log("testy");
+        // Interpret the file as an array of 8-bit integers.
+        // Each byte is one pixel: 0 or 1.
+        const data = new Uint8Array(buffer);
+
+        // Get the canvas
+        const canvas = document.getElementById("map");
+        const ctx = canvas.getContext("2d");
+
+        // Create an empty 256 x 256 image.
+        // Each pixel has 4 values: R, G, B, Alpha.
+        const img = ctx.createImageData(256, 256);
+
+        // Loop over all pixels in the binary file
+        for (let y = 0; y < 256; y++) {
+            for (let x = 0; x < 256; x++) {
+
+                // Convert (x, y) into the position in the 1D data array.
+                const value = data[y * 256 + x] ? 0 : 255;
+
+                // Rotate 90 degrees counter-clockwise.
+                // Equivalent to np.rot90(mask, k=1)
+                const nx = y;
+                const ny = 255 - x;
+		
+		if (ny < 6) continue; // Remove the non existing top 6 rows (250x256)
+		const newY = ny - 6;
+
+                // Canvas has 4 values per pixel: R, G, B, Alpha.
+                const i = (ny * 256 + nx) * 4;
+
+                // Set the pixel to black or white
+                img.data[i]     = value; // Red
+                img.data[i + 1] = value; // Green
+                img.data[i + 2] = value; // Blue
+                img.data[i + 3] = 255;   // Alpha
+            }
+        }
+
+        // Display the image
+        ctx.putImageData(img, 0, 0);
+    });
+
+        // ------------------------------------------------------------------------------
+        // SVG Page loader
+        // ------------------------------------------------------------------------------
+
+        document.addEventListener("DOMContentLoaded", function () {
+            // Get all <object> elements with the class 'svgObject'
+            const svgObjects = document.querySelectorAll(".svgObject");
+
+            // Iterate over each <object> element
+            svgObjects.forEach(function (obj, index) {
+		console.log(obj, index);
+                // Add a load event listener to each <object>
+                obj.addEventListener("load", function () {
+                    // Check for pairs (=2) since two quads connect to one FEB
+		    const asicMaskIndex = Math.floor(index / 2);
+		    const svgDoc = obj.contentDocument;
+
+                    for (let chip = 0; chip < 4; chip++) {
+			const chipElement = svgDoc.getElementById(`chip${chip}`);
+			if (chipElement) {
+			    chipElement.addEventListener("click", () => {
+			        mask_selection(asicMaskIndex, index, chip);
+			    });
+			}
+		    } 
+
+                    if (index % 2 === 0) { 
+			// Pairs of quads have one mask
+                        // Get the internal document of the loaded SVG
+			// TODO: check that asicMaskIndex is number!!!
+               	        mjsonrpc_db_get_value(`/Equipment/Quads/Settings/DAQ/Links/ASICMask[${asicMaskIndex}]`).then(function (rpc) {
+	                    let value = rpc.result.data[0];
+		            color_chips(value, asicMaskIndex);
+	                });
+		    }	    
+		});
+            });
+        });
+	
+
+	
+   </script>
+</head>
+
+<body class="mcss" onload="mhttpd_init('Quad SVG'); mhistory_init();">
+
+<!-- header and side navigation will be filled in mhttpd_init -->
+<div id="mheader"></div>
+<div id="msidenav"></div>
+
+<div id="mmain">
+
+    <!-- Values to be monitored (modb values with onchange or onload commands) -->
+
+    <div class="modb" data-odb-path="/Equipment/Quads/Settings/DAQ/Commands/MupixConfig" 
+	    onload="oc_mupixconfig(this.value, this)" onchange="oc_mupixconfig(this.value, this)">
+    <div class="modb" data-odb-path="/Equipment/Quads/Settings/DAQ/Commands/MupixTDACConfig"
+            onload="oc_mupixconfig(this.value, this)" onchange="oc_mupixconfig(this.value, this)">
+
+    <!-- Should become a tab for power-->
+
+    <div class="mtabs">
+        <div class="mtab active"
+             data-target="quad_power">
+            Power
+        </div>
+        <div class="mtab" data-setup="cooling"
+             data-target="quad_cooling">
+            Cooling
+        </div>
+	<div class="mtab"
+             data-target="quad_control">
+            Chip control
+        </div>
+        <div class="mtab"
+             data-target="quad_masks">
+            Chip masks
+        </div>
+    </div>
+    
+    <div id="quad_power" class="mpanel active">
+
+    <table class="mtable">
+        <tr>
+            <th colspan="8" class="mtableheader" id="lvSupply0Title"></th>
+        </tr>
+        <tr>
+            <th colspan="2"> Channel: </th>
+            <th>State</th>
+            <th>Demand Voltage</th>
+            <th>Voltage</th>
+            <th>Current Limit</th>
+            <th>Current</th>
+            <th>Description</th>
+        </tr>
+        <tr>
+            <th>0</th>
+            <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/LVSUPPLY0/Variables/State[0]" data-color="lightgreen" data-background-color="red"></div></td>
+            <td style="text-align: center"><input type="checkbox" name="CheckboxPixels" class="modbcheckbox" data-odb-path="/Equipment/LVSUPPLY0/Variables/Set State[0]"></input></td>
+            <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/LVSUPPLY0/Variables/Demand Voltage[0]" data-odb-editable="1"></div></td>
+            <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/LVSUPPLY0/Variables/Voltage[0]"></div></td>
+            <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY0/Variables/Current Limit[0]" data-odb-editable="1"></div></td>
+            <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY0/Variables/Current[0]"></div></td>
+            <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY0/Settings/Channel Names[0]" data-odb-editable="1"></div></td>
+        </tr>
+        <tr>
+            <th>1</th>
+            <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/LVSUPPLY0/Variables/State[1]" data-color="lightgreen" data-background-color="red"></div></td>
+            <td style="text-align: center"><input type="checkbox" name="CheckboxPixels" class="modbcheckbox" data-odb-path="/Equipment/LVSUPPLY0/Variables/Set State[1]"></input></td>
+            <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/LVSUPPLY0/Variables/Demand Voltage[1]" data-odb-editable="1"></div></td>
+            <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/LVSUPPLY0/Variables/Voltage[1]"></div></td>
+            <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY0/Variables/Current Limit[1]" data-odb-editable="1"></div></td>
+            <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY0/Variables/Current[1]"></div></td>
+            <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY0/Settings/Channel Names[1]" data-odb-editable="1"></div></td>
+        </tr>
+        <tr>
+            <th>2</th>
+            <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/LVSUPPLY0/Variables/State[2]" data-color="lightgreen" data-background-color="red"></div></td>
+            <td style="text-align: center"><input type="checkbox" name="CheckboxPixels" class="modbcheckbox" data-odb-path="/Equipment/LVSUPPLY0/Variables/Set State[2]"></input></td>
+            <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/LVSUPPLY0/Variables/Demand Voltage[2]" data-odb-editable="1"></div></td>
+            <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/LVSUPPLY0/Variables/Voltage[2]"></div></td>
+            <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY0/Variables/Current Limit[2]" data-odb-editable="1"></div></td>
+            <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY0/Variables/Current[2]"></div></td>
+            <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY0/Settings/Channel Names[2]" data-odb-editable="1"></div></td>
+        </tr>
+        <tr>
+            <th>3</th>
+            <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/LVSUPPLY0/Variables/State[3]" data-color="lightgreen" data-background-color="red"></div></td>
+            <td style="text-align: center"><input type="checkbox" name="CheckboxPixels" class="modbcheckbox" data-odb-path="/Equipment/LVSUPPLY0/Variables/Set State[3]"></input></td>
+            <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/LVSUPPLY0/Variables/Demand Voltage[3]" data-odb-editable="1"></div></td>
+            <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/LVSUPPLY0/Variables/Voltage[3]"></div></td>
+            <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY0/Variables/Current Limit[3]" data-odb-editable="1"></div></td>
+            <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY0/Variables/Current[3]"></div></td>
+            <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY0/Settings/Channel Names[3]" data-odb-editable="1"></div></td>
+        </tr>
+    </table>
+
+    <table class="mtable">
+        <tr>
+            <th colspan="8" class="mtableheader" id="lvSupply1Title">LV SUPPLY 1: Quads & HV Box</th>
+        </tr>
+        <tr>
+            <th colspan="2"> Channel: </th>
+            <th>State</th>
+            <th>Demand Voltage</th>
+            <th>Voltage</th>
+            <th>Current Limit</th>
+            <th>Current</th>
+            <th>Description</th>
+        </tr>
+        <tr>
+            <th>0</th>
+            <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/LVSUPPLY1/Variables/State[0]" data-color="lightgreen" data-background-color="red"></div></td>
+            <td style="text-align: center"><input type="checkbox" name="CheckboxPixels" class="modbcheckbox" data-odb-path="/Equipment/LVSUPPLY1/Variables/Set State[0]"></input></td>
+            <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/LVSUPPLY1/Variables/Demand Voltage[0]" data-odb-editable="1"></div></td>
+            <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/LVSUPPLY1/Variables/Voltage[0]"></div></td>
+            <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY1/Variables/Current Limit[0]" data-odb-editable="1"></div></td>
+            <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY1/Variables/Current[0]"></div></td>
+            <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY1/Settings/Channel Names[0]" data-odb-editable="1"></div></td>
+        </tr>
+        <tr>
+            <th>1</th>
+            <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/LVSUPPLY1/Variables/State[1]" data-color="lightgreen" data-background-color="red"></div></td>
+            <td style="text-align: center"><input type="checkbox" name="CheckboxPixels" class="modbcheckbox" data-odb-path="/Equipment/LVSUPPLY1/Variables/Set State[1]"></input></td>
+            <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/LVSUPPLY1/Variables/Demand Voltage[1]" data-odb-editable="1"></div></td>
+            <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/LVSUPPLY1/Variables/Voltage[1]"></div></td>
+            <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY1/Variables/Current Limit[1]" data-odb-editable="1"></div></td>
+            <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY1/Variables/Current[1]"></div></td>
+            <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY1/Settings/Channel Names[1]" data-odb-editable="1"></div></td>
+        </tr>
+        <tr>
+            <th>2</th>
+            <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/LVSUPPLY1/Variables/State[2]" data-color="lightgreen" data-background-color="red"></div></td>
+            <td style="text-align: center"><input type="checkbox" name="CheckboxPixels" class="modbcheckbox" data-odb-path="/Equipment/LVSUPPLY1/Variables/Set State[2]"></input></td>
+            <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/LVSUPPLY1/Variables/Demand Voltage[2]" data-odb-editable="1"></div></td>
+            <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/LVSUPPLY1/Variables/Voltage[2]"></div></td>
+            <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY1/Variables/Current Limit[2]" data-odb-editable="1"></div></td>
+            <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY1/Variables/Current[2]"></div></td>
+            <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY1/Settings/Channel Names[2]" data-odb-editable="1"></div></td>
+        </tr>
+        <tr>
+            <th>3</th>
+            <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/LVSUPPLY1/Variables/State[3]" data-color="lightgreen" data-background-color="red"></div></td>
+            <td style="text-align: center"><input type="checkbox" name="CheckboxPixels" class="modbcheckbox" data-odb-path="/Equipment/LVSUPPLY1/Variables/Set State[3]"></input></td>
+            <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/LVSUPPLY1/Variables/Demand Voltage[3]" data-odb-editable="1"></div></td>
+            <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/LVSUPPLY1/Variables/Voltage[3]"></div></td>
+            <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY1/Variables/Current Limit[3]" data-odb-editable="1"></div></td>
+            <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY1/Variables/Current[3]"></div></td>
+            <td><div class="modbvalue" data-format="f3" data-odb-path="/Equipment/LVSUPPLY1/Settings/Channel Names[3]" data-odb-editable="1"></div></td>
+        </tr>
+    </table>
+
+    <table class="mtable">
+        <tr><th colspan="10" class="mtableheader" id="hvSupplyTitle">HV Box & Keithley HV supplies</th></tr>
+        <tr>
+            <th colspan="2">Node</th>
+            <td>State</td>
+            <th colspan="2" >Channel</th>
+            <th>Demand Voltage</th>
+            <th>Voltage</th>
+            <th>Current Limit (A)</th>
+            <th>Current (&mu;A)</th>
+            <th>Description</th>
+        </tr>
+        <tr>
+            <th><input type="number" id="node_hv0" min="1" onchange="updateHV(0)"></th>
+            <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/LVSUPPLY1/Variables/State[3]" data-color="lightgreen" data-background-color="red"
+		id="hv0_supplyChannel"></div></td>
+            <td style="text-align: center"><input type="checkbox" name="CheckboxPixels" class="modbcheckbox" data-odb-path="/Equipment/LVSUPPLY1/Variables/Set State[3]"
+		id="hv0_supplyChannelSet"></input></td>
+            <th><input type="number" id="channel_hv0" min="0" max="3" onchange="updateHV(0)"></th>
+            <td style="text-align: center">
+                <div class="modbbox" style="width: 20px; height: 20px;"
+                     data-hvrow="0" data-odb-template="/Equipment/Quad HV/Variables/Demand[%i]"
+                     data-odb-path="" 
+                     data-color="lightgreen" data-background-color="red">
+                </div></td>
+            <td><div class="modbvalue" 
+                     data-hvrow="0" data-odb-template="/Equipment/Quad HV/Variables/Demand[%i]"
+                     data-odb-path="" 
+                     data-formula="-x" data-odb-editable="1">
+                </div></td>
+            <td><div class="modbvalue" data-format="f2" 
+                     data-hvrow="0" data-odb-template="/Equipment/Quad HV/Variables/Measured[%i]"
+                     data-odb-path="" 
+                     data-formula="-x">
+                </div></td>
+            <td>none</td>
+            <td><div id="hv_curr" data-format="f3" class="modbvalue" 
+                     data-hvrow="0" data-odb-template="/Equipment/Quad HV/Variables/Current[%i]"
+                     data-odb-path="" 
+                     data-formula="-x">
+                </div></td>
+            <td id="channel_hv0_name" style="text-align: center"></td>
+        </tr>
+        <tr>
+            <th><input type="number" id="node_hv1" min="1" onchange="updateHV(1)"></th>
+            <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/LVSUPPLY1/Variables/State[3]" data-color="lightgreen" data-background-color="red"
+		id="hv1_supplyChannel"></div></td>
+            <td style="text-align: center"><input type="checkbox" name="CheckboxPixels" class="modbcheckbox" data-odb-path="/Equipment/LVSUPPLY1/Variables/Set State[3]"
+		id="hv1_supplyChannelSet"></input></td>
+            <th><input type="number" id="channel_hv1" min="0" max="3" onchange="updateHV(1)"></th>
+            <td style="text-align: center">
+                <div class="modbbox" style="width: 20px; height: 20px;" 
+                     data-hvrow="1" data-odb-template="/Equipment/Quad HV/Variables/Demand[%i]"
+                     data-odb-path=""  
+                     data-color="lightgreen" data-background-color="red">
+                </div></td>
+            <td><div class="modbvalue" 
+                data-hvrow="1" data-odb-template="/Equipment/Quad HV/Variables/Demand[%i]"
+                data-odb-path="" 
+                data-formula="-x" data-odb-editable="1">
+            </div></td>
+            <td><div class="modbvalue" data-format="f2" 
+                data-hvrow="1" data-odb-template="/Equipment/Quad HV/Variables/Measured[%i]"
+                data-odb-path="" 
+                data-formula="-x">
+            </div></td>
+            <td>none</td>
+            <td><div id="hv_curr" data-format="f3" class="modbvalue" 
+                data-hvrow="1" data-odb-template="/Equipment/Quad HV/Variables/Current[%i]"
+                data-odb-path="/Equipment/Quad HV/Variables/Current[0]" 
+                data-formula="-x">
+            </div></td>
+            <td id="channel_hv1_name" style="text-align: center"></td>
+        </tr>
+        <tr data-setup="keithley">
+            <th>Keithley</th>
+            <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/K2450/Variables/Output[0]" data-color="lightgreen" data-background-color="red"></div></td>
+            <td style="text-align: center"><input type="checkbox" name="CheckboxHVNewPixels" class="modbcheckbox" data-odb-path="/Equipment/K2450/Variables/Output[0]"></input></td>
+            <th>0</th>
+            <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/K2450/Variables/Output[0]" data-color="lightgreen" data-background-color="red"></div></td>
+            <td><div class="modbvalue" data-odb-path="/Equipment/K2450/Variables/Output[1]" data-formula="x" data-odb-editable="1"></div></td>
+            <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/K2450/Variables/Input[1]" data-formula="x"></div></td>
+            <td><div class="modbvalue" data-format="e2" data-odb-path="/Equipment/K2450/Variables/Output[6]" data-formula="x" data-odb-editable="1"></div></td>
+            <td><div id="keithley_curr" data-format="f3" class="modbvalue" data-odb-path="/Equipment/K2450/Variables/Input[4]" data-formula="x*1000000"></div></td>
+            <td id="HVSUPPLY1_0" style="text-align: center">New quads HV</td>
+        </tr>
+        <tr data-setup="keithley">
+            <th>Keithley B</th>
+            <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/K2450B/Variables/Output[0]" data-color="lightgreen" data-background-color="red"></div></td>
+            <td style="text-align: center"><input type="checkbox" name="CheckboxHVNewPixels2" class="modbcheckbox" data-odb-path="/Equipment/K2450B/Variables/Output[0]"></input></td>
+            <th>0</th>
+            <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/K2450B/Variables/Output[0]" data-color="lightgreen" data-background-color="red"></div></td>
+            <td><div class="modbvalue" data-odb-path="/Equipment/K2450B/Variables/Output[1]" data-formula="x" data-odb-editable="1"></div></td>
+            <td><div class="modbvalue" data-format="f2" data-odb-path="/Equipment/K2450B/Variables/Input[1]" data-formula="x"></div></td>
+            <td><div class="modbvalue" data-format="e2" data-odb-path="/Equipment/K2450B/Variables/Output[6]" data-formula="x" data-odb-editable="1"></div></td>
+            <td><div id="keithleyb_curr" data-format="f3" class="modbvalue" data-odb-path="/Equipment/K2450B/Variables/Input[4]" data-formula="x*1000000"></div></td>
+            <td id="HVSUPPLY2_0" style="text-align: center">Second Keithley</td>
+        </tr>
+    </table>
+
+    </div>
+
+    <!-- 2nd tab: Cooling ---------------------------------------------------->
+
+    <div id="quad_cooling" class="mpanel" data-setup="cooling">
+
+    <table class="mtable" id="chillerMonitor">
+        <tr><th colspan="6" class="mtableheader">Chiller</th></tr>
+        <tr><th>Running</th><th>On/Off</th><th>Set temp (°C)</th><th>Readback (°C)</th><th>Pressure (bar)</th><th></th></tr>
+        <tr>
+            <td style="text-align:center">
+            <div class="modbbox" style="width:20px;height:20px;"
+                data-odb-path="/Equipment/Chiller/Variables/Input[0]"
+                data-color="lightgreen" data-background-color="red"></div></td>
+            <td style="text-align:center">
+            <input type="checkbox" class="modbcheckbox"
+                    data-odb-path="/Equipment/Chiller/Variables/Output[0]"></td>
+            <td style="text-align:center">
+            <div class="modbvalue" data-format="f2"
+                data-odb-path="/Equipment/Chiller/Variables/Output[1]"
+                data-odb-editable="1"></div></td>
+            <td style="text-align:center">
+            <div class="modbvalue" data-format="f2"
+                data-odb-path="/Equipment/Chiller/Variables/Input[2]"></div></td>
+            <td style="text-align:center">
+            <div class="modbvalue" data-format="f2"
+                data-odb-path="/Equipment/Chiller/Variables/Input[3]"></div></td>
+            <td style="text-align:center">
+            <a href="?cmd=eqtable&amp;eq=Chiller" target="_blank">
+                <button class="mbutton">Open chiller page</button></a></td>
+        </tr>
+    </table>
+
+    <div id="coolingHistory"></div>
+
+    </div>
+
+    <!-- 3rd tab: Chip control ------------------------------------------------>
+
+    <div id="quad_control" class="mpanel">
+
+    <div class="modb" id="feb0_chipMask" data-odb-path="/Equipment/Quads/Settings/DAQ/Links/ASICMask[0]" onchange="color_chips(this.value, 0);"></div>
+
+    <table class="mtable">
+	<tr><th colspan="3" class="mtableheader">Chip selection &amp; control</th></tr>
+	<tr><td colspan="3">
+	    <div style="position:relative;width:100%;margin_auto">
+                <div style="display:flex;justify-content:center;">
+                <!-- Layer 0 -->
+		<object id="quad0" type="image/svg+xml" class="svgObject"
+			data="Quads/Quad_sketch.svg" style="width:250px;"></object>
+	        <!-- Gap between Layers -->
+		<div style="width:20px;"></div>
+		<!-- Layer 1 -->
+                <object id="quad1" type="image/svg+xml" class="svgObject"
+			data="Quads/Quad_sketch.svg" style="width:250px;"></object>
+	    </div>
+            </td>
+        </tr>
+	<tr>
+	    <td colspan="3" style="text-align:center">
+		    <button class="modbbutton mbutton"
+			    data-validate='selectAll(1)'>
+			    Select All!</button>
+                    <button class="modbbutton mbutton"
+			    data-validate='selectAll(0)'>
+			    Unselect All!</button>
+            </td>
+	</tr>
+
+	<tr>
+	    <td>Configure:</td>
+	    <td colspan="2" class="chip-action-cell">
+                <div>
+                    <button class="mbutton"
+                            onclick="chipAction('configure')">
+                        Configure
+                    </button>
+                </div>
+	    </td>
+	</tr>
+
+	<tr>
+	    <td>Masking:</td>
+	    <td colspan="2" class="chip-action-cell">
+	        <div class="chip-action-sequence">
+
+	            <div>
+	                <button class= "mbutton"
+	                        onclick="chipAction('configure')">
+	                    Configure
+	                </button>
+	            </div>
+  
+		    <span class="chip-action-arrow">→</span>
+
+            	    <div>
+	                <button class="mbutton"
+	                        onclick="chipAction('highThreshold')">
+	                    High Threshold
+	                </button>
+	            </div>
+
+                    <span class="chip-action-arrow">→</span>
+
+	            <div>
+	                <button class="mbutton"
+	                        onclick="chipAction('uploadTDACs')">
+	                    Mask
+	                </button>
+	            </div>
+
+                    <span class="chip-action-arrow">→</span>
+
+	            <div>
+	                <button class="mbutton"
+	                        onclick="chipAction('nomThreshold')">
+	                    Nominal Threshold
+	                </button>
+	            </div>
+
+                    <span class="chip-action-arrow">→</span>
+
+	            <div>
+	                <button class="mbutton"
+	                        onclick="chipAction('configure')">
+	                    Configure
+	                </button>
+	            </div>
+
+	        </div>
+	    </td>
+	</tr>
+        <tr>
+            <td>Reset PLL:</td>
+            <td colspan="2" class="chip-action-cell">
+	</tr>
+        <tr>
+            <td>Reset BiasBlock:</td>
+            <td colspan="2" class="chip-action-cell">
+        </tr>
+
+    </table>
+
+    </div>
+
+    <!-- 4th tab: Chip masks ------------------------------------------------>
+
+    <div id="quad_masks" class="mpanel">
+
+    <table class="mtable">
+        <tr><th colspan="1" class="mtableheader">Chip masks</th></tr>
+        <tr><td colspan="1">
+            <div style="position:relative;width:100%;margin_auto">
+                <div style="display:flex;justify-content:center;">
+                <!-- Layer 0 -->
+		<div id="quad0_container" style="position:relative; width:250px;">
+                    <object id="quad0_mask" type="image/svg+xml" class="svgObjectMask"
+                            data="Quads/Quad_sketch.svg" style="width:250px;">
+	            </object>
+                </div>
+                <!-- Gap between Layers -->
+                <div style="width:20px;"></div>
+                <!-- Layer 1 -->
+                <object id="quad1_mask" type="image/svg+xml" class="svgObjectMask"
+                        data="Quads/Quad_sketch.svg" style="width:250px;"></object>
+            </div>
+            </td>
+        </tr>
+    </table>
+
+    <canvas id="map" width="256" height="250"></canvas>
+
+    </div>
+</div>
+
+<!-- Toopltip implementation -->
+<!-- Tooltip container -->
+<div id="htmlTooltip"></div>
+<script>
+    const htmlTooltip = document.getElementById("htmlTooltip");
+
+    function showHtmlTooltip(event, text) {
+
+        const svgObject = event.target.ownerDocument.defaultView.frameElement;
+        const objectRect = svgObject.getBoundingClientRect();
+
+        htmlTooltip.textContent = text;
+
+        htmlTooltip.style.left = (objectRect.left + event.clientX + 10) + "px";
+        htmlTooltip.style.top  = (objectRect.top  + event.clientY + 10) + "px";
+
+        htmlTooltip.style.visibility = "visible";
+    }
+
+    function hideHtmlTooltip() {
+        htmlTooltip.style.visibility = "hidden";
+    }
+
+</script>
+
+
+</body>
+</html>
