@@ -422,8 +422,14 @@
 
 
 	function loadMask(image, chip) {
+	    mjsonrpc_db_get_value(`/Equipment/Quads/Settings/Config/TDACS/TDACFILE`).then(function (rpc) {
+	        let paths = rpc.result.data[0];
 
-	    fetch(`userfiles/maskfiles/mask_${chip}.bin`)
+    		let paths_short = paths.map(path =>
+	            path.replace("/home/pinky/online/", "")
+		);	
+
+		fetch(paths_short[chip] + "?v=" + Date.now())  //userfiles/maskfiles/mask_${chip}.bin`)
 	        .then(r => r.arrayBuffer())
 	        .then(buffer => {
 
@@ -467,6 +473,7 @@
 	            image.setAttribute("href", canvas.toDataURL());
 
 	        });
+	    });
 	}
 
 	/*fetch("userfiles/maskfiles/mask_7.bin")
@@ -516,6 +523,57 @@
 	        // Display the image
 	        ctx.putImageData(img, 0, 0);
 	    });*/
+
+	async function pysequencerAction(command) {
+	    const pySeqPath = "/PySequencer/State/Filename";
+	    const pySeqStart = "/PySequencer/Command/Start script";
+	    const pySeqLoad = "/PySequencer/Command/Load new file";
+	
+	    const pySeqParamPaths = [
+                "/PySequencer/Param/Value/source",
+	        "/PySequencer/Param/Value/destination",
+        	"/PySequencer/Param/Value/action"
+    	    ];
+
+            const params = {
+                SelEdgeMask: [
+		    "/home/pinky/online/userfiles/maskfiles/edge_masks",
+		    "/home/pinky/online/userfiles/maskfiles/",
+		    "mask copy"
+		],
+		SelEmptyMask: [
+                    "/home/pinky/online/userfiles/maskfiles/empty_masks",
+                    "/home/pinky/online/userfiles/maskfiles/",
+                    "mask copy"
+
+		]
+            };
+
+            const tmp_params = params[command];	
+
+	    // 1. Set the script filename
+	    await mjsonrpc_db_paste(
+	        [pySeqPath],
+	        ["masking_pioneer.py"]
+	    );
+
+	    // 2. Load the new file
+	    await mjsonrpc_db_paste(
+	        [pySeqLoad],
+	        [true]
+	    );
+
+	    // 3. Set the three parameter values
+	    await mjsonrpc_db_paste(
+	        pySeqParamPaths,
+	        tmp_params
+	    );
+
+	    await mjsonrpc_db_paste(
+		[pySeqStart],
+		[true]
+	    );
+	}
 
         // ------------------------------------------------------------------------------
         // SVG Page loader
@@ -1055,8 +1113,8 @@
     <div id="quad_masks" class="mpanel">
 
     <table class="mtable">
-        <tr><th colspan="1" class="mtableheader">Chip masks</th></tr>
-        <tr><td colspan="1">
+        <tr><th colspan="2" class="mtableheader">Chip masks</th></tr>
+        <tr><td colspan="2">
             <div style="position:relative;width:100%;margin_auto">
                 <div style="display:flex;justify-content:center;">
                 <!-- Layer 0 -->
@@ -1071,6 +1129,24 @@
                 <object id="quad1_mask" type="image/svg+xml" class="svgObjectMask"
                         data="Quads/Quad_sketch.svg" style="width:400px;"></object>
             </div>
+            </td>
+        </tr>
+	<tr>
+	    <td>Select edge masks:</td>
+	    <td>
+                <button class="mbutton"
+                        onclick="pysequencerAction('SelEdgeMask')">
+                    Run Pysequencer
+                </button>
+	    </td>
+	</tr>
+        <tr>
+            <td>Select empty masks:</td>
+            <td>
+                <button class="mbutton"
+                        onclick="pysequencerAction('SelEmptyMask')">
+                    Run Pysequencer
+                </button>
             </td>
         </tr>
     </table>
