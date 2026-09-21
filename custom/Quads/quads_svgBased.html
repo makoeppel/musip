@@ -279,10 +279,18 @@
 	        configure: "/Equipment/Quads/Settings/DAQ/Commands/MupixConfig",
         	uploadTDACs: "/Equipment/Quads/Settings/DAQ/Commands/MupixTDACConfig",
                 highThreshold: "/Equipment/Quads/Settings/Config/VDACS/ThHigh",
-		nomThreshold: "/Equipment/Quads/Settings/Config/VDACS/ThHigh"
+		nomThreshold: "/Equipment/Quads/Settings/Config/VDACS/ThHigh",
+		alwaysEnable: "/Equipment/Quads/Settings/Config/CONFDACS/AlwaysEnable",
+		disablePLL: "/Equipment/Quads/Settings/Config/CONFDACS/EnPLL",
+		enablePLL: "/Equipment/Quads/Settings/Config/CONFDACS/EnPLL",
+		biasBlockOn: "/Equipment/Quads/Settings/Config/BIASDACS/BiasBlock_on",
+                biasBlockOff: "/Equipment/Quads/Settings/Config/BIASDACS/BiasBlock_on",
+		setThreshold: "/Equipment/Quads/Settings/Config/VDACS/ThHigh"
 	    };
 
 	    const tmp_path = paths[command];
+ 	    const message = document.getElementById("stringAction");
+	    const timeoutMessage = 2500;
 
 	    if (!tmp_path) {
 	        console.error("Unknown chip action:", command);
@@ -290,21 +298,54 @@
 	    }
 	    if (command === "configure" || command === "uploadTDACs") {
 	        modbset(tmp_path, true);
+    		message.textContent = command === "configure" ? "Chips configured" : "TDACs uploaded";
+    		setTimeout(() => message.textContent = "", timeoutMessage);
 	    }
 
-	    else if (command === "highThreshold") {
+	    else if (command === "disablePLL" || command === "enablePLL") {
+	         mjsonrpc_db_get_value(tmp_path).then(function (rpc) {
+                        let value = rpc.result.data[0];
+			let enPLLValue = Array(value.length).fill(command === "enablePLL" ? 0 : 1);
+			modbset(tmp_path, enPLLValue);
+
+                        message.textContent = command === "enablePLL" ? "Reset PLL" : "Disabled PLL";
+                        setTimeout(() => message.textContent = "", timeoutMessage);
+		});
+	    }
+
+            else if (command === "biasBlockOff" || command === "biasBlockOn") {
+                 mjsonrpc_db_get_value(tmp_path).then(function (rpc) {
+                        let value = rpc.result.data[0];
+                        let biasBlockValue = Array(value.length).fill(command === "biasBlockOff" ? 0 : 5);
+                        modbset(tmp_path, biasBlockValue);
+
+                        message.textContent = command === "biasBlockOff" ? "Turned off bias block" : "Turned on bias block";
+                        setTimeout(() => message.textContent = "", timeoutMessage);
+                });
+            }
+
+	    else if (command === "highThreshold" || command === "setThreshold") {
+		let newThHigh = document.getElementById("newThHigh").value;
 
 		mjsonrpc_db_get_value(tmp_path).then(function (rpc) {
                         let value = rpc.result.data[0];
 
 			chipOriginalThreshold = [...value];
-		        let highValue = Array(value.length).fill(ThHigh_highValue);
+		        let highValue = Array(value.length).fill(command === "highThrehsold" ? ThHigh_highValue : newThHigh);
 		        modbset(tmp_path, highValue);
 
 			// Set also ThLow (also ThHigh - 1)
 			let lowValue = highValue.map(value => value -1);
 			let lowPath = tmp_path.replace("/ThHigh", "/ThLow");
 			modbset(lowPath, lowValue);
+
+			// Ensure that always enable is off since masking will happen next
+			let alwaysEnableArray = Array(value.length).fill(0);
+			modbset(paths["alwaysEnable"], alwaysEnableArray);
+
+			// Set a message text which visualizes that this was executed
+			message.textContent = command === "highThreshold" ? "Applied high threshold" : "Applied custom threshold";
+			setTimeout(() => message.textContent = "", timeoutMessage);
 		});
 	    }
 
@@ -320,6 +361,11 @@
                 let lowValue = chipOriginalThreshold.map(value => value -1);
                 let lowPath = tmp_path.replace("/ThHigh", "/ThLow");
                 modbset(lowPath, lowValue);
+
+                // Set a message text which visualizes that this was executed
+                message.textContent = "Applied nominal threshold";
+                setTimeout(() => message.textContent = "", timeoutMessage);
+
 	    }
 
 	    console.log("Executed chips action: " + command);
@@ -327,149 +373,149 @@
 
 	// Testing ground for masking maps
 	// TODO: Missing: Differentiate between quads 
-document.addEventListener("DOMContentLoaded", function () {
+	document.addEventListener("DOMContentLoaded", function () {
 
-    const svgObjects = document.querySelectorAll(".svgObjectMask");
+    	    const svgObjects = document.querySelectorAll(".svgObjectMask");
+	    const nQuads = svgObjects.length;
+	    svgObjects.forEach(function (obj, index) {
+		const numbOfFirstChip = index * 4;
+	        obj.addEventListener("load", function () {
+	            const svgDoc = obj.contentDocument;
 
-    svgObjects.forEach(function (obj, index) {
+	            for (let chip = 0; chip < 4; chip++) {
 
-        obj.addEventListener("load", function () {
+	                const chipElement = svgDoc.getElementById(`chip${chip}`);
 
-            const svgDoc = obj.contentDocument;
+	                if (!chipElement)
+	                    continue;
 
-            for (let chip = 0; chip < 4; chip++) {
+	                // Get the position and size of the chip rectangle
+	                const x = chipElement.getAttribute("x");
+	                const y = chipElement.getAttribute("y");
+	                const width = chipElement.getAttribute("width");
+	                const height = chipElement.getAttribute("height");
 
-                const chipElement = svgDoc.getElementById(`chip${chip}`);
+	                // Create an SVG image
+	                const image = svgDoc.createElementNS(
+	                    "http://www.w3.org/2000/svg",
+	                    "image"
+	                );
 
-                if (!chipElement)
-                    continue;
+                	image.setAttribute("x", x);
+        	        image.setAttribute("y", y);
+	                image.setAttribute("width", width);
+       		        image.setAttribute("height", height);
 
-                // Get the position and size of the chip rectangle
-                const x = chipElement.getAttribute("x");
-                const y = chipElement.getAttribute("y");
-                const width = chipElement.getAttribute("width");
-                const height = chipElement.getAttribute("height");
+	                // Store chip number
+			const globalChipNumber = numbOfFirstChip + chip;
+	                image.setAttribute("data-chip", globalChipNumber);
 
-                // Create an SVG image
-                const image = svgDoc.createElementNS(
-                    "http://www.w3.org/2000/svg",
-                    "image"
-                );
+	                // Load the binary mask
+	                loadMask(image, globalChipNumber);
 
-                image.setAttribute("x", x);
-                image.setAttribute("y", y);
-                image.setAttribute("width", width);
-                image.setAttribute("height", height);
-
-                // Store chip number
-                image.setAttribute("data-chip", chip);
-
-                // Load the binary mask
-                loadMask(image, chip);
-
-                // Put image on top of the rectangle
-                chipElement.parentNode.appendChild(image);
-            }
-        });
-    });
-});
+	                // Put image on top of the rectangle
+	                chipElement.parentNode.appendChild(image);
+	            }
+	        });
+	    });
+	});
 
 
-function loadMask(image, chip) {
+	function loadMask(image, chip) {
 
-    fetch(`userfiles/maskfiles/mask_${chip}.bin`)
-        .then(r => r.arrayBuffer())
-        .then(buffer => {
+	    fetch(`userfiles/maskfiles/mask_${chip}.bin`)
+	        .then(r => r.arrayBuffer())
+	        .then(buffer => {
 
-            const data = new Uint8Array(buffer);
+	            const data = new Uint8Array(buffer);
 
-            // Create temporary canvas for the 256 x 250 mask
-            const canvas = document.createElement("canvas");
-            canvas.width = 256;
-            canvas.height = 250;
+	            // Create temporary canvas for the 256 x 250 mask
+	            const canvas = document.createElement("canvas");
+	            canvas.width = 256;
+	            canvas.height = 250;
 
-            const ctx = canvas.getContext("2d");
-            const img = ctx.createImageData(256, 250);
+	            const ctx = canvas.getContext("2d");
+	            const img = ctx.createImageData(256, 250);
 
-            for (let y = 0; y < 256; y++) {
-                for (let x = 0; x < 256; x++) {
+	            for (let y = 0; y < 256; y++) {
+	                for (let x = 0; x < 256; x++) {
 
-                    const value = data[y * 256 + x] ? 0 : 255;
+	                    const value = data[y * 256 + x] ? 0 : 255;
 
-                    // Rotate 90° counter-clockwise
-                    const nx = y;
-                    const ny = 255 - x;
+	                    // Rotate 90° counter-clockwise
+	                    const nx = y;
+	                    const ny = 255 - x;
 
-                    // Remove the 6 non-existing rows
-                    if (ny < 6)
-                        continue;
+	                    // Remove the 6 non-existing rows
+	                    if (ny < 6)
+	                        continue;
 
-                    const newY = ny - 6;
+	                    const newY = ny - 6;
 
-                    const i = (newY * 256 + nx) * 4;
+	                    const i = (newY * 256 + nx) * 4;
 
-                    img.data[i]     = value;
-                    img.data[i + 1] = value;
-                    img.data[i + 2] = value;
-                    img.data[i + 3] = 255;
-                }
-            }
+	                    img.data[i]     = value;
+	                    img.data[i + 1] = value;
+	                    img.data[i + 2] = value;
+	                    img.data[i + 3] = 255;
+	                }
+	            }
 
-            ctx.putImageData(img, 0, 0);
+	            ctx.putImageData(img, 0, 0);
 
-            // Convert canvas to an image
-            image.setAttribute("href", canvas.toDataURL());
+	            // Convert canvas to an image
+	            image.setAttribute("href", canvas.toDataURL());
 
-        });
-}
+	        });
+	}
 
-fetch("userfiles/maskfiles/mask_2.bin")
-//fetch("/home/pinky/bt2026/musip/output/maskfiles_analyzer/mask_2_run_156.bin")
-    // Read the binary file
-    .then(r => r.arrayBuffer())
-    .then(buffer => {
-	console.log("testy");
-        // Interpret the file as an array of 8-bit integers.
-        // Each byte is one pixel: 0 or 1.
-        const data = new Uint8Array(buffer);
+	/*fetch("userfiles/maskfiles/mask_7.bin")
+	//fetch("/home/pinky/bt2026/musip/output/maskfiles_analyzer/mask_2_run_156.bin")
+	    // Read the binary file
+	    .then(r => r.arrayBuffer())
+	    .then(buffer => {
+		console.log("testy");
+	        // Interpret the file as an array of 8-bit integers.
+	        // Each byte is one pixel: 0 or 1.
+	        const data = new Uint8Array(buffer);
 
-        // Get the canvas
-        const canvas = document.getElementById("map");
-        const ctx = canvas.getContext("2d");
+	        // Get the canvas
+	        const canvas = document.getElementById("map");
+	        const ctx = canvas.getContext("2d");
 
-        // Create an empty 256 x 256 image.
-        // Each pixel has 4 values: R, G, B, Alpha.
-        const img = ctx.createImageData(256, 256);
+	        // Create an empty 256 x 256 image.
+	        // Each pixel has 4 values: R, G, B, Alpha.
+	        const img = ctx.createImageData(256, 256);
 
-        // Loop over all pixels in the binary file
-        for (let y = 0; y < 256; y++) {
-            for (let x = 0; x < 256; x++) {
+	        // Loop over all pixels in the binary file
+	        for (let y = 0; y < 256; y++) {
+	            for (let x = 0; x < 256; x++) {
 
-                // Convert (x, y) into the position in the 1D data array.
-                const value = data[y * 256 + x] ? 0 : 255;
+	                // Convert (x, y) into the position in the 1D data array.
+	                const value = data[y * 256 + x] ? 0 : 255;
 
-                // Rotate 90 degrees counter-clockwise.
-                // Equivalent to np.rot90(mask, k=1)
-                const nx = y;
-                const ny = 255 - x;
+	                // Rotate 90 degrees counter-clockwise.
+	                // Equivalent to np.rot90(mask, k=1)
+	                const nx = y;
+	                const ny = 255 - x;
 		
-		if (ny < 6) continue; // Remove the non existing top 6 rows (250x256)
-		const newY = ny - 6;
+			if (ny < 6) continue; // Remove the non existing top 6 rows (250x256)
+			const newY = ny - 6;
 
-                // Canvas has 4 values per pixel: R, G, B, Alpha.
-                const i = (ny * 256 + nx) * 4;
+	                // Canvas has 4 values per pixel: R, G, B, Alpha.
+	                const i = (ny * 256 + nx) * 4;
 
-                // Set the pixel to black or white
-                img.data[i]     = value; // Red
-                img.data[i + 1] = value; // Green
-                img.data[i + 2] = value; // Blue
-                img.data[i + 3] = 255;   // Alpha
-            }
-        }
+	                // Set the pixel to black or white
+	                img.data[i]     = value; // Red
+	                img.data[i + 1] = value; // Green
+	                img.data[i + 2] = value; // Blue
+	                img.data[i + 3] = 255;   // Alpha
+	            }
+	        }
 
-        // Display the image
-        ctx.putImageData(img, 0, 0);
-    });
+	        // Display the image
+	        ctx.putImageData(img, 0, 0);
+	    });*/
 
         // ------------------------------------------------------------------------------
         // SVG Page loader
@@ -832,7 +878,10 @@ fetch("userfiles/maskfiles/mask_2.bin")
 			    Unselect All!</button>
             </td>
 	</tr>
-
+	<tr>
+       	    <td>Last Action:</td>
+	    <td colspan="2" id="stringAction"></td>
+	</tr>
 	<tr>
 	    <td>Configure:</td>
 	    <td colspan="2" class="chip-action-cell">
@@ -899,11 +948,103 @@ fetch("userfiles/maskfiles/mask_2.bin")
         <tr>
             <td>Reset PLL:</td>
             <td colspan="2" class="chip-action-cell">
+               <div class="chip-action-sequence">
+
+                    <div>
+                        <button class= "mbutton"
+                                onclick="chipAction('disablePLL')">
+                            Disable PLL
+                        </button>
+                    </div>
+
+                    <span class="chip-action-arrow">→</span>
+
+                    <div>
+                        <button class="mbutton"
+                                onclick="chipAction('configure')">
+                            Configure
+                        </button>
+                    </div>
+
+                    <span class="chip-action-arrow">→</span>
+
+                    <div>
+                        <button class="mbutton"
+                                onclick="chipAction('enablePLL')">
+                            Enable PLL
+                        </button>
+                    </div>
+
+                    <span class="chip-action-arrow">→</span>
+
+                    <div>
+                        <button class="mbutton"
+                                onclick="chipAction('configure')">
+                            Configure
+                        </button>
+                    </div>
+		</div>
+	    </td>
 	</tr>
         <tr>
             <td>Reset BiasBlock:</td>
             <td colspan="2" class="chip-action-cell">
+               <div class="chip-action-sequence">
+
+                    <div>
+                        <button class= "mbutton"
+                                onclick="chipAction('biasBlockOff')">
+                            BiasBlock Off
+                        </button>
+                    </div>
+
+                    <span class="chip-action-arrow">→</span>
+
+                    <div>
+                        <button class="mbutton"
+                                onclick="chipAction('configure')">
+                            Configure
+                        </button>
+                    </div>
+
+                    <span class="chip-action-arrow">→</span>
+
+                    <div>
+                        <button class="mbutton"
+                                onclick="chipAction('biasBlockOn')">
+                            BiasBlock On
+                        </button>
+                    </div>
+
+                    <span class="chip-action-arrow">→</span>
+
+                    <div>
+                        <button class="mbutton"
+                                onclick="chipAction('configure')">
+                            Configure
+                        </button>
+                    </div>
+		</div>
+	    </td>
         </tr>
+        <tr>
+            <td>New global ThHigh:</td>
+            <td colspan="2" class="chip-action-cell">
+
+		<div>
+	            <input type="number" id="newThHigh" value="125">
+                    <button class="mbutton"
+                            onclick="chipAction('setThreshold')">
+                        Set Threshold
+                    </button>
+                    <button class="mbutton"
+                            onclick="chipAction('nomThreshold')">
+                        Back to previous Threshold
+		    </button>
+                </div>
+	    </td>
+	</tr>
+
 
     </table>
 
@@ -919,23 +1060,24 @@ fetch("userfiles/maskfiles/mask_2.bin")
             <div style="position:relative;width:100%;margin_auto">
                 <div style="display:flex;justify-content:center;">
                 <!-- Layer 0 -->
-		<div id="quad0_container" style="position:relative; width:250px;">
+		<div id="quad0_container" style="position:relative; width:400px;">
                     <object id="quad0_mask" type="image/svg+xml" class="svgObjectMask"
-                            data="Quads/Quad_sketch.svg" style="width:250px;">
+                            data="Quads/Quad_sketch.svg" style="width:400px;">
 	            </object>
                 </div>
                 <!-- Gap between Layers -->
                 <div style="width:20px;"></div>
                 <!-- Layer 1 -->
                 <object id="quad1_mask" type="image/svg+xml" class="svgObjectMask"
-                        data="Quads/Quad_sketch.svg" style="width:250px;"></object>
+                        data="Quads/Quad_sketch.svg" style="width:400px;"></object>
             </div>
             </td>
         </tr>
     </table>
 
-    <canvas id="map" width="256" height="250"></canvas>
+    <!--<canvas id="map" width="256" height="250"></canvas>-->
 
+<button type="button" onclick="runTest()">Run test.py</button>
     </div>
 </div>
 
@@ -943,6 +1085,11 @@ fetch("userfiles/maskfiles/mask_2.bin")
 <!-- Tooltip container -->
 <div id="htmlTooltip"></div>
 <script>
+
+    function runTest() {
+        mhttpd_exec_script("/CustomScript/Test");
+    }
+
     const htmlTooltip = document.getElementById("htmlTooltip");
 
     function showHtmlTooltip(event, text) {
