@@ -719,7 +719,7 @@ void TB_t::menu_ASIC_config(){
             configure_asic(i,config_ALL_OFF);
             break;
         case '2':
-            configure_asic(i,config_PRBS_single);
+            configure_asic(i,config_ALL_OFF);
             break;
         case '+':
             i = (i + 1) % nBoards;

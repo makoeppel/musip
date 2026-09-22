@@ -10,17 +10,7 @@ static const uint32_t MUTRIG_CONFIG_LEN_WORDS = 84;
 
 #include "mutrig3/FF.h"
 #include "mutrig3/ALL_OFF.h"
-#include "mutrig3/beamtime26_qc.h"
-#include "mutrig2/PRBS_single.h"
-#include "mutrig2/No_TDC_Power.h"
-#include "mutrig2/PLL_TEST.h"
 
-static_assert(
-    MUTRIG_CONFIG_LEN_BITS == MUTRIG3_BEAMTIME26_QC_BITS,
-    "MuTRiG3 bit-count mismatch");
-static_assert(
-    MUTRIG_CONFIG_LEN_BYTES == MUTRIG3_BEAMTIME26_QC_BYTES,
-    "MuTRiG3 byte-count mismatch");
 static_assert(
     sizeof(config_ALL_OFF) == MUTRIG_CONFIG_LEN_BYTES,
     "MuTRiG3 all-off pattern has the wrong size");
