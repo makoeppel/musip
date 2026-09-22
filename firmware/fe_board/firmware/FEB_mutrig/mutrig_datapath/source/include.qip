@@ -1,0 +1,10 @@
+#
+#KB: TODO: Move to other directory?
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "ch_rate.vhd"]
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "asic_rate.vhd"]
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "pll_test.vhd"]
+
+#KB: Include this in the separate projects
+#set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "tile_datapath.vhd"]
+#set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "scifi_datapath.vhd"]
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "counter_ram.vhd"]
