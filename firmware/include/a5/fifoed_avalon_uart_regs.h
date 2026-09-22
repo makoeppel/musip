@@ -1,0 +1,1 @@
+../../ext_ip/fifoed_avalon_uart/inc/fifoed_avalon_uart_regs.h
