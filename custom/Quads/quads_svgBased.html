@@ -372,53 +372,55 @@
 	}
 
 	// Testing ground for masking maps
-	// TODO: Missing: Differentiate between quads 
 	document.addEventListener("DOMContentLoaded", function () {
 
     	    const svgObjects = document.querySelectorAll(".svgObjectMask");
-	    const nQuads = svgObjects.length;
 	    svgObjects.forEach(function (obj, index) {
-		const numbOfFirstChip = index * 4;
-	        obj.addEventListener("load", function () {
-	            const svgDoc = obj.contentDocument;
-
-	            for (let chip = 0; chip < 4; chip++) {
-
-	                const chipElement = svgDoc.getElementById(`chip${chip}`);
-
-	                if (!chipElement)
-	                    continue;
-
-	                // Get the position and size of the chip rectangle
-	                const x = chipElement.getAttribute("x");
-	                const y = chipElement.getAttribute("y");
-	                const width = chipElement.getAttribute("width");
-	                const height = chipElement.getAttribute("height");
-
-	                // Create an SVG image
-	                const image = svgDoc.createElementNS(
-	                    "http://www.w3.org/2000/svg",
-	                    "image"
-	                );
-
-                	image.setAttribute("x", x);
-        	        image.setAttribute("y", y);
-	                image.setAttribute("width", width);
-       		        image.setAttribute("height", height);
-
-	                // Store chip number
-			const globalChipNumber = numbOfFirstChip + chip;
-	                image.setAttribute("data-chip", globalChipNumber);
-
-	                // Load the binary mask
-	                loadMask(image, globalChipNumber);
-
-	                // Put image on top of the rectangle
-	                chipElement.parentNode.appendChild(image);
-	            }
-	        });
+		obj.addEventListener("load", function() {
+		    setupMask(obj, index);
+		});
 	    });
 	});
+
+	function setupMask(obj, index) {
+	    const svgDoc = obj.contentDocument;
+	    const numbOfFirstChip = index * 4;
+
+	    for (let chip = 0; chip < 4; chip++) {
+
+	        const chipElement = svgDoc.getElementById(`chip${chip}`);
+
+	        if (!chipElement)
+	            continue;
+
+	        // Get the position and size of the chip rectangle
+	        const x = chipElement.getAttribute("x");
+	        const y = chipElement.getAttribute("y");
+	        const width = chipElement.getAttribute("width");
+	        const height = chipElement.getAttribute("height");
+
+	        // Create an SVG image
+	        const image = svgDoc.createElementNS(
+	            "http://www.w3.org/2000/svg",
+	            "image"
+	        );
+
+              	image.setAttribute("x", x);
+       		image.setAttribute("y", y);
+	        image.setAttribute("width", width);
+     		image.setAttribute("height", height);
+
+	        // Store chip number
+	    	const globalChipNumber = numbOfFirstChip + chip;
+		image.setAttribute("data-chip", globalChipNumber);
+
+	        // Load the binary mask
+	        loadMask(image, globalChipNumber);
+
+		// Put image on top of the rectangle
+	        chipElement.parentNode.appendChild(image);
+	    }
+	}
 
 
 	function loadMask(image, chip) {
@@ -449,8 +451,13 @@
 	                    const value = data[y * 256 + x] ? 0 : 255;
 
 	                    // Rotate 90° counter-clockwise
-	                    const nx = y;
-	                    const ny = 255 - x;
+	                    let nx = y;
+	                    let ny = 255 - x;
+
+   			    if (chip === 0 || chip === 1 || chip === 4 || chip === 5) {
+			        nx = 255 - y;
+				ny = x;
+			    } //TODO: the 6 row shift below is not correct yet for chips 0,1,4,5
 
 	                    // Remove the 6 non-existing rows
 	                    if (ny < 6)
@@ -476,63 +483,22 @@
 	    });
 	}
 
-	/*fetch("userfiles/maskfiles/mask_7.bin")
-	//fetch("/home/pinky/bt2026/musip/output/maskfiles_analyzer/mask_2_run_156.bin")
-	    // Read the binary file
-	    .then(r => r.arrayBuffer())
-	    .then(buffer => {
-		console.log("testy");
-	        // Interpret the file as an array of 8-bit integers.
-	        // Each byte is one pixel: 0 or 1.
-	        const data = new Uint8Array(buffer);
-
-	        // Get the canvas
-	        const canvas = document.getElementById("map");
-	        const ctx = canvas.getContext("2d");
-
-	        // Create an empty 256 x 256 image.
-	        // Each pixel has 4 values: R, G, B, Alpha.
-	        const img = ctx.createImageData(256, 256);
-
-	        // Loop over all pixels in the binary file
-	        for (let y = 0; y < 256; y++) {
-	            for (let x = 0; x < 256; x++) {
-
-	                // Convert (x, y) into the position in the 1D data array.
-	                const value = data[y * 256 + x] ? 0 : 255;
-
-	                // Rotate 90 degrees counter-clockwise.
-	                // Equivalent to np.rot90(mask, k=1)
-	                const nx = y;
-	                const ny = 255 - x;
-		
-			if (ny < 6) continue; // Remove the non existing top 6 rows (250x256)
-			const newY = ny - 6;
-
-	                // Canvas has 4 values per pixel: R, G, B, Alpha.
-	                const i = (ny * 256 + nx) * 4;
-
-	                // Set the pixel to black or white
-	                img.data[i]     = value; // Red
-	                img.data[i + 1] = value; // Green
-	                img.data[i + 2] = value; // Blue
-	                img.data[i + 3] = 255;   // Alpha
-	            }
-	        }
-
-	        // Display the image
-	        ctx.putImageData(img, 0, 0);
-	    });*/
-
+	// PySenquencer is used here to copy/generate mask files
 	async function pysequencerAction(command) {
 	    const pySeqPath = "/PySequencer/State/Filename";
 	    const pySeqStart = "/PySequencer/Command/Start script";
 	    const pySeqLoad = "/PySequencer/Command/Load new file";
 	
+	    const runNumber = document.getElementById("runNumberForMasking").value; 
+
+	    const flag_merge = document.getElementById("runMaskMerge").checked ? 1 : 0;
+
 	    const pySeqParamPaths = [
                 "/PySequencer/Param/Value/source",
 	        "/PySequencer/Param/Value/destination",
-        	"/PySequencer/Param/Value/action"
+        	"/PySequencer/Param/Value/action",
+		"/PySequencer/Param/Value/runNumber",
+		"/PySequencer/Param/Value/flag_merge"
     	    ];
 
             const params = {
@@ -545,11 +511,16 @@
                     "/home/pinky/online/userfiles/maskfiles/empty_masks",
                     "/home/pinky/online/userfiles/maskfiles/",
                     "mask copy"
-
+		],
+		SelRunMask: [
+		    "/home/pinky/bt2026/musip/output/maskfiles_analyzer",
+		    "/home/pinky/online/userfiles/maskfiles/",
+		    "mask run"
 		]
             };
 
-            const tmp_params = params[command];	
+	    console.log("Run number for masking: " + runNumber + ", merge flag: " + flag_merge);
+	    const tmp_params = [...params[command], runNumber, flag_merge];	
 
 	    // 1. Set the script filename
 	    await mjsonrpc_db_paste(
@@ -573,6 +544,33 @@
 		[pySeqStart],
 		[true]
 	    );
+	    
+            await waitForPySequencerFinished();
+
+	    console.log("point1");
+	    if (command === "SelEdgeMask"  || command === "SelEmptyMask" || command === "SelRunMask" ) {
+		console.log("Point2");
+	        const svgObjects = document.querySelectorAll(".svgObjectMask");
+                svgObjects.forEach(function (obj, index) {
+                    setupMask(obj, index);
+                });
+	    }
+	}
+
+	// Helper Function to tell me that PySenquer was executed:
+	async function waitForPySequencerFinished() {
+	    while (true) {
+	        const rpc = await mjsonrpc_db_get_value(
+	            "/PySequencer/State/Finished"
+	        );
+
+	        const finished = rpc.result.data[0];
+
+	        if (finished === true || finished === 1)
+	            return;
+
+	        await new Promise(resolve => setTimeout(resolve, 1000));
+	    }
 	}
 
         // ------------------------------------------------------------------------------
@@ -957,6 +955,15 @@
 	    <td colspan="2" class="chip-action-cell">
 	        <div class="chip-action-sequence">
 
+		    <div>
+                        <button class="mbutton"
+                                onclick="chipAction('highThreshold')">
+                            High Threshold
+                        </button>
+                    </div>
+
+                    <span class="chip-action-arrow">→</span>
+
 	            <div>
 	                <button class= "mbutton"
 	                        onclick="chipAction('configure')">
@@ -964,15 +971,6 @@
 	                </button>
 	            </div>
   
-		    <span class="chip-action-arrow">→</span>
-
-            	    <div>
-	                <button class="mbutton"
-	                        onclick="chipAction('highThreshold')">
-	                    High Threshold
-	                </button>
-	            </div>
-
                     <span class="chip-action-arrow">→</span>
 
 	            <div>
@@ -1136,7 +1134,7 @@
 	    <td>
                 <button class="mbutton"
                         onclick="pysequencerAction('SelEdgeMask')">
-                    Run Pysequencer
+                    Run Pysequencer (Edge Masks)
                 </button>
 	    </td>
 	</tr>
@@ -1145,15 +1143,23 @@
             <td>
                 <button class="mbutton"
                         onclick="pysequencerAction('SelEmptyMask')">
-                    Run Pysequencer
+                    Run Pysequencer (Empty Masks)
                 </button>
+            </td>
+        </tr>
+        <tr>
+            <td>Select run-based masks:</td>
+            <td>
+                <button class="mbutton"
+                        onclick="pysequencerAction('SelRunMask')">
+                    Run Pysequencer (Run Masks)
+                </button>
+		<input type="number" id="runNumberForMasking" value="0">
+		<input type="checkbox" id="runMaskMerge"> Merge with existing mask</input>
             </td>
         </tr>
     </table>
 
-    <!--<canvas id="map" width="256" height="250"></canvas>-->
-
-<button type="button" onclick="runTest()">Run test.py</button>
     </div>
 </div>
 
