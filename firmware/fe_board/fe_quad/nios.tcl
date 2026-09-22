@@ -1,0 +1,1 @@
+../fe_mupix/nios.tcl

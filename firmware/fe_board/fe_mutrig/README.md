@@ -1,0 +1,1 @@
+make QSYS_SEARCH_PATH=ip/fifoed_avalon_uart/

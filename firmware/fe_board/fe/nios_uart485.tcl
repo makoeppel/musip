@@ -1,0 +1,11 @@
+add_instance uart485_0 fifoed_avalon_uart
+nios_base.connect uart485_0 s1_clock s1_clock_reset s1 0x70040000
+set_instance_parameter_value uart485_0 baud 115200
+set_instance_parameter_value uart485_0 data_bits 8
+set_instance_parameter_value uart485_0 trans_pin true
+set_instance_parameter_value uart485_0 use_cts_rts true
+nios_base.connect_irq uart485_0.s1_irq 6
+add_interface uart485_0 conduit end
+set_interface_property uart485_0 EXPORT_OF uart485_0.g1
+
+

@@ -1,0 +1,27 @@
+#
+
+# 'factory' FE assignments
+set_global_assignment -name SOURCE_TCL_SCRIPT_FILE [file join $::quartus(qip_path) "assignments/FE_A5.tcl"]
+set_global_assignment -name SDC_FILE [file join $::quartus(qip_path) "top_FEB_v2.sdc"]
+
+set_global_assignment -name QIP_FILE [file join $::quartus(qip_path) "util/include.qip"]
+
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "s4/ip_altpll.vhd"]
+
+set_global_assignment -name QIP_FILE [file join $::quartus(qip_path) "a5/include.qip"]
+set_global_assignment -name QIP_FILE [file join $::quartus(qip_path) "registers/include.qip"]
+
+#set_global_assignment -name QIP_FILE [file join $::quartus(qip_path) "s4/xcvr.qip"]
+
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "sc_rx.vhd"]
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "sc_ram.vhd"]
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "sc_node.vhd"]
+
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "fe_block_v2.vhd"]
+
+set_global_assignment -name QIP_FILE [file join $::quartus(qip_path) "../firmware/FEB_common/include.qip"]
+
+# TODO: this is needed for the sorter we can remove it when we have a common rec
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "../firmware/FEB_mutrig/mutrig_types.vhd"]
+
+set_global_assignment -name QIP_FILE [file join $::quartus(qip_path) "../../common/firmware/a10/link/include.qip"]

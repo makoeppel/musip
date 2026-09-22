@@ -1,0 +1,16 @@
+foreach path [ glob -directory $::quartus(qip_path) {*}"
+    ../fe/top_FEB_v2.qip
+    ../fe/assignments/FE_v2_mutrig_tele_x4.tcl
+    ../firmware/FEB_mutrig/include.qip
+    tile_datapath.vhd
+    tile_path.vhd
+    top.vhd top.sdc
+" ] {
+    set_global_assignment -name [ dict get {
+        .qip QIP_FILE .sdc SDC_FILE .tcl SOURCE_TCL_SCRIPT_FILE .vhd VHDL_FILE
+    } [ file extension $path ] ] $path
+}
+
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "../fe/fe_block_v2.vhd"]  -disable
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "../fe/fe_block_v2-rs485.vhd"]
+
