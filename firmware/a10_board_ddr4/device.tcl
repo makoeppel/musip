@@ -1,0 +1,1 @@
+../a10_board/device.tcl
