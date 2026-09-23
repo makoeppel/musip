@@ -1,0 +1,178 @@
+
+Command Format
+
+Commands must be sent as specified in the commands list and must be terminated with the command terminator code 0AH (Line Feed, LF) except for commands over the TCP socket where the terminator is allowed but not required. Commands may be sent in groups with individual commands separated from each other by the code 3BH (;). The group must be terminated with command terminator 0AH (Line Feed, LF).
+
+Responses from the instrument to the controller are sent as specified in the commands list. Each response is terminated by a <RESPONSE MESSAGE TERMINATOR> which is 0DH (Carriage Return, CR) followed by 0AH (Line Feed, LF).
+
+<WHITE SPACE> is defined as character codes 00H to 20H and is ignored except in command identifiers. e.g. '*C LS' is not equivalent to '*CLS'.
+
+The high bit of all characters is ignored.  The commands are case insensitive
+Error and Status Reporting
+
+A separate error and status model is maintained for each interface instance; an interface instance is defined as a potential connection. USB, RS232 and GPIB are inherently single connections so represent one interface instance each.  LAN, however, allows for multiple simultaneous connections so represents multiple interface instances.  Two interface instances are allocated to the two TCP socket interfaces and one more is allocated to the Web page interface.  Having a separate model for each interface instance ensures that data does not get lost as many commands e.g. '*ESR?' clear the contents on read.
+
+Error status is maintained using a set of registers as shown below.
+
+ 
+
+ 
+Event Status Register "ESR" and Event Status Enable Register "ESE"
+
+The Event Status Register is read and cleared by the '*ESR?' command.
+
+It is a bit field where each bit has the following significance.
+bit 7  	Power On. Set when power is first applied to the instrument. 
+bit 6  	Not used. 
+bit 5  	Command Error. Set when a syntax type error is detected in a command from the bus. The parser is reset and parsing continues at the next byte in the input stream 
+bit 4  	Execution Error. Set when an error is encountered while attempting to execute a completely parsed command. The appropriate error number will be reported in the Execution Error Register, see Error Messages section 
+bit 3  	Verify Timeout Error.  Set when a parameter is set with 'verify' specified and the value is not reached within 5 seconds, e.g. output voltage is slowed by a large capacitor on the output. 
+bit 2  	Query Error. This bit is set when a query error occors over GPIB. Query Errors are not possible on the other interfaces. When this happerns the approprate error number will be reported in the Query Error Register as listed below.
+1.  Interrupted error.
+2.  Deadlock error.
+3.  Unterminated error.
+bit 1  	Not used. 
+bit 0  	Operation Complete:  Set in response to the '*OPC' command. 
+
+Limit Event Status Registers 'LSR<n>?' and Limit Event Enable Status 'LSE<n>'
+
+For single output power supplies there is one Limit Event Status Register; for dual power supplies there are two.  These are read and cleared using 'LSR1?' and 'LSR2' respectively.  On power up these registers are set to 0 then immediately set to show new limit status.
+Limit Event Status Register 1
+bit 7 	Not used
+bit 6 	Not used
+bit 5 	Set when output 1 sense trip has occured
+bit 4 	Set when output 1 thermal trip has occured
+bit 3 	Set when output 1 over current trip has occured
+bit 2 	Set when output 1 over voltage trip has occured
+bit 1 	Set when output 1 enters current limit (CI mode) 
+bit 0 	Set when output 1 enters voltage limit (CV mode)
+
+Limit Event Status Register 2
+bit 7 	Set when AUX output trip has occured
+bit 6 	Set when AUX output enters current limit
+bit 5 	Set when output 2 sense trip has occured
+bit 4 	Set when output 2 thermal trip has occured
+bit 3 	Set when output 2 over current trip has occured
+bit 2 	Set when output 2 over voltage trip has occured
+bit 1 	Set when output 2 enters current limit (CI mode) 
+bit 0 	Set when output 2 enters voltage limit (CV mode)
+
+Execution Error Register 'EER?'
+
+This register contains a number representing the last error encountered over the current interface.  The Execution Error register is read and cleared using the 'EER?' command.  On power up this register is set to 0 for all interface instances.
+
+Error messages defined to date are. 
+0  	No error encountered
+1 - 99  	Internal hardware error detected.
+116  	A recall of set up data has been requested but the store specified does not contain any data
+117  	A recall of set up data has been requested but the store specified contains corrupted data.  This indicates either a hardware fault or a temporary data corruption, which can be corrected by writing data to the store again.
+120  	The numerical value sent with the command was too big or too small. Includes negative numbers where only positive numbers are accepted.
+123  	A recall/store of set up data has been requested from/to an illegal store number.
+124  	A range change has been requested but the current psu settings make it illegal - see manual operation instruction for details.
+200 	Read Only: An attempt has been made to change the settings of the unit from an instrument without write privileges. See 'Interface locking' below for detail.
+
+Parallel Poll Enable Register '*PRE, *PRE?'
+
+This register is of limited use when the interface being used is not GPIB.
+
+This register controls which bits of the Status byte register form the ist local message: If the result of bitwise ANDing The Status Bye Register with this register is zero then the value of ist is 0 otherwise it is 1.
+Interface Locking
+
+All interfaces are live at all times; this removes the need to select the active interface and is also a LXI requirement.  To reduce the risk of the instrument being inadvertently under the control of two interfaces at once a simple lock and release mechanism is provided in the instruction set.  The lock is automatically released where it is possible to detect disconnection and when the local button is pressed.  Access to the interfaces may also be limited using the web page.
+
+Any interface may request to have exclusive control of the interface by sending a 'IFLOCK' command. The lock may only be released by the interface instance that has the lock by sending an 'IFUNLOCK' command and may be queried by sending a 'IFLOCK?' command.  The reply for any of these commands will be '-1' if the lock is owned by another interface instance, '0' if the interface is free and '1' if the lock is owned by the requesting interface instance.  Sending any command that changes the instrument status will set bits 4 and 6 of the Event Status Register and put 200 into the Execution Error Register to indicate that you do not have sufficient privileges for the required action.
+
+Note: it is also possible to configure the maximum privileges for a particular interface to either 'read only' or 'no access' from the Web page interface. 
+Commands
+Nomenclature
+
+This section lists commands and queries implemented in this instrument. The commands are listed in alphabetical order within the function groups.
+
+There are no dependent parameters, coupled parameters, overlapping commands, expression program data elements or compound command program headers; each command is completely executed before the next command is started.
+
+All commands that send a reply are terminated with the remote message terminator (ASCII 0DH, 0AH carriage return, line feed).
+<nrf>  	A number in any format e.g. 12, 12.00, 1.2e1 and 120e-1 are all accepted as the number 12. Any number, when received, is converted to the required precision consistent with the use then rounded to obtain the value of the command.
+<nr1> 	A number with no fractional parts.
+<nr2> 	A number with fixed point format.
+
+The Commands
+Common System and Status Commands
+*CLS 	Clear Status. 
+*ESE <nrf> 	Set Event Status Enable Register
+*ESE? 	Report value of Event Status Enable Register
+*ESR? 	Query and clear the Event Status Register. The response format is <nr1>.
+See 'Error and Status reporting' for details of the response.
+*IDN? 	Returns the instrument identification. The exact response is determined by the instrument configuration and is of the form:
+<NAME>,<model>, <serial no.>, <version>
+where <NAME> is the manufacturer's name, <model> defines the type of instrument, <serial> is the unit serial number and <version> is the revision level of the software installed.
+*IST? 	Returns the ist Local message as defined by IEE488.2.
+The response is 0 if the local message is false, 1 if the local message is true.  Note: This command is of limited use if the interface is not GPIB.
+*OPC 	Sets the OPC bit (bit 0) in the Event Status Register
+*OPC? 	Query operation complete. Always returns 1 because all commands are sequential.
+*RST 	Resets the instrument to the remote operation default settings with the exception of remote interface settings, stored set-ups , Vmin/Vmax values and DC state at power-on setting. Default settings are:
+0.1V,100mA, DeltaV=10mV, DeltaI=1mA, Vmin=3V, Vmax=5V, output(s) off, Lock cancelled, V-Span cancelled, 500mA Range cancelled, Meter Average cancelled, OVP & OCP at instrument maximum.Mode and Sense settings are as determined by the front panel switches.
+*SRE <nrf> 	Sets Service Request Enable Register
+*SRE? 	Report the value in the Service Request Enable Register
+*STB? 	Report the Value in the Status Byte
+*PRE <nrf> 	Set the Parallel Poll Enable register.
+*PRE? 	Report the value in in the Parallel Poll Enable register.
+*TRG 	There is no trigger capability. This command is accepted but performs no action (ignored).
+*TST? 	Self test. There is no self-test capability so the response is always "0".
+*WAI 	Wait for Operation Complete True. Because all operations are sequential this command does nothing.
+EER? 	Query and clear the Execution Error Register. The response format is <nr1>.
+See 'Error and Status reporting' for details of the response
+IFLOCK 	Request interface 'lock'. This requests exclusive access control of the instrument. The response is "1" if successful or "-1" if the lock is unavailable either because it is already in use or the user has disabled this interface from taking control using the web interface.
+IFLOCK? 	Query the status of the interface 'lock'. The return value is "1" if the lock is owned by the requesting interfaced instance; "0" if there is no active lock or "-1" if the lock is unavailable either because it is already in use or the user has disabled this interface from taking control using the web interface.
+IFUNLOCK 	Release the 'lock' if possible. This command returns the value "0" if successful. If this command is unsuccessful "-1" is returned, 200 is placed in the Execution Register and bit 4 of the Event Status Register is set indicating that you do not have the authority to release the 'lock'.
+LOCAL 	Go to Local. This does not release any active interface lock so that it remains with the selected interface when the next remote command is received. Going to Local with this command, or the front panel Local key, will keep the V/I settings at their last remotely set values, with Lock Settings on, and will leave the output(s) in their present state.
+LSE<n> <nrf> 	Set the value of the Limit Status Enable Register <n>.
+LSE<n>? 	Report value of limit Status Enable Register <n>.
+LSR<n>? 	Query and clear the Limit Event Status Register <n>. The response format is <nr1>. See 'Error and Status reporting' for details of the response
+QER? 	Query and Clear the Query Error Register. The response is <nr1>
+Note: This command has no meaning if theinterface is anything other than GPIB. If the interface is not GPIB the result is allways 0.
+TRIPRST 	Attempts to clear any trip conditions.
+Instrument Specific Commands
+ADDRESS? 	Returns the bus address; this is the address used by GPIB, if fitted, or may be used as a general identifier over the other interfaces. The syntax of the response is <nr1>.
+MODE 	Set the instrument operating mode to LINK or assign control to output 1 or 2 where has the following meaning. 0 = linked, 1 = assign control to output 1, 2 = assing control to output 2. Setting linked mode uniquely affects the way the instrument responds to some remote commands. Assigning control to outputs 1 or 2 exits linked mode but has no other effect until the instrument is returned to local operation. Any operating mode set in remote operation will be retained when the instrument is returned to local operation.
+MODE? 	Report the current operating mode. The resposnse is is LINKED or CTRL<n>.
+DECI<n> 	Decrement output <n> current limit by step size.
+DECV<n> 	Decrement output <n> voltage by step size.
+DECV<n>V 	Decrement output <n> voltage by step size and verify.
+DELTAI<n> <nrf> 	Set the output <n> current step size to <nrf> amps.
+DELTAI<n>? 	Return the output <n> current step size. Response is DELTAI<n> <nr2>, where <nr2> is in amps.
+DELTAV<n> <nrf> 	Set the output <n> voltage step size to <nrf> volts.
+DELTAV<n>? 	Return the output <n> voltage step size. Response is DELTAV<n> <nr2>, where <nr2> is in volts.
+I<n> <nrf> 	Set the output <n> current limit to <nrf>.
+I<n>? 	Return the set current of output <n>. Response is I<n> <nr2>, where <nr2> is in amps.
+I<n>O? 	Return output <n> measured current. Response is <nr2>, where <nr2> is in amps.
+INCI<n> 	Increment output <n> current limit by step size.
+INCV<n> 	Increment output <n> voltage by step size.
+INCV<n>V 	Increment output <n> voltage by step size and verify.
+RANGE<n> <nrf> 	Set the voltage range to <nrf>. Where <nrf> has the following meaning:
+QL355P: 0=15V(5A), 1=35V(3A), 2=35V(500mA)
+QL564P: 0=25V(4A), 1=56V(2A), 2=56V(500mA)
+RANGE<n>? 	Return the set voltage range. Result is <nr1>. Where <nr1> has the following meaning:
+QL355P: 0=15V(5A), 1=35V(3A), 2=35V(500mA)
+QL564P: 0=25V(4A), 1=56V(2A), 2=56V(500mA)
+OCP<n> <nrf> 	Set output <n> over current protection trip point to <nrf> Amps
+OCP<n>? 	Return the current trip setting for output <n>.  Response is IP<n> <nr2> where <nr2> is in Amps
+OP<n> <nrf> 	Set output <n> on or off, where <nrf> has the following meaning:
+1 = ON, 0 = OFF
+OP<n>? 	Returns output <n> on or off status. Response <nr1> has the following meaning: 1 = ON, 0 = OFF
+OPALL <nrf> 	Set all outputs on or off, where <nrf> has the following meaning:
+1 = ON, 0 = OFF
+OVP<n> <nrf> 	Set output <n> over voltage protection trip point to <nrf> Volts
+OVP<n>? 	Return the voltage trip setting for output <n>.  Response is VP<n> <nr2> where <nr2> is in Volts
+RCL<n> <nrf> 	Recall a set up for PSU<n> from the set up store specified by <nrf> where <nrf> can be 0-49 for the main outputs (1 and 2) or 0-9 for the 3rd AUX output.
+If the instrument is operating in linked mode then the set up for both main outputs will be recalled from the linked mode set up store specified by <nrf>. The <n> specification is ignored.
+The 3rd AUX output is not recalled if the instrument is operating in linked mode.
+SAV<n> <nrf> 	Save the current set up of PSU<n> to the set up store specified by <nrf> where <nrf> can be 0-49 for the main outputs (1 and 2) or 0-9 for the 3rd AUX output.
+If the instrument is operating in linked mode then set up for both main outputs will be saved in the linked mode set up store specified by <nrf>. The <n> specification is ignored This has no effect on the individual PSU<n> set up stores available when not in linked mode.
+The AUX outputs settings are not stored in linked mode.
+SENSE<n> <nrf> 	Set the output <n> sense mode where <nrf> has the following meaning:
+0=local, 1=remote.
+V<n> <nrf> 	Set output <n> to <nrf> volts.
+V<n>? 	Return the set voltage of output <n>. Response is V<n> <nr2>, where <nr2> is in volts.
+V<n>O? 	Return output <n> measured voltage. Response is <nr2>V, where <nr2> is in volts.
+V<n>V <nrf> 	Set output <n> to <nrf> volts, with verify.
+
