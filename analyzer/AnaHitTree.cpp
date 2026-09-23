@@ -88,14 +88,13 @@ TAFlowEvent* AnaHitTree::AnalyzeFlowEvent(TARunInfo*, TAFlags* flags, TAFlowEven
             pixel_row_.push_back(spHit.row());
             pixel_tot_.push_back(spHit.tot());
             pixel_time_.push_back(spHit.time()*8); //convert to nano seconds
-            pixel_timestamp_.push_back(spHit.timestamp());
         }
-        if(write_mutrighits_ && currentHit.is_mutrig()) {
-            auto spHit = currentHit.as_mutrig();
-            mutrig_channel_.push_back(spHit.channel());
-            mutrig_tot_.push_back(spHit.tot());
-            mutrig_time_.push_back(spHit.time());
-            mutrig_timestamp_.push_back(spHit.timestamp());
+        if(write_triggerhits_ && currentHit.is_trigger()) {
+            auto spHit = currentHit.as_trigger();
+            trigger_channel_.push_back(spHit.channel());
+            trigger_tot_.push_back(spHit.tot());
+            trigger_time_.push_back(spHit.time());
+            trigger_timestamp_.push_back(spHit.time_1ns());
         }
     }
 
