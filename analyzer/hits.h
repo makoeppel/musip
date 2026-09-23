@@ -20,7 +20,8 @@ struct pixelhit {
     [[nodiscard]] uint8_t ts_low() const { return (hitdata >> 11) & 0x1F; }
     [[nodiscard]] uint8_t subheader_time() const { return (hitdata >> 4) & 0x7F; }
     [[nodiscard]] uint8_t ts_sorterhit() const { return hitdata & 0xF; }
-    [[nodiscard]] uint64_t time() const { return hitdata & 0x1FFFFFFFFFULL; }
+    [[nodiscard]] uint64_t time8ns() const { return (hitdata & 0x1FFFFFFFFFULL); }
+    [[nodiscard]] uint64_t time() const { return time8ns() * 8; }
 
     void Print() const {
         std::printf(

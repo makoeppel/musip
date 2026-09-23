@@ -34,6 +34,8 @@ void AnaTriggerHistos::BeginRun(TARunInfo* runinfo) {
     /////////  1D histos  ///////////
     h_channel = pPlotCollection_->getOrCreateHistogram1DD("ChannelID", n_CHANNELS, -0.5, n_CHANNELS - 0.5, error);
     h_nHits = pPlotCollection_->getOrCreateHistogram1DD("nHits", 201, -0.5, 200.5, error);
+    h_phaserf = pPlotCollection_->getOrCreateHistogram1DD("h_phaserf", 201, -0.5, 200.5, error);
+    h_periodrf = pPlotCollection_->getOrCreateHistogram1DD("h_periodrf", 201, -0.5, 200.5, error);
 
     for (int ch = 0; ch < n_CHANNELS; ch++) {
         printf("Creating ToT histogram for channel %d\n", ch);
@@ -53,6 +55,7 @@ void AnaTriggerHistos::BeginRun(TARunInfo* runinfo) {
     }
 
     /////////  2D histos  ///////////
+    h_tof_rf = pPlotCollection_->getOrCreateHistogram2DI("ToF_ToT", 128, 0, 128, 32, 0, 32, error);
     h_channel_tot = pPlotCollection_->getOrCreateHistogram2DI("Channel_ToT", n_CHANNELS, -0.5, n_CHANNELS - 0.5, 256, 0, 256, error);
     h_channel_8ns = pPlotCollection_->getOrCreateHistogram2DI("Channel_8ns", n_CHANNELS, -0.5, n_CHANNELS - 0.5, 2048, 0, 0xFFFFFFF, error);
     h_channel_1ns = pPlotCollection_->getOrCreateHistogram2DI("Channel_1ns", n_CHANNELS, -0.5, n_CHANNELS - 0.5, 2048, 0, 0xFFFFF, error);
@@ -80,9 +83,46 @@ TAFlowEvent* AnaTriggerHistos::AnalyzeFlowEvent(TARunInfo*, TAFlags* flags, TAFl
     //fill event-based observables
     h_nHits->Fill(triggerhits.size());
 
+    std::sort(triggerhits.begin(), triggerhits.end(),
+        [](const auto& a, const auto& b) {
+            return a.time() < b.time();
+        });
+
     //loop over hits
     for(auto& hit : triggerhits) {
         auto last_hit = last_hits[hit.channel()];
+
+        if (hit.channel() == 1) {
+            saw_s1 = 1;
+            last_s1 = hit;
+        }
+
+        // logic for RF
+        if (saw_s1 == 1 && hit.channel() == 6) {
+            cur_rf_hits.push_back(hit.time_1ns());
+            int diff = (int) last_time_rf - (int) hit.time_1ns();
+            // we had a 3 puls event before start again and wait for the next s1
+            if (std::abs(diff) > 200 && last_time_rf != 0) {
+                saw_s1 = 0;
+                cur_rf_hits.clear();
+                last_time_rf = 0;
+            } else {
+                last_time_rf = hit.time_1ns();
+            }
+            // we only look at the 4 pulses for now
+            if ( cur_rf_hits.size() == 4 ) {
+                std::sort(cur_rf_hits.begin(), cur_rf_hits.end());
+                int scint_time = last_s1.time_1ns();
+                int last_rf_time = cur_rf_hits[cur_rf_hits.size()-2];
+                int64_t rf_phase = last_rf_time - scint_time;
+                int rf_period = cur_rf_hits[cur_rf_hits.size()-1] - cur_rf_hits[cur_rf_hits.size()-2];
+                h_tof_rf->Fill(rf_phase, last_s1.tot());
+                h_phaserf->Fill(rf_phase);
+                h_periodrf->Fill(rf_period);
+                saw_s1 = 0;
+                cur_rf_hits.clear();
+            }
+        }
 
         // fill 1D
         if ( hit.channel() == 0 )

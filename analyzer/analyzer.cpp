@@ -6,6 +6,7 @@
 #include "AnaMutrigHistos.h"
 #include "AnaTriggerHistos.h"
 #include "AnaFillHits.h"
+#include "AnaHitTree.h"
 //#include "AnaMusip.h"
 #include "musip/dqm/DQMManager.hpp"
 
@@ -361,6 +362,7 @@ int main(int argc, char* argv[]) {
     // The first parameter in the constructor is the name of the config file entry for that module.
     // The second parameter is whether the module is enabled by default when not otherwise specified.
     TARegister fillhits(new TAFactoryTemplateWithConfig<AnaFillHits>("fillhits", true));
+    TARegister hitTree(new TAFactoryTemplateWithConfig<AnaHitTree>("hitTree", true));
     TARegister quad(new TAFactoryTemplateWithConfig<AnaQuadHistos>("quad", true));
     TARegister mutrig(new TAFactoryTemplateWithConfig<AnaMutrigHistos>("mutrig", true));
     TARegister trigger(new TAFactoryTemplateWithConfig<AnaTriggerHistos>("trigger", true));
