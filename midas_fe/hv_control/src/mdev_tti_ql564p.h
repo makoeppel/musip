@@ -41,7 +41,7 @@ class tti_ql564p_card {
 
 class mdev_tti_ql564p : public mdev {
    private:
-    static constexpr int channels_per_card = 2;
+    static constexpr int channels_per_card = 1;
 
     midas::odb m_settings;
     midas::odb m_variables;
