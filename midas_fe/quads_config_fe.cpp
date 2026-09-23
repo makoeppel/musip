@@ -61,6 +61,8 @@ BOOL equipment_common_overwrite = TRUE;
 // configuration variables
 FEBSlowcontrolInterface* feb_sc;
 midas::odb m_settings;
+midas::odb m_variables;
+
 uint8_t bitpattern_mupix[N_BYTES_MUPIX] = {};
 uint8_t bitpattern_mutrig[N_BYTES_MUTRIG] = {};
 mudaq::DmaMudaqDevice* mup = nullptr;
@@ -541,7 +543,7 @@ void sc_settings_changed(midas::odb o) {
         // MUTRIG Commands //
 	// *************** //
         if(name == "init_tmb" && o){
-            TBinit(*feb_sc, m_settings);
+            TBinit(*feb_sc, m_settings, m_variables);
         }
         if(name == "TestPulsesTDC"){
             ChangeTDCTest(*feb_sc, m_settings);
@@ -613,6 +615,7 @@ int frontend_init() {
     // create ODB copy for settings
     settings.connect_and_fix_structure("/Equipment/Quads/Settings/");
     m_settings.connect("/Equipment/Quads/Settings");
+    m_variables.connect("/Equipment/Quads/Variables");
 
     // end and start of run
     install_begin_of_run(begin_of_run);

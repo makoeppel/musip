@@ -1333,7 +1333,7 @@ int UpdatePower(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) {
         bool FEBsIsMutrig = m_settings["DAQ"]["Links"]["FEBsMutrig"][febIDx];
         if (!FEBsIsMutrig)
             continue;
-	    febSSIDx++;
+        febSSIDx++;
         printf("FEB:%i SSIDx:%i ASICMask: %12.12x [%s]\n", febIDx, febSSIDx, ASICMask, FEBActive ? "Active" : "Inactive");
 
         if (!FEBActive)
