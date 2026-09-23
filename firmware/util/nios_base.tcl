@@ -160,10 +160,10 @@ proc nios_base.init {} {
     }
 
     add_interface i2c conduit end
-    set_interface_property i2c EXPORTOF i2c.i2c_serial
+    set_interface_property i2c EXPORT_OF i2c.i2c_serial
 
     add_interface spi conduit end
-    set_interface_property spi EXPORTOF spi.external
+    set_interface_property spi EXPORT_OF spi.external
 
     nios_base.add_pio pio 32 Output 0x700F0280
 
