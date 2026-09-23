@@ -35,12 +35,15 @@ private:
 
     //global 1D histos
     musip::dqm::Histogram1DD* h_channel {}; // channel hitmap
+    musip::dqm::Histogram1DD* h_phaserf {}; // phase rf
+    musip::dqm::Histogram1DD* h_periodrf {}; // period rf
     musip::dqm::Histogram1DD* h_nHits {}; // hits per event
     musip::dqm::Histogram1DD* h_timeStampDeltaSameChannel {}; //time difference t-t_prev for the same channel, all combined
 
     std::unordered_map<int, musip::dqm::Histogram1DD*> h_tot_; //ToT of hits per channel
     std::unordered_map<int, musip::dqm::Histogram1DD*> h_time_diff_; //time diff of hits per channel
     //2D histos
+    musip::dqm::Histogram2DI* h_tof_rf {}; // tof vs rf
     musip::dqm::Histogram2DI* h_channel_tot {}; //ToT vs channel
     musip::dqm::Histogram2DI* h_channel_8ns {}; //course time vs channel id
     musip::dqm::Histogram2DI* h_channel_1ns {}; //fine time vs channel id
@@ -48,6 +51,10 @@ private:
     std::map<std::pair<int,int>, musip::dqm::Histogram2DF*> h_timewalk_; //timewalk histograms for each channel
 
     std::map<uint16_t, triggerhit> last_hits;
+    std::vector<uint32_t> cur_rf_hits;
+    int last_time_rf = 0;
+    int saw_s1 = 0;
+    triggerhit last_s1;
 
 };
 

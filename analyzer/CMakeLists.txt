@@ -7,6 +7,7 @@ set(minalyzer_analyzers_headers
     AnaHitTree.h
     #AnaMusip.h
     AnaQuadHistos.h
+    AnaHitTree.h
     AnaMutrigHistos.h
     AnaTriggerHistos.h
     json.h
@@ -19,6 +20,7 @@ set(minalyzer_analyzers_sources
     AnaHitTree.cpp
     #AnaMusip.cpp
     AnaQuadHistos.cpp
+    AnaHitTree.cpp
     AnaMutrigHistos.cpp
     AnaTriggerHistos.cpp
 )
