@@ -32,10 +32,11 @@ BOOL equipment_common_overwrite = TRUE;
 
 int hv_loop(void);
 int hv_read(char *pevent, int off);
+int hv_read2(char *pevent, int off);
 
 EQUIPMENT equipment[] = {
 
-   {"HV",                       // equipment name
+   {"HV Quads",                       // equipment name
       {140, 0,                  // event ID, trigger mask
          "SYSTEM",              // event buffer
          EQ_PERIODIC,           // equipment type
@@ -51,7 +52,7 @@ EQUIPMENT equipment[] = {
       hv_read,                  // readout routine
    },
 
-   {"TTI HV",                  // equipment name
+   {"HV Scintillators",                  // equipment name
       {141, 0,                  // event ID, trigger mask
          "SYSTEM",              // event buffer
          EQ_PERIODIC,            // equipment type
@@ -64,7 +65,7 @@ EQUIPMENT equipment[] = {
          0,                     // number of sub events
          1,                     // log history every second
          "", "", ""},
-      hv_read,                  // readout routine
+      hv_read2,                  // readout routine
    },
 
    {""}
@@ -72,6 +73,7 @@ EQUIPMENT equipment[] = {
 
 // master device table
 std::vector<mdev *> mdev_table;
+std::vector<mdev *> mdev_table2;
 
 /*-- Error dispatcher causing communiction alarm -------------------*/
 
@@ -86,18 +88,18 @@ INT frontend_init()
 {
    /*---- set correct ODB device addresses ----*/
 
-   //auto mupixHv = new mdev_hv4("HV");
-   //mupixHv->set_submaster("mscb382.psi.ch");
-   //mupixHv->add_card(  35,  {"none0", "quad 1", "quad 2", "quad 3"}, 50);
-   //mupixHv->add_card(  35,  {"quad 0", "none1", "none2",  "none3"},  75);
+   auto mupixHv = new mdev_hv4("HV Quads");
+   mupixHv->set_submaster("mscb382.psi.ch");
+   mupixHv->add_card(  35,  {"none0", "quad 1", "quad 2", "quad 3"}, 50);
+   mupixHv->add_card(  35,  {"quad 0", "none1", "none2",  "none3"},  75);
 
-   //mdev_table.push_back(mupixHv);
+   mdev_table.push_back(mupixHv);
 
 
-   auto ttiHv = new mdev_tti_ql564p("TTI HV");
+   auto ttiHv = new mdev_tti_ql564p("HV Scintillators");
    ttiHv->set_host("ql564p02.psi.ch");
-   ttiHv->add_card({"TTI QL564P CH1", "TTI QL564P CH2"});
-   mdev_table.push_back(ttiHv);
+   ttiHv->add_card({"TTI QL564P CH1"});
+   mdev_table2.push_back(ttiHv);
 
    // ----------------------
 
@@ -111,6 +113,9 @@ INT frontend_init()
    try {
       mdev::mdev_odb_setup(mdev_table);
       mdev::mdev_init(mdev_table);
+
+      mdev::mdev_odb_setup(mdev_table2);
+      mdev::mdev_init(mdev_table2);
    } catch (mexception& e) {
       cm_msg(MERROR, "frontend_init", "%s", e.what());
       return FE_ERR_HW;
@@ -137,6 +142,7 @@ int hv_loop()
 
       // call loop functions of all devices
       mdev::mdev_loop(mdev_table);
+      mdev::mdev_loop(mdev_table2);
 
    } catch (mexception& e) {
       last_error_time = ss_time();
@@ -162,6 +168,15 @@ int hv_loop()
 int hv_read(char *pevent, int off)
 {
    for (mdev *m : mdev_table)
+      if (EVENT_ID(pevent) == m->get_event_id())
+         return m->read_event(pevent, off);
+
+   return 0;
+}
+
+int hv_read2(char *pevent, int off)
+{
+   for (mdev *m : mdev_table2)
       if (EVENT_ID(pevent) == m->get_event_id())
          return m->read_event(pevent, off);
 
