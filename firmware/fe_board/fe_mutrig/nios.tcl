@@ -1,6 +1,6 @@
 #
 source {device.tcl}
-source {util/nios_base.tcl}
+source {../fe/util/nios_base.tcl}
 set_instance_parameter_value ram {memorySize} {0x0001F000}
 set_instance_parameter_value spi numberOfSlaves 16
 set_instance_parameter_value spi targetClockRate 128000

@@ -145,10 +145,6 @@ $(PREFIX)/include.qip : $(PREFIX)/components_pkg.vhd $(QSYS_FILES)
 	# add $(APP_DIR)/mem_init/meminit.qip
 	echo "set_global_assignment -name QIP_FILE [ file join $$::quartus(qip_path) \"$$(realpath -m --relative-to=$(PREFIX) -- $(APP_DIR)/mem_init/meminit.qip)\" ]" >> "$@"
 
-# default device.tcl file
-device.tcl :
-	touch -- "$@"
-
 $(PREFIX)/%.vhd : %.vhd.envsubst
 	NAME="$(basename $(notdir $@))" envsubst '$$NAME' < "$<" > "$@"
 
