@@ -393,6 +393,8 @@ TAFlowEvent* AnaQuadHistos::AnalyzeFlowEvent(TARunInfo*, TAFlags* flags, TAFlowE
             return a.time() < b.time();
     });
 
+    if ( pixelhits.size() == 0 ) return flow;
+
     // get rate per chip
     float time_in_sec = (pixelhits.back().time() - pixelhits.front().time()) / 1e9;
     for (auto const& pair : hits_per_channel) {
