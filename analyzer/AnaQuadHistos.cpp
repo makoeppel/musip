@@ -35,7 +35,8 @@ void AnaQuadHistos::BeginRun(TARunInfo* runinfo) {
     chipID = pPlotCollection_->getOrCreateHistogram1DD("chipID", 24, -0.5, 24 - 0.5, error);
 
     /////////  2D histos  ///////////
-    for (int i = 0; i < 24; i++) {
+    h_rate_per_channel = pPlotCollection_->getOrCreateHistogram2DF("h_rate_per_channel", 24, -0.5, 24 - 0.5, 2048, -0.5, 10000 - 0.5, error);
+    for (int i = 0; i < 8; i++) {
         mask_files.push_back({});
         char quadIDString[256];
         std::string directoryName = std::string("");
@@ -347,8 +348,8 @@ void AnaQuadHistos::EndRun(TARunInfo* runinfo) {
     printf("AnaQuadHistos::EndRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
 
     // write mask file
-    std::string path = "/home/mu3e/musip/output/maskfiles_analyzer";
-    for ( int index = 0; index < 24; index++ ) {
+    std::string path = "/home/pinky/bt2026/musip/output/maskfiles_analyzer";
+    for ( int index = 0; index < 8; index++ ) {
         mask_files[index] = create_mask_file(hitmaps[index]->asRootObject("myHistogram", "My histogram title").get(), index, 0.5);
 
         std::string data = "/mask_" + std::to_string(index) + "_run_" + std::to_string(runinfo->fRunNo) + ".bin";
@@ -377,11 +378,32 @@ TAFlowEvent* AnaQuadHistos::AnalyzeFlowEvent(TARunInfo*, TAFlags* flags, TAFlowE
     HitVectorFlowEvent* hitevent = flow->Find<HitVectorFlowEvent>();
     if(!hitevent) return flow;
 
+    std::vector<pixelhit> pixelhits;
+    std::unordered_map<int, int> hits_per_channel;
+
     for ( auto& cur_hit : hitevent->hits ) {
+        if (cur_hit.is_pixel()) {
+            hits_per_channel[cur_hit.as_pixel().chipid()]++;
+            pixelhits.push_back(cur_hit.as_pixel());
+        }
+    }
 
-        if (!cur_hit.is_pixel()) continue;
+    std::sort(pixelhits.begin(), pixelhits.end(),
+        [](const auto& a, const auto& b) {
+            return a.time() < b.time();
+    });
 
-        auto hit = cur_hit.as_pixel();
+    // get rate per chip
+    float time_in_sec = (pixelhits.back().time() - pixelhits.front().time()) / 1e9;
+    for (auto const& pair : hits_per_channel) {
+        auto key = pair.first;
+        h_rate_per_channel->Fill(key, hits_per_channel[key] / time_in_sec);
+    }
+    // printf("Event Time %i\n", (int) pixelhits.front().time() - (int) prev_time);
+    prev_time = pixelhits.back().time();
+
+    for ( auto hit : pixelhits ) {
+
         chipID->Fill(hit.chipid());
 
         if (hit.chipid() >= 24) continue;
@@ -389,52 +411,52 @@ TAFlowEvent* AnaQuadHistos::AnalyzeFlowEvent(TARunInfo*, TAFlags* flags, TAFlowE
         // fill hitmap histograms
         uint32_t col, row;
         std::tie(col, row) = get_quad_global_col_row(hit);
-	switch (hit.chipid()) {
-	case 16:
-	case 17:
-	case 18:
-	case 19:
-		combinedHitmap[0]->Fill(col,row);
-		break;
-	case 10:
-	case 11:
-	case 2:
-	case 3:
-		combinedHitmap[1]->Fill(col,row);
-		break;
-	case 8:
-	case 9:
-	case 20:
-	case 21:
-		combinedHitmap[2]->Fill(col,row);
-		break;
-	case 6:
-	case 7:
-	case 4:
-	case 5:
-		combinedHitmap[3]->Fill(col,row);
-		break;
-	case 22:
-	case 23:
-	case 0:
-	case 1:
-		combinedHitmap[4]->Fill(col,row);
-		break;
-	case 12:
-	case 13:
-	case 14:
-	case 15:
-		combinedHitmap[5]->Fill(col,row);
-		break;
-	default:
-		break;
-	}
+        switch (hit.chipid()) {
+        case 0:
+        case 1:
+        case 2:
+        case 3:
+            combinedHitmap[0]->Fill(col,row);
+            break;
+        case 4:
+        case 5:
+        case 6:
+        case 7:
+            combinedHitmap[1]->Fill(col,row);
+            break;
+        case 8:
+        case 9:
+        case 10:
+        case 11:
+            combinedHitmap[2]->Fill(col,row);
+            break;
+        case 12:
+        case 13:
+        case 14:
+        case 15:
+            combinedHitmap[3]->Fill(col,row);
+            break;
+        case 16:
+        case 17:
+        case 18:
+        case 19:
+            combinedHitmap[4]->Fill(col,row);
+            break;
+        case 20:
+        case 21:
+        case 22:
+        case 23:
+            combinedHitmap[5]->Fill(col,row);
+            break;
+        default:
+            break;
+        }
         hitmaps[hit.chipid()]->Fill(hit.col(), hit.row());
 
         // fill timing histogram
         uint32_t ckdivend = 0;
         uint32_t ckdivend2 = 31;
-        uint32_t localTime = hit.time() % (1 << 11);  // local pixel time is first 11 bits of the global time
+        uint32_t localTime = hit.time8ns() % (1 << 11);  // local pixel time is first 11 bits of the global time
         uint32_t cur_hitToA = localTime * 8/*ns*/ * (ckdivend + 1);
         uint32_t cur_hitToT = ( ( (0x1F+1) + hit.tot() -  ( (localTime * (ckdivend+1) / (ckdivend2+1) ) & 0x1F) ) & 0x1F);//  * 8 * (ckdivend2+1) ;
         hitToT[hit.chipid()]->Fill(cur_hitToT);

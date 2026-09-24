@@ -202,7 +202,7 @@ begin
                         -- Bits 55:48       ToT in ns
                         next_64bit_word(i)(55 downto 48) <= i_rx(i).data(31 downto 24);
                         -- Bits 47:20       8ns time
-                        next_64bit_word(i)(47 downto 20) <= ts_high(i)(23 downto 0) & ts_low(i)(15 downto 12);
+                        next_64bit_word(i)(47 downto 20) <= ts_high(i)(22 downto 0) & ts_low(i)(15 downto 11);
                         -- Bits 19:0        rising edge time in ns
                         next_64bit_word(i)(19 downto 0) <= i_rx(i).data(19 downto 0);
                     end if;

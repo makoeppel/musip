@@ -561,15 +561,15 @@ int ConfigureTDACs(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) {
              asicMaskIDx++) {
             if (!((ASICMask >> (asicMaskIDx % N_CHIPS)) & 0x1))
                 continue;
-            cm_msg1(MINFO, "quads", "WriteTDACs()",
-                   "/Settings/Config/ -> globalASIC-%i -> localASIC-%i on FEB-%i", asicMaskIDx,
-                   asicMaskIDx % N_CHIPS, febIDx);
 
             // read TDAC file
-            // TODO: we only read the first TDAC file, this is hardcoded change me
             std::string path = m_settings["Config"]["TDACS"]["TDACFILE"][asicMaskIDx];
             std::vector<uint32_t> tdac_chip(64 * 256);
-            read_tdac_file(tdac_chip, "/home/labor/musip/online/userfiles/maskfiles/" + path);
+            read_tdac_file(tdac_chip, path); //"/home/labor/musip/online/userfiles/maskfiles/" + path);
+
+            cm_msg1(MINFO, "quads", "WriteTDACs()",
+                   "WriteTDACs() /Settings/Config/ -> globalASIC-%i -> localASIC-%i on FEB-%i file: %s", asicMaskIDx,
+                   asicMaskIDx % N_CHIPS, febIDx, path.c_str());
 
             // write TDAC
             uint32_t N_DCOLS_PER_PAGE = 8;

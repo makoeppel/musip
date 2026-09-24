@@ -42,25 +42,25 @@ int FEBSlowcontrolInterface::FEB_write(uint32_t febIDx, const uint32_t startaddr
         FPGA_ID = ADDRS::BROADCAST_ADDR;
 
     if (startaddr >= pow(2, 16)) {
-        cm_msg(MERROR, "FEBSlowcontrolInterface::FEB_write",
+        cm_msg1(MERROR, "quads" , "FEBSlowcontrolInterface::FEB_write",
                "FEB_write address %i is bigger then max addr %f", startaddr, pow(2, 16));
         return ERRCODES::ADDR_INVALID;
     }
 
     // TODO: We will have more than 16 FPGAs...
     if (FPGA_ID > 15 and FPGA_ID != ADDRS::BROADCAST_ADDR) {
-        cm_msg(MERROR, "FEBSlowcontrolInterface::FEB_write",
+        cm_msg1(MERROR, "quads", "FEBSlowcontrolInterface::FEB_write",
                "FEB_write ID %i is bigger then current max ID 15", FPGA_ID);
         return ERRCODES::ADDR_INVALID;
     }
 
     if (!data.size()) {
-        cm_msg(MERROR, "FEBSlowcontrolInterface::FEB_write", "FEB_write Length zero");
+        cm_msg1(MERROR, "quads", "FEBSlowcontrolInterface::FEB_write", "FEB_write Length zero");
         return ERRCODES::SIZE_ZERO;
     }
 
     if (data.size() > MAX_SLOWCONTROL_WRITE_MESSAGE_SIZE) {
-        cm_msg(MERROR, "FEBSlowcontrolInterface::FEB_write", "FEB_write Length of %li too big",
+        cm_msg1(MERROR, "quads", "FEBSlowcontrolInterface::FEB_write", "FEB_write Length of %li too big",
                data.size());
         return ERRCODES::SIZE_INVALID;
     }
@@ -71,7 +71,7 @@ int FEBSlowcontrolInterface::FEB_write(uint32_t febIDx, const uint32_t startaddr
 
     // check if the SWB is busy
     if (!(mdev.read_register_ro(SC_MAIN_STATUS_REGISTER_R) & 0x1)) {
-        cm_msg(MERROR, "FEBSlowcontrolInterface::FEB_write", "SWB is busy");
+        cm_msg1(MERROR, "quads", "FEBSlowcontrolInterface::FEB_write", "SWB is busy");
         return ERRCODES::FPGA_BUSY;
     }
 
@@ -108,7 +108,7 @@ int FEBSlowcontrolInterface::FEB_write(uint32_t febIDx, const uint32_t startaddr
     }
 
     if (count == 1000) {
-        cm_msg(MERROR, "FEBSlowcontrolInterface::FEB_write",
+        cm_msg1(MERROR, "quads", "FEBSlowcontrolInterface::FEB_write",
                "MudaqDevice::FEB_write Timeout for done reg");
         return ERRCODES::FPGA_TIMEOUT;
     }
@@ -125,7 +125,7 @@ int FEBSlowcontrolInterface::FEB_write(uint32_t febIDx, const uint32_t startaddr
             break;
         // for some reason there is a read acknowledge at the front of the queue...
         if (read_packets > 0) {
-            cm_msg(MERROR, "FEBSlowcontrolInterface::FEB_write",
+            cm_msg1(MERROR, "quads", "FEBSlowcontrolInterface::FEB_write",
                    "wrong packet type, N packets: %i, count: %i", read_packets, count);
             sc_packet_deque.front().Print();
             sc_packet_deque.pop_front();
@@ -134,7 +134,7 @@ int FEBSlowcontrolInterface::FEB_write(uint32_t febIDx, const uint32_t startaddr
     }
 
     if (count == 1000) {
-        cm_msg(MERROR, "FEBSlowcontrolInterface::FEB_write",
+        cm_msg1(MERROR, "quads", "FEBSlowcontrolInterface::FEB_write",
                "Timeout occured waiting for reply: Wanted to write to FPGA %d, "
                "Addr 0x%08X, length %zu",
                FPGA_ID, startaddr, data.size());
@@ -142,13 +142,13 @@ int FEBSlowcontrolInterface::FEB_write(uint32_t febIDx, const uint32_t startaddr
     }
 
     if (!sc_packet_deque.front().Good()) {
-        cm_msg(MERROR, "FEBSlowcontrolInterface::FEB_write", "Received bad packet");
+        cm_msg1(MERROR, "quads", "FEBSlowcontrolInterface::FEB_write", "Received bad packet");
         sc_packet_deque.pop_front();
         return ERRCODES::BAD_PACKET;
     }
 
     if (!sc_packet_deque.front().IsResponse()) {
-        cm_msg(MERROR, "FEBSlowcontrolInterface::FEB_write",
+        cm_msg1(MERROR, "quads", "FEBSlowcontrolInterface::FEB_write",
                "Received request packet, this should not happen...");
         sc_packet_deque.pop_front();
         return ERRCODES::BAD_PACKET;
@@ -265,29 +265,29 @@ int FEBSlowcontrolInterface::FEB_read(uint32_t febIDx, const uint32_t startaddr,
         count++;
     }
     if (count == 1000) {
-        cm_msg(MERROR, "MudaqDevice::FEBsc_read",
+        cm_msg1(MERROR, "quads", "MudaqDevice::FEBsc_read",
                "Timeout occured waiting for reply: Wanted to read from FPGA %d, "
                "Addr 0x%08X, length %zu, memaddr 0x%08X",
                FPGA_ID, startaddr, data.size(), m_FEBsc_rmem_addr);
         return ERRCODES::FPGA_TIMEOUT;
     }
     if (!sc_packet_deque.front().Good()) {
-        cm_msg(MERROR, "MudaqDevice::FEBsc_read", "Received bad packet, resetting");
+        cm_msg1(MERROR, "quads", "MudaqDevice::FEBsc_read", "Received bad packet, resetting");
         sc_packet_deque.pop_front();
         FEBsc_resetSecondary();
         return ERRCODES::BAD_PACKET;
     }
     if (!sc_packet_deque.front().IsResponse()) {
-        cm_msg(MERROR, "MudaqDevice::FEBsc_read",
+        cm_msg1(MERROR, "quads", "MudaqDevice::FEBsc_read",
                "Received request packet, this should not happen..., resetting");
         sc_packet_deque.pop_front();
         FEBsc_resetSecondary();
         return ERRCODES::BAD_PACKET;
     }
     if (sc_packet_deque.front().GetLength() != data.size()) {
-        cm_msg(MERROR, "MudaqDevice::FEBsc_read",
+        cm_msg1(MERROR, "quads", "MudaqDevice::FEBsc_read",
                "Wanted to read from FPGA %d, Addr 0x%08X, length %zu", FPGA_ID, startaddr, data.size());
-        cm_msg(MERROR, "MudaqDevice::FEBsc_read",
+        cm_msg1(MERROR, "quads", "MudaqDevice::FEBsc_read",
                "Received packet fails size check, communication error, resetting");
         sc_packet_deque.pop_front();
         FEBsc_resetSecondary();
@@ -316,11 +316,11 @@ void FEBSlowcontrolInterface::FEBsc_resetMain() {
     m_FEBsc_wmem_addr = 0;
     // reset fpga entity
     mdev.toggle_register(RESET_REGISTER_W, SET_RESET_BIT_SC_MAIN(0), 1000);
-    cm_msg(MINFO, "FEBsc_resetMain()", "FEBsc_resetMain() Done");
+    cm_msg1(MINFO, "quads", "FEBsc_resetMain()", "FEBsc_resetMain() Done");
 }
 
 void FEBSlowcontrolInterface::FEBsc_resetSecondary() {
-    // cm_msg(MINFO, "FEB_slowcontrol" , "Resetting slow control secondary");
+    // cm_msg1(MINFO, "quads", "FEB_slowcontrol" , "Resetting slow control secondary");
     // reset our pointer
     m_FEBsc_rmem_addr = 0;
     // reset fpga entity
@@ -334,7 +334,7 @@ void FEBSlowcontrolInterface::FEBsc_resetSecondary() {
         fflush(stdout);
         timeout_cnt++;
         if (timeout_cnt >= 100) {
-            cm_msg(MERROR, "FEBsc_resetSecondary()",
+            cm_msg1(MERROR, "quads", "FEBsc_resetSecondary()",
                    "Slow control secondary reset FAILED with timeout");
             // someone basically unplugged the PCie card. stop switch_fe now
             cm_disconnect_experiment();
@@ -342,7 +342,7 @@ void FEBSlowcontrolInterface::FEBsc_resetSecondary() {
             exit(0);
         }
     };
-    cm_msg(MINFO, "FEBsc_resetSecondary()", "FEBsc_resetSecondary() Done");
+    cm_msg1(MINFO, "quads", "FEBsc_resetSecondary()", "FEBsc_resetSecondary() Done");
 }
 
 int FEBSlowcontrolInterface::FEBsc_NiosRPC(uint32_t febIDx, uint16_t command,

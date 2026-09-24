@@ -267,28 +267,6 @@ int create_midas_events(uint32_t* dmaBuffer, uint32_t dmaBufSize, int rbh)
     if (dmaBufSize < 2)
         return -1;
 
-    // sort hits
-    static constexpr uint64_t kTimestampMask = (1ULL << 37) - 1ULL; // bits 0..36
-    struct HitWord {
-        uint32_t word0;
-        uint32_t word1;
-        uint64_t ts;
-    };
-    std::vector<HitWord> hits;
-
-    for (uint32_t i = 0; i < maxwords * 4; i += 2) {
-        uint32_t word0 = dmaBuffer[i];
-        uint32_t word1 = dmaBuffer[i+1];
-        uint64_t word =
-             static_cast<uint64_t>(word0) |
-            (static_cast<uint64_t>(word1) << 32);
-        uint64_t ts = word & kTimestampMask;
-        hits.push_back({word0, word1, ts});
-    }
-    // Sort by timestamp
-    // std::sort(hits.begin(), hits.end(),
-    //           [](const HitWord& a, const HitWord& b) { return a.ts < b.ts; });
-
     // create MIDAS event
     void* event = nullptr;
     int status = 0;
@@ -314,15 +292,11 @@ int create_midas_events(uint32_t* dmaBuffer, uint32_t dmaBufSize, int rbh)
     uint32_t* data = nullptr;
     std::string bank_name = "H000";
     bk_create(bankHeader, bank_name.c_str(), TID_UINT32, reinterpret_cast<void**>(&data));
-    // memcpy(data, dmaBuffer, dmaBufSize * sizeof(uint32_t));
-    // data += dmaBufSize * sizeof(uint32_t);
-    // Store 64-bit words as two uint32_t words
-    for (size_t i = 0; i < hits.size(); ++i) {
-        data[2 * i]     = hits[i].word0;
-        data[2 * i + 1] = hits[i].word1;
-    }
-    memcpy(data, data, hits.size() / 2 * sizeof(uint32_t));
-    data += hits.size() / 2 * sizeof(uint32_t);
+
+    // copy over event data
+    for (uint32_t i = 0; i < maxwords * 8; i++) data[i] = dmaBuffer[i];
+    memcpy(data, data, maxwords * 8);
+    data += maxwords * 8;
     bk_close(bankHeader, data);
 
     eventHeader->data_size = bk_size(bankHeader);
@@ -430,9 +404,9 @@ int read_stream_thread(void*) {
 
         std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
         double dma_time = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count();
-        std::cout << "Time difference (DMA) = "
-                  << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count()
-                  << "[µs]" << std::endl;
+        // std::cout << "Time difference (DMA) = "
+        //           << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count()
+        //           << "[µs]" << std::endl;
 
         begin = std::chrono::steady_clock::now();
 
@@ -452,9 +426,9 @@ int read_stream_thread(void*) {
 
         end = std::chrono::steady_clock::now();
         double event_time = (double) std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count();
-        std::cout << "Time difference (EVENT) = "
-                  << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count()
-                  << "[µs]" << std::endl;
+        // std::cout << "Time difference (EVENT) = "
+        //           << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count()
+        //           << "[µs]" << std::endl;
 
         m_settings["Readout"]["HitRate"] = (double) maxwords * 4 / (dma_time / 1e6);
     }

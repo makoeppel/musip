@@ -18,6 +18,7 @@ struct pixelhit {
     [[nodiscard]] uint8_t t2() const { return tot(); }
     [[nodiscard]] uint32_t ts_high() const { return (hitdata >> 16) & 0x1FFFFF; }
     [[nodiscard]] uint8_t ts_low() const { return (hitdata >> 11) & 0x1F; }
+    [[nodiscard]] uint32_t ts_header() const { return (hitdata >> 11) & 0x3FFFFFF; }
     [[nodiscard]] uint8_t subheader_time() const { return (hitdata >> 4) & 0x7F; }
     [[nodiscard]] uint8_t ts_sorterhit() const { return hitdata & 0xF; }
     [[nodiscard]] uint64_t time8ns() const { return (hitdata & 0x1FFFFFFFFFULL); }
@@ -31,7 +32,7 @@ struct pixelhit {
             col(),
             row(),
             tot(),
-            (unsigned long long)time()
+            (unsigned long long) time()
         );
     }
 };
@@ -86,6 +87,7 @@ struct triggerhit {
     [[nodiscard]] uint8_t channel() const { return (hitdata >> 56) & 0xF; }
     [[nodiscard]] uint8_t tot() const { return (hitdata >> 48) & 0xFF; }
     [[nodiscard]] uint32_t time_8ns() const { return (hitdata >> 20) & 0xFFFFFFF; }
+    [[nodiscard]] uint32_t ts_header() const { return (hitdata >> 20) & 0x3FFFFFF; }
     [[nodiscard]] uint32_t time_1ns() const { return hitdata & 0xFFFFF; }
     //[[nodiscard]] uint64_t time() const {return (time_8ns()*8) + time_1ns();} //returns time in ns
     [[nodiscard]] uint64_t time() const {
@@ -101,7 +103,7 @@ struct triggerhit {
         //     fine
         // );
 
-        return (coarse_ns & 0xFF00000) + fine;
+        return (coarse_ns & 0xFFFF00000) + fine;
     }
 
     void Print() const {
