@@ -34,6 +34,7 @@ private:
     musip::dqm::PlotCollection* pPlotCollection_ {};
 
     //global 1D histos
+    musip::dqm::Histogram1DD* l1_s1_time {}; // channel hitmap
     musip::dqm::Histogram1DD* h_channel {}; // channel hitmap
     musip::dqm::Histogram1DD* h_phaserf {}; // phase rf
     musip::dqm::Histogram1DD* h_periodrf {}; // period rf
@@ -43,6 +44,9 @@ private:
     std::unordered_map<int, musip::dqm::Histogram1DD*> h_tot_; //ToT of hits per channel
     std::unordered_map<int, musip::dqm::Histogram1DD*> h_time_diff_; //time diff of hits per channel
     //2D histos
+    musip::dqm::Histogram2DF* h_rate_per_channel {};
+    musip::dqm::Histogram2DI* h_tot_l1_vs_s1 {};
+    musip::dqm::Histogram2DI* h_timewalk_l1_vs_time_s1 {};
     musip::dqm::Histogram2DI* h_tof_rf {}; // tof vs rf
     musip::dqm::Histogram2DI* h_channel_tot {}; //ToT vs channel
     musip::dqm::Histogram2DI* h_channel_8ns {}; //course time vs channel id

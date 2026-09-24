@@ -32,6 +32,7 @@ void AnaTriggerHistos::BeginRun(TARunInfo* runinfo) {
     using MD = musip::dqm::Metadata;
 
     /////////  1D histos  ///////////
+    l1_s1_time = pPlotCollection_->getOrCreateHistogram1DD("l1_s1_time", 2048, -2048 - 0.5, 2048 - 0.5, error);
     h_channel = pPlotCollection_->getOrCreateHistogram1DD("ChannelID", n_CHANNELS, -0.5, n_CHANNELS - 0.5, error);
     h_nHits = pPlotCollection_->getOrCreateHistogram1DD("nHits", 201, -0.5, 200.5, error);
     h_phaserf = pPlotCollection_->getOrCreateHistogram1DD("h_phaserf", 201, -0.5, 200.5, error);
@@ -55,7 +56,10 @@ void AnaTriggerHistos::BeginRun(TARunInfo* runinfo) {
     }
 
     /////////  2D histos  ///////////
+    h_rate_per_channel = pPlotCollection_->getOrCreateHistogram2DF("h_rate_per_channel", 24, -0.5, 24 - 0.5, 2048, -0.5, 10000 - 0.5, error);
     h_tof_rf = pPlotCollection_->getOrCreateHistogram2DI("ToF_ToT", 128, 0, 128, 32, 0, 32, error);
+    h_tot_l1_vs_s1 = pPlotCollection_->getOrCreateHistogram2DI("ToT_l1_vs_s1", 32, 0 - 0.5, 32 - 0.5, 256, 0 - 0.5, 256 - 0.5, error);
+    h_timewalk_l1_vs_time_s1 = pPlotCollection_->getOrCreateHistogram2DI("timewalk_l1_vs_time_s1", 32, 0 - 0.5, 32 - 0.5, 256, -128 - 0.5, 128 - 0.5, error);
     h_channel_tot = pPlotCollection_->getOrCreateHistogram2DI("Channel_ToT", n_CHANNELS, -0.5, n_CHANNELS - 0.5, 256, 0, 256, error);
     h_channel_8ns = pPlotCollection_->getOrCreateHistogram2DI("Channel_8ns", n_CHANNELS, -0.5, n_CHANNELS - 0.5, 2048, 0, 0xFFFFFFF, error);
     h_channel_1ns = pPlotCollection_->getOrCreateHistogram2DI("Channel_1ns", n_CHANNELS, -0.5, n_CHANNELS - 0.5, 2048, 0, 0xFFFFF, error);
@@ -76,17 +80,29 @@ TAFlowEvent* AnaTriggerHistos::AnalyzeFlowEvent(TARunInfo*, TAFlags* flags, TAFl
     if(!hitevent) return flow;
 
     std::vector<triggerhit> triggerhits;
-    for ( auto& cur_hit : hitevent->hits )
-        if (cur_hit.is_trigger())
+    std::unordered_map<int, int> hits_per_channel;
+
+    for ( auto& cur_hit : hitevent->hits ) {
+        if (cur_hit.is_trigger()) {
+            hits_per_channel[cur_hit.as_trigger().channel()]++;
             triggerhits.push_back(cur_hit.as_trigger());
+        }
+    }
 
     //fill event-based observables
     h_nHits->Fill(triggerhits.size());
 
     std::sort(triggerhits.begin(), triggerhits.end(),
         [](const auto& a, const auto& b) {
-            return a.time() < b.time();
+            return a.ts_header() < b.ts_header();
         });
+
+    // get rate per channel
+    float time_in_sec = ((triggerhits.back().ts_header() - triggerhits.front().ts_header()) * 16) / 1e6;
+    for (auto const& pair : hits_per_channel) {
+        auto key = pair.first;
+        h_rate_per_channel->Fill(key, hits_per_channel[key] / time_in_sec);
+    }
 
     //loop over hits
     for(auto& hit : triggerhits) {
@@ -145,6 +161,45 @@ TAFlowEvent* AnaTriggerHistos::AnalyzeFlowEvent(TARunInfo*, TAFlags* flags, TAFl
         }
 
         last_hits[hit.channel()] = hit;
+    }
+
+    // correlation between S1 and L1
+    std::vector<triggerhit> s1_hits;
+    std::vector<pixelhit> ch1_hits;
+
+    for(const auto& currentHit : hitevent->hits) {
+        if(currentHit.is_pixel())
+            if (currentHit.as_pixel().chipid() == 1)
+                ch1_hits.push_back(currentHit.as_pixel());
+        if(currentHit.is_trigger()) {
+            if (currentHit.as_trigger().channel() == 1)
+                s1_hits.push_back(currentHit.as_trigger());
+        }
+    }
+
+    std::sort(s1_hits.begin(), s1_hits.end(),
+        [](const auto& a, const auto& b) {
+            return a.time_1ns() < b.time_1ns();
+        });
+    std::sort(ch1_hits.begin(), ch1_hits.end(),
+        [](const auto& a, const auto& b) {
+            return a.time() < b.time();
+        });
+
+    for (auto s1_hit : s1_hits) {
+        for (auto ch1_hit : ch1_hits) {
+            if (std::abs((int) (ch1_hit.time() & 0xFFFFF) - (int) s1_hit.time_1ns()) < 2048) {
+                l1_s1_time->Fill((int) (ch1_hit.time() & 0xFFFFF) - (int) s1_hit.time_1ns());
+                uint32_t ckdivend = 0;
+                uint32_t ckdivend2 = 31;
+                uint32_t localTime = ch1_hit.time8ns() % (1 << 11);  // local pixel time is first 11 bits of the global time
+                uint32_t cur_hitToA = localTime * 8/*ns*/ * (ckdivend + 1);
+                uint32_t cur_hitToT = ( ( (0x1F+1) + ch1_hit.tot() -  ( (localTime * (ckdivend+1) / (ckdivend2+1) ) & 0x1F) ) & 0x1F);//  * 8 * (ckdivend2+1) ;
+                h_tot_l1_vs_s1->Fill(cur_hitToT, s1_hit.tot());
+                if (std::abs((int) (ch1_hit.time() & 0xFFFFF) - (int) s1_hit.time_1ns()) < 128)
+                    h_timewalk_l1_vs_time_s1->Fill(cur_hitToT, (int) (ch1_hit.time() & 0xFFFFF) - (int) s1_hit.time_1ns());
+            }
+        }
     }
 
     return flow;
