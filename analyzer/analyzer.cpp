@@ -364,7 +364,7 @@ int main(int argc, char* argv[]) {
     TARegister fillhits(new TAFactoryTemplateWithConfig<AnaFillHits>("fillhits", true));
     TARegister hitTree(new TAFactoryTemplateWithConfig<AnaHitTree>("hitTree", true));
     TARegister quad(new TAFactoryTemplateWithConfig<AnaQuadHistos>("quad", true));
-    TARegister mutrig(new TAFactoryTemplateWithConfig<AnaMutrigHistos>("mutrig", true));
+    //(new TAFactoryTemplateWithConfig<AnaMutrigHistos>("mutrig", true));
     TARegister trigger(new TAFactoryTemplateWithConfig<AnaTriggerHistos>("trigger", true));
     //TARegister musip(new TAFactoryWrapper<AnaMusipFactory>("musip", true));
 

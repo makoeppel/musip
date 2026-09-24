@@ -13,6 +13,14 @@
 #include <numeric>
 #include <unordered_map>
 
+#include <TH2I.h>
+#include <TLine.h>
+#include <TF1.h>
+#include <TCanvas.h>
+#include <TStyle.h>
+#include <TLatex.h>
+#include <TPaveText.h>
+
 AnaTriggerHistos::AnaTriggerHistos(const boost::property_tree::ptree& config, TARunInfo* runinfo)
     : TARunObject(runinfo)
 {
@@ -33,6 +41,7 @@ void AnaTriggerHistos::BeginRun(TARunInfo* runinfo) {
 
     /////////  1D histos  ///////////
     l1_s1_time = pPlotCollection_->getOrCreateHistogram1DD("l1_s1_time", 2048, -2048 - 0.5, 2048 - 0.5, error);
+    l1_s1_time_corrected = pPlotCollection_->getOrCreateHistogram1DD("l1_s1_time_corrected", 2048, -2048 - 0.5, 2048 - 0.5, error);
     h_channel = pPlotCollection_->getOrCreateHistogram1DD("ChannelID", n_CHANNELS, -0.5, n_CHANNELS - 0.5, error);
     h_nHits = pPlotCollection_->getOrCreateHistogram1DD("nHits", 201, -0.5, 200.5, error);
     h_phaserf = pPlotCollection_->getOrCreateHistogram1DD("h_phaserf", 201, -0.5, 200.5, error);
@@ -56,10 +65,12 @@ void AnaTriggerHistos::BeginRun(TARunInfo* runinfo) {
     }
 
     /////////  2D histos  ///////////
+    h_l1_s1_time_vs_time = pPlotCollection_->getOrCreateHistogram2DF("l1_s1_time_vs_time", 1000, -0.5, 1e6 - 0.5, 256, -256 - 0.5, 256 - 0.5, error);
     h_rate_per_channel = pPlotCollection_->getOrCreateHistogram2DF("h_rate_per_channel", 24, -0.5, 24 - 0.5, 2048, -0.5, 10000 - 0.5, error);
     h_tof_rf = pPlotCollection_->getOrCreateHistogram2DI("ToF_ToT", 128, 0, 128, 32, 0, 32, error);
     h_tot_l1_vs_s1 = pPlotCollection_->getOrCreateHistogram2DI("ToT_l1_vs_s1", 32, 0 - 0.5, 32 - 0.5, 256, 0 - 0.5, 256 - 0.5, error);
-    h_timewalk_l1_vs_time_s1 = pPlotCollection_->getOrCreateHistogram2DI("timewalk_l1_vs_time_s1", 32, 0 - 0.5, 32 - 0.5, 256, -128 - 0.5, 128 - 0.5, error);
+    h_timewalk_l1_vs_time_s1 = pPlotCollection_->getOrCreateHistogram2DI("timewalk_l1_vs_time_s1", 256, -128 - 0.5, 128 - 0.5, 32, 0 - 0.5, 32 - 0.5, error);
+    h_timewalk_corrected_l1_vs_time_s1 = pPlotCollection_->getOrCreateHistogram2DI("timewalk_corrected_l1_vs_time_s1", 256, -128 - 0.5, 128 - 0.5, 32, 0 - 0.5, 32 - 0.5, error);
     h_channel_tot = pPlotCollection_->getOrCreateHistogram2DI("Channel_ToT", n_CHANNELS, -0.5, n_CHANNELS - 0.5, 256, 0, 256, error);
     h_channel_8ns = pPlotCollection_->getOrCreateHistogram2DI("Channel_8ns", n_CHANNELS, -0.5, n_CHANNELS - 0.5, 2048, 0, 0xFFFFFFF, error);
     h_channel_1ns = pPlotCollection_->getOrCreateHistogram2DI("Channel_1ns", n_CHANNELS, -0.5, n_CHANNELS - 0.5, 2048, 0, 0xFFFFF, error);
@@ -69,7 +80,83 @@ void AnaTriggerHistos::BeginRun(TARunInfo* runinfo) {
 }
 
 void AnaTriggerHistos::EndRun(TARunInfo* runinfo) {
-    printf("TriggerHistos::EndRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+    auto rootHist = h_timewalk_l1_vs_time_s1->asRootObject("timewalk", "C1-S1 time walk;#Deltat [ns];ToT");
+    auto time_diff_corrected = l1_s1_time_corrected->asRootObject("histo", "C1-S1 time corrected;#Deltat [ns];#");
+
+    TH2I* h = rootHist.get();
+    TH1D* h_corrected = time_diff_corrected.get();
+    h_corrected->GetXaxis()->SetRangeUser(-100.0, 100.0);
+
+    TF1 doubleGaus("doubleGaus", "[0]*exp(-0.5*pow((x-[1])/[2],2)) + [3]*exp(-0.5*pow((x-[1])/[4],2))", -60.0, 60.0);
+
+    double maxBin = h_corrected->GetMaximum();
+    double initialMean = h_corrected->GetBinCenter(h_corrected->GetMaximumBin());
+    doubleGaus.SetParameters(maxBin, initialMean, 5.0, maxBin * 0.3, 15.0);
+
+    h_corrected->Fit(&doubleGaus, "RQ");
+
+    double mean = doubleGaus.GetParameter(1);
+    double sigma1 = doubleGaus.GetParameter(2);
+    double sigma2 = doubleGaus.GetParameter(4);
+    double A1 = doubleGaus.GetParameter(0);
+    double A2 = doubleGaus.GetParameter(3);
+
+    double meanErr = doubleGaus.GetParError(1);
+    double sigma1Err = doubleGaus.GetParError(2);
+    double sigma2Err = doubleGaus.GetParError(4);
+
+    double effectiveRMS = std::sqrt((A1 * std::pow(sigma1, 3) + A2 * std::pow(sigma2, 3)) / (A1 * sigma1 + A2 * sigma2));
+
+    std::cout << "Double Gaussian fit:\n"
+              << "  Mean      = " << mean << " +/- " << meanErr << " ns\n"
+              << "  Sigma 1   = " << sigma1 << " +/- " << sigma1Err << " ns\n"
+              << "  Sigma 2   = " << sigma2 << " +/- " << sigma2Err << " ns\n"
+              << "  Effective RMS = " << effectiveRMS << " ns\n";
+
+    TCanvas* canvas = new TCanvas("timewalk_canvas", "C1-S1 Time Walk", 1400, 700);
+    canvas->Divide(2, 1);
+
+    canvas->cd(1);
+    gPad->SetRightMargin(0.15);
+    h->SetStats(0);
+    h->GetXaxis()->SetTitle("#Deltat = C1 - S1 [ns]");
+    h->GetYaxis()->SetTitle("ToT");
+    h->Draw("COLZ");
+
+    canvas->cd(2);
+    gPad->SetGridx();
+    gPad->SetGridy();
+
+    h_corrected->SetStats(0);
+    h_corrected->SetMarkerStyle(20);
+    h_corrected->SetMarkerSize(0.8);
+    h_corrected->SetMarkerColor(kBlue);
+    h_corrected->SetLineColor(kBlue);
+    h_corrected->GetXaxis()->SetTitle("#Deltat = C1 - S1 [ns]");
+    h_corrected->GetYaxis()->SetTitle("#");
+    h_corrected->SetTitle("C1-S1 Time Corrected;#Deltat = C1 - S1 [ns];#");
+    h_corrected->Draw("E1");
+
+    doubleGaus.SetLineColor(kRed);
+    doubleGaus.SetLineWidth(3);
+    doubleGaus.Draw("SAME");
+    gPad->Update();
+
+    TLine meanLine(mean, gPad->GetUymin(), mean, gPad->GetUymax());
+    meanLine.SetLineColor(kGreen + 2);
+    meanLine.SetLineStyle(2);
+    meanLine.SetLineWidth(2);
+    meanLine.Draw("SAME");
+
+    TPaveText pave(0.60, 0.68, 0.88, 0.88, "NDC");
+    pave.SetFillStyle(0);
+    pave.SetBorderSize(0);
+    pave.SetTextSize(0.032);
+    pave.AddText(TString::Format("#sigma_{1} = %.2f #pm %.2f ns", sigma1, sigma1Err));
+    pave.Draw("SAME");
+
+    canvas->SaveAs(TString::Format("timewalk_run_%d.pdf", runinfo->fRunNo));
+    delete canvas;
 }
 
 TAFlowEvent* AnaTriggerHistos::AnalyzeFlowEvent(TARunInfo*, TAFlags* flags, TAFlowEvent* flow) {
@@ -190,15 +277,58 @@ TAFlowEvent* AnaTriggerHistos::AnalyzeFlowEvent(TARunInfo*, TAFlags* flags, TAFl
         for (auto ch1_hit : ch1_hits) {
             if (std::abs((int) (ch1_hit.time() & 0xFFFFF) - (int) s1_hit.time_1ns()) < 2048) {
                 l1_s1_time->Fill((int) (ch1_hit.time() & 0xFFFFF) - (int) s1_hit.time_1ns());
+                h_l1_s1_time_vs_time->Fill(ch1_hit.ts_header() % (int) 1e6, (int) (ch1_hit.time() & 0xFFFFF) - (int) s1_hit.time_1ns());
                 uint32_t ckdivend = 0;
                 uint32_t ckdivend2 = 31;
                 uint32_t localTime = ch1_hit.time8ns() % (1 << 11);  // local pixel time is first 11 bits of the global time
                 uint32_t cur_hitToA = localTime * 8/*ns*/ * (ckdivend + 1);
                 uint32_t cur_hitToT = ( ( (0x1F+1) + ch1_hit.tot() -  ( (localTime * (ckdivend+1) / (ckdivend2+1) ) & 0x1F) ) & 0x1F);//  * 8 * (ckdivend2+1) ;
                 h_tot_l1_vs_s1->Fill(cur_hitToT, s1_hit.tot());
-                if (std::abs((int) (ch1_hit.time() & 0xFFFFF) - (int) s1_hit.time_1ns()) < 128)
-                    h_timewalk_l1_vs_time_s1->Fill(cur_hitToT, (int) (ch1_hit.time() & 0xFFFFF) - (int) s1_hit.time_1ns());
+                if ( timeWalkValid[cur_hitToT] ) {
+                    l1_s1_time_corrected->Fill((int) (ch1_hit.time() & 0xFFFFF) - (int) s1_hit.time_1ns() - timeWalkCorrection[cur_hitToT]);
+                }
+                if (std::abs((int) (ch1_hit.time() & 0xFFFFF) - (int) s1_hit.time_1ns()) < 128) {
+                    h_timewalk_l1_vs_time_s1->Fill((int) (ch1_hit.time() & 0xFFFFF) - (int) s1_hit.time_1ns(), cur_hitToT);
+                    if ( timeWalkValid[cur_hitToT] ) {
+                        double dt = (int)(ch1_hit.time() & 0xFFFFF) - (int)s1_hit.time_1ns();
+                        double corrected_dt = dt - timeWalkCorrection[cur_hitToT];
+                        h_timewalk_corrected_l1_vs_time_s1->Fill(corrected_dt, cur_hitToT);
+                    }
+                }
             }
+        }
+    }
+
+    // create tot correction
+    for (int tot = 0; tot < 32; ++tot) {
+        auto rootHist =
+            h_timewalk_l1_vs_time_s1
+                ->asRootObject("myHistogram", "My histogram title");
+
+        int ybin = rootHist.get()->GetYaxis()->FindBin(tot);
+
+        double sum = 0.0;
+        double sumw = 0.0;
+
+        for (int xbin = 1; xbin <= rootHist.get()->GetNbinsX(); ++xbin) {
+
+            double n = rootHist.get()->GetBinContent(xbin, ybin);
+
+            if (n <= 0)
+                continue;
+
+            double dt = rootHist.get()->GetXaxis()->GetBinCenter(xbin);
+
+            sum  += n * dt;
+            sumw += n;
+        }
+
+        if (sumw >= 100) {
+            timeWalkCorrection[tot] = sum / sumw;
+            timeWalkValid[tot] = true;
+        }
+        else {
+            timeWalkValid[tot] = false;
         }
     }
 
