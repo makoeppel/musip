@@ -23,8 +23,8 @@ const setups = {
     pioneer: {
 	mask_path: ["/home"],     
         features: ["keins"],
-	lv_supply_0_title: "LV SUPPLY 0: Quads, FEBs and HV Box",
-	lv_supply_1_title: "LV SUPPLY 1",
+	lv_supply_0_title: "LV SUPPLY 0: FEBs",
+	lv_supply_1_title: "LV SUPPLY 1 Quads and HV Box",
 	hv_supply_title: "HV Box",
         //Channels:
         node_hv0_def: 1,
@@ -34,8 +34,8 @@ const setups = {
         channel_hv1_def: 1,
         channel_hv0_name: "",
         channel_hv1_name: "",
-	hvBox_supplyChannel: "/Equipment/LVSUPPLY0/Variables/State[2]",   
-	hvBox_supplyChannelSet: "/Equipment/LVSUPPLY0/Variables/Set State[2]"
+	hvBox_supplyChannel: "/Equipment/LVSUPPLY1/Variables/State[2]",   
+	hvBox_supplyChannelSet: "/Equipment/LVSUPPLY1/Variables/Set State[2]"
     }
 };
 

@@ -84,6 +84,7 @@
 	    // Set some titles:
             document.getElementById("lvSupply0Title").textContent = cfg.lv_supply_0_title;
  	    document.getElementById("lvSupply1Title").textContent = cfg.lv_supply_1_title;
+	    document.getElementById("hvSupplyTitle").textContent = cfg.hv_supply_title;
 	    // Set some channels:
             document.getElementById("node_hv0").value = cfg.node_hv0_def;
             document.getElementById("node_hv0").max = cfg.node_hv_max;
@@ -135,7 +136,7 @@
 	// Chip selection routines 
 	// ------------------------------------------------------------------------------
 
-        color_sel = 'black';
+        color_sel = 'blue'; //'black';
 	color_unsel = '#c8c8c8';
 
         function color_chips(mask, feb) {
@@ -453,24 +454,27 @@
 	                    // Rotate 90° counter-clockwise
 	                    let nx = y;
 	                    let ny = 255 - x;
+			    let newY;
 
    			    if (chip === 0 || chip === 1 || chip === 4 || chip === 5) {
 			        nx = 255 - y;
 				ny = x;
-			    } //TODO: the 6 row shift below is not correct yet for chips 0,1,4,5
-
+				if (ny > 249)
+				    continue;
+				newY = ny;
+			    } else {
 	                    // Remove the 6 non-existing rows
-	                    if (ny < 6)
-	                        continue;
-
-	                    const newY = ny - 6;
+	                        if (ny < 6)
+	                            continue;
+				newY = ny - 6;
+			    }
 
 	                    const i = (newY * 256 + nx) * 4;
 
-	                    img.data[i]     = value;
-	                    img.data[i + 1] = value;
-	                    img.data[i + 2] = value;
-	                    img.data[i + 3] = 255;
+	                    img.data[i]     = value; //R
+	                    img.data[i + 1] = value; //G
+	                    img.data[i + 2] = value; //B
+	                    img.data[i + 3] = 255;   //Fill
 	                }
 	            }
 
@@ -485,77 +489,86 @@
 
 	// PySenquencer is used here to copy/generate mask files
 	async function pysequencerAction(command) {
-	    const pySeqPath = "/PySequencer/State/Filename";
-	    const pySeqStart = "/PySequencer/Command/Start script";
-	    const pySeqLoad = "/PySequencer/Command/Load new file";
+            const pySeqRunning = "/PySequencer/State/Running"
+            mjsonrpc_db_get_value(pySeqRunning).then(async function (rpc) {
+                let running = rpc.result.data[0];
+	        if (running == true) {
+		    dlgAlert("PySequencer is already running! Can not execute demanded action.");
+		}
+		else {
+
+	    	    const pySeqPath = "/PySequencer/State/Filename";
+		    const pySeqStart = "/PySequencer/Command/Start script";
+		    const pySeqLoad = "/PySequencer/Command/Load new file";
 	
-	    const runNumber = document.getElementById("runNumberForMasking").value; 
+		    const runNumber = document.getElementById("runNumberForMasking").value; 
+		    const flag_merge = document.getElementById("runMaskMerge").checked ? 1 : 0;
 
-	    const flag_merge = document.getElementById("runMaskMerge").checked ? 1 : 0;
+		    const pySeqParamPaths = [
+	                "/PySequencer/Param/Value/source",
+		        "/PySequencer/Param/Value/destination",
+	        	"/PySequencer/Param/Value/action",
+			"/PySequencer/Param/Value/runNumber",
+			"/PySequencer/Param/Value/flag_merge"
+	    	    ];
 
-	    const pySeqParamPaths = [
-                "/PySequencer/Param/Value/source",
-	        "/PySequencer/Param/Value/destination",
-        	"/PySequencer/Param/Value/action",
-		"/PySequencer/Param/Value/runNumber",
-		"/PySequencer/Param/Value/flag_merge"
-    	    ];
+	            const params = {
+	                SelEdgeMask: [
+			    "/home/pinky/online/userfiles/maskfiles/edge_masks",
+			    "/home/pinky/online/userfiles/maskfiles/",
+			    "mask copy"
+			],
+			SelEmptyMask: [
+	                    "/home/pinky/online/userfiles/maskfiles/empty_masks",
+	                    "/home/pinky/online/userfiles/maskfiles/",
+	                    "mask copy"
+			],
+			SelRunMask: [
+			    "/home/pinky/bt2026/musip/output/maskfiles_analyzer",
+			    "/home/pinky/online/userfiles/maskfiles/",
+			    "mask run"
+			]
+	            };
 
-            const params = {
-                SelEdgeMask: [
-		    "/home/pinky/online/userfiles/maskfiles/edge_masks",
-		    "/home/pinky/online/userfiles/maskfiles/",
-		    "mask copy"
-		],
-		SelEmptyMask: [
-                    "/home/pinky/online/userfiles/maskfiles/empty_masks",
-                    "/home/pinky/online/userfiles/maskfiles/",
-                    "mask copy"
-		],
-		SelRunMask: [
-		    "/home/pinky/bt2026/musip/output/maskfiles_analyzer",
-		    "/home/pinky/online/userfiles/maskfiles/",
-		    "mask run"
-		]
-            };
+		    console.log("Run number for masking: " + runNumber + ", merge flag: " + flag_merge);
+		    const tmp_params = [...params[command], runNumber, flag_merge];	
 
-	    console.log("Run number for masking: " + runNumber + ", merge flag: " + flag_merge);
-	    const tmp_params = [...params[command], runNumber, flag_merge];	
+		    // 1. Set the script filename
+		    await mjsonrpc_db_paste(
+		        [pySeqPath],
+		        ["masking_pioneer.py"]
+		    );
 
-	    // 1. Set the script filename
-	    await mjsonrpc_db_paste(
-	        [pySeqPath],
-	        ["masking_pioneer.py"]
-	    );
+		    // 2. Load the new file
+		    await mjsonrpc_db_paste(
+		        [pySeqLoad],
+		        [true]
+		    );
 
-	    // 2. Load the new file
-	    await mjsonrpc_db_paste(
-	        [pySeqLoad],
-	        [true]
-	    );
+		    // 3. Set the three parameter values
+		    await mjsonrpc_db_paste(
+		        pySeqParamPaths,
+		        tmp_params
+		    );
 
-	    // 3. Set the three parameter values
-	    await mjsonrpc_db_paste(
-	        pySeqParamPaths,
-	        tmp_params
-	    );
-
-	    await mjsonrpc_db_paste(
-		[pySeqStart],
-		[true]
-	    );
+		    await mjsonrpc_db_paste(
+			[pySeqStart],
+			[true]
+		    );
 	    
-            await waitForPySequencerFinished();
+	            await waitForPySequencerFinished();
 
-	    console.log("point1");
-	    if (command === "SelEdgeMask"  || command === "SelEmptyMask" || command === "SelRunMask" ) {
-		console.log("Point2");
-	        const svgObjects = document.querySelectorAll(".svgObjectMask");
-                svgObjects.forEach(function (obj, index) {
-                    setupMask(obj, index);
-                });
-	    }
-	}
+		    console.log("point1");
+		    if (command === "SelEdgeMask"  || command === "SelEmptyMask" || command === "SelRunMask" ) {
+			console.log("Point2");
+		        const svgObjects = document.querySelectorAll(".svgObjectMask");
+	                svgObjects.forEach(function (obj, index) {
+	                    setupMask(obj, index);
+	                });
+		    }
+                }
+            });
+        }	
 
 	// Helper Function to tell me that PySenquer was executed:
 	async function waitForPySequencerFinished() {
@@ -571,6 +584,30 @@
 
 	        await new Promise(resolve => setTimeout(resolve, 1000));
 	    }
+	}
+
+	// Link quality monitoring:
+	// TODO: This function is currently only working for one FEB
+	function update_pcls(value) {
+	    const svgObjects = document.querySelectorAll(".svgObject");
+	    var quadOffset = 0;
+	    svgObjects.forEach(function (obj, index) {
+		const svgDoc = obj.contentDocument;
+		const febindex = Math.floor(index / 2);
+                //console.log(value);
+	        var febIDfromPCLS = value[0];
+	        //var nlinks = value[1]; //not needed for now
+	        const nlinks = 12;
+	        for (var i=0; i < nlinks; i++) {
+		    var status = value[2+quadOffset+4*i];
+		    var disp   = value[2+quadOffset+4*i+1];
+		    var err    = value[2+quadOffset+4*i+2];
+		    var nhits  = value[2+quadOffset+4*i+3];
+		    //console.log(i+quadOffset, " : ", nhits);
+		    //TODO: Fetch the text in the svg where rate etc come into
+	        }
+		quadOffset += nlinks;
+	    });
 	}
 
         // ------------------------------------------------------------------------------
@@ -1101,8 +1138,9 @@
 	    </td>
 	</tr>
 
-
     </table>
+
+    <div name="modb" data-odb-path="/Equipment/Quads/Variables/PCLS" onchange="update_pcls(this.value)"></div>
 
     </div>
 
