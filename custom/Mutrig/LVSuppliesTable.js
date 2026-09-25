@@ -102,12 +102,16 @@ function init_HVTable(config_url){
 
         //this is for the SCSHV boxes at PSI
         var statePath = '/Equipment/' + device +  '/Variables/Current[' + index + ']';//'/Variables/ChStatus[' + index + ']';
+        var statePath = '/Equipment/' + device +  '/Settings/Output On[' + index + ']';
+
         var setStatePath = null;// '/Equipment/' + device + '/Variables/ChStatus[' + index + ']'; //null; 
-	if(setStateName != null){
-            setStatePath = '/Equipment/' + device + '/Variables/'+setStateName+'[' + index + ']'; //null;
-	}
+        var setStatePath = null;// '/Equipment/' + device + '/Variables/ChStatus[' + index + ']'; //null;
+	      if(setStateName != null){
+          setStatePath = '/Equipment/' + device + setStateName+'[' + index + ']';
+        }
         var demandVPath = '/Equipment/' + device + '/Variables/Demand[' + index + ']';
         var voltagePath = '/Equipment/' + device + '/Variables/Measured[' + index + ']';
+        //var voltagePath = '/Equipment/' + device + '/Variables/Voltage[' + index + ']';
         var currentLimitPath = '/Equipment/' + device + '/Settings/Current Limit[' + index + ']';
         var currentPath = '/Equipment/' + device + '/Variables/Current[' + index + ']';
         var descPath = '/Equipment/' + device + '/Settings/Names[' + index + ']';
