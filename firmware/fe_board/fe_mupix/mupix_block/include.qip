@@ -1,0 +1,14 @@
+#
+
+set_global_assignment -name QIP_FILE [ file join $::quartus(qip_path) "comp_type_const/include.qip" ]
+
+set_global_assignment -name QIP_FILE [file join $::quartus(qip_path) "data_unpacker/data_unpacker.qip"]
+set_global_assignment -name QIP_FILE [file join $::quartus(qip_path) "slowcontrol/slowcontrol.qip"]
+
+set_global_assignment -name QIP_FILE [file join $::quartus(qip_path) "receiver_block/receiver_block.qip"]
+
+set_global_assignment -name QIP_FILE [file join $::quartus(qip_path) "sorter/sorter.qip"]
+
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "mupix_datapath.vhd"]
+
+set_global_assignment -name SDC_FILE [file join $::quartus(qip_path) "mupix.sdc"]

@@ -5,11 +5,14 @@ use IEEE.std_logic_1164.all;
 use IEEE.numeric_std.all;
 
 entity rst_shift_block is
+generic (
+    P_WIDTH             : natural
+);
 port (
-    o_d           : out std_logic_vector(0 downto 0); -- dataout
+    o_d           : out std_logic_vector(P_WIDTH-1 downto 0); -- dataout
 
-    i_d           : in std_logic_vector(0 downto 0); -- datain
-    i_cdata       : in std_logic_vector(5 downto 0); -- configuration input
+    i_d           : in std_logic_vector(P_WIDTH-1 downto 0); -- datain
+    i_cdata       : in std_logic_vector((6*P_WIDTH)-1 downto 0); -- configuration input
     i_we          : in std_logic; -- state machine start signal
 
     -- 125 MHz reset/clock
@@ -31,10 +34,10 @@ architecture bhv of rst_shift_block is
     -- start signal in units of cclk
     signal s_cstartin : std_logic := '0';
     -- signals for connection
-    signal s_cclkena : std_logic_vector(0 downto 0);
+    signal s_cclkena : std_logic_vector(P_WIDTH-1 downto 0);
     signal s_cdataout : std_logic;
     signal s_cupdateout : std_logic;
-    signal s_datashift : std_logic_vector(0 downto 0);
+    signal io_config_phase180 : std_logic_vector(P_WIDTH-1 downto 0);
 
 begin
 
@@ -61,25 +64,30 @@ begin
     end process;
 
     conf : entity work.obuf_config
+	 generic map(
+        datawidth => P_WIDTH
+    )
     port map (
         i_cdata => i_cdata,
         i_cstart => s_cstartin,
         o_cdata => s_cdataout,
         o_cclkena => s_cclkena,
         o_cupdate => s_cupdateout,
-        o_datashift => s_datashift(0),
+        o_config_phase180 => io_config_phase180,
         i_reset_n => i_reset_n,
         i_cclk => s_cclk--,
     );
 
     ip : entity work.ip_reset_shift
+	 generic map (P_WIDTH => P_WIDTH)
     port map (
-        datashift => s_datashift,
+        
         datain => i_d,
         io_config_clk => s_cclk,
         io_config_clkena => s_cclkena,
         io_config_datain => s_cdataout,
         io_config_update => s_cupdateout,
+		  io_config_phase180 => io_config_phase180,
         dataout => o_d,
         --oe(0) => s_oe,
 

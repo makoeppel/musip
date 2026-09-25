@@ -1,0 +1,1 @@
+Source code of the digital part of the mupix11, taken from https://bitbucket.org/mu3e/mupix11_digital_review/src/master/
