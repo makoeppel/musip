@@ -1,0 +1,8 @@
+*.o
+*.ko
+*.cmd
+Module.symvers
+modules.order
+mudaq.mod.c
+mudaq.mod
+
