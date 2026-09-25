@@ -382,7 +382,7 @@ int ConfigureASICs(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings, uint8
  * @param bitpattern_w Temporary buffer used to build the configuration bitstream.
  * @return FE_SUCCESS if all ASICs configured successfully; error code otherwise.
  */
-int ConfigureMuTRiGASICs(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings, uint8_t* bitpattern_w) {
+int ConfigureMuTRiGASICs(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) {
     int status = FE_SUCCESS;
 
     mutrig::Mutrig3Config config;

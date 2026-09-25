@@ -259,7 +259,7 @@ void mdev_hv4::loop(void) {
 
 /*------------------------------------------------------------------*/
 
-int mdev_hv4::read_event(char *pevent, int off) {
+int mdev_hv4::read_event(char *pevent, int [[maybe_unused]] offset) {
    float *pdata;
 
    // init bank structure

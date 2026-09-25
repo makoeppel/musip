@@ -64,7 +64,6 @@ midas::odb m_settings;
 midas::odb m_variables;
 
 uint8_t bitpattern_mupix[N_BYTES_MUPIX] = {};
-uint8_t bitpattern_mutrig[N_BYTES_MUTRIG] = {};
 mudaq::DmaMudaqDevice* mup = nullptr;
 std::vector<uint32_t> readout_banks = {};
 std::vector<uint32_t> feb_hits = {0,0,0,0};
@@ -369,7 +368,7 @@ int begin_of_run() {
     uint32_t link_active_from_odb = 0;
     for (int idx = 0; idx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); ++idx)
         if (m_settings["DAQ"]["Links"]["FEBsActive"][idx])
-            link_active_from_odb = link_active_from_odb || (0x1 << idx);
+            link_active_from_odb |= (0x1 << idx);
     printf("Waiting for run prepare acknowledge from all FEBs\n");
     // TODO: test this part of checking the run number
     do {
@@ -559,7 +558,7 @@ void sc_settings_changed(midas::odb o) {
         }
 
         if ( name == "MutrigConfig" && o) {
-            ConfigureMuTRiGASICs(*feb_sc, m_settings, bitpattern_mutrig);
+            ConfigureMuTRiGASICs(*feb_sc, m_settings);
         }
         if ( name == "reset_datapath" && o) {
             MuTRiG_reset_datapath(*feb_sc, m_settings);
