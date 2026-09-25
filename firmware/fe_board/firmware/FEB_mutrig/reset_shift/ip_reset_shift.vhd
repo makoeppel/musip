@@ -13,15 +13,17 @@ use altera_mf.altera_mf_components.all;
 -- synthesis read_comments_as_HDL off
 
 entity ip_reset_shift is
+generic (
+    P_WIDTH             : natural
+);
 port (
-    datashift           : in    std_logic_vector(0 downto 0);
-    datain              : in    std_logic_vector(0 downto 0);
+    datain              : in    std_logic_vector(P_WIDTH-1 downto 0);
     io_config_clk       : in    std_logic;
-    io_config_clkena    : in    std_logic_vector(0 downto 0);
+    io_config_clkena    : in    std_logic_vector(P_WIDTH-1 downto 0);
     io_config_datain    : in    std_logic;
     io_config_update    : in    std_logic;
-    --oe                  : in    std_logic_vector(0 downto 0);
-    dataout             : out   std_logic_vector(0 downto 0);
+	 io_config_phase180       : in    std_logic_vector(P_WIDTH-1 downto 0);
+    dataout             : out   std_logic_vector(P_WIDTH-1 downto 0);
 
     i_reset_n           : in    std_logic;
     i_clk               : in    std_logic--;
@@ -61,44 +63,45 @@ architecture rtl of ip_reset_shift is
     );
     END COMPONENT;
 
-    signal s_delay_ctrl  : STD_LOGIC_VECTOR(4 DOWNTO 0);
-    signal s_sig_from_ddio : STD_LOGIC_VECTOR(0 DOWNTO 0) := "0";
-    signal s_data : STD_LOGIC_VECTOR(0 DOWNTO 0) := "0";
-    signal s_data_del : STD_LOGIC_VECTOR(0 DOWNTO 0) := "0";
-    signal datashift_clk : std_logic_vector(0 downto 0);
+    signal s_delay_ctrl  : STD_LOGIC_VECTOR(5*P_WIDTH-1 DOWNTO 0);
+    signal s_sig_from_ddio : STD_LOGIC_VECTOR(P_WIDTH-1 DOWNTO 0);
+    signal s_data : STD_LOGIC_VECTOR(P_WIDTH-1 DOWNTO 0);
+    signal s_data_del : STD_LOGIC_VECTOR(P_WIDTH-1 DOWNTO 0);
+    signal io_config_phase180_clk : std_logic_vector(P_WIDTH-1 downto 0);
 
-begin
-
-    ioconfiga : arriav_io_config
+begin	 
+    e_io_config_phase180 : entity work.ff_sync
+    generic map ( W => io_config_phase180_clk'length )
     port map (
-        clk => io_config_clk,
-        datain => io_config_datain,
-        ena => io_config_clkena(0),
-        outputregdelaysetting => s_delay_ctrl,
-        update => io_config_update
-    );
-
-    e_datashift : entity work.ff_sync
-    generic map ( W => datashift_clk'length )
-    port map (
-        i_d => datashift, o_q => datashift_clk,
+        i_d => io_config_phase180, o_q => io_config_phase180_clk,
         i_reset_n => i_reset_n, i_clk => i_clk--,
     );
 
-    -- TODO : IMPLEMENT SHIFT OF HALF CLOCK CYCLE DEPENDING ON DATASHIFT(=)
-    half_cycle : process(i_clk, datashift_clk)
+    half_cycle : process(i_clk, io_config_phase180_clk)
     begin
     if rising_edge(i_clk) then
-        s_data <= datain;
-        if datashift_clk(0) = '1' then
-            s_data_del <= s_data;
-        else
-            s_data_del <= datain;
-        end if;
-
+		  for i in io_config_phase180_clk'range loop
+			  s_data(i) <= datain(i);
+           if io_config_phase180_clk(i) = '1' then
+					s_data_del(i) <= s_data(i);
+			  else
+					s_data_del(i) <= datain(i);
+			  end if;
+		  end loop;
     end if;
-
     end process;
+	 
+    g_ioconfig: for i in 0 to P_WIDTH -1 generate
+       ioconfig : arriav_io_config
+       port map (
+         clk => io_config_clk,
+         datain => io_config_datain,
+         ena => io_config_clkena(i),
+         outputregdelaysetting => s_delay_ctrl(i*5+4 DOWNTO i*5),
+         update => io_config_update
+		 );
+    end generate;
+
     buf : altddio_out
     generic map (
         extend_oe_disable => "OFF",
@@ -108,7 +111,7 @@ begin
         lpm_type => "altddio_out",
         oe_reg => "UNREGISTERED",
         power_up_high => "OFF",
-        width => 1
+        width => P_WIDTH
     )
     port map (
         datain_h => s_data_del,
@@ -117,15 +120,18 @@ begin
         dataout => s_sig_from_ddio
     );
 
-    sd1 : arriav_delay_chain
-    generic map (
-        sim_falling_delay_increment => 200,
-        sim_rising_delay_increment => 200
-    )
-    port map (
-        datain => s_sig_from_ddio(0),
-        dataout => dataout(0),
-        delayctrlin => s_delay_ctrl
-    );
+	 g_delaychains: for i in 0 to P_WIDTH -1 generate
+	 
+		 sd1 : arriav_delay_chain
+		 generic map (
+			  sim_falling_delay_increment => 200,
+			  sim_rising_delay_increment => 200
+		 )
+		 port map (
+			  datain => s_sig_from_ddio(i),
+			  dataout => dataout(i),
+			  delayctrlin => s_delay_ctrl(i*5+4 DOWNTO i*5)
+		 );
+	 end generate;
 
 end architecture;

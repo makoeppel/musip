@@ -88,8 +88,10 @@ package feb_sc_registers is
     constant TEST_OUT_REGISTER                  :   integer := 16#FC2C#;
     constant REBOOT_REGISTER_RW                 :   integer := 16#FC2D#;
     constant SHUTDOWN_REGISTER_RW               :   integer := 16#FC2E#;
-    constant RUN_START_DENIAL_REGISTER_R        :   integer := 16#FC2F#;        -- DOC: Reason for denied run start ack | FEB_ALL
     constant RUN_NUMBER_REGISTER_R              :   integer := 16#FC2F#;        -- DOC: Run number on the FEB | FEB_ALL
+    constant RUN_START_DENIAL_REGISTER_R        :   integer := 16#FC30#;        -- DOC: Reason for denied run start ack | FEB_ALL
+    constant RESET_DELAY_REGISTER_RW            :   integer := 16#FC31#;        -- DOC: Set the delay of the reset in 125 MHz cycles, 8 bit active | FEB_ALL
+
 
     constant FIREFLY_XCVR_CH_SEL_REGISTER_RW    :   integer := 16#FF00#;
     constant FIREFLY_XCVR_N_CH_REGISTER_R       :   integer := 16#FF01#;

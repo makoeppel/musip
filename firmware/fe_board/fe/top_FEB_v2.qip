@@ -6,7 +6,7 @@ set_global_assignment -name SDC_FILE [file join $::quartus(qip_path) "top_FEB_v2
 
 set_global_assignment -name QIP_FILE [file join $::quartus(qip_path) "util/include.qip"]
 
-set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "s4/ip_altpll.vhd"]
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "a5/ip_altpll.vhd"]
 
 set_global_assignment -name QIP_FILE [file join $::quartus(qip_path) "a5/include.qip"]
 set_global_assignment -name QIP_FILE [file join $::quartus(qip_path) "registers/include.qip"]

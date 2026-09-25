@@ -185,6 +185,7 @@ architecture arch of fe_block_v2_rs485 is
     signal ffly_rx_datak            : std_logic_vector(15 downto 0);
 
     signal fpga_id_reg              : std_logic_vector(15 downto 0);
+    signal reset_delay_reg          : std_logic_vector(7 downto 0);
 
     signal ffly_tx_data             : std_logic_vector(127 downto 0) :=
                                           X"000000" & work.util.K28_5
@@ -388,6 +389,7 @@ begin
 
         o_nios_reboot               => nios_reboot_156,
         o_shutdown                  => shutdown_internal,
+        o_reset_delay               => reset_delay_reg,
         i_testout                   => i_testout,
 
         i_reset_n                   => reset_156_n,
@@ -634,6 +636,7 @@ begin
         i_reset_bypass_payload  => reg_reset_bypass_payload,
         o_run_number            => run_number,
         i_fpga_id               => fpga_id_reg(15 downto 0),
+        i_reset_delay           => reset_delay_reg,
         i_terminated            => terminated, --TODO: test with two datamergers
         o_test                  => open,
 

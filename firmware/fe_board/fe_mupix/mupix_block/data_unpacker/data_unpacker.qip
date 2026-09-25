@@ -1,0 +1,11 @@
+#
+
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "mapping_functions.vhd"]
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "data_unpacker.vhd"]
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "data_unpacker_outer.vhd"]
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "hit_ts_conversion.vhd"]
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "hit_multiplexer.vhd"]
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "hit_multiplexer_generic.vhd"]
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "mp_sc_removal.vhd"]
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "sc_readback_mem.vhd"]
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "sc_readback_mem_adc.vhd"]
