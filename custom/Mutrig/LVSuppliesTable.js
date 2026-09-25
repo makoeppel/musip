@@ -92,7 +92,7 @@ function init_LVTable(config_url){
 
 // Dynamically build HV supply table rows from HV_devices provided by TimingScint_config.js
 function init_HVTable(config_url){
-    function makeRow(device, index) {
+    function makeRow(device, index, setStateName) {
         function makeCell(html) { var td = document.createElement('td'); td.innerHTML = html; return td; }
 
         var tr = document.createElement('tr');
@@ -103,6 +103,9 @@ function init_HVTable(config_url){
         //this is for the SCSHV boxes at PSI
         var statePath = '/Equipment/' + device +  '/Variables/Current[' + index + ']';//'/Variables/ChStatus[' + index + ']';
         var setStatePath = null;// '/Equipment/' + device + '/Variables/ChStatus[' + index + ']'; //null; 
+	if(setStateName != null){
+            setStatePath = '/Equipment/' + device + '/Variables/'+setStateName+'[' + index + ']'; //null;
+	}
         var demandVPath = '/Equipment/' + device + '/Variables/Demand[' + index + ']';
         var voltagePath = '/Equipment/' + device + '/Variables/Measured[' + index + ']';
         var currentLimitPath = '/Equipment/' + device + '/Settings/Current Limit[' + index + ']';
@@ -148,7 +151,7 @@ function init_HVTable(config_url){
 
         window.HV_devices.forEach(function(dev){
             //console.log('Processing device:', dev);
-            body.appendChild(makeRow(dev.device, dev.channel));
+            body.appendChild(makeRow(dev.device, dev.channel,dev.setStateName));
         });
     }
 
@@ -164,12 +167,14 @@ function init_HVTable(config_url){
           window.HV_devices = [];
           HV.forEach(function(entry){
             // Expect entry: { device: <name>, channel: <value> }
+            console.log(entry)
             if (!entry || typeof entry !== 'object') return;
             var device = entry.device !== undefined ? entry.device : null;
             var indices = entry.indices !== undefined ? entry.indices : null;
+            var setStateName = entry.setStateName !== undefined ? entry.setStateName : null;
 
             indices.forEach(function(c){
-              window.HV_devices.push({ device: device, channel: c }); 
+              window.HV_devices.push({ device: device, channel: c , setStateName: setStateName}); 
             });
           });
           console.log('HV devices:', window.HV_devices);

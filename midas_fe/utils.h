@@ -579,7 +579,7 @@ int MuTRiG_energy_update(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings)
         uint32_t energy_scale = m_settings["DAQ"]["Commands"]["MuTRiG"]["energy_scale"];
         uint32_t energy_offset = m_settings["DAQ"]["Commands"]["MuTRiG"]["energy_offset"];
         uint32_t value = ((energy_offset & 0x7fff)<< 4) | energy_scale & 0xf;
-        feb_sc.FEB_write(febIDx, value, MUTRIG_CTRL_ENERGY_REGISTER_W);
+        feb_sc.FEB_write(febIDx, MUTRIG_CTRL_ENERGY_REGISTER_W, value);
     }
     return status;
 }
