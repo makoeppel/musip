@@ -40,6 +40,7 @@ void AnaTriggerHistos::BeginRun(TARunInfo* runinfo) {
     using MD = musip::dqm::Metadata;
 
     /////////  1D histos  ///////////
+    proton_current = pPlotCollection_->getOrCreateHistogram1DD("proton_current", 2048, 0 - 0.5, 4096 - 0.5, error);
     l1_s1_time = pPlotCollection_->getOrCreateHistogram1DD("l1_s1_time", 2048, -2048 - 0.5, 2048 - 0.5, error);
     l1_s1_time_corrected = pPlotCollection_->getOrCreateHistogram1DD("l1_s1_time_corrected", 2048, -2048 - 0.5, 2048 - 0.5, error);
     h_channel = pPlotCollection_->getOrCreateHistogram1DD("ChannelID", n_CHANNELS, -0.5, n_CHANNELS - 0.5, error);
@@ -194,6 +195,9 @@ TAFlowEvent* AnaTriggerHistos::AnalyzeFlowEvent(TARunInfo*, TAFlags* flags, TAFl
     //loop over hits
     for(auto& hit : triggerhits) {
         auto last_hit = last_hits[hit.channel()];
+
+        if (hit.channel() == 7)
+            proton_current->Fill(hit.time_1ns());
 
         if (hit.channel() == 1) {
             saw_s1 = 1;
