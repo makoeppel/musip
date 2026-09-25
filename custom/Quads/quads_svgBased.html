@@ -136,7 +136,7 @@
 	// Chip selection routines 
 	// ------------------------------------------------------------------------------
 
-        color_sel = 'blue'; //'black';
+        color_sel = 'lightblue'; //'black';
 	color_unsel = '#c8c8c8';
 
         function color_chips(mask, feb) {
@@ -588,25 +588,84 @@
 
 	// Link quality monitoring:
 	// TODO: This function is currently only working for one FEB
+	// TODO: Proper initialization missing
+	var previous = [];
+
 	function update_pcls(value) {
 	    const svgObjects = document.querySelectorAll(".svgObject");
-	    var quadOffset = 0;
+	    var quadOffset = 0;	
 	    svgObjects.forEach(function (obj, index) {
 		const svgDoc = obj.contentDocument;
 		const febindex = Math.floor(index / 2);
-                //console.log(value);
-	        var febIDfromPCLS = value[0];
+	        var febIDfromPCLS = value[0]; // <-- not used so far (needed for general purpose)
 	        //var nlinks = value[1]; //not needed for now
 	        const nlinks = 12;
-	        for (var i=0; i < nlinks; i++) {
-		    var status = value[2+quadOffset+4*i];
-		    var disp   = value[2+quadOffset+4*i+1];
-		    var err    = value[2+quadOffset+4*i+2];
-		    var nhits  = value[2+quadOffset+4*i+3];
-		    //console.log(i+quadOffset, " : ", nhits);
-		    //TODO: Fetch the text in the svg where rate etc come into
-	        }
-		quadOffset += nlinks;
+
+		for (var chip=0; chip<4; chip++) {
+		    var nhits_chip = 0;
+		    
+   		    for (var i=0; i<3; i++) {
+			var link = chip * 3 + i;
+
+  		        var nhits = parseInt(value[2 + quadOffset + 4 * link + 3], 16);
+
+			var disp  = parseInt(value[2 + quadOffset + 4 * link + 1], 16);
+			var err   = parseInt(value[2 + quadOffset + 4 * link + 2], 16);
+
+			// Previous values for this individual link
+                        var prev = previous[index]?.[link] || {
+                            nhits: 0,
+                            disp: 0,
+                            err: 0
+                        };
+
+	                // Differences for this link
+        	        var new_nhits = nhits - prev.nhits;
+                	var new_disp  = disp  - prev.disp;
+                	var new_err   = err   - prev.err;
+
+			nhits_chip += new_nhits;
+			
+			console.log(index, chip, link, 2 + quadOffset + 4 * link + 3, parseInt(value[2 + quadOffset + 4 * link + 3], 16));
+
+			var linkLetter = ["A", "B", "C"][i];
+
+			if (svgDoc) {
+			    const disRate = svgDoc.getElementById(`link${linkLetter}_dispErr_chip${chip}`);
+			    const errRate = svgDoc.getElementById(`link${linkLetter}_8b10bErr_chip${chip}`);
+
+			    if (disRate)
+			        disRate.style.fill = new_disp === 0 ? "green" : new_disp < 100 ? "yellow" : "red";
+
+			    if (errRate)
+			        errRate.style.fill = new_err === 0 ? "green" : new_err < 100 ? "yellow" : "red";
+			}
+
+			// Store current values for next update
+                	if (!previous[index]) {
+	                    previous[index] = [];
+        	        }
+
+                	previous[index][link] = {
+	                    nhits: nhits,
+        	            disp: disp,
+                	    err: err
+	                };
+
+		    }
+		
+		    console.log(index, chip, nhits_chip);
+		    
+		    // Only nhits currently gets an SVG update
+		    if (svgDoc) {
+	                const chipRate = svgDoc.getElementById(`rate_chip${chip}`);
+        	        if (chipRate) {
+	                    chipRate.textContent = `${nhits_chip} Hz`;
+	                }
+		    }
+		}
+
+		quadOffset += nlinks*4;
 	    });
 	}
 
