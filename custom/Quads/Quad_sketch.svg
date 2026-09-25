@@ -23,15 +23,15 @@
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="mm"
-     inkscape:zoom="1.4142136"
-     inkscape:cx="118.08683"
-     inkscape:cy="134.70384"
+     inkscape:zoom="1.7101424"
+     inkscape:cx="122.21205"
+     inkscape:cy="124.55103"
      inkscape:window-width="1512"
-     inkscape:window-height="848"
+     inkscape:window-height="851"
      inkscape:window-x="0"
      inkscape:window-y="33"
      inkscape:window-maximized="1"
-     inkscape:current-layer="svgLayer_chips" />
+     inkscape:current-layer="layer1-4-3" />
   <defs
      id="defs1" />
   <g
@@ -83,5 +83,437 @@
        x="34.395832"
        y="34.395832"
        inkscape:label="Chip3" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer1"
+     inkscape:label="Labels_chip0">
+    <g
+       id="g8"
+       transform="translate(1.9782529,3.3112399)"
+       inkscape:label="RateBox">
+      <text
+         xml:space="preserve"
+         style="font-size:3.175px;writing-mode:lr-tb;direction:ltr;fill:#000000;stroke-width:0.264583"
+         x="6.0044861"
+         y="9.962472"
+         id="rateTitle_chip0"><tspan
+           sodipodi:role="line"
+           id="tspan1"
+           style="font-size:3.175px;stroke-width:0.264583"
+           x="6.0044861"
+           y="9.962472">Rate:</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-size:3.175px;writing-mode:lr-tb;direction:ltr;fill:#000000;stroke-width:0.264583"
+         x="6.0044861"
+         y="14.889613"
+         id="linkTitle_chip0"><tspan
+           sodipodi:role="line"
+           style="font-size:3.175px;stroke-width:0.264583"
+           x="6.0044861"
+           y="14.889613"
+           id="tspan4">Links: </tspan><tspan
+           sodipodi:role="line"
+           style="font-size:3.175px;stroke-width:0.264583"
+           x="6.0044861"
+           y="18.858362"
+           id="tspan2" /></text>
+      <text
+         xml:space="preserve"
+         style="font-size:3.175px;writing-mode:lr-tb;direction:ltr;fill:#000000;stroke-width:0.264583"
+         x="17.305702"
+         y="14.785744"
+         id="linkNumbering_chip0"><tspan
+           sodipodi:role="line"
+           id="tspan5"
+           style="font-size:3.175px;stroke-width:0.264583"
+           x="17.305702"
+           y="14.785744">A</tspan><tspan
+           sodipodi:role="line"
+           style="font-size:3.175px;stroke-width:0.264583"
+           x="17.305702"
+           y="18.754494"
+           id="tspan6">B</tspan><tspan
+           sodipodi:role="line"
+           style="font-size:3.175px;stroke-width:0.264583"
+           x="17.305702"
+           y="22.723244"
+           id="tspan7">C</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-size:3.175px;writing-mode:lr-tb;direction:ltr;fill:#000000;stroke-width:0.264583"
+         x="15.670519"
+         y="10.008981"
+         id="rate_chip0"
+         inkscape:label="rate_chip0"><tspan
+           sodipodi:role="line"
+           id="tspan8"
+           style="font-size:3.175px;stroke-width:0.264583"
+           x="15.670519"
+           y="10.008981">100 Hz</tspan></text>
+    </g>
+    <circle
+       style="fill:#000000;stroke-width:0.257532"
+       id="linkA_dispErr_chip0"
+       cx="23.998255"
+       cy="16.862488"
+       inkscape:label="linkA_dispErr"
+       r="1.190625" />
+    <circle
+       style="fill:#000000;stroke-width:0.257526"
+       id="linkB_dispErr_chip0"
+       cx="23.998255"
+       cy="20.897867"
+       r="1.190625" />
+    <circle
+       style="fill:#000000;stroke-width:0.257526"
+       id="linkC_dispErr_chip0"
+       cx="23.998255"
+       cy="24.933247"
+       r="1.190625" />
+    <circle
+       style="fill:#000000;stroke-width:0.257527"
+       id="linkC_8b10bErr_chip0"
+       cx="27.353651"
+       cy="24.933247"
+       r="1.190625" />
+    <circle
+       style="fill:#000000;stroke-width:0.257526"
+       id="linkB_8b10bErr_chip0"
+       cx="27.353651"
+       cy="20.897867"
+       r="1.190625" />
+    <circle
+       style="fill:#000000;stroke-width:0.257526"
+       id="linkA_8b10bErr_chip0"
+       cx="27.353651"
+       cy="16.862488"
+       r="1.190625" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer1-4"
+     inkscape:label="Labels_chip1"
+     transform="translate(29.104166,-0.02376512)">
+    <g
+       id="g8-2"
+       transform="translate(1.9782529,3.3112399)"
+       inkscape:label="RateBox">
+      <text
+         xml:space="preserve"
+         style="font-size:3.175px;writing-mode:lr-tb;direction:ltr;fill:#000000;stroke-width:0.264583"
+         x="6.0044861"
+         y="9.962472"
+         id="rateTitle_chip1"><tspan
+           sodipodi:role="line"
+           id="tspan1-7"
+           style="font-size:3.175px;stroke-width:0.264583"
+           x="6.0044861"
+           y="9.962472">Rate:</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-size:3.175px;writing-mode:lr-tb;direction:ltr;fill:#000000;stroke-width:0.264583"
+         x="6.0044861"
+         y="14.889613"
+         id="linkTitle_chip1"><tspan
+           sodipodi:role="line"
+           style="font-size:3.175px;stroke-width:0.264583"
+           x="6.0044861"
+           y="14.889613"
+           id="tspan4-3">Links: </tspan><tspan
+           sodipodi:role="line"
+           style="font-size:3.175px;stroke-width:0.264583"
+           x="6.0044861"
+           y="18.858362"
+           id="tspan2-4" /></text>
+      <text
+         xml:space="preserve"
+         style="font-size:3.175px;writing-mode:lr-tb;direction:ltr;fill:#000000;stroke-width:0.264583"
+         x="17.305702"
+         y="14.785744"
+         id="linkNumbering_chip1"><tspan
+           sodipodi:role="line"
+           id="tspan5-9"
+           style="font-size:3.175px;stroke-width:0.264583"
+           x="17.305702"
+           y="14.785744">A</tspan><tspan
+           sodipodi:role="line"
+           style="font-size:3.175px;stroke-width:0.264583"
+           x="17.305702"
+           y="18.754494"
+           id="tspan6-5">B</tspan><tspan
+           sodipodi:role="line"
+           style="font-size:3.175px;stroke-width:0.264583"
+           x="17.305702"
+           y="22.723244"
+           id="tspan7-9">C</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-size:3.175px;writing-mode:lr-tb;direction:ltr;fill:#000000;stroke-width:0.264583"
+         x="15.670519"
+         y="10.008981"
+         id="rate_chip1"
+         inkscape:label="rate_chip1"><tspan
+           sodipodi:role="line"
+           id="tspan8-8"
+           style="font-size:3.175px;stroke-width:0.264583"
+           x="15.670519"
+           y="10.008981">100 Hz</tspan></text>
+    </g>
+    <circle
+       style="fill:#000000;stroke-width:0.257532"
+       id="linkA_dispErr_chip1"
+       cx="23.998255"
+       cy="16.862488"
+       inkscape:label="#linkA_dispErr_chip1"
+       r="1.190625" />
+    <circle
+       style="fill:#000000;stroke-width:0.257526"
+       id="linkB_dispErr_chip1"
+       cx="23.998255"
+       cy="20.897867"
+       r="1.190625" />
+    <circle
+       style="fill:#000000;stroke-width:0.257526"
+       id="linkC_dispErr_chip1"
+       cx="23.998255"
+       cy="24.933247"
+       r="1.190625" />
+    <circle
+       style="fill:#000000;stroke-width:0.257527"
+       id="linkC_8b10bErr_chip1"
+       cx="27.353651"
+       cy="24.933247"
+       r="1.190625" />
+    <circle
+       style="fill:#000000;stroke-width:0.257526"
+       id="linkB_8b10bErr_chip1"
+       cx="27.353651"
+       cy="20.897867"
+       r="1.190625" />
+    <circle
+       style="fill:#000000;stroke-width:0.257526"
+       id="linkA_8b10bErr_chip1"
+       cx="27.353651"
+       cy="16.862488"
+       r="1.190625" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer1-4-7"
+     inkscape:label="Labels_chip2"
+     transform="translate(0,29.0804)">
+    <g
+       id="g8-2-0"
+       transform="translate(1.9782529,3.3112399)"
+       inkscape:label="RateBox">
+      <text
+         xml:space="preserve"
+         style="font-size:3.175px;writing-mode:lr-tb;direction:ltr;fill:#000000;stroke-width:0.264583"
+         x="6.0044861"
+         y="9.962472"
+         id="rateTitle_chip2"><tspan
+           sodipodi:role="line"
+           id="tspan1-7-6"
+           style="font-size:3.175px;stroke-width:0.264583"
+           x="6.0044861"
+           y="9.962472">Rate:</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-size:3.175px;writing-mode:lr-tb;direction:ltr;fill:#000000;stroke-width:0.264583"
+         x="6.0044861"
+         y="14.889613"
+         id="linkTitle_chip2"><tspan
+           sodipodi:role="line"
+           style="font-size:3.175px;stroke-width:0.264583"
+           x="6.0044861"
+           y="14.889613"
+           id="tspan4-3-5">Links: </tspan><tspan
+           sodipodi:role="line"
+           style="font-size:3.175px;stroke-width:0.264583"
+           x="6.0044861"
+           y="18.858362"
+           id="tspan2-4-3" /></text>
+      <text
+         xml:space="preserve"
+         style="font-size:3.175px;writing-mode:lr-tb;direction:ltr;fill:#000000;stroke-width:0.264583"
+         x="17.305702"
+         y="14.785744"
+         id="linkNumbering_chip2"><tspan
+           sodipodi:role="line"
+           id="tspan5-9-9"
+           style="font-size:3.175px;stroke-width:0.264583"
+           x="17.305702"
+           y="14.785744">A</tspan><tspan
+           sodipodi:role="line"
+           style="font-size:3.175px;stroke-width:0.264583"
+           x="17.305702"
+           y="18.754494"
+           id="tspan6-5-4">B</tspan><tspan
+           sodipodi:role="line"
+           style="font-size:3.175px;stroke-width:0.264583"
+           x="17.305702"
+           y="22.723244"
+           id="tspan7-9-1">C</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-size:3.175px;writing-mode:lr-tb;direction:ltr;fill:#000000;stroke-width:0.264583"
+         x="15.670519"
+         y="10.008981"
+         id="rate_chip2"
+         inkscape:label="rate_chip2"><tspan
+           sodipodi:role="line"
+           id="tspan8-8-6"
+           style="font-size:3.175px;stroke-width:0.264583"
+           x="15.670519"
+           y="10.008981">100 Hz</tspan></text>
+    </g>
+    <circle
+       style="fill:#000000;stroke-width:0.257532"
+       id="linkA_dispErr_chip2"
+       cx="23.998255"
+       cy="16.862488"
+       inkscape:label="#linkA_dispErr_chip2"
+       r="1.190625" />
+    <ellipse
+       style="fill:#000000;stroke-width:0.257526"
+       id="linkB_dispErr_chip2"
+       cx="23.998255"
+       cy="20.897867"
+       rx="1.191"
+       ry="1.190625" />
+    <circle
+       style="fill:#000000;stroke-width:0.257526"
+       id="linkC_dispErr_chip2"
+       cx="23.998255"
+       cy="24.933247"
+       r="1.190625" />
+    <circle
+       style="fill:#000000;stroke-width:0.257527"
+       id="linkC_8b10bErr_chip2"
+       cx="27.353651"
+       cy="24.933247"
+       r="1.190625" />
+    <circle
+       style="fill:#000000;stroke-width:0.257526"
+       id="linkB_8b10bErr_chip2"
+       cx="27.353651"
+       cy="20.897867"
+       r="1.190625" />
+    <circle
+       style="fill:#000000;stroke-width:0.257526"
+       id="linkA_8b10bErr_chip2"
+       cx="27.353651"
+       cy="16.862488"
+       r="1.190625" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer1-4-3"
+     inkscape:label="Labels_chip3"
+     transform="translate(29.104166,29.0804)">
+    <g
+       id="g8-2-5"
+       transform="translate(1.9782529,3.3112399)"
+       inkscape:label="RateBox">
+      <text
+         xml:space="preserve"
+         style="font-size:3.175px;writing-mode:lr-tb;direction:ltr;fill:#000000;stroke-width:0.264583"
+         x="6.0044861"
+         y="9.962472"
+         id="rateTitle_chip3"><tspan
+           sodipodi:role="line"
+           id="tspan1-7-3"
+           style="font-size:3.175px;stroke-width:0.264583"
+           x="6.0044861"
+           y="9.962472">Rate:</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-size:3.175px;writing-mode:lr-tb;direction:ltr;fill:#000000;stroke-width:0.264583"
+         x="6.0044861"
+         y="14.889613"
+         id="linkTitle_chip3"><tspan
+           sodipodi:role="line"
+           style="font-size:3.175px;stroke-width:0.264583"
+           x="6.0044861"
+           y="14.889613"
+           id="tspan4-3-6">Links: </tspan><tspan
+           sodipodi:role="line"
+           style="font-size:3.175px;stroke-width:0.264583"
+           x="6.0044861"
+           y="18.858362"
+           id="tspan2-4-1" /></text>
+      <text
+         xml:space="preserve"
+         style="font-size:3.175px;writing-mode:lr-tb;direction:ltr;fill:#000000;stroke-width:0.264583"
+         x="17.305702"
+         y="14.785744"
+         id="linkNumbering_chip3"><tspan
+           sodipodi:role="line"
+           id="tspan5-9-92"
+           style="font-size:3.175px;stroke-width:0.264583"
+           x="17.305702"
+           y="14.785744">A</tspan><tspan
+           sodipodi:role="line"
+           style="font-size:3.175px;stroke-width:0.264583"
+           x="17.305702"
+           y="18.754494"
+           id="tspan6-5-48">B</tspan><tspan
+           sodipodi:role="line"
+           style="font-size:3.175px;stroke-width:0.264583"
+           x="17.305702"
+           y="22.723244"
+           id="tspan7-9-3">C</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-size:3.175px;writing-mode:lr-tb;direction:ltr;fill:#000000;stroke-width:0.264583"
+         x="15.670519"
+         y="10.008981"
+         id="rate_chip3"
+         inkscape:label="rate_chip3"><tspan
+           sodipodi:role="line"
+           id="tspan8-8-64"
+           style="font-size:3.175px;stroke-width:0.264583"
+           x="15.670519"
+           y="10.008981">100 Hz</tspan></text>
+    </g>
+    <circle
+       style="fill:#000000;stroke-width:0.257532"
+       id="linkA_dispErr_chip3"
+       cx="23.998255"
+       cy="16.862488"
+       inkscape:label="#linkA_dispErr_chip3"
+       r="1.190625" />
+    <circle
+       style="fill:#000000;stroke-width:0.257526"
+       id="linkB_dispErr_chip3"
+       cx="23.998255"
+       cy="20.897867"
+       r="1.190625" />
+    <circle
+       style="fill:#000000;stroke-width:0.257526"
+       id="linkC_dispErr_chip3"
+       cx="23.998255"
+       cy="24.933247"
+       r="1.190625" />
+    <circle
+       style="fill:#000000;stroke-width:0.257527"
+       id="linkC_8b10bErr_chip3"
+       cx="27.353651"
+       cy="24.933247"
+       r="1.190625" />
+    <circle
+       style="fill:#000000;stroke-width:0.257526"
+       id="linkB_8b10bErr_chip3"
+       cx="27.353651"
+       cy="20.897867"
+       r="1.190625" />
+    <circle
+       style="fill:#000000;stroke-width:0.257526"
+       id="linkA_8b10bErr_chip3"
+       cx="27.353651"
+       cy="16.862488"
+       r="1.190625" />
   </g>
 </svg>
