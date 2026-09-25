@@ -34,6 +34,7 @@ private:
     musip::dqm::PlotCollection* pPlotCollection_ {};
 
     //global 1D histos
+    musip::dqm::Histogram1DD* proton_current {}; // channel hitmap
     musip::dqm::Histogram1DD* l1_s1_time {}; // channel hitmap
     musip::dqm::Histogram1DD* l1_s1_time_corrected {}; // channel hitmap
     musip::dqm::Histogram1DD* h_channel {}; // channel hitmap
