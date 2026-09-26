@@ -185,6 +185,11 @@ void init_banks() {
     names.push_back("DMA SKIP");
     names.push_back("DMA FULL");
     names.push_back("READOUT RATE");
+    names.push_back("Sorter InTime FEB 0");
+    names.push_back("Sorter OutTime FEB 0");
+    names.push_back("Sorter Over FEB 0");
+    names.push_back("Sorter Out FEB 0");
+
     quads_settings[namename] = names;
 
     // setup PCLS bank
@@ -837,6 +842,31 @@ int read_sc_event(char* pevent, int off) {
     readout_banks.push_back(dma_skip);
     readout_banks.push_back(dma_full);
     readout_banks.push_back(m_settings["Readout"]["HitRate"]);
+
+    // TODO: this is a hack from the pioneer beamtime
+    vector<uint32_t> sorterdata(12*7+3);
+    feb_sc->FEB_read(0, SORTER_COUNTER_REGISTER_R, sorterdata);
+
+    // NINTIME counter
+    uint32_t nintime = 0;
+    for(uint32_t i = 0; i < 12; i++) {
+        nintime += sorterdata[i+SORTER_INDEX_NINTIME];
+    }
+    // NOUTOFTIME counter
+    uint32_t nouttime = 0;
+    for(uint32_t i = 0; i < 12; i++) {
+        nouttime += sorterdata[i+SORTER_INDEX_NOUTOFTIME];
+    }
+    // NOVERFLOW counter
+    uint32_t noverflow = 0;
+    for(uint32_t i = 0; i < 12; i++) {
+        noverflow += sorterdata[i+SORTER_INDEX_NOVERFLOW];
+    }
+    uint32_t nout = sorterdata[SORTER_INDEX_NOUT];
+    readout_banks.push_back(nintime);
+    readout_banks.push_back(nouttime);
+    readout_banks.push_back(noverflow);
+    readout_banks.push_back(nout);
 
     // *************************************
     // ************ MUPIX BANKS  ***********
