@@ -78,36 +78,36 @@ static void print_swb_counters(mudaq::DmaMudaqDevice& mu) {
     printf("Input subheader (cnt / rate (Hz))\n");
     for (int i = 0; i <= 3; ++i) {
         mu.write_register(SWB_COUNTER_REGISTER_W, i);
-        uint32_t cnt = mu.read_register_ro(SWB_COUNTER_REGISTER_LOW_R);
-        uint32_t rate = mu.read_register_ro(SWB_RATE_REGISTER_R);
+        uint32_t cnt = mu.read_register_ro(SWB_COUNTER_REGISTER_R);
+        uint32_t rate = 0;
         printf("Link:%i %i / %i\n", i, cnt, rate);
     }
     printf("Input hit (cnt / rate (Hz))\n");
     for (int i = 4; i <= 7; ++i) {
         mu.write_register(SWB_COUNTER_REGISTER_W, i);
-        uint32_t cnt = mu.read_register_ro(SWB_COUNTER_REGISTER_LOW_R);
-        uint32_t rate = mu.read_register_ro(SWB_RATE_REGISTER_R);
+        uint32_t cnt = mu.read_register_ro(SWB_COUNTER_REGISTER_R);
+        uint32_t rate = 0;
         printf("Link:%i %i / %i\n", i, cnt, rate);
     }
     printf("Input package (cnt / rate (Hz))\n");
     for (int i = 8; i <= 11; ++i) {
         mu.write_register(SWB_COUNTER_REGISTER_W, i);
-        uint32_t cnt = mu.read_register_ro(SWB_COUNTER_REGISTER_LOW_R);
-        uint32_t rate = mu.read_register_ro(SWB_RATE_REGISTER_R);
+        uint32_t cnt = mu.read_register_ro(SWB_COUNTER_REGISTER_R);
+        uint32_t rate = 0;
         printf("Link:%i %i / %i\n", i, cnt, rate);
     }
     mu.write_register(SWB_COUNTER_REGISTER_W, 12);
-    uint32_t cnt = mu.read_register_ro(SWB_COUNTER_REGISTER_LOW_R);
-    uint32_t rate = mu.read_register_ro(SWB_RATE_REGISTER_R);
+    uint32_t cnt = mu.read_register_ro(SWB_COUNTER_REGISTER_R);
+    uint32_t rate = 0;
     printf("MUX out (cnt / rate (Hz)):%i / %i\n", cnt, rate);
 
     printf("DMA hit cnt out: %i \n",
-           mu.read_register_ro(EVENT_BUILD_HIT_CNT_LOWER_R) * 4);  // hit cnt to DMA
+           mu.read_register_ro(EVENT_BUILD_IDLE_NOT_HEADER_R) * 4);  // hit cnt to DMA
     printf("DMA hit rate out: %i \n",
-           mu.read_register_ro(EVENT_BUILD_HIT_RATE_R));  // fifo rate to DMA
+           mu.read_register_ro(EVENT_BUILD_TAG_FIFO_FULL_R));  // fifo rate to DMA
     printf("DMA skip hit cnt: %i \n",
-           mu.read_register_ro(EVENT_BUILD_HIT_DROP_CNT_R) * 4);  // hit drop DMA busy
-    printf("DMA FIFO full: %i \n", mu.read_register_ro(EVENT_BUILD_FULL_CNT_R));  // fifo full cnt
+           mu.read_register_ro(EVENT_BUILD_SKIP_EVENT_DMA_R) * 4);  // hit drop DMA busy
+    printf("DMA FIFO full: %i \n", mu.read_register_ro(BUFFER_STATUS_REGISTER_R));  // fifo full cnt
 }
 
 uint64_t generate_random_pixel_hit_swb(bool print) {
@@ -417,7 +417,7 @@ int read_stream_thread(void*) {
 
         // create MIDAS events
         auto clock_start_create_event = std::chrono::steady_clock::now();
-        it ( SUCCESS == create_midas_events(hits, sizeof(hits)/sizeof(hits[0]) , rbh) ) {
+        if ( SUCCESS == create_midas_events(hits, sizeof(hits)/sizeof(hits[0]), rbh) ) {
             auto clock_end_create_event = std::chrono::steady_clock::now();
             auto dma_time = std::chrono::duration<double>(clock_end - clock_start).count();
             printf("nHits %i time %i\n", sizeof(hits)/sizeof(hits[0]), dma_time);
