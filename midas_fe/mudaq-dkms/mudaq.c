@@ -462,7 +462,7 @@ int mudaq_register(struct mudaq* mu) {
             mudaq_set_dma_data_addr(mu, entry->dma_handle, i, entry->size >> PAGE_SHIFT);
             i++;
         }
-        mudaq_set_dma_n_buffers(mu, i + 1);
+        mudaq_set_dma_n_buffers(mu, i);
     }
     mu->to_user[1] = 0;
 

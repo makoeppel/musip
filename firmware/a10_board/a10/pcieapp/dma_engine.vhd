@@ -20,9 +20,13 @@ use work.a10_pcie_registers.all;
 
 entity dma_engine is
 generic (
+    -- internal memory:
+    -- - g_DATA_WIDTH * 2^g_WADDR_WIDTH == 256 * 2^g_RADDR_WIDTH
+    -- - [AK] g_RADDR_WIDTH must be 11 (see below)
     g_WADDR_WIDTH : positive := 13;
     g_RADDR_WIDTH : positive := 11;
     g_DATA_WIDTH : positive := 64;
+    --
     IRQNUM                      : std_logic_vector(4 downto 0) := "00000";
     ENABLE_BIT                  : integer := 0;
     NOW_BIT                     : integer := 0;
@@ -82,9 +86,10 @@ architecture RTL of dma_engine is
     signal memwriteaddr                 : std_logic_vector(g_WADDR_WIDTH-1 downto 0);
     signal memwriteaddr_long            : std_logic_vector(63 downto 0);
     signal memwriteaddr_last            : std_logic_vector(g_WADDR_WIDTH-1 downto 0);
-    signal memdatawren                  : std_logic;
 
-    signal enoughdata                   : std_logic_vector(31 downto 0);
+    -- each bit corresponds to 4 kB block in internal memory,
+    -- in total there are 16 blocks for a total of 64 kB
+    signal enoughdata                   : std_logic_vector(15 downto 0);
     signal overflow                     : std_logic;
     signal memoryblock_dma              : std_logic_vector(3 downto 0);
     signal memoryblock_written          : std_logic_vector(3 downto 0);
@@ -115,7 +120,7 @@ architecture RTL of dma_engine is
     signal packet_length_l              : std_logic_vector(10 downto 0);
     signal packet_length                : std_logic_vector(9 downto 0);
     signal words_sent                   : std_logic_vector(9 downto 0);
-    signal blocks                       : std_logic_vector(6 downto 0);
+    signal blocks                       : integer range 16 downto 1;
     signal last_dw_be                   : std_logic;
 
     signal remoteaddress_var            : std_logic_vector(31 downto 0); -- assume buffer is not larger than 4 GB
@@ -139,13 +144,6 @@ architecture RTL of dma_engine is
     signal count_pages                  : std_logic_vector(19 downto 0);
     signal dma_data_n_addrs_reg         : std_logic_vector(11 downto 0);
 
-    -- signals for DMA fifo and memory writing
-    signal aclr                         : std_logic;
-    signal data_fifo                    : std_logic_vector(127 downto 0);
---    signal empty_fifo                   : std_logic;
---    signal empty_fifo_r                 : std_logic;
-    signal full_fifo                    : std_logic;
-
     signal tx_ready_last                : std_logic;
     signal tx_valid_r                   : std_logic;
 
@@ -158,8 +156,6 @@ architecture RTL of dma_engine is
 begin
 
     dma_status_register <= dma_status_register_reg;
-
-    aclr <= not i_reset_n;
 
     o_tx.data <= tx_data_r when tx_valid_r = '1'
         else tx_data_last;
@@ -252,7 +248,7 @@ begin
         test_out <= test_out_r;
 
         test_out_r(27 downto 12) <= datain(22 downto 7);
---        test_out_r(35 downto 28) <= data_fifo(11 downto 4);
+        --test_out_r(35 downto 28) <= data_fifo(11 downto 4);
         test_out_r(35 downto 28) <= (others => '0'); -- dma_fifo is commented out, thus data_fifo is not connected
         test_out_r(10 downto 0) <= memwriteaddr(10 downto 0);
         test_out_r(11) <= '0'; -- currently unused bits
@@ -354,7 +350,7 @@ begin
                 dma_request <= '1';
                 memwraddr_last_dma <= (memoryblock_dma + '1') & "0000000";
                 packet_length_l <= "00001000000"; -- 64
-                blocks <= "0010000"; --16
+                blocks <= 16;
                 memaddr <= memwraddr_last_dma;
                 memaddr_last_packet <= memwraddr_last_dma;
                 memwriteaddreoedma <= memwriteaddreoe;
@@ -383,7 +379,8 @@ begin
                 memaddr <= memaddr+'1';
             end if;
 
-            remoteaddress_next <= dma_data_address_out_fpga + (count_pages & x"000"); -- one PCIe block has 0x100 bytes, one 4096B page per DMA block
+            -- one PCIe block has one page (0x1000 = 4096 bytes) per DMA block
+            remoteaddress_next <= dma_data_address_out_fpga + (count_pages & x"000");
 
         -- wait one cycle for dma_granted to be set to '0' in completer
         when pause_dma1 =>
@@ -413,7 +410,7 @@ begin
 
             if(dma_granted = '1') then
                 state <= header;
-                memaddr <= memaddr+'1';
+                memaddr <= memaddr + 1;
                 if ( pause_counter /= "0010") then -- stayed longer than minimum 3 cycles in pause2 state -> other stuff happening on bus
                     dma_block_counter <= (others => '0');
                 else
@@ -432,8 +429,8 @@ begin
                 "00000000" & -- byte 2: tag
                 last_dw_be & last_dw_be & last_dw_be & last_dw_be & "1111"; -- byte 3 last and first data word byte enables
 
-            -- 32 bit addressing
-            if ( remoteaddress_next(63 downto 32) = x"00000000" ) then
+            if ( remoteaddress_next(63 downto 32) = 0 ) then
+                -- 32 bit addressing
                 header0 := "0" & "10" & "00000" &-- byte0: R(1) FMT(2) TYPE(5)
                     "0" & "000" & "0000" & --byte1: R(1) TC(3) R(4)
                     "0" & "0" & "00" & "00" & packet_length; -- packet length is in words
@@ -442,7 +439,6 @@ begin
                 header3 := (others => '0');  -- reserved
             else
                 -- 64 bit addressing
-
                 header0 := "0" & "11" & "00000" &-- byte0: R(1) FMT(2) TYPE(5)
                     "0" & "000" & "0000" & --byte1: R(1) TC(3) R(4)
                     "0" & "0" & "00" & "00" & packet_length; -- packet length is in words
@@ -469,7 +465,7 @@ begin
                 state <= running;
 
                 remoteaddress_var <= remoteaddress_var  + (packet_length & "00"); -- in bytes
-                words_sent <= words_sent + "0000000100";
+                words_sent <= words_sent + 4;
             end if;
             if(tx_ready = '1' and tx_ready_last = '1') then
                 memaddr <= memaddr+'1';
@@ -485,7 +481,7 @@ begin
                 o_tx.sop <= '0';
                 o_tx.eop <= '0';
                 o_tx.empty <= "00";
-                words_sent <= words_sent + "000001000";
+                words_sent <= words_sent + 8;
                 memoutbuffer <= memout(255 downto 128);
             else
                 tx_valid_r <= '0';
@@ -495,7 +491,7 @@ begin
                 words_sent <= words_sent;
             end if;
 
-            if(words_sent >= "0000111000" and tx_ready_last = '1')then -- check for PCIe-block boundary
+            if(words_sent >= 56 and tx_ready_last = '1') then -- check for PCIe-block boundary
                 tx_valid_r <= '1';
                 o_tx.sop <= '0';
                 o_tx.eop <= '1';
@@ -503,15 +499,16 @@ begin
                 -- Upper half of the packet should be empty
                 o_tx.empty <= "10";
 
-                addrtemp := memaddr_last_packet + "1000";
+                addrtemp := memaddr_last_packet + 8;
                 memaddr <= addrtemp(g_RADDR_WIDTH-1 downto 1) & "0";
-                memaddr_last_packet <= memaddr_last_packet + "1000";
+                memaddr_last_packet <= memaddr_last_packet + 8;
 
-                if(blocks <= "0000001") then
+                -- blocks are counted from 16 to 1
+                if(blocks <= 1) then
                     state <= controlinfoheader;
-                    count_pages <= count_pages + '1';
+                    count_pages <= count_pages + 1;
                     dma_block_counter <= (others => '0');
-                    if ( interruptcounter = "111111" ) then
+                    if ( interruptcounter = 63 ) then
                         remoteaddress_interrupt <= remoteaddress_var;
                     end if;
 
@@ -520,15 +517,13 @@ begin
                     pause_counter <= (others => '0');
                     dma_done <= '1';
                     --state <= header;
-                    blocks <= blocks - '1';
+                    blocks <= blocks - 1;
                     words_sent <= (others => '0');
                     remoteaddress_next <= remoteaddress_next + (packet_length & "00");
                 end if;
-
-
             else
-                if(tx_ready = '1' and words_sent < "0000111000") then
-                    memaddr <= memaddr+'1';
+                if(tx_ready = '1' and words_sent < 56) then
+                    memaddr <= memaddr + 1;
                 else
                     memaddr  <= memaddr;
                 end if;
@@ -587,7 +582,6 @@ begin
 
 
             if(tx_ready_last = '1') then
-
                 if ( count_pages >= dma_data_pages_out_fpga ) then
                     dma_data_mem_addr_fpga <= dma_data_mem_addr_fpga + '1';
                     count_pages <= (others => '0');
@@ -599,13 +593,13 @@ begin
 
                 end if;
 
-
                 tx_valid_r <= '1';
                 o_tx.sop <= '1';
                 o_tx.eop <= '1';
                 o_tx.empty <= "00";
 
-                if(interruptcounter = "111111" and interrupt_enabled = '1') then  -- interrupt every 64 DMA blocks
+                if(interruptcounter = 63 and interrupt_enabled = '1') then
+                    -- interrupt every 64 DMA blocks
                     state <= interrupt;
                 else
                     state <= waiting;
@@ -649,7 +643,6 @@ begin
         memwriteaddr <= (others => '0');
         memwriteaddr_long <= (others => '0');
         memwriteaddr_last <= (others => '0');
-        memdatawren <= '0';
         memwriteaddreoe <= (others => '0');
         start_dma <= '0';
         start_dma_next <= '0';
@@ -681,9 +674,11 @@ begin
             end if;
 
             -- check for 4kB written data
+            -- [AK] this assumes internal memory size of 64 kB,
+            --      i.e. g_RADDR_WIDTH = 11 => 2^11 * 256 / 8 = 64 kB
             if(memwriteaddr(g_WADDR_WIDTH-4) /= memwriteaddr_last(g_WADDR_WIDTH-4)) then -- 64 bit words input
                 memoryblock_written <= memwriteaddr_last(g_WADDR_WIDTH-1 downto g_WADDR_WIDTH-4);
-                start_dma <= not(start_dma);
+                start_dma <= not start_dma;
             end if;
             memwriteaddr_last <= memwriteaddr;
             start_dma_next <= start_dma; -- wait one cycle until ref_clk sees transition

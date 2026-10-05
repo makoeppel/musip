@@ -31,16 +31,10 @@ constexpr std::array<T, N> filled_array(const T& value) {
 // Map /Equipment/Quads/Settings
 midas::odb settings = {
     {"Readout",
-     {{"Datagen Divider", 1000},
-      {"Sorter Delay", filled_array<uint64_t, N_FEBS>(200)},
-      {"Software dummy", false},
+     {{"Software dummy", false},
       {"Datagen Enable", false},
       {"mask_n_generic", 0x0},
-      {"use_merger", false},
-      {"max_requested_words", 0x80000},
-      {"use_send_time", false},
-      {"HitRate", 0},
-      {"n_mevents", 10}}},
+      {"HitRate", 0}}},
     {"DAQ",
      {
         {"Commands",

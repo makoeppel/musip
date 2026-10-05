@@ -15,7 +15,7 @@ use work.mudaq.all;
 entity pcie_block is
 generic (
     g_DMA_WADDR_WIDTH : positive := 14;
-    g_DMA_RADDR_WIDTH : positive := 12;
+    g_DMA_RADDR_WIDTH : positive := 11;
     g_DMA_DATA_WIDTH : positive := 32;
     g_PCIE_X : positive := 8--;
 );
@@ -42,8 +42,8 @@ port (
     pcie_led_x8         : out   std_logic;
 
     -- pcie registers
-    writeregs           : out   reg32array_pcie;
-    regwritten          : out   std_logic_vector(63 downto 0);
+    o_writeregs         : out   reg32array_pcie;
+    o_regwritten        : out   std_logic_vector(63 downto 0);
     readregs            : in    reg32array_pcie;
 
     -- pcie writeable memory
@@ -417,8 +417,8 @@ begin
         app_msi_ack         => app_msi_ack,
 
         -- registers
-        writeregs           => writeregs,
-        regwritten          => regwritten,
+        o_writeregs         => o_writeregs,
+        o_regwritten        => o_regwritten,
         readregs            => readregs,
 
         -- pcie writeable memory
