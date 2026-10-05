@@ -25,6 +25,7 @@ port (
     o_hit_cnt           : out std_logic_vector(63 downto 0);
     o_hit_drop_cnt      : out std_logic_vector(63 downto 0);
     o_full_cnt          : out std_logic_vector(63 downto 0);
+    o_cnt_input         : out std_logic_vector(63 downto 0);
     o_hit_rate          : out std_logic_vector(31 downto 0);
 
     i_reset_n           : in  std_logic;
@@ -45,8 +46,6 @@ architecture arch of musip_event_builder is
     );
 
     signal event_builder_state : event_builder_state_t := waiting;
-    signal cnt_4kb : std_logic_vector(31 downto 0);
-
 
     ------------------------------------------------------------------------
     -- FIFO interface signals
@@ -61,17 +60,12 @@ architecture arch of musip_event_builder is
     ------------------------------------------------------------------------
     -- Counters
     ------------------------------------------------------------------------
-    signal hit_cnt : std_logic_vector(63 downto 0) := (others => '0');
-    signal hit_drop_cnt : std_logic_vector(63 downto 0) := (others => '0');
-    signal full_cnt : std_logic_vector(63 downto 0) := (others => '0');
+    signal hit_cnt, cnt_input, hit_drop_cnt, full_cnt : std_logic_vector(63 downto 0) := (others => '0');
 
+    -- [AK] TODO: count in units of 4 kB
     signal word_counter  : std_logic_vector(31 downto 0) := (others => '0');
 
-
-    ------------------------------------------------------------------------
-    -- Control signals
-    ------------------------------------------------------------------------
-    signal done          : std_logic := '0';
+    signal timeout : unsigned(25 downto 0);
 
 begin
 
@@ -79,6 +73,7 @@ begin
     o_hit_cnt <= hit_cnt;
     o_hit_drop_cnt <= hit_drop_cnt;
     o_full_cnt <= full_cnt;
+    o_cnt_input <= cnt_input;
 
     e_fifo_event : entity work.ip_scfifo_v2
     generic map (
@@ -100,12 +95,9 @@ begin
     );
 
     --! data out
-    fifo_en <= '1' when (fifo_empty = '0' and i_dmamemhalffull = '0') and (event_builder_state = write_hits or event_builder_state = write_last_hit) else '0';
-    drop_hit <= '1' when fifo_en = '0' and wrusedw(13) = '1' else '0';
-    o_wen <= '1' when event_builder_state = write_4kb_padding and i_dmamemhalffull = '0' else fifo_en;
-    o_data <= fifo_data when event_builder_state = write_hits or event_builder_state = write_last_hit else (others => '1');
-    o_endofevent <= '1' when (fifo_empty = '0' and i_dmamemhalffull = '0') and event_builder_state = write_last_hit else '0';
-    o_done <= done;
+    fifo_en <= '1' when ( fifo_empty = '0' and i_dmamemhalffull = '0' ) and ( event_builder_state = write_hits ) else '0';
+    drop_hit <= '1' when ( fifo_en = '0' and wrusedw(13) = '1' ) else '0';
+    o_done <= '1' when ( i_wen = '1' and word_counter >= i_get_n_words ) else '0';
 
     e_hit_rate : entity work.word_rate
     generic map ( g_CLK_MHZ => 250.0 )
@@ -118,62 +110,68 @@ begin
     process(i_clk, i_reset_n)
     begin
     if ( i_reset_n = '0' ) then
-        done <= '0';
-        cnt_4kb <= (others => '0');
         event_builder_state <= waiting;
+        o_wen <= '0';
+        o_data <= (others => '1');
+        o_endofevent <= '0';
         hit_cnt <= (others => '0');
         hit_drop_cnt <= (others => '0');
         word_counter <= (others => '0');
         full_cnt <= (others => '0');
+        cnt_input <= (others => '0');
         --
     elsif rising_edge(i_clk) then
 
         if ( drop_hit = '1' ) then
-            hit_drop_cnt <= std_logic_vector(unsigned(hit_drop_cnt) + 1);
+            hit_drop_cnt <= hit_drop_cnt + 1;
         end if;
 
         if ( i_wen = '0' ) then
-            done <= '0';
             word_counter <= (others => '0');
         end if;
 
         if ( fifo_full = '1' ) then
-            full_cnt <= std_logic_vector(unsigned(full_cnt) + 1);
+            full_cnt <= full_cnt + 1;
+        end if;
+
+        if ( i_valid = '1' ) then
+            cnt_input <= cnt_input + 1;
+        end if;
+
+        o_wen <= '0';
+        o_data <= (others => '1');
+        o_endofevent <= '0';
+
+        if ( fifo_empty = '0' or word_counter(12 downto 0) = 0 ) then
+            -- reset timeout when there is data or when at 4~kB boundary
+            timeout <= (others => '1');
+        elsif ( timeout /= 0 ) then
+            timeout <= timeout - 1;
         end if;
 
         case event_builder_state is
             when waiting =>
-                if ( i_wen = '1' and i_get_n_words /= 0 and done = '0' ) then
-                    word_counter <= i_get_n_words;
+                if ( i_wen = '1' and word_counter < i_get_n_words ) then
                     event_builder_state <= write_hits;
                 end if;
 
             when write_hits =>
-                if ( word_counter = 2 and fifo_empty = '0' and i_dmamemhalffull = '0' ) then
-                    event_builder_state <= write_last_hit;
-                    word_counter <= std_logic_vector(unsigned(word_counter) - 1);
-                    hit_cnt <= std_logic_vector(unsigned(hit_cnt) + 1);
-                elsif ( fifo_empty = '0' and i_dmamemhalffull = '0' ) then
-                    word_counter <= std_logic_vector(unsigned(word_counter) - 1);
-                    hit_cnt <= std_logic_vector(unsigned(hit_cnt) + 1);
-                end if;
-
-            when write_last_hit =>
-                if ( fifo_empty = '0' and i_dmamemhalffull = '0' ) then
-                    word_counter <= (others => '0');
-                    cnt_4kb <= (others => '0');
-                    event_builder_state <= write_4kb_padding;
-                    hit_cnt <= std_logic_vector(unsigned(hit_cnt) + 1);
-                end if;
-
-            when write_4kb_padding =>
-                if ( i_dmamemhalffull = '0' ) then
-                    if ( cnt_4kb = "01111111" ) then
-                        done <= '1';
-                        event_builder_state <= waiting;
-                    else
-                        cnt_4kb <= cnt_4kb + '1';
+                if ( word_counter >= i_get_n_words and word_counter(12 downto 0) = 0 ) then
+                    -- stop when we have have requested words and at 256~kB boundary
+                    event_builder_state <= waiting;
+                    o_endofevent <= '1';
+                elsif ( fifo_empty = '1' and word_counter(12 downto 0) = 0 ) then
+                    event_builder_state <= waiting;
+                    o_endofevent <= '1';
+                elsif ( fifo_empty = '0' or timeout = 0 ) and ( i_dmamemhalffull = '0' ) then
+                    -- produce data or filler on timeout
+                    o_wen <= '1';
+                    o_data <= (others => '1');
+                    if ( fifo_empty = '0' ) then
+                        o_data <= fifo_data;
+                        hit_cnt <= hit_cnt + 1;
                     end if;
+                    word_counter <= word_counter + 1;
                 end if;
 
             when others =>

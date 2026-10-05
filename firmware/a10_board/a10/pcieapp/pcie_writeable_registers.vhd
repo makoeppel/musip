@@ -24,8 +24,8 @@ port (
     i_rx_bar        : in    std_logic;
 
     -- registers
-    writeregs       : out   reg32array_pcie;
-    regwritten      : out   std_logic_vector(63 downto 0);
+    o_writeregs     : out   reg32array_pcie;
+    o_regwritten    : out   std_logic_vector(63 downto 0);
 
     -- to response engine
     readaddr        : out   std_logic_vector(5 downto 0);
@@ -119,17 +119,18 @@ begin
     fdw_be <= rx_st.data(35 downto 32);
     ldw_be <= rx_st.data(39 downto 36);
 
-    writeregs <= writeregs_r;
-
     process(i_clk, i_reset_n)
     begin
     if ( i_reset_n = '0' ) then
         state <= reset;
         writeregs_r <= (others => (others => '0'));
-        regwritten <= (others => '0');
+        regwritten_r <= (others => '0');
+        o_writeregs <= (others => (others => '0'));
+        o_regwritten <= (others => '0');
         --
     elsif rising_edge(i_clk) then
-        regwritten <= regwritten_r;
+        o_writeregs <= writeregs_r;
+        o_regwritten <= regwritten_r;
 
         readen <= '0';
         word3 <= rx_st.data(127 downto 96);
@@ -243,8 +244,10 @@ begin
         -- so during writeregs_B_reset_n the write requests are buffered
         -- and the writes are delayed (but not lost)
         writeregs_B <= (others => (others => '0'));
+        regwritten_B <= (others => '0');
         --
     elsif rising_edge(i_clk_B) then
+        regwritten_B <= (others => '0');
         if ( writeregs_B_fifo_rempty = '0' ) then
             writeregs_B(to_integer(unsigned(writeregs_B_fifo_rdata(37 downto 32)))) <= writeregs_B_fifo_rdata(31 downto 0);
             regwritten_B(to_integer(unsigned(writeregs_B_fifo_rdata(37 downto 32)))) <= '1';
