@@ -34,6 +34,7 @@ midas::odb settings = {
      {{"Software dummy", false},
       {"Datagen Enable", false},
       {"mask_n_generic", 0x0},
+      {"Sorter Delay", filled_array<uint64_t, N_FEBS>(200)},
       {"HitRate", 0}}},
     {"DAQ",
      {
