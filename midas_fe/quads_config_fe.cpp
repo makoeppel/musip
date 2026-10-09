@@ -438,7 +438,6 @@ void sc_settings_changed(midas::odb o) {
         "lapse_delay",
         "lapse_replace_latency",
         "resetskew"
-
     };
 
     std::vector<std::string> names_no_reset{
@@ -650,6 +649,10 @@ void sc_settings_changed(midas::odb o) {
 
             cm_msg1(MINFO, "quads", "on_settings_changed()" , "disable data generator on the FPGA");
 
+        }
+        if (name == "Load Firmware" && o) {
+            cm_msg1(MINFO, "quads", "on_settings_changed()" , "Load Firmware");
+            LoadFirmwareAll(*feb_sc,m_settings,m_variables,false);
         }
 
         if(!no_reset)
@@ -1007,7 +1010,7 @@ int read_sc_event(char* pevent, [[maybe_unused]] int off) {
                 float fval = TMB_TEMPERATURE_FACTOR * to_signed_16b(rval[idx+1]);
                 if( (((rval[0]>>(idx)) & 0x01) == 0) || ((rval[idx+1]&0xffff)==0x8fff))
                     fval = NAN;
-                printf("XXTM idx = %lu : %x --> %f\n",idx,rval[idx+1],fval);
+                //printf("XXTM idx = %lu : %x --> %f\n",idx,rval[idx+1],fval);
                 values_XXTM.push_back(fval);
             }
         } else {
