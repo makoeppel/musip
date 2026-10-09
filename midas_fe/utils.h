@@ -1397,6 +1397,18 @@ int InitFEBs(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) {
     for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
         bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
         bool FEBsIsMutrig = m_settings["DAQ"]["Links"]["FEBsMutrig"][febIDx];
+        if (!FEBActive)
+            continue;
+
+        // set FPGA ID
+        feb_sc.FEB_write(febIDx, FPGA_ID_REGISTER_RW, febIDx);
+        vector<uint32_t> data(1);
+        feb_sc.FEB_read(febIDx, FPGA_ID_REGISTER_RW, data);
+        if ((febIDx & 0xffff) == (data[0] & 0xffff))
+            cm_msg1(MINFO, "quads", "InitFEBs()", "Successfully set FEBID of FEB %i to ID %i", febIDx,
+                   febIDx);
+
+
         if (FEBsIsMutrig) {
             feb_sc.FEB_write(febIDx, MUTRIG_CTRL_DP_REGISTER_W, 0x0FFFFFFF);
             feb_sc.FEB_write(febIDx, MUTRIG_CTRL_DUMMY_REGISTER_W, 0x0);
@@ -1408,32 +1420,26 @@ int InitFEBs(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings) {
             feb_sc.FEB_write(febIDx, MUTRIG_CTRL_LAPSE_DELAY_W, delay);
 
         }
-        if (!FEBActive)
-            continue;
-        // set FPGA ID
-        feb_sc.FEB_write(febIDx, FPGA_ID_REGISTER_RW, febIDx);
-        vector<uint32_t> data(1);
-        feb_sc.FEB_read(febIDx, FPGA_ID_REGISTER_RW, data);
-        if ((febIDx & 0xffff) == (data[0] & 0xffff))
-            cm_msg1(MINFO, "quads", "InitFEBs()", "Successfully set FEBID of FEB %i to ID %i", febIDx,
-                   febIDx);
-        feb_sc.FEB_write(febIDx, MP_LVDS_LINK_MASK_REGISTER_W,
-                         (uint32_t)m_settings["DAQ"]["Links"]["LVDSLinkMask"][febIDx]);
-        feb_sc.FEB_write(
-            febIDx, MP_LVDS_LINK_MASK2_REGISTER_W,
-            (uint32_t)(((uint64_t)m_settings["DAQ"]["Links"]["LVDSLinkMask"][febIDx]) >> 32));
-        feb_sc.FEB_write(febIDx, MP_LVDS_INVERT_0_REGISTER_W,
-                         (uint32_t)m_settings["DAQ"]["Links"]["LVDSLinkInvert"][febIDx]);
-        feb_sc.FEB_write(
-            febIDx, MP_LVDS_INVERT_1_REGISTER_W,
-            (uint32_t)(((uint64_t)m_settings["DAQ"]["Links"]["LVDSLinkInvert"][febIDx]) >> 32));
-        feb_sc.FEB_write(febIDx, MP_CTRL_SPI_ENABLE_REGISTER_W, 0x00000000);
-        feb_sc.FEB_write(febIDx, MP_CTRL_DIRECT_SPI_ENABLE_REGISTER_W, 0x00000000);
-        feb_sc.FEB_write(febIDx, MP_CTRL_SLOW_DOWN_REGISTER_W, 0x0000001F);
+        else { // FEB is Pixel
+            feb_sc.FEB_write(febIDx, MP_LVDS_LINK_MASK_REGISTER_W,
+                            (uint32_t)m_settings["DAQ"]["Links"]["LVDSLinkMask"][febIDx]);
+            feb_sc.FEB_write(
+                febIDx, MP_LVDS_LINK_MASK2_REGISTER_W,
+                (uint32_t)(((uint64_t)m_settings["DAQ"]["Links"]["LVDSLinkMask"][febIDx]) >> 32));
+            feb_sc.FEB_write(febIDx, MP_LVDS_INVERT_0_REGISTER_W,
+                            (uint32_t)m_settings["DAQ"]["Links"]["LVDSLinkInvert"][febIDx]);
+            feb_sc.FEB_write(
+                febIDx, MP_LVDS_INVERT_1_REGISTER_W,
+                (uint32_t)(((uint64_t)m_settings["DAQ"]["Links"]["LVDSLinkInvert"][febIDx]) >> 32));
+            feb_sc.FEB_write(febIDx, MP_CTRL_SPI_ENABLE_REGISTER_W, 0x00000000);
+            feb_sc.FEB_write(febIDx, MP_CTRL_DIRECT_SPI_ENABLE_REGISTER_W, 0x00000000);
+            feb_sc.FEB_write(febIDx, MP_CTRL_SLOW_DOWN_REGISTER_W, 0x0000001F);
+        }
+
         uint32_t delay = m_settings["Readout"]["Sorter Delay"][febIDx];
         feb_sc.FEB_write(febIDx, SORTER_COUNTER_REGISTER_R + SORTER_INDEX_DELAY, delay);
 
-        // chip mapping
+        // chip mapping TODO: this needs separation between mutrig and quads
         cm_msg1(MINFO, "quads", "InitFEBs()", "Set global ASIC ID mapping");
         for ( uint32_t chipID = febIDx * N_CHIPS; chipID < (febIDx + 1) * N_CHIPS; chipID++ ) {
             uint16_t globalChipID = (uint16_t) m_settings["DAQ"]["Links"]["Mapping"][chipID];
