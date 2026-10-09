@@ -1,7 +1,9 @@
 #!/usr/bin/env -S python3
 import sys
-sys.path.append("../../")
+#sys.path.append("../../")
+from datetime import datetime
 import mutrig.base_variables as cfg
+import mutrig.mutrigTB_variables
 import mutrig.tthreshold_scan as tscan
 import mutrig.Mutrig_basic_functions as m
 import midas.client as client
@@ -17,20 +19,32 @@ cfg.polarity_inverted = False
 # Sequencer callbacks
 def define_params(seq):
     seq.register_param("start_threshold", "Start t-threshold", 0);
-    seq.register_param("stop_threshold", "Stop t-threshold", 255);
+    seq.register_param("stop_threshold", "Stop t-threshold", 63);
     seq.register_param("step_threshold", "Step t-threshold", 1);
-    seq.register_param("wait_time", "Wait time (s)", 1);
+    seq.register_param("start_offset", "Start t-offset", 0);
+    seq.register_param("stop_offset", "Stop t-offset", 2);
+    seq.register_param("wait_time", "Wait time (s)", 3);
 
 
 def sequence(seq):
     seq.set_py_logger_to_midas(True)
-    start_threshold = seq.get_param("start_threshold");
-    stop_threshold  = seq.get_param("stop_threshold");
-    step_threshold  = seq.get_param("step_threshold");
-    wait_time        = seq.get_param("wait_time");
+    start_tth = seq.get_param("start_threshold");
+    stop_tth  = seq.get_param("stop_threshold");
+    step_tth  = seq.get_param("step_threshold");
+    start_offs = seq.get_param("start_offset");
+    stop_offs  = seq.get_param("stop_offset");
+    dt        = seq.get_param("wait_time");
 
-    th, r, temperatures, settings = tscan.scan(seq, 0, 64, 1, 3)
-    filename = f'tthreshold_scan_260527.json'
+    th,r,temperatures,settings = tscan.scan(seq,
+                                            start_threshold=start_tth, stop_threshold=stop_tth, step_threshold=step_tth, 
+                                            start_offset=start_offs, stop_offset=stop_offs,
+                                            wait_time=dt)
+
+
+    scan_path = "scripts/MutrigScripts/data/tthreshold_scans"
+    current_date = datetime.now().strftime('%d-%m-%Y-%H:%M')
+    filename = scan_path+"/tth_scan_"+str(current_date)+".json"
+
     seq.msg("Scan complete. Writing output to "+filename)
     tscan.write_json(filename,th,r,temperatures,settings)
 
@@ -63,7 +77,10 @@ if __name__ == "__main__":
     #cfg.TEST_MODE = True
     cfg.Print()
 
+    scan_path = "measurements/"
+    filename = scan_path+"/tth_scan_"+str(current_date)+".json"
+
     th,r,temperatures,settings = tscan.scan(seq,start_threshold=0, stop_threshold=63, step_threshold=1, wait_time=3.0, start_offset=0, stop_offset=2)
-    filename = f'../data/tthreshold_scan.json'
+
     seq.msg("Scan complete. Writing output to "+filename)
     tscan.write_json(filename,th,r,temperatures,settings)
