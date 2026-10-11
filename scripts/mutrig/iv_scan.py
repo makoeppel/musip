@@ -8,16 +8,17 @@ import midas.client as client
 import midas.sequencer as sequencer
 import re
 import json
+import os
 from datetime import datetime
 import numpy as np
 import mutrig.base_variables as cfg
-
 import mutrig.Mutrig_basic_functions as m
+import sys
+
+import matplotlib.pyplot as plt
 
 path_this_scan = f"/Tests/Mutrig/iv_scan"
-# module-level storage so an external interrupt handler can restore settings
-_original_settings = {}
-hv_channels = 4 # change this if we want to scan more than one module
+
 
 def Get_HV_path(setting, index=None):
     if index is not None:
@@ -25,15 +26,6 @@ def Get_HV_path(setting, index=None):
     else:
         return f"{cfg.path_hv}/Variables/{setting}"
 
-def Get_HV_index(client, name):
-    index = -1
-    #channel_names = client.odb_get(f"{cfg.path_hv}/Settings/Names");
-    for i in range(8): # change this to have len(HV channels)
-        channel_name = client.odb_get(f"{cfg.path_hv}/Settings/Names[{i}]");
-        #channel_name = channel_names[i]
-        if channel_name == name:
-            index = i
-    return index
 
 def Store_HV_Settings(client):
     settings=client.odb_get(f"{cfg.path_hv}/Variables/Demand")
@@ -42,7 +34,7 @@ def Store_HV_Settings(client):
 def Restore_HV_Settings(client,settings):
     settings=client.odb_set(f"{cfg.path_hv}/Variables/Demand",settings)
         
-def scan(seq, hv_board, start_voltage, stop_voltage, num_steps, wait_time):
+def scan(seq, start_voltage, stop_voltage, num_steps, wait_time, enable_odb_storage=False):
     '''
     Pythonized version of original sequencer script for IV scan
     args:
@@ -51,7 +43,6 @@ def scan(seq, hv_board, start_voltage, stop_voltage, num_steps, wait_time):
         stop_voltage - stopping voltage value
         num_steps - number of steps for voltage
         wait_time - time to wait after setting new voltage before reading out current
-        hv_board - number/name of the HV board used
     returns:
         V_{hv_board}_{hv_channel} - list of voltages for each channel of the used HV board
         I_{hv_board}_{hv_channel} - list of corresponding current for each channel of the used HV board
@@ -68,66 +59,112 @@ def scan(seq, hv_board, start_voltage, stop_voltage, num_steps, wait_time):
     num_steps = num_steps + 1 # add one step for stop_voltage
     step_size = (stop_voltage - start_voltage) / (num_steps - 1)
     
-    seq.msg(f"IV scan: Scanning IV for voltages from {start_voltage} to {stop_voltage} in steps of {step_size} in ({num_steps} steps)")
+    channel_indices=[]
+    channel_names=[]
+    eq_channel_names = seq.odb_get(f"{cfg.path_hv}/Settings/Names")
+    for chn in cfg.channel_names:
+        try:
+            channel_indices.append(eq_channel_names.index(chn))
+            channel_names.append(chn)
+        except:
+            pass
+    hv_channels = len(channel_indices)
+
+
+    seq.msg(f"IV scan: Scanning IV for voltages from {start_voltage} to {stop_voltage} in steps of {step_size} in ({num_steps} steps). Channels: {channel_names}")
     
     # Delete old output
-    seq.msg("Does not touch ChState, you're responsible for turning on the channels")
-    print(f"Check that the output for HV board {hv_board} is active!")
-    input("Press Enter to continue ...")
-    try:
-        seq.odb_delete(f"{path_this_scan}/Output")
-    except:
-        seq.msg(f"No previous output to delete at {path_this_scan}/Output")
+    if enable_odb_output:
+        try:
+            seq.odb_delete(f"{path_this_scan}/Output")
+        except:
+            seq.msg(f"No previous ODB output to delete at {path_this_scan}/Output")
     
     # Store current values
     global original_settings
     original_settings = Store_HV_Settings(seq)
     
     # create arrays for V and I:
-    V = [ [] for i in range(hv_channels) ]
-    I = [ [] for i in range(hv_channels) ]
+    V = [[] for i in range(hv_channels)]
+    I = [[] for i in range(hv_channels)]
     
-    # scanning part:
-    for hv_ch in range(hv_channels):
-        # Choose hv name for the channel
-        hv_name = f"TL_DS_{hv_board}_{hv_ch}"
-        print("hv_name: ",hv_name)
-        # find which index the name corresponds to
-        index_hv = Get_HV_index(seq, hv_name)
-        print("index_hv: ",index_hv)
-        
-        seq.odb_set(f"{cfg.path_hv}/Variables/Demand[{index_hv}]",start_voltage)
-    time.sleep(wait_time)
-    
+    # scanning part - setup:
+    for hv_idx, hv_name in zip(channel_indices, channel_names):
+        print("hv_name: ",hv_name,"; index_hv: ",hv_idx)
+        seq.odb_set(f"{cfg.path_hv}/Variables/Demand[{hv_idx}]",start_voltage) 
+        output_on_check = seq.odb_get(f"{cfg.path_hv}/Settings/Output On[{hv_idx}]")
+        if (output_on_check != True): 
+            print("output_on for HV ",hv_name," is False, please verify")
+    time.sleep(2*wait_time)
+   
     for num in range(num_steps):
         time.sleep(wait_time)
         next_demand = start_voltage + step_size * num
         print("Next voltage: ",next_demand," out of ",stop_voltage)
-        
-        for hv_ch in range(hv_channels):
-            hv_name = f"TL_DS_{hv_board}_{hv_ch}"
-            index_hv = Get_HV_index(seq, hv_name)
-            volt = seq.odb_get(f"{cfg.path_hv}/Variables/Voltage[{index_hv}]")
-            curr = seq.odb_get(f"{cfg.path_hv}/Variables/Current[{index_hv}]")
-            V[hv_ch].append(volt)
-            I[hv_ch].append(curr)
-            
-            seq.odb_set(f"{cfg.path_hv}/Variables/Demand[{index_hv}]",next_demand)
-        
-    Restore_HV_Settings(seq, original_settings)
-    
-    return V, I
+        for chIdx, (hv_idx, hv_name) in enumerate(zip(channel_indices, channel_names)):
+            V[chIdx].append(seq.odb_get(f"{cfg.path_hv}/Variables/Voltage[{index_hv}]"))
+            I[chIdx].append(seq.odb_get(f"{cfg.path_hv}/Variables/Current[{index_hv}]"))
 
+            if enable_odb_storage:
+                seq.odb_set(f"{path_this_scan}/Output/V_{hv_name}[{num}]",V[chIdx][-1])
+                seq.odb_set(f"{path_this_scan}/Output/I_{hv_name}[{num}]",I[chIdx][-1])
+
+            seq.odb_set(f"{cfg.path_hv}/Variables/Demand[{chIdx}]",next_demand)
+        
+    Restore_HV_Settings(seq, original_settings)    
+    return channel_names, V, I
 
 # Write data to json
-def write_json(path, V, I, hv_board):
-    current_date = "13-02-26"
+def write_json(path, names, V, I):
+    current_date = datetime.today().strftime('%d-%m-%Y') # to be used as the file ending for scans/configs
+    print("Date: ", current_date)
     output = {'IV scan': current_date}
-    for hv_ch in range(hv_channels):
-        V_dict = {f'V_{hv_board}_{hv_ch}' : V[hv_ch]}
-        I_dict = {f'I_{hv_board}_{hv_ch}' : I[hv_ch]}
+    for i, name in enumerate(names):
+        V_dict = {f'V_{name}' : V[i]}
+        I_dict = {f'I_{name}' : I[i]}
         output.update(V_dict)
         output.update(I_dict)
     with open(path, 'w') as json_file:
         json.dump(output, json_file, indent=2)
     json_file.close()
+
+
+def read_json(path):
+    with open(path, 'r') as json_file:
+        data = json.load(json_file)
+    json_file.close()
+    V=[]
+    I=[]
+    names=[]
+    for key in data.keys():
+        if key.startswith('V_'):
+            hv_name = key[2:]
+            V.append(data[key])
+            I.append(data[f'I_{hv_name}'])
+            names.append(hv_name)
+            print(f"HV channel: {hv_name}, V: {V}, I: {I}")
+    return names, V, I
+
+def plot_iv(names, V, I, output_path_iv, title):
+    plt.figure(figsize=(8, 6))
+    for i, name in enumerate(names):
+        plt.plot(V[i], I[i], "-", label=name)
+    
+    plt.title(f'IV Scan for {title}')
+    plt.xlabel('Voltage (V)')
+    plt.ylabel('Current (mA)')
+    plt.xlim([44, 58])
+    plt.ylim([1e-3, 1e0])
+    plt.yscale('log')
+    
+    plt.legend()
+    plt.grid()
+    plt.savefig(output_path_iv)
+    plt.close()
+    
+    print(f"Saved to {output_path_iv}")
+
+def plot_iv_from_json(json_path, output_path, title):
+    names, V, I = read_json(json_path)
+    ofilename = os.path.splitext(os.path.basename(json_path))[0]
+    plot_iv(names, V, I, output_path, title, ofilename)

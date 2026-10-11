@@ -77,7 +77,8 @@ if __name__ == "__main__":
     #cfg.TEST_MODE = True
     cfg.Print()
 
-    scan_path = "measurements/"
+    scan_path = "scripts/MutrigScripts/data/tthreshold_scans"
+    current_date = datetime.now().strftime('%d-%m-%Y-%H:%M')
     filename = scan_path+"/tth_scan_"+str(current_date)+".json"
 
     th,r,temperatures,settings = tscan.scan(seq,start_threshold=0, stop_threshold=63, step_threshold=1, wait_time=3.0, start_offset=0, stop_offset=2)
