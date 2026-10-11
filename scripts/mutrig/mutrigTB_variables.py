@@ -16,5 +16,5 @@ cfg.polarity_inverted = False
 
 cfg.path_hv = "/Equipment/HV Scintillators"
 cfg.path_lv = "/Equipment/LVSUPPLY1"
-cfg.hv_names = ["CH0"]
+cfg.hv_channel_names = ["TTI QL564P CH1"]
 

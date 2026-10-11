@@ -38,6 +38,3 @@ alias git-mk='env GIT_AUTHOR_NAME="Marius Koeppel" GIT_AUTHOR_EMAIL="koeppel.ma@
 alias git-tr='env GIT_AUTHOR_NAME="Thomas Rudzki" GIT_AUTHOR_EMAIL="rudzki@physi.uni-heidelberg.de" git'
 alias git-kb='env GIT_AUTHOR_NAME="Konrad Briggl" GIT_AUTHOR_EMAIL="konrad.briggl@kip.uni-heidelberg.de" git'
 alias git-lm='env GIT_AUTHOR_NAME="Lukas Mandok" GIT_AUTHOR_EMAIL="mandok@physi.uni-heidelberg.de" git'
-alias git-pi='env GIT_AUTHOR_NAME="Pascal Isenring" GIT_AUTHOR_EMAIL="pascal.isenring@psi.ch" git'
-alias git-zs='env GIT_AUTHOR_NAME="Zaher Salman" GIT_AUTHOR_EMAIL="zaher.salman@psi.ch" git'
-alias git-jw='env GIT_AUTHOR_NAME="Julian Wollrath" GIT_AUTHOR_EMAIL="julian.wollrath@psi.ch" git'
