@@ -17,8 +17,8 @@ cfg.polarity_inverted = False
 
 # Sequencer callbacks
 def define_params(seq):
-    seq.register_param("start_voltage", "Start voltage", 45)
-    seq.register_param("stop_voltage", "Stop voltage", 57)
+    seq.register_param("start_voltage", "Start voltage", 30)
+    seq.register_param("stop_voltage", "Stop voltage", 45)
     seq.register_param("num_steps", "Number of steps", 30)
     seq.register_param("wait_time", "Wait time (s)", 1)
 
@@ -65,8 +65,10 @@ if __name__ == "__main__":
     # register handler for common termination signals
     signal.signal(signal.SIGINT, _interrupt_handler)
     signal.signal(signal.SIGTERM, _interrupt_handler)
+    cfg.Print()
 
-    V, I = ivscan.scan(seq,start_voltage=45, stop_voltage=57, num_steps=30, wait_time=5)
+    
+    names, V, I = ivscan.scan(seq,start_voltage=30, stop_voltage=45, num_steps=30, wait_time=1)
     
     scan_path = "scripts/MutrigScripts/data/iv_scans"
     current_date = datetime.now().strftime('%d-%m-%Y-%H:%M')

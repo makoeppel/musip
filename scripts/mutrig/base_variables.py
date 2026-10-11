@@ -16,7 +16,7 @@ polarity_inverted = "False"
 path_hv = "/Equipment/HV"
 path_lv = "/Equipment/TDK"
 
-hv_names = []
+hv_channel_names = []
 
 def Print():
     print("*** MuTRiG Scan setup variables ***")
@@ -26,6 +26,8 @@ def Print():
     print(f"path_links_settings = {path_links_settings}")
     print(f"bank_prefix         = {bank_prefix}")
     print(f"polarity_inverted   = {polarity_inverted}")
+    print(f"hv equipment path   = {path_hv}")
+    print(f"hv channel names    = {hv_channel_names}")
     print("*************************************")
 
 

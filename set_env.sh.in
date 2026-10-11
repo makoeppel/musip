@@ -23,7 +23,7 @@ LD_LIBRARY_PATH="$LIBDIR:$LD_LIBRARY_PATH"
 if [[ "$OSTYPE" == "darwin"* ]] ; then
     export DYLD_LIBRARY_PATH="$LIBDIR${DYLD_LIBRARY_PATH:+:$DYLD_LIBRARY_PATH}";
 fi
-export PYTHONPATH="PYTHONPATH:$MIDASSYS/python"
+export PYTHONPATH="PYTHONPATH:$MIDASSYS/python:@PROJECT_SOURCE_DIR@/scripts"
 
 # remove duplicate and export
 PATH=$(printf %s "$PATH" | awk -v RS=: '!a[$0]++ { if(n++) printf(":"); printf("%s", $0) }')

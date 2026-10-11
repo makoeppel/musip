@@ -62,7 +62,7 @@ def scan(seq, start_voltage, stop_voltage, num_steps, wait_time, enable_odb_stor
     channel_indices=[]
     channel_names=[]
     eq_channel_names = seq.odb_get(f"{cfg.path_hv}/Settings/Names")
-    for chn in cfg.channel_names:
+    for chn in cfg.hv_channel_names:
         try:
             channel_indices.append(eq_channel_names.index(chn))
             channel_names.append(chn)
@@ -74,7 +74,7 @@ def scan(seq, start_voltage, stop_voltage, num_steps, wait_time, enable_odb_stor
     seq.msg(f"IV scan: Scanning IV for voltages from {start_voltage} to {stop_voltage} in steps of {step_size} in ({num_steps} steps). Channels: {channel_names}")
     
     # Delete old output
-    if enable_odb_output:
+    if enable_odb_storage:
         try:
             seq.odb_delete(f"{path_this_scan}/Output")
         except:
@@ -93,23 +93,30 @@ def scan(seq, start_voltage, stop_voltage, num_steps, wait_time, enable_odb_stor
         print("hv_name: ",hv_name,"; index_hv: ",hv_idx)
         seq.odb_set(f"{cfg.path_hv}/Variables/Demand[{hv_idx}]",start_voltage) 
         output_on_check = seq.odb_get(f"{cfg.path_hv}/Settings/Output On[{hv_idx}]")
-        if (output_on_check != True): 
-            print("output_on for HV ",hv_name," is False, please verify")
+        if (output_on_check != True):
+            seq.msg(f"Output_on for HV {hv_name} is False, please verify")
+    next_demand = start_voltage
     time.sleep(2*wait_time)
    
     for num in range(num_steps):
         time.sleep(wait_time)
+        current_demand = next_demand
+        #print("Next voltage: ",next_demand," out of ",stop_voltage)
         next_demand = start_voltage + step_size * num
-        print("Next voltage: ",next_demand," out of ",stop_voltage)
         for chIdx, (hv_idx, hv_name) in enumerate(zip(channel_indices, channel_names)):
-            V[chIdx].append(seq.odb_get(f"{cfg.path_hv}/Variables/Voltage[{index_hv}]"))
-            I[chIdx].append(seq.odb_get(f"{cfg.path_hv}/Variables/Current[{index_hv}]"))
+            vm = seq.odb_get(f"{cfg.path_hv}/Variables/Voltage[{hv_idx}]")
+            cm = seq.odb_get(f"{cfg.path_hv}/Variables/Current[{hv_idx}]")
+            print(f"Step {num+1}/{num_steps}: HV {hv_name} (index {hv_idx}) - Demand: {current_demand:.2f} V, Measured Voltage: {vm:.2f} V, Measured Current: {cm:.2f} mA")
+            seq.odb_set(f"{cfg.path_hv}/Variables/Demand[{hv_idx}]",next_demand)
+
+            V[chIdx].append(vm)
+            I[chIdx].append(cm)
 
             if enable_odb_storage:
-                seq.odb_set(f"{path_this_scan}/Output/V_{hv_name}[{num}]",V[chIdx][-1])
-                seq.odb_set(f"{path_this_scan}/Output/I_{hv_name}[{num}]",I[chIdx][-1])
+                seq.odb_set(f"{path_this_scan}/Output/V_{hv_name}[{num}]",vm)
+                seq.odb_set(f"{path_this_scan}/Output/I_{hv_name}[{num}]",cm)
 
-            seq.odb_set(f"{cfg.path_hv}/Variables/Demand[{chIdx}]",next_demand)
+            seq.odb_set(f"{cfg.path_hv}/Variables/Demand[{hv_idx}]",next_demand)
         
     Restore_HV_Settings(seq, original_settings)    
     return channel_names, V, I
@@ -146,6 +153,8 @@ def read_json(path):
     return names, V, I
 
 def plot_iv(names, V, I, output_path_iv, title):
+
+
     plt.figure(figsize=(8, 6))
     for i, name in enumerate(names):
         plt.plot(V[i], I[i], "-", label=name)
@@ -153,9 +162,9 @@ def plot_iv(names, V, I, output_path_iv, title):
     plt.title(f'IV Scan for {title}')
     plt.xlabel('Voltage (V)')
     plt.ylabel('Current (mA)')
-    plt.xlim([44, 58])
-    plt.ylim([1e-3, 1e0])
-    plt.yscale('log')
+    #plt.xlim([V_min - (V_max - V_min)*0.01, V_max + (V_max - V_min)*0.01])
+    #plt.ylim([1e-3, 1e0])
+    #plt.yscale('log')
     
     plt.legend()
     plt.grid()
