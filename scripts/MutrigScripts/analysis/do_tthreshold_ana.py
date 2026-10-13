@@ -1,11 +1,11 @@
 #!/usr/bin/env -S python3
 import sys
-#sys.path.append("../../../python/")
 sys.path.append("../../")
+
 import mutrig.base_variables as cfg
 import mutrig.mutrigTB_variables
 
-import mutrig.rate_calibration as rc
+import mutrig.tth_selection as tth_ana
 import mutrig.tthreshold_scan as tth_scan
 import mutrig.Mutrig_basic_functions as m
 import sys
@@ -14,12 +14,17 @@ import os
 # Standalone / Tests main routine
 if __name__ == "__main__":
     global seq;
-    filename = "../data/tthreshold_scan_.json"
-    filename_output = "../data/tthreshold_scan.config.json"
 
+    args = sys.argv[1:]
+    if len(args) < 1:
+        quit()
+    
+    filename = args[0]
+    filename_output=filename+".calib.json"
+    if len(args) > 1:
+        filename_output = args[1]
         
-    tths_arr, offsets_arr, bad_channels, channels_details = rc.select_tth(filename,constrate=True,constrate_value=100000,high_to_low = False,debug = False)
-    #tths_arr, offsets_arr, bad_channels, channels_details = rc.select_tth(filename, 16)
+    tths_arr, offsets_arr, bad_channels, channels_details = tth_ana.select_rate(filename,constrate_value=1e5,ratecut=2e5, skip=4)
     tth_scan.write_config_odb(tths_arr, offsets_arr, path = filename_output)
 
 
