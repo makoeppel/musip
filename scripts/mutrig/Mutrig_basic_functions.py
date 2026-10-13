@@ -27,6 +27,24 @@ def Configure_all_asics(client):
 def SetTestPulse(client, enable=1):
     client.odb_set(f"{cfg.path_commands}/TestPulsesTDC", enable)
 
+def MaskUnmaskChannels(client,channel=None, mask=None, others=None):
+    maskv = client.odb_get(Get_channel_odb_path("mask"))
+    if others != None:
+        maskv = [mask]*len(maskv)
+    if (channel != None) and (mask != None):
+        maskv[channel]=mask
+    client.odb_set(Get_channel_odb_path("mask"),maskv)
+
+def Set_tth(client,previous_threshold):
+    path_threshold = Get_channel_odb_path("tthresh")
+    client.msg(f"Reading previous T-threshold settings from {path_threshold}")
+    client.odb_set(path_threshold,previous_threshold)
+
+    client.odb_set(f"{cfg.path_commands}/TestPulsesTDC", enable)
+    length_ch = len(settings['Channels']['mask'])
+    settings['Channels']['mask']=[8]*mask;
+
+
 
 ##################################################
 # Standard Mutrig ASIC configuration
