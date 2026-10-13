@@ -36,6 +36,8 @@ protected:
     std::vector<musip::dqm::Histogram2DF*> maskmap;
     std::vector<musip::dqm::Histogram2DF*> combinedHitmap;
     std::vector<musip::dqm::Histogram2DF*> hitmaps;
+    std::vector<musip::dqm::Histogram2DF*> hitmaps_low_tot;
+    std::vector<musip::dqm::Histogram2DF*> hitmaps_high_tot;
     std::vector<musip::dqm::Histogram1DD*> hitToT;
     std::vector<musip::dqm::Histogram1DD*> hitToA;
     std::vector<musip::dqm::Histogram1DD*> hitTime;

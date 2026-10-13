@@ -51,7 +51,7 @@
 // data buffer is 512MB ( = 128k uint32 words)
 // currently the maximum is 4GB, if larger buffer is needed, the variable on the
 // FPGA looping through the ring buffer needs to have more bits
-#define MUDAQ_DMABUF_DATA_ORDER 25                            // 29, 25 for 32 MB
+#define MUDAQ_DMABUF_DATA_ORDER 29                            // 29, 25 for 32 MB
 #define MUDAQ_DMABUF_DATA_LEN (1 << MUDAQ_DMABUF_DATA_ORDER)  // in bytes
 #define MUDAQ_DMABUF_DATA_MASK (MUDAQ_DMABUF_DATA_LEN - 1)
 #define MUDAQ_DMABUF_DATA_ORDER_WORDS (MUDAQ_DMABUF_DATA_ORDER - 2)

@@ -4,6 +4,7 @@ const setups = {
     musip: {
 	mask_path: ["/home/mu3e/musip/online/userfiles/maskfiles"],
         features: ["keithley", "cooling"],
+	n_quads: 6,
 	//Titles:
 	lv_supply_0_title: "LV SUPPLY 0: FEB & MuTrig",
 	lv_supply_1_title: "LV SUPPLY 1: Quads & HV Box",
@@ -23,6 +24,8 @@ const setups = {
     pioneer: {
 	mask_path: ["/home"],     
         features: ["keins"],
+	n_quads: 2,
+	//Titles:
 	lv_supply_0_title: "LV SUPPLY 0: FEBs",
 	lv_supply_1_title: "LV SUPPLY 1 Quads and HV Box",
 	hv_supply_title: "HV Box",

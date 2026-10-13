@@ -87,7 +87,7 @@
         </table>
 
 
-        <table class="mtable" id="LVsupply1">
+        <!-- <table class="mtable" id="LVsupply1">
             <tr><th colspan="12" class="mtableheader">LV SUPPLY 1</th></tr>
             <tr>
                 <th colspan="2" >Channel</th>
@@ -157,7 +157,7 @@
             </tr>
 
         </table>
-        
+         -->
         <!-- <table class="mtable" id="LVsupply2">
             <tr><th colspan="8" class="mtableheader">LV SUPPLY 2</th></tr>
             <tr>
@@ -212,10 +212,10 @@
 
         </table> -->
 
-        <!-- <table class="mtable" id="HVSUPPLY">
-            <tr><th colspan="8" class="mtableheader">HV SUPPLY</th></tr>
+        <table class="mtable" id="HVSUPPLY">
+            <tr><th colspan="7" class="mtableheader">HV SUPPLY</th></tr>
             <tr>
-                <th colspan="2" >Channel</th>
+                <th>Channel</th>
                 <th>State</th>
                 <th>Demand Voltage</th>
                 <th>Voltage</th>
@@ -223,6 +223,7 @@
                 <th>Current (uA)</th>
                 <th>Description</th>
             </tr>
+	    <!--
             <tr>
                 <th>0</th>
                 <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/HVSUPPLY0/Variables/State[0]" data-color="lightgreen" data-background-color="red"></div></td>
@@ -252,28 +253,28 @@
                 <td><div class="modbvalue" data-format="e3" data-odb-path="/Equipment/HVSUPPLY1/Variables/Current Limit[1]" data-odb-editable="1" data-formula="x"></div></td>
                 <td><div id="keithley_curr" data-format="e3" class="modbvalue" data-odb-path="/Equipment/HVSUPPLY1/Variables/Current[1]" data-formula="1000000*x"></div></td>
                 <td id="HVSUPPLY1_1" style="text-align: center">not connected</td>
-            </tr>
+	    </tr>-->
             <tr>
                 <th rowspan="2">HV Box</th>
-                <td rowspan="2" style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/LVSUPPLY0/Variables/State[2]" data-color="lightgreen" data-background-color="red"></div></td>
-                <td rowspan="2" style="text-align: center"><input type="checkbox" name="CheckboxPixels" class="modbcheckbox" data-odb-path="/Equipment/LVSUPPLY0/Variables/Set State[2]"></input></td>
+                <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/LVSUPPLY0/Variables/State[2]" data-color="lightgreen" data-background-color="red"></div></td>
                 <td><div class="modbvalue" data-odb-path="/Equipment/Quad HV/Variables/Demand[0]" data-formula="-x" data-odb-editable="1"></div></td>
                 <td><div class="modbvalue" data-format="e3" data-odb-path="/Equipment/Quad HV/Variables/Measured[0]" data-formula="-x"></div></td>
                 <td rowspan="2">none</td>
                 <td><div id="keithley_curr" data-format="e3" class="modbvalue" data-odb-path="/Equipment/Quad HV/Variables/Current[0]" data-formula="x"></div></td>
-                <td id="HVSUPPLY1_1" style="text-align: center">Quad 0 (70µm)</td>
+                <td id="HVSUPPLY1_1" style="text-align: center">Quad 0</td>
             </tr>
             <tr>
+		<td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/LVSUPPLY0/Variables/State[2]" data-color="lightgreen" data-background-color="red"></div></td>
                 <td><div class="modbvalue" data-odb-path="/Equipment/Quad HV/Variables/Demand[3]" data-formula="-x" data-odb-editable="1"></div></td>
                 <td><div class="modbvalue" data-format="e3" data-odb-path="/Equipment/Quad HV/Variables/Measured[3]" data-formula="-x"></div></td>
                 <td><div id="keithley_curr" data-format="e3" class="modbvalue" data-odb-path="/Equipment/Quad HV/Variables/Current[3]" data-formula="x"></div></td>
-                <td id="HVSUPPLY1_1" style="text-align: center">Quad 2 (100µm)</td>
+                <td id="HVSUPPLY1_1" style="text-align: center">Quad 1</td>
             </tr>
 
             <tr>
-        </table> -->
+        </table>
 
-        <table class="mtable" id="HV Box">
+        <!-- <table class="mtable" id="HV Box">
             <tr><th colspan="10" class="mtableheader">HV Box</th></tr>
             <tr>
                 <th colspan="2">Node</th>
@@ -309,7 +310,7 @@
                 <td><div id="keithley_curr" data-format="f3" class="modbvalue" data-odb-path="/Equipment/K2450/Variables/Input[4]" data-formula="x*1000000"></div></td>
                 <td id="HVSUPPLY1_0" style="text-align: center">New quads HV</td>
             </tr>
-        </table>
+        </table> -->
 
     </div>
     

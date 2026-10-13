@@ -85,6 +85,7 @@
 	// Get setup from config file (config_quads_svgBased.js)
 	document.addEventListener("DOMContentLoaded", function () {   
 	    applySetup();
+	    setupQuads();
 	    // Set some titles:
             document.getElementById("lvSupply0Title").textContent = cfg.lv_supply_0_title;
  	    document.getElementById("lvSupply1Title").textContent = cfg.lv_supply_1_title;
@@ -102,7 +103,7 @@
             document.getElementById("hv0_supplyChannelSet").dataset.odbPath = cfg.hvBox_supplyChannelSet;
             document.getElementById("hv1_supplyChannel").dataset.odbPath = cfg.hvBox_supplyChannel;
             document.getElementById("hv1_supplyChannelSet").dataset.odbPath = cfg.hvBox_supplyChannelSet;
-	    // Below should depennd on config file aka. how many HV cannels we have
+	    // TODO: Below should depennd on config file aka. how many HV cannels we have
 	    updateHV(0);
 	    updateHV(1);
 	});
@@ -136,6 +137,29 @@
 	    }
 	});
 
+	// Dynamic creation of quad display, depending on n_quads
+	function setupQuads() {
+	    const container = document.getElementById('quad_container');
+	    container.innerHTML = '';
+
+	    for (let i = 0; i < n_quads; i++) {
+	        if (i > 0) {
+	            const gap = document.createElement('div');
+	            gap.style.width = '20px';
+	            container.appendChild(gap);
+	        }
+
+	        const quad = document.createElement('object');
+	        quad.id = 'quad' + i;
+	        quad.type = 'image/svg+xml';
+	        quad.className = 'svgObject';
+	        quad.data = 'Quads/Quad_sketch.svg';
+	        quad.style.width = '250px';
+
+	        container.appendChild(quad);
+	    }
+	}
+
 	// ------------------------------------------------------------------------------
 	// Chip selection routines 
 	// ------------------------------------------------------------------------------
@@ -145,17 +169,20 @@
 
         function color_chips(mask, feb) {
             //console.log('mask:', mask, 'feb:', feb);
-	    if (feb > 0) return; //TODO: add other quads here
+	    //if (feb > 0) return; //TODO: add other quads here
 
             // Determine the base quad ID based on the value of feb
             const baseQuadId = 'quad';
  	    // Loop over the two relevant quads // TODO: 2 should not be hardcoded!
             for (let i = 0; i < 2; i++) {
                 const address_byte = (mask >> (0+i*4)) & 0xF; // Extract the correct byte
-		const quadIdNum = i + feb*2;
+		const quadIdNum = i + feb*2; //2 quads per FEB
                 const quadId = baseQuadId + quadIdNum;
 		//console.log(quadId);
-                const svgDoc = document.getElementById(quadId).contentDocument;
+
+		const quad = document.getElementById(quadId);
+        	if (!quad?.contentDocument) continue;
+	        const svgDoc = quad.contentDocument;
 
                 // Loop over the four chips in each quad
                 for (let j = 0; j < 4; j++) {
@@ -173,7 +200,7 @@
 	                // Add tooltip only once, otherwise mulitple redundant eventListeners
         	        if (!chip.dataset.tooltipInitialized) {
 
-                	    chip.dataset.tooltip = "Quad " + i + " - Chip " + j;
+                	    chip.dataset.tooltip = "Quad " + quadIdNum + " - Chip " + j;
 
 	                    chip.addEventListener("mouseenter", function (event) {
 	                        showHtmlTooltip(event, chip.dataset.tooltip);
@@ -1055,19 +1082,11 @@
     <table class="mtable">
 	<tr><th colspan="3" class="mtableheader">Chip selection &amp; control</th></tr>
 	<tr><td colspan="3">
-	    <div style="position:relative;width:100%;margin_auto">
-                <div style="display:flex;justify-content:center;">
-                <!-- Layer 0 -->
-		<object id="quad0" type="image/svg+xml" class="svgObject"
-			data="Quads/Quad_sketch.svg" style="width:250px;"></object>
-	        <!-- Gap between Layers -->
-		<div style="width:20px;"></div>
-		<!-- Layer 1 -->
-                <object id="quad1" type="image/svg+xml" class="svgObject"
-			data="Quads/Quad_sketch.svg" style="width:250px;"></object>
-	    </div>
-            </td>
-        </tr>
+	    <div style="display:flex;justify-content:center;" id="quad_container">
+                <!-- SVG objects added dynamically -->
+            </div>
+	    </td>
+	</tr>
 	<tr>
 	    <td colspan="3" style="text-align:center">
 		    <button class="modbbutton mbutton"
@@ -1258,6 +1277,7 @@
     <table class="mtable">
         <tr><th colspan="2" class="mtableheader">Chip masks</th></tr>
         <tr><td colspan="2">
+	    <!-- TODO: Make this adjustable for n_quads -->
             <div style="position:relative;width:100%;margin_auto">
                 <div style="display:flex;justify-content:center;">
                 <!-- Layer 0 -->

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html class="mcss">
+<head>
+   <meta charset="UTF-8">
+   <link rel="stylesheet" href="midas.css">
+   <script src="controls.js"></script>
+   <script src="midas.js"></script>
+   <script src="mhttpd.js"></script>
+   <script src="mhistory.js"></script>
+   <title>Scintillators SMA Board</title>
+
+   <style>
+      .mtable td { padding: 2px; }
+   </style>
+
+<body class="mcss" onload="mhttpd_init('Scintillators SMA Board');">
+
+<!-- header and side navigation will be filled in mhttpd_init -->
+<div id="mheader"></div>
+<div id="msidenav"></div>
+
+<div id="mmain">
+
+    <table class="mtable">
+        <tr><th class="mtableheader">Scintillators rates from SMA board</th></tr>
+	<tr><td>
+            <div style="position:relative;width:100%;margin_auto">
+                <object id="svg" type="image/svg+xml" class="svgObject"
+                        data="Quads/pioneer_beamMonitor_ratePage.svg" style="width:800px;"></object>
+            </div>
+            </td>
+        </tr>
+    </table>
+</div>
