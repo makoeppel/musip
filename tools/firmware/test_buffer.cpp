@@ -158,8 +158,6 @@ struct link_t {
 
 // NOTE: maximum block size is 256 kB
 constexpr size_t BLOCK_SIZE = 256*1024;
-std::mutex mutex;
-std::atomic<int> stop = 0;
 
 size_t n256 = 0, n64 = 0, nHits = 0;
 size_t nOoO = 0;
@@ -300,7 +298,6 @@ int main(int argc, const char* argv[]) {
 
         clock_end = std::chrono::steady_clock::now();
     }
-    stop = 1;
     printf("DONE\n");
 
     if(nOoO > 0) printf("%d out-of-order timestamps\n", nOoO);

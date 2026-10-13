@@ -52,6 +52,26 @@ void AnaQuadHistos::BeginRun(TARunInfo* runinfo) {
             MD::AxisTitleY("Row")
         ));
 
+        hitmaps_low_tot.push_back(pPlotCollection_->getOrCreateHistogram2DF(
+            directoryName + "hitmap_low_tot_" + quadIDString, 
+            256, -0.5, 255.5,   // 2 * 256 columns
+            250, -0.5, 249.5,   // 2 * 250 rows
+            error,
+            MD::Title("Hitmap"), 
+            MD::AxisTitleX("Column"), 
+            MD::AxisTitleY("Row")
+        ));
+
+        hitmaps_high_tot.push_back(pPlotCollection_->getOrCreateHistogram2DF(
+            directoryName + "hitmap_high_tot_" + quadIDString, 
+            256, -0.5, 255.5,   // 2 * 256 columns
+            250, -0.5, 249.5,   // 2 * 250 rows
+            error,
+            MD::Title("Hitmap"), 
+            MD::AxisTitleX("Column"), 
+            MD::AxisTitleY("Row")
+        ));
+
         hitToT.push_back(pPlotCollection_->getOrCreateHistogram1DD(
             directoryName + "hitToT_" + quadIDString, 
             32, 0, 32,
@@ -454,7 +474,6 @@ TAFlowEvent* AnaQuadHistos::AnalyzeFlowEvent(TARunInfo*, TAFlags* flags, TAFlowE
             break;
         }
         hitmaps[hit.chipid()]->Fill(hit.col(), hit.row());
-
         // fill timing histogram
         uint32_t ckdivend = 0;
         uint32_t ckdivend2 = 31;
@@ -464,6 +483,9 @@ TAFlowEvent* AnaQuadHistos::AnalyzeFlowEvent(TARunInfo*, TAFlags* flags, TAFlowE
         hitToT[hit.chipid()]->Fill(cur_hitToT);
         hitToA[hit.chipid()]->Fill(cur_hitToA);
         hitTime[hit.chipid()]->Fill(localTime);
+
+        if (cur_hitToT < 5) hitmaps_low_tot[hit.chipid()]->Fill(hit.col(), hit.row());
+        else hitmaps_high_tot[hit.chipid()]->Fill(hit.col(), hit.row());
 
     }
 

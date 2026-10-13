@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="800"
+   height="800"
+   viewBox="0 0 211.66666 211.66667"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.4.4 (dcaf3e7, 2026-05-05)"
+   sodipodi:docname="pioneer_beamMonitor_ratePage.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     inkscape:zoom="0.52410024"
+     inkscape:cx="421.67506"
+     inkscape:cy="370.15819"
+     inkscape:window-width="1512"
+     inkscape:window-height="849"
+     inkscape:window-x="0"
+     inkscape:window-y="33"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs1" />
+  <g
+     inkscape:label="Ebene 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <rect
+       style="fill:#000000;fill-opacity:1;stroke-width:0.169568"
+       id="Q1"
+       width="5.2916665"
+       height="105.83334"
+       x="10.229589"
+       y="52.916668"
+       inkscape:label="Q1" />
+    <rect
+       style="fill:#000000;fill-opacity:1;stroke-width:0.169568"
+       id="Q2"
+       width="5.2916665"
+       height="105.83334"
+       x="36.839115"
+       y="52.916668"
+       inkscape:label="Q2" />
+    <rect
+       style="fill:#00c8d8;fill-opacity:1;stroke-width:0.169568"
+       id="S1"
+       width="5.2916665"
+       height="105.83334"
+       x="63.448635"
+       y="52.916668"
+       inkscape:label="S1" />
+    <rect
+       style="fill:#00c8d8;fill-opacity:1;stroke-width:0.169568"
+       id="S2"
+       width="5.2916665"
+       height="105.83334"
+       x="116.66768"
+       y="52.916668"
+       inkscape:label="S2" />
+    <rect
+       style="fill:#00c8d8;fill-opacity:1;stroke-width:0.169568"
+       id="S3"
+       width="5.2916665"
+       height="105.83334"
+       x="143.27721"
+       y="52.916668"
+       inkscape:label="S3" />
+    <rect
+       style="fill:#00c8d8;fill-opacity:1;stroke-width:0.169568"
+       id="S4"
+       width="5.2916665"
+       height="105.83334"
+       x="169.88673"
+       y="52.916668"
+       inkscape:label="S4" />
+    <rect
+       style="fill:#00c8d8;fill-opacity:1;stroke-width:0.169568"
+       id="S5"
+       width="5.2919998"
+       height="105.83334"
+       x="196.49626"
+       y="52.916668"
+       inkscape:label="S5" />
+    <rect
+       style="fill:#969696;fill-opacity:1;stroke-width:0.207678"
+       id="degrader"
+       width="5.2916665"
+       height="158.75"
+       x="88.058159"
+       y="1.1444092e-05"
+       inkscape:label="degrader" />
+    <text
+       xml:space="preserve"
+       style="font-size:5.29167px;writing-mode:lr-tb;direction:ltr;fill:#000000;fill-opacity:1;stroke-width:0.264583"
+       x="9.2438602"
+       y="166.65649"
+       id="text1"><tspan
+         sodipodi:role="line"
+         id="tspan1"
+         style="font-size:5.29167px;fill:#000000;fill-opacity:1;stroke-width:0.264583"
+         x="9.2438602"
+         y="166.65649">Q1</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:5.29167px;writing-mode:lr-tb;direction:ltr;fill:#000000;fill-opacity:1;stroke-width:0.264583"
+       x="35.743572"
+       y="166.65649"
+       id="text1-1"><tspan
+         sodipodi:role="line"
+         id="tspan1-5"
+         style="font-size:5.29167px;fill:#000000;fill-opacity:1;stroke-width:0.264583"
+         x="35.743572"
+         y="166.65649">Q2</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:5.29167px;writing-mode:lr-tb;direction:ltr;fill:#000000;fill-opacity:1;stroke-width:0.264583"
+       x="62.712246"
+       y="166.64616"
+       id="text1-18"><tspan
+         sodipodi:role="line"
+         id="tspan1-7"
+         style="font-size:5.29167px;fill:#000000;fill-opacity:1;stroke-width:0.264583"
+         x="62.712246"
+         y="166.64616">S1</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:5.29167px;writing-mode:lr-tb;direction:ltr;fill:#000000;fill-opacity:1;stroke-width:0.264583"
+       x="80.655624"
+       y="166.74951"
+       id="text1-5"><tspan
+         sodipodi:role="line"
+         id="tspan1-6"
+         style="font-size:5.29167px;fill:#000000;fill-opacity:1;stroke-width:0.264583"
+         x="80.655624"
+         y="166.74951">degrader</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:5.29167px;writing-mode:lr-tb;direction:ltr;fill:#000000;fill-opacity:1;stroke-width:0.264583"
+       x="115.82147"
+       y="166.65649"
+       id="text1-4"><tspan
+         sodipodi:role="line"
+         id="tspan1-3"
+         style="font-size:5.29167px;fill:#000000;fill-opacity:1;stroke-width:0.264583"
+         x="115.82147"
+         y="166.65649">S2</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:5.29167px;writing-mode:lr-tb;direction:ltr;fill:#000000;fill-opacity:1;stroke-width:0.264583"
+       x="142.45813"
+       y="166.65649"
+       id="text1-3"><tspan
+         sodipodi:role="line"
+         id="tspan1-63"
+         style="font-size:5.29167px;fill:#000000;fill-opacity:1;stroke-width:0.264583"
+         x="142.45813"
+         y="166.65649">S3</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:5.29167px;writing-mode:lr-tb;direction:ltr;fill:#000000;fill-opacity:1;stroke-width:0.264583"
+       x="168.99661"
+       y="166.64616"
+       id="text1-3-4"><tspan
+         sodipodi:role="line"
+         id="tspan1-63-6"
+         style="font-size:5.29167px;fill:#000000;fill-opacity:1;stroke-width:0.264583"
+         x="168.99661"
+         y="166.64616">S4</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:5.29167px;writing-mode:lr-tb;direction:ltr;fill:#000000;fill-opacity:1;stroke-width:0.264583"
+       x="195.66556"
+       y="166.64616"
+       id="text1-3-8"><tspan
+         sodipodi:role="line"
+         id="tspan1-63-4"
+         style="font-size:5.29167px;fill:#000000;fill-opacity:1;stroke-width:0.264583"
+         x="195.66556"
+         y="166.64616">S5</tspan></text>
+    <rect
+       style="fill:#000000;fill-opacity:1;stroke-width:0.267919"
+       id="S1_rate"
+       width="15"
+       height="5"
+       x="58.594467"
+       y="40"
+       inkscape:label="S1_rate" />
+    <rect
+       style="fill:#000000;fill-opacity:1;stroke-width:0.267919"
+       id="S2_rate"
+       width="15"
+       height="5"
+       x="111.81352"
+       y="40"
+       inkscape:label="S2_rate" />
+    <rect
+       style="fill:#000000;fill-opacity:1;stroke-width:0.267919"
+       id="S3_rate"
+       width="15"
+       height="5"
+       x="138.42303"
+       y="40"
+       inkscape:label="S3_rate" />
+    <rect
+       style="fill:#000000;fill-opacity:1;stroke-width:0.267919"
+       id="S4_rate"
+       width="15"
+       height="5"
+       x="165.03256"
+       y="40"
+       inkscape:label="S4_rate" />
+    <rect
+       style="fill:#000000;fill-opacity:1;stroke-width:0.267919"
+       id="S5_rate"
+       width="15"
+       height="5"
+       x="191.64226"
+       y="40"
+       inkscape:label="S5_rate" />
+  </g>
+</svg>

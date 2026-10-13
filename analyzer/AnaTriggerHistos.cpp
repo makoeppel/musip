@@ -186,6 +186,7 @@ TAFlowEvent* AnaTriggerHistos::AnalyzeFlowEvent(TARunInfo*, TAFlags* flags, TAFl
         });
 
     // get rate per channel
+    if (triggerhits.size() < 2) return flow;
     float time_in_sec = ((triggerhits.back().ts_header() - triggerhits.front().ts_header()) * 16) / 1e6;
     for (auto const& pair : hits_per_channel) {
         auto key = pair.first;
@@ -254,85 +255,87 @@ TAFlowEvent* AnaTriggerHistos::AnalyzeFlowEvent(TARunInfo*, TAFlags* flags, TAFl
         last_hits[hit.channel()] = hit;
     }
 
-    // correlation between S1 and L1
-    std::vector<triggerhit> s1_hits;
-    std::vector<pixelhit> ch1_hits;
+    if (true) {
+        // correlation between S1 and L1
+        std::vector<triggerhit> s1_hits;
+        std::vector<pixelhit> ch1_hits;
 
-    for(const auto& currentHit : hitevent->hits) {
-        if(currentHit.is_pixel())
-            if (currentHit.as_pixel().chipid() == 1)
-                ch1_hits.push_back(currentHit.as_pixel());
-        if(currentHit.is_trigger()) {
-            if (currentHit.as_trigger().channel() == 1)
-                s1_hits.push_back(currentHit.as_trigger());
+        for(const auto& currentHit : hitevent->hits) {
+            if(currentHit.is_pixel())
+                if (currentHit.as_pixel().chipid() == 1)
+                    ch1_hits.push_back(currentHit.as_pixel());
+            if(currentHit.is_trigger()) {
+                if (currentHit.as_trigger().channel() == 1)
+                    s1_hits.push_back(currentHit.as_trigger());
+            }
         }
-    }
 
-    std::sort(s1_hits.begin(), s1_hits.end(),
-        [](const auto& a, const auto& b) {
-            return a.time_1ns() < b.time_1ns();
-        });
-    std::sort(ch1_hits.begin(), ch1_hits.end(),
-        [](const auto& a, const auto& b) {
-            return a.time() < b.time();
-        });
+        std::sort(s1_hits.begin(), s1_hits.end(),
+            [](const auto& a, const auto& b) {
+                return a.time_1ns() < b.time_1ns();
+            });
+        std::sort(ch1_hits.begin(), ch1_hits.end(),
+            [](const auto& a, const auto& b) {
+                return a.time() < b.time();
+            });
 
-    for (auto s1_hit : s1_hits) {
-        for (auto ch1_hit : ch1_hits) {
-            if (std::abs((int) (ch1_hit.time() & 0xFFFFF) - (int) s1_hit.time_1ns()) < 2048) {
-                l1_s1_time->Fill((int) (ch1_hit.time() & 0xFFFFF) - (int) s1_hit.time_1ns());
-                h_l1_s1_time_vs_time->Fill(ch1_hit.ts_header() % (int) 1e6, (int) (ch1_hit.time() & 0xFFFFF) - (int) s1_hit.time_1ns());
-                uint32_t ckdivend = 0;
-                uint32_t ckdivend2 = 31;
-                uint32_t localTime = ch1_hit.time8ns() % (1 << 11);  // local pixel time is first 11 bits of the global time
-                uint32_t cur_hitToA = localTime * 8/*ns*/ * (ckdivend + 1);
-                uint32_t cur_hitToT = ( ( (0x1F+1) + ch1_hit.tot() -  ( (localTime * (ckdivend+1) / (ckdivend2+1) ) & 0x1F) ) & 0x1F);//  * 8 * (ckdivend2+1) ;
-                h_tot_l1_vs_s1->Fill(cur_hitToT, s1_hit.tot());
-                if ( timeWalkValid[cur_hitToT] ) {
-                    l1_s1_time_corrected->Fill((int) (ch1_hit.time() & 0xFFFFF) - (int) s1_hit.time_1ns() - timeWalkCorrection[cur_hitToT]);
-                }
-                if (std::abs((int) (ch1_hit.time() & 0xFFFFF) - (int) s1_hit.time_1ns()) < 128) {
-                    h_timewalk_l1_vs_time_s1->Fill((int) (ch1_hit.time() & 0xFFFFF) - (int) s1_hit.time_1ns(), cur_hitToT);
+        for (auto s1_hit : s1_hits) {
+            for (auto ch1_hit : ch1_hits) {
+                if (std::abs((int) (ch1_hit.time() & 0xFFFFF) - (int) s1_hit.time_1ns()) < 2048) {
+                    l1_s1_time->Fill((int) (ch1_hit.time() & 0xFFFFF) - (int) s1_hit.time_1ns());
+                    h_l1_s1_time_vs_time->Fill(ch1_hit.ts_header() % (int) 1e6, (int) (ch1_hit.time() & 0xFFFFF) - (int) s1_hit.time_1ns());
+                    uint32_t ckdivend = 0;
+                    uint32_t ckdivend2 = 31;
+                    uint32_t localTime = ch1_hit.time8ns() % (1 << 11);  // local pixel time is first 11 bits of the global time
+                    uint32_t cur_hitToA = localTime * 8/*ns*/ * (ckdivend + 1);
+                    uint32_t cur_hitToT = ( ( (0x1F+1) + ch1_hit.tot() -  ( (localTime * (ckdivend+1) / (ckdivend2+1) ) & 0x1F) ) & 0x1F);//  * 8 * (ckdivend2+1) ;
+                    h_tot_l1_vs_s1->Fill(cur_hitToT, s1_hit.tot());
                     if ( timeWalkValid[cur_hitToT] ) {
-                        double dt = (int)(ch1_hit.time() & 0xFFFFF) - (int)s1_hit.time_1ns();
-                        double corrected_dt = dt - timeWalkCorrection[cur_hitToT];
-                        h_timewalk_corrected_l1_vs_time_s1->Fill(corrected_dt, cur_hitToT);
+                        l1_s1_time_corrected->Fill((int) (ch1_hit.time() & 0xFFFFF) - (int) s1_hit.time_1ns() - timeWalkCorrection[cur_hitToT]);
+                    }
+                    if (std::abs((int) (ch1_hit.time() & 0xFFFFF) - (int) s1_hit.time_1ns()) < 128) {
+                        h_timewalk_l1_vs_time_s1->Fill((int) (ch1_hit.time() & 0xFFFFF) - (int) s1_hit.time_1ns(), cur_hitToT);
+                        if ( timeWalkValid[cur_hitToT] ) {
+                            double dt = (int)(ch1_hit.time() & 0xFFFFF) - (int)s1_hit.time_1ns();
+                            double corrected_dt = dt - timeWalkCorrection[cur_hitToT];
+                            h_timewalk_corrected_l1_vs_time_s1->Fill(corrected_dt, cur_hitToT);
+                        }
                     }
                 }
             }
         }
-    }
 
-    // create tot correction
-    for (int tot = 0; tot < 32; ++tot) {
-        auto rootHist =
-            h_timewalk_l1_vs_time_s1
-                ->asRootObject("myHistogram", "My histogram title");
+        // create tot correction
+        for (int tot = 0; tot < 32; ++tot) {
+            auto rootHist =
+                h_timewalk_l1_vs_time_s1
+                    ->asRootObject("myHistogram", "My histogram title");
 
-        int ybin = rootHist.get()->GetYaxis()->FindBin(tot);
+            int ybin = rootHist.get()->GetYaxis()->FindBin(tot);
 
-        double sum = 0.0;
-        double sumw = 0.0;
+            double sum = 0.0;
+            double sumw = 0.0;
 
-        for (int xbin = 1; xbin <= rootHist.get()->GetNbinsX(); ++xbin) {
+            for (int xbin = 1; xbin <= rootHist.get()->GetNbinsX(); ++xbin) {
 
-            double n = rootHist.get()->GetBinContent(xbin, ybin);
+                double n = rootHist.get()->GetBinContent(xbin, ybin);
 
-            if (n <= 0)
-                continue;
+                if (n <= 0)
+                    continue;
 
-            double dt = rootHist.get()->GetXaxis()->GetBinCenter(xbin);
+                double dt = rootHist.get()->GetXaxis()->GetBinCenter(xbin);
 
-            sum  += n * dt;
-            sumw += n;
-        }
+                sum  += n * dt;
+                sumw += n;
+            }
 
-        if (sumw >= 100) {
-            timeWalkCorrection[tot] = sum / sumw;
-            timeWalkValid[tot] = true;
-        }
-        else {
-            timeWalkValid[tot] = false;
+            if (sumw >= 100) {
+                timeWalkCorrection[tot] = sum / sumw;
+                timeWalkValid[tot] = true;
+            }
+            else {
+                timeWalkValid[tot] = false;
+            }
         }
     }
 

@@ -778,7 +778,7 @@ int frontend_init() {
     midas::odb custom("/Custom", true);
     struct passwd *pw = getpwuid(getuid());
     const char *homedir = pw->pw_dir;
-    custom["Path"] = std::string (homedir).append("/musip/custom");
+    // custom["Path"] = std::string (homedir).append("/musip/custom");
     custom["Quads"] = "Quads/quad_basics.html";
     custom["MuTRiG"] = "Mutrig/TimingScint.html";
     custom["LVDS"] = "lvds.html";
@@ -1090,7 +1090,8 @@ int read_sc_event(char* pevent, [[maybe_unused]] int off) {
             feb_sc->FEB_read(febIDx, FEBSlowcontrolInterface::OFFSETS::FEBsc_RPC_DATAOFFSET, rval);
 
             // store and scale temperatures
-            for (size_t idx=0; idx < N_TMB_MATRIX_TEMPERATURES; idx++) {
+            for (size_t idx=0; idx < N_TMB_MATRIX_TEMPERATURES-1; idx++) {
+                printf("XXTM idx = %lu : %x\n",idx,rval[idx+1]);
                 float fval = TMB_TEMPERATURE_FACTOR * to_signed_16b(rval[idx+1]);
                 if( (((rval[0]>>(idx)) & 0x01) == 0) || ((rval[idx+1]&0xffff)==0x8fff))
                     fval = NAN;

@@ -1,7 +1,8 @@
 // Load masking files:
 
 // Default path for UI display only - does NOT modify ODB values on page load
-let currentMaskFolderPath = "/home/mu3e/musip/online/userfiles/maskfiles/"; // Default: maskfiles directory
+//let currentMaskFolderPath = "/home/mu3e/musip/online/userfiles/maskfiles/"; // Default: maskfiles directory
+let currentMaskFolderPath = "/home/pinky/online/userfiles/maskfiles/";
 
 // Track display state vs actual ODB state
 // This represents what the user has selected in the UI, not what's actually in ODB

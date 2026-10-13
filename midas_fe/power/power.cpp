@@ -30,6 +30,7 @@ derived from the equipment name
 #include "device/mscbhvr.h"
 #include "GenesysDriver.h"
 #include "HMP4040Driver.h"
+#include "NGP824Driver.h"
 #include "mstrlcpy.h"
 using midas::odb;
 
@@ -81,6 +82,7 @@ INT read_hameg_power6(char* pevent, INT off);
 INT read_hameg_power7(char* pevent, INT off);
 INT read_hameg_power8(char* pevent, INT off);
 INT read_hameg_power9(char* pevent, INT off);
+INT read_ngp_power0(char* pevent, INT off);
 INT read_power(float* pdata, const std::string& eqn);
 
 void setup_history();
@@ -250,6 +252,23 @@ EQUIPMENT equipment[] = {
     //        read_hameg_power8,
     //    },
 
+    {
+        "NGP0",                            /* equipment name */
+        {130, 0,                             /* event ID, trigger mask */
+         "SYSTEM",                           /* event buffer */
+         EQ_PERIODIC,                        /* equipment type */
+         0,                                  /* event source */
+         "MIDAS",                            /* format */
+         TRUE,                               /* enabled */
+         RO_STOPPED | RO_RUNNING | RO_PAUSE, /* all, but not write to odb */
+         10000,                              /* read every 10 sec , "1000" for debugging purposes*/
+         0,                                  /* stop run after this event limit */
+         0,                                  /* number of sub events */
+         1,                                  /* log history every event */
+         "", "", ""},                        /* device driver list */
+        read_ngp_power0,
+    },
+
     {""}  // why is there actually this empty one here? FW
 
 };
@@ -285,6 +304,7 @@ INT frontend_init() {
     //  allow equipment name starts to recognize supply type
     std::vector<std::string> genysis_names = {"Gen", "gen", "tdk", "TDK"};
     std::vector<std::string> hameg_names = {"HMP", "hmp", "ham", "HAM", "Lab", "lab"};
+    std::vector<std::string> ngp824_names = {"NGP", "ngp"};
 
     for (unsigned int eqID = 0; eqID < nEq - 1; eqID++) {
         std::cout << "start init Equipment id " << eqID << std::endl;
@@ -299,6 +319,9 @@ INT frontend_init() {
         } else if (std::find(hameg_names.begin(), hameg_names.end(), shortname) !=
                    hameg_names.end()) {
             drivers.emplace_back(new HMP4040Driver(equipment[eqID].name, &equipment[eqID].info));
+        } else if (std::find(ngp824_names.begin(), ngp824_names.end(), shortname) !=
+                   ngp824_names.end()) {
+            drivers.emplace_back(new NGP824Driver(equipment[eqID].name, &equipment[eqID].info)); 
         } else if (name == std::string("PowerDistribution")) {
             // do nothing, also no warning
             continue;

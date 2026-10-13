@@ -329,9 +329,9 @@ int read_stream_thread(void*) {
         if(readout_enabled_prev == 1 && readout_enabled_cur == 0) {
             // stop generator
             printf("read_stream_thread: stop generator\n");
-            mu.write_register(SWB_READOUT_STATE_REGISTER_W, 0);
-            mu.write_register(DATAGENERATOR_DIVIDER_REGISTER_W, 0);
-            mu.write_register(SWB_GENERIC_MASK_REGISTER_W, 0);
+            //mu.write_register(SWB_READOUT_STATE_REGISTER_W, 0);
+            //mu.write_register(DATAGENERATOR_DIVIDER_REGISTER_W, 0);
+            //mu.write_register(SWB_GENERIC_MASK_REGISTER_W, 0);
         }
         if(!readout_enabled() || !is_readout_thread_enabled()) {
             // wait for dma flush
