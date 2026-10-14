@@ -18,10 +18,11 @@ struct pixelhit {
     [[nodiscard]] uint8_t t2() const { return tot(); }
     [[nodiscard]] uint32_t ts_high() const { return (hitdata >> 16) & 0x1FFFFF; }
     [[nodiscard]] uint8_t ts_low() const { return (hitdata >> 11) & 0x1F; }
+    [[nodiscard]] uint32_t ts_header() const { return (hitdata >> 11) & 0x3FFFFFF; }
     [[nodiscard]] uint8_t subheader_time() const { return (hitdata >> 4) & 0x7F; }
     [[nodiscard]] uint8_t ts_sorterhit() const { return hitdata & 0xF; }
-    [[nodiscard]] uint64_t timestamp() const { return hitdata & 0x1FFFFFFFFFULL; }
-    [[nodiscard]] double time() const { return timestamp()*8; }
+    [[nodiscard]] uint64_t time8ns() const { return (hitdata & 0x1FFFFFFFFFULL); }
+    [[nodiscard]] uint64_t time() const { return time8ns() * 8; }
 
     void Print() const {
         std::printf(
@@ -31,7 +32,7 @@ struct pixelhit {
             col(),
             row(),
             tot(),
-            (unsigned long long)timestamp()
+            (unsigned long long) time()
         );
     }
 };
@@ -76,6 +77,51 @@ struct mutrighit {
 
 };
 
+
+struct triggerhit {
+    triggerhit() noexcept : hitdata(0x0) {}
+    triggerhit(uint64_t h) noexcept : hitdata(h) {}
+
+    uint64_t hitdata;
+
+    [[nodiscard]] bool is_trigger() const { return ((hitdata >> 63) & 0x1) == 1; }
+    [[nodiscard]] uint8_t channel() const { return (hitdata >> 56) & 0xF; }
+    [[nodiscard]] uint8_t tot() const { return (hitdata >> 48) & 0xFF; }
+    [[nodiscard]] uint32_t time_8ns() const { return (hitdata >> 20) & 0xFFFFFFF; }
+    [[nodiscard]] uint32_t ts_header() const { return (hitdata >> 20) & 0x3FFFFFF; }
+    [[nodiscard]] uint32_t time_1ns() const { return hitdata & 0xFFFFF; }
+    //[[nodiscard]] uint64_t time() const {return (time_8ns()*8) + time_1ns();} //returns time in ns
+    [[nodiscard]] uint64_t time() const {
+        const uint32_t coarse = time_8ns();
+        const uint32_t fine   = time_1ns();
+
+        const uint32_t coarse_ns = coarse * 8;
+        const uint32_t coarse_ns_in_fine_range = coarse_ns & 0xFFFFF;
+
+        // std::printf(
+        //     "8ns:%u 1ns:%u\n",
+        //     coarse_ns_in_fine_range,
+        //     fine
+        // );
+
+        return (coarse_ns & 0xFFFF00000) + fine;
+    }
+
+    void Print() const {
+        std::printf(
+            "x64:%016llx channel:%u tot:%u 8ns:%u 1ns:%u time:%010llx\n",
+            (unsigned long long)hitdata,
+            channel(),
+            tot(),
+            time_8ns(),
+            time_1ns(),
+            (unsigned long long)time()
+        );
+    }
+
+};
+
+
 struct hit {
     hit() noexcept : hitdata(0x0) {}
     explicit hit(uint64_t h) noexcept : hitdata(h) {}
@@ -85,10 +131,12 @@ struct hit {
     // Common discriminator
     [[nodiscard]] bool is_pixel() const  { return ((hitdata >> 63) & 0x1) == 0; }
     [[nodiscard]] bool is_mutrig() const { return ((hitdata >> 63) & 0x1) == 1; }
+    [[nodiscard]] bool is_trigger() const { return ((hitdata >> 63) & 0x1) == 1; }
 
     // Convert to typed views
     [[nodiscard]] pixelhit as_pixel() const { return pixelhit(hitdata); }
     [[nodiscard]] mutrighit as_mutrig() const { return mutrighit(hitdata); }
+    [[nodiscard]] triggerhit as_trigger() const { return triggerhit(hitdata); }
 
     // helper
     [[nodiscard]] uint64_t raw() const { return hitdata; }
@@ -96,6 +144,8 @@ struct hit {
     void Print() const {
         if(is_pixel()) {
             as_pixel().Print();
+        } else if (is_trigger()) {
+            as_trigger().Print();
         } else {
             as_mutrig().Print();
         }

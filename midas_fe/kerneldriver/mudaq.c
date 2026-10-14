@@ -420,7 +420,8 @@ static
 int mudaq_register(struct mudaq* mu) {
     int error = 0;
 
-    mu->minor = ida_simple_get(&mudaq_ida, 0, MAX_NUM_DEVICES - 1, GFP_KERNEL);
+    // mu->minor = ida_simple_get(&mudaq_ida, 0, MAX_NUM_DEVICES - 1, GFP_KERNEL);
+    mu->minor = ida_alloc_range(&mudaq_ida, 0, MAX_NUM_DEVICES - 1, GFP_KERNEL);
     if(mu->minor < 0) goto err_out;
 
     mu->dmabuf = dmabuf_alloc(&mu->pci_dev->dev, MUDAQ_DMABUF_DATA_LEN);
@@ -462,7 +463,7 @@ int mudaq_register(struct mudaq* mu) {
             mudaq_set_dma_data_addr(mu, entry->dma_handle, i, entry->size >> PAGE_SHIFT);
             i++;
         }
-        mudaq_set_dma_n_buffers(mu, i + 1);
+        mudaq_set_dma_n_buffers(mu, i);
     }
     mu->to_user[1] = 0;
 

@@ -36,11 +36,18 @@ protected:
     std::vector<musip::dqm::Histogram2DF*> maskmap;
     std::vector<musip::dqm::Histogram2DF*> combinedHitmap;
     std::vector<musip::dqm::Histogram2DF*> hitmaps;
+    std::vector<musip::dqm::Histogram2DF*> hitmaps_low_tot;
+    std::vector<musip::dqm::Histogram2DF*> hitmaps_high_tot;
     std::vector<musip::dqm::Histogram1DD*> hitToT;
     std::vector<musip::dqm::Histogram1DD*> hitToA;
     std::vector<musip::dqm::Histogram1DD*> hitTime;
     std::vector<std::vector<uint8_t>> mask_files;
     std::vector<uint32_t> vec_tot_noisy_pixels;
+
+    // 2D histos
+    musip::dqm::Histogram2DF* h_rate_per_channel {};
+
+    uint32_t prev_time = 0;
 
 };
 

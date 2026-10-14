@@ -30,6 +30,7 @@ package mudaq is
     constant MUPIX_HEADER_ID        : std_logic_vector(5 downto 0) := "111010";
     constant TILE_HEADER_ID         : std_logic_vector(5 downto 0) := "110100";
     constant SCIFI_HEADER_ID        : std_logic_vector(5 downto 0) := "111000";
+    constant SMA_HEADER_ID          : std_logic_vector(5 downto 0) := "111100";
     constant OUTER_HEADER_ID        : std_logic_vector(5 downto 0) := "111001";
     constant DATA_SUB_HEADER_ID     : std_logic_vector(5 downto 0) := "111111";
     constant GENERIC_HEADER_ID      : std_logic_vector(5 downto 0) := "111110";
