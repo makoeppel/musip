@@ -19,15 +19,15 @@
   },
   "LV" : [
     {
-       "device"  : "LVSUPPLY0",
+       "device"  : "LVSUPPLY1",
        "indices" : [0,1,2,3]
     }
   ],
   "HV" : [
     {
-       "device"  : "HV Supplies",
-       "setStateName" : "ChState",
-       "indices" : [0,1]
+       "device"  : "HV Scintillators",
+       "setStateName" : "Settings/Output On",
+       "indices" : [0]
     }
   ]
 
