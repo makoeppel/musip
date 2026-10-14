@@ -35,16 +35,15 @@ def sequence(seq):
     stop_offs  = seq.get_param("stop_offset");
     dt        = seq.get_param("wait_time");
 
+    scan_path = "scripts/MutrigScripts/data/tthreshold_scans"
+    current_date = datetime.now().strftime('%d-%m-%Y-%H:%M')
+
     th,r,temperatures,settings = tscan.scan(seq,
                                             start_threshold=start_tth, stop_threshold=stop_tth, step_threshold=step_tth, 
                                             start_offset=start_offs, stop_offset=stop_offs,
                                             wait_time=dt)
 
-
-    scan_path = "scripts/MutrigScripts/data/tthreshold_scans"
-    current_date = datetime.now().strftime('%d-%m-%Y-%H:%M')
     filename = scan_path+"/tth_scan_"+str(current_date)+".json"
-
     seq.msg("Scan complete. Writing output to "+filename)
     tscan.write_json(filename,th,r,temperatures,settings)
 
