@@ -63,7 +63,8 @@ def select_rate(filename,constrate_value, ratecut, skip=0):
             tths_arr.append(selected_th % 64)
             offs_arr.append(selected_offset)
             good_channels.append(channel)
-            print(f"Channel {channel} -> Sel={selected_th} ({tths_arr[-1]},{offs_arr[-1]}) | {channels_details[channel]}")
+        
+        print(f"Channel {channel} -> Sel={selected_th} ({tths_arr[-1]},{offs_arr[-1]}) | {channels_details[channel]}")
 
     good_channels.sort()
     bad_channels.sort()

@@ -1,3 +1,4 @@
+import argparse
 import sys
 sys.path.append("../../")
 
@@ -7,21 +8,40 @@ import mutrig.mutrigTB_variables
 import mutrig.eth_selection as eth_ana
 import mutrig.ethreshold_scan as eth_scan
 import mutrig.Mutrig_basic_functions as m
-import sys
-import os
+import midas.client as client
 
 # Standalone / Tests main routine
 if __name__ == "__main__":
-    global seq;
+    parser = argparse.ArgumentParser(
+        description="Select and export E-threshold settings from a scan."
+    )
+    parser.add_argument("filename", help="Input E-threshold scan JSON file")
+    parser.add_argument(
+        "-o",
+        "--output",
+        metavar="FILENAME",
+        help="Output ODB configuration JSON file (default: INPUT.calib.json)",
+    )
+    parser.add_argument(
+        "--apply",
+        action="store_true",
+        help="Upload the selected threshold configuration to ODB",
+    )
+    args = parser.parse_args()
 
-    args = sys.argv[1:]
-    if len(args) < 1:
-        quit()
-    
-    filename = args[0]
-    filename_output=filename+".calib.json"
-    if len(args) > 1:
-        filename_output = args[1]
-    data = eth_ana.read_data(filename)    
-    eths_arr, bad_channels, channels_details = eth_ana.select_rate(data,constrate_value=1e0,ratecut=10, skip=4)
-    eth_scan.write_config_odb(eths_arr, data['settings'], path = filename_output)
+    filename_output = args.output or args.filename + ".calib.json"
+    data = eth_ana.read_data(args.filename)
+    eths_arr, bad_channels, channels_details = eth_ana.select_rate(
+        data, constrate_value=1e0, ratecut=10, skip=4
+    )
+    config = eth_scan.assemble_config(
+        eths_arr, data["settings"], path=filename_output
+    )
+
+    if args.apply:
+        seq = client.MidasClient("MutrigTuning")
+        for key,val in config.items():
+            print(f"Updating ODB: {cfg.path_asicsettings}/Channels/{key}")
+            seq.odb_set(f"{cfg.path_asicsettings}/Channels/{key}",val)
+        
+        m.Configure_all_asics(seq)

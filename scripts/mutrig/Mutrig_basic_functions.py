@@ -137,7 +137,7 @@ def Store_Settings(client):
 def Restore_Settings(client,settings):
     settings=client.odb_set(f"{cfg.path_asicsettings}",settings)
     Configure_all_asics(client)
-
+    
 def Get_tth_offsets(client):
     path = Get_channel_odb_path("tthresh_offset")
     return client.odb_get(path)
