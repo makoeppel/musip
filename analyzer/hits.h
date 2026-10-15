@@ -83,8 +83,9 @@ struct hit {
     uint64_t hitdata;
 
     // Common discriminator
-    [[nodiscard]] bool is_pixel() const  { return ((hitdata >> 63) & 0x1) == 0; }
-    [[nodiscard]] bool is_mutrig() const { return ((hitdata >> 63) & 0x1) == 1; }
+    [[nodiscard]] bool is_good() const  { return (hitdata != 0xffffffffffffffff) ; }
+    [[nodiscard]] bool is_pixel() const  { return is_good() && (((hitdata >> 63) & 0x1) == 0); }
+    [[nodiscard]] bool is_mutrig() const { return is_good() && (((hitdata >> 63) & 0x1) == 1); }
 
     // Convert to typed views
     [[nodiscard]] pixelhit as_pixel() const { return pixelhit(hitdata); }
