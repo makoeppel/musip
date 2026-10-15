@@ -64,14 +64,14 @@ struct mutrighit {
 
     void Print() const {
         std::printf(
-            "x64:%016lx chipid:%u channel:%u et:%u rem:%u fine:%u \t timestamp:%llx\n",
+            "x64:%016llx chipid:%u channel:%u et:%u rem:%u fine:%u \t timestamp:%llx\n",
             (unsigned long long)hitdata,
             chipid(),
             channel(),
             et(),
             time_remainder(),
             fine_time(),
-            timestamp()
+            time8ns()
         );
     }
 
