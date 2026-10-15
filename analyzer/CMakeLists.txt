@@ -41,6 +41,8 @@ target_link_libraries(minalyzer_analyzers PUBLIC
     ROOT::Hist
     ROOT::ROOTNTuple
     ROOT::ROOTNTupleUtil
+    ROOT::Graf
+    ROOT::Gpad
 )
 
 # I'm not entirely convinced these defines are necessary, but I don't want
