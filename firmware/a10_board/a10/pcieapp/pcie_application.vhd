@@ -18,7 +18,7 @@ use work.mudaq.all;
 entity pcie_application is
 generic (
     g_DMA_WADDR_WIDTH : positive := 14;
-    g_DMA_RADDR_WIDTH : positive := 12;
+    g_DMA_RADDR_WIDTH : positive := 11;
     g_DMA_DATA_WIDTH : positive := 32--;
 );
 port (
@@ -45,8 +45,8 @@ port (
     app_msi_ack             : in    std_logic;
 
     -- registers
-    writeregs               : out   reg32array_pcie;
-    regwritten              : out   std_logic_vector(63 downto 0);
+    o_writeregs             : out   reg32array_pcie;
+    o_regwritten            : out   std_logic_vector(63 downto 0);
     readregs                : in    reg32array_pcie;
 
     -- pcie writeable memory
@@ -145,12 +145,12 @@ architecture RTL of pcie_application is
 
     signal dma_control_address      : std_logic_vector(63 downto 0);
     signal dma_data_address         : std_logic_vector(63 downto 0);
+    signal dma_data_address_written : std_logic;
     signal dma_data_address_out     : std_logic_vector(63 downto 0);
     signal dma_data_mem_addr        : std_logic_vector(11 downto 0);
     signal dma_data_pages           : std_logic_vector(19 downto 0);
     signal dma_data_pages_out       : std_logic_vector(19 downto 0);
     signal dma_data_n_addrs         : std_logic_vector(11 downto 0);
-    signal dma_write_config         : std_logic;
 
     signal app1_msi_req             : std_logic;
     signal app1_msi_tc              : std_logic_vector(2 downto 0);
@@ -177,8 +177,8 @@ begin
         i_clk => i_clk--,
     );
 
-    writeregs <= writeregs_s;
-    regwritten <= regwritten_s;
+    o_writeregs <= writeregs_s;
+    o_regwritten <= regwritten_s;
     readregs_s(63 downto 56) <= readregs_int(63 downto 56);
     readregs_s(55 downto 0) <= readregs(55 downto 0);
 
@@ -202,8 +202,8 @@ begin
         i_rx_bar        => rx_bar0(0),
 
         -- registers
-        writeregs       => writeregs_s,
-        regwritten      => regwritten_s,
+        o_writeregs     => writeregs_s,
+        o_regwritten    => regwritten_s,
 
         -- to response engine
         readaddr        => wreg_readaddr,
@@ -417,7 +417,7 @@ begin
         dma_data_address            => dma_data_address,
         dma_data_address_out        => dma_data_address_out,
         dma_data_mem_addr           => dma_data_mem_addr,
-        dma_addrmem_data_written    => regwritten_s(DMA_DATA_ADDR_LOW_REGISTER_W),
+        dma_addrmem_data_written    => dma_data_address_written,
         dma_data_pages              => dma_data_pages,
         dma_data_pages_out          => dma_data_pages_out,
         dma_data_n_addrs            => dma_data_n_addrs,
@@ -435,12 +435,13 @@ begin
     begin
     if ( i_reset_n = '0' ) then
         testout <= (others => '0');
-        dma_write_config <= '0';
 
         app_msi_req <= '0';
         app_msi_tc <= (others => '0');
         app_msi_num <= (others => '0');
         app1_msi_ack <= '0';
+
+        dma_data_address_written <= '0';
 
     elsif rising_edge(i_clk) then
 
@@ -461,18 +462,13 @@ begin
 
         dma_control_address <= writeregs_s(DMA_CTRL_ADDR_HI_REGISTER_W) & writeregs_s(DMA_CTRL_ADDR_LOW_REGISTER_W);
         dma_data_address <= writeregs_s(DMA_DATA_ADDR_HI_REGISTER_W) & writeregs_s(DMA_DATA_ADDR_LOW_REGISTER_W);
+        dma_data_address_written <= regwritten_s(DMA_DATA_ADDR_LOW_REGISTER_W);
         dma_data_n_addrs <= writeregs_s(DMA_NUM_ADDRESSES_REGISTER_W)(DMA_NUM_ADDRESSES_RANGE);
         dma_data_mem_addr <= writeregs_s(DMA_RAM_LOCATION_NUM_PAGES_REGISTER_W)(DMA_RAM_LOCATION_RANGE);
         dma_data_pages <= writeregs_s(DMA_RAM_LOCATION_NUM_PAGES_REGISTER_W)(DMA_NUM_PAGES_RANGE);
         readregs_int(DMA_DATA_ADDR_HI_REGISTER_R) <= dma_data_address_out(63 downto 32);
         readregs_int(DMA_DATA_ADDR_LOW_REGISTER_R) <= dma_data_address_out(31 downto 0);
         readregs_int(DMA_NUM_PAGES_REGISTER_R)(DMA_NUM_PAGES_RANGE) <= dma_data_pages_out;
-
-        if(regwritten_s(DMA_DATA_ADDR_LOW_REGISTER_W)='1' and writeregs_s(DMA_REGISTER_W)(DMA_BIT_ADDR_WRITE_ENABLE) = '1') then
-            dma_write_config <= '1';
-        else
-            dma_write_config <= '0';
-        end if;
 
         testout(127 downto 124) <= testout_completer(127 downto 124);
         testout(123 downto 112) <= "00" & rmem_readlength; -- length of read request for readable memory

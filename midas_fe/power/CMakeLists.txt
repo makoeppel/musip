@@ -3,6 +3,7 @@
 add_executable(power
     power_testbench.cpp
     GenesysDriver.cpp
+    NGP824Driver.cpp
     Keithley2611BDriver.cpp Keithley2612ADriver.cpp
     Keithley2400Driver.cpp Keithley2450Driver.cpp
     Keithley6487Driver.cpp

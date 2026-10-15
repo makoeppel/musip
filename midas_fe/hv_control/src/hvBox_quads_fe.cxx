@@ -77,11 +77,11 @@ INT frontend_init()
 
    /*---- set correct ODB device addresses ----*/
 
-   mdevice_mscbhv4 quadHV("Quad HV", "Quad HV modules", "mscb382"); //this should not be hardcoded!
-   quadHV.set_hvmax(50);
-   quadHV.define_box(1, {"none0", "quad 1", "quad 2", "quad 3"}, 35);
-   quadHV.set_hvmax(50);
-   quadHV.define_box(2, {"quad 0", "none1", "none2", "none3"}, 75);
+   mdevice_mscbhv4 quadHV("Quad HV", "Quad HV modules", "192.168.10.15"); //this should not be hardcoded!
+   quadHV.set_hvmax(40);
+   quadHV.define_box(1, {"quad 0", "quad 1", "none 0", "none 1"}, 35);
+   //quadHV.set_hvmax(50);
+   //quadHV.define_box(2, {"quad 0", "none1", "none2", "none3"}, 75);
    quadHV.define_history_panel("US V", "Measured");
    quadHV.define_history_panel("US I", "Current");
 

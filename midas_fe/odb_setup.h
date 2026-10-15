@@ -31,17 +31,11 @@ constexpr std::array<T, N> filled_array(const T& value) {
 // Map /Equipment/Quads/Settings
 midas::odb settings = {
     {"Readout",
-     {{"Datagen Divider", 1000},
-      {"Sorter Delay", filled_array<uint64_t, N_FEBS>(200)},
-      {"Software dummy", false},
+     {{"Software dummy", false},
       {"Datagen Enable", false},
       {"mask_n_generic", 0x0},
-      {"use_merger", false},
-      {"max_requested_words", 0x80000},
-      {"use_send_time", false},
-      {"HitRate", 0},
-      {"MUX_ERROR", 0},
-      {"n_mevents", 10}}},
+      {"Sorter Delay", filled_array<uint64_t, N_FEBS>(200)},
+      {"HitRate", 0}}},
     {"DAQ",
      {
         {"Commands",
@@ -107,6 +101,7 @@ midas::odb settings = {
            {"FEBsActive", filled_array<bool, N_FEBS>(false)},
            {"FEBsQuads", filled_array<bool, N_FEBS>(false)},
            {"FEBsMutrig", filled_array<bool, N_FEBS>(false)},
+           {"FEBsSMA", filled_array<bool, N_FEBS>(false)},
            {"Mapping", { 0,  1,  2,  3,  4,  5,  6,  7,
                          8,  9, 10, 11, 12, 13, 14, 15,
                         16, 17, 18, 19, 20, 21, 22, 23,

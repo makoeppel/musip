@@ -12,6 +12,7 @@
 #include <iostream>
 #include <mutex>
 #include <thread>
+#include <cmath>
 
 #include "BaseClient.h"
 #include "SerialClient.h"

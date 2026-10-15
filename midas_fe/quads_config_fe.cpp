@@ -71,6 +71,7 @@ std::vector<uint32_t> feb_hits_last = {0,0,0,0};
 std::vector<uint32_t> feb_rates_mutrig = {0,0,0,0};
 std::vector<uint32_t> feb_prev_lvds_err(N_FEBS*MAX_LVDS_LINKS_PER_FEB, 0);
 std::vector<uint32_t> lvds_banks = {};
+std::vector<uint32_t> sma_counter_banks = {};
 std::vector<float> ssfe_banks = {};
 std::vector<uint32_t> matrix_banks = {};
 std::vector<uint32_t> adc_banks = {};
@@ -185,6 +186,11 @@ void init_banks() {
     names.push_back("DMA SKIP");
     names.push_back("DMA FULL");
     names.push_back("READOUT RATE");
+    names.push_back("Sorter InTime FEB 0");
+    names.push_back("Sorter OutTime FEB 0");
+    names.push_back("Sorter Over FEB 0");
+    names.push_back("Sorter Out FEB 0");
+
     quads_settings[namename] = names;
 
     // setup PCLS bank
@@ -249,6 +255,20 @@ void init_banks() {
     quads_settings[nameMTCF] = namesMTCF;
     quads_settings[nameMTCE] = namesMTCE;
     quads_settings[nameMTTM] = namesMTTM;
+
+    std::string nameSMCR = std::string("Names SMCR");
+    std::vector<std::string> namesSMCR;
+    for (uint32_t i = 0; i < N_FEBS_SMA; i++) {
+        for (uint32_t trigger = 0; trigger < N_INPUT_SMA; trigger++) {
+            namesSMCR.push_back("MUX rate F" + std::to_string(i) + " T" + std::to_string(trigger));
+            namesSMCR.push_back("MUX skip F" + std::to_string(i) + " T" + std::to_string(trigger));
+            for (uint32_t chain = 0; chain < N_CHAINS_SMA; chain++) {
+                namesSMCR.push_back("rate F" + std::to_string(i) + " T" + std::to_string(trigger) + " C"  + std::to_string(chain));
+                namesSMCR.push_back("skip F" + std::to_string(i) + " T" + std::to_string(trigger) + " C"  + std::to_string(chain));
+            }
+        }
+    }
+    quads_settings[nameSMCR] = namesSMCR;
 }
 
 void setup_history() {
@@ -341,6 +361,24 @@ void setup_history() {
     temp.push_back("Quads/MTTM:MTTM[3]");
     hs_define_panel("MuTRiG", "Temperatures", temp);
 
+    // sma
+    for (uint32_t feb = 0; feb < N_FEBS_SMA; feb++) {
+        std::vector<std::string> ch_rate;
+        std::vector<std::string> ch_skip;
+        for (uint32_t trigger = 0; trigger < N_INPUT_SMA; trigger++) {
+            for (uint32_t chain = 0; chain < N_CHAINS_SMA; chain++) {
+                ch_rate.push_back("Quads/SMCR:rate F" + std::to_string(feb) + " T" + std::to_string(trigger) + " C" + std::to_string(chain));
+                ch_skip.push_back("Quads/SMCR:skip F" + std::to_string(feb) + " T" + std::to_string(trigger) + " C" + std::to_string(chain));
+            }
+            std::string panelname("F " + std::to_string(feb) + " Ch " + std::to_string(trigger) + " rate");
+            hs_define_panel("Trigger", panelname.c_str(), ch_rate);
+            panelname = "F " + std::to_string(feb) + " Ch " + std::to_string(trigger) + " skip";
+            hs_define_panel("Trigger", panelname.c_str(), ch_skip);
+            ch_rate.clear();
+            ch_skip.clear();
+        }
+    }
+
 }
 
 int begin_of_run() {
@@ -367,8 +405,9 @@ int begin_of_run() {
     uint16_t timeout_cnt = 300;
     uint32_t link_active_from_odb = 0;
     for (int idx = 0; idx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); ++idx)
-        if (m_settings["DAQ"]["Links"]["FEBsActive"][idx])
-            link_active_from_odb |= (0x1 << idx);
+        if (m_settings["DAQ"]["Links"]["FEBsActive"][idx]) {
+            link_active_from_odb += (0x1 << idx);
+        }
     printf("Waiting for run prepare acknowledge from all FEBs\n");
     // TODO: test this part of checking the run number
     do {
@@ -381,6 +420,14 @@ int begin_of_run() {
 
     if (timeout_cnt == 0) {
         cm_msg1(MINFO, "quads", "quad_fe", "Run %d start denied - check if FEBs alive", run_number);
+
+        for (int idx = 0; idx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); ++idx) {
+            if (m_settings["DAQ"]["Links"]["FEBsActive"][idx]) {
+                mup->write_register_wait(RUN_NR_ADDR_REGISTER_W, idx, 1000);
+                uint32_t val = mup->read_register_ro(RUN_NR_REGISTER_R);
+                printf("PREP_ACK=%u STOP_ACK=%u RNo=0x%8.8x\n", (val>>25) & 1, (val>>24) & 1,(val>>0) & 0xffffff);
+            }
+        }
         return CM_TRANSITION_CANCELED;
     }
     write_command_by_name("Sync");
@@ -638,6 +685,13 @@ int frontend_init() {
     if (status != SUCCESS)
         return FE_ERR_DRIVER;
 
+    // check if PCIE is working
+    uint32_t val = mup->read_register_ro(VERSION_REGISTER_R);
+    if(val == 0xFFFFFFFF){
+        cm_msg(MERROR, "frontend_init()", "PCIe Error, swb pcie reg reading not working");
+        return FE_ERR_DRIVER;
+    }
+
     // Set our transition sequence. The default is 500.
     cm_set_transition_sequence(TR_START, 400);
 
@@ -659,8 +713,14 @@ int frontend_init() {
     usleep(500000);  // we sleep here to wait until the command is processed
     mup->write_register(RESET_LINK_CTL_REGISTER_W, 0x0);
 
-    // init FEBs
+    // usleep(500000);
+    // feb_sc->FEBsc_resetMain();
+    // feb_sc->FEBsc_resetSecondary();
+
+    printf("Reset FEBs by sending Abort Run and Stop Reset\n");
     InitFEBs(*feb_sc, m_settings);
+    printf("Reset FEBs by sending Abort Run and Stop Reset\n");
+
 
     // init banks
     init_banks();
@@ -677,7 +737,7 @@ int frontend_init() {
     midas::odb custom("/Custom", true);
     struct passwd *pw = getpwuid(getuid());
     const char *homedir = pw->pw_dir;
-    custom["Path"] = std::string (homedir).append("/musip/custom");
+    // custom["Path"] = std::string (homedir).append("/musip/custom");
     custom["Quads"] = "Quads/quad_basics.html";
     custom["MuTRiG"] = "Mutrig/TimingScint.html";
     custom["LVDS"] = "lvds.html";
@@ -794,6 +854,31 @@ int read_sc_event(char* pevent, int off) {
     readout_banks.push_back(dma_skip);
     readout_banks.push_back(dma_full);
     readout_banks.push_back(m_settings["Readout"]["HitRate"]);
+
+    // TODO: this is a hack from the pioneer beamtime
+    vector<uint32_t> sorterdata(12*7+3);
+    feb_sc->FEB_read(0, SORTER_COUNTER_REGISTER_R, sorterdata);
+
+    // NINTIME counter
+    uint32_t nintime = 0;
+    for(uint32_t i = 0; i < 12; i++) {
+        nintime += sorterdata[i+SORTER_INDEX_NINTIME];
+    }
+    // NOUTOFTIME counter
+    uint32_t nouttime = 0;
+    for(uint32_t i = 0; i < 12; i++) {
+        nouttime += sorterdata[i+SORTER_INDEX_NOUTOFTIME];
+    }
+    // NOVERFLOW counter
+    uint32_t noverflow = 0;
+    for(uint32_t i = 0; i < 12; i++) {
+        noverflow += sorterdata[i+SORTER_INDEX_NOVERFLOW];
+    }
+    uint32_t nout = sorterdata[SORTER_INDEX_NOUT];
+    readout_banks.push_back(nintime);
+    readout_banks.push_back(nouttime);
+    readout_banks.push_back(noverflow);
+    readout_banks.push_back(nout);
 
     // *************************************
     // ************ MUPIX BANKS  ***********
@@ -963,7 +1048,8 @@ int read_sc_event(char* pevent, int off) {
             feb_sc->FEB_read(febIDx, FEBSlowcontrolInterface::OFFSETS::FEBsc_RPC_DATAOFFSET, rval);
 
             // store and scale temperatures
-            for (size_t idx=0; idx < N_TMB_MATRIX_TEMPERATURES; idx++) {
+            for (size_t idx=0; idx < N_TMB_MATRIX_TEMPERATURES-1; idx++) {
+                printf("XXTM idx = %lu : %x\n",idx,rval[idx+1]);
                 float fval = TMB_TEMPERATURE_FACTOR * to_signed_16b(rval[idx+1]);
                 if( (((rval[0]>>(idx)) & 0x01) == 0) || ((rval[idx+1]&0xffff)==0x8fff))
                     fval = NAN;
@@ -986,7 +1072,7 @@ int read_sc_event(char* pevent, int off) {
         int rpc_ret = -17;
         if (FEBsIsMutrig)
            febSSIDx++;
-	else
+        else
            continue;
 
         rpc_ret = feb_sc->FEBsc_NiosRPC(febIDx, CMD_TILE_TMB_STATUS, {});
@@ -1007,6 +1093,48 @@ int read_sc_event(char* pevent, int off) {
     }
 
     MuTRiGResetLVDSAddr(*feb_sc, m_settings);
+
+    // SMA banks
+    // VHDL
+    // counters(N_INPUT_SMA*N_CHAINS_SMA-1 downto 0) <= hit_rate;
+    // counters(2*N_INPUT_SMA*N_CHAINS_SMA-1 downto N_INPUT_SMA*N_CHAINS_SMA) <= skip_cnt;
+    // counters(2*N_INPUT_SMA*N_CHAINS_SMA+g_N-1 downto 2*N_INPUT_SMA*N_CHAINS_SMA) <= mux_rate;
+    // counters(2*N_INPUT_SMA*N_CHAINS_SMA+2*g_N-1 downto 2*N_INPUT_SMA*N_CHAINS_SMA+4) <= mux_skip;
+    sma_counter_banks.clear();
+    uint32_t sma_febs = 0;
+    offset = 0;
+    for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
+        bool FEBActive = m_settings["DAQ"]["Links"]["FEBsActive"][febIDx];
+        bool FEBsIsSMA = m_settings["DAQ"]["Links"]["FEBsSMA"][febIDx];
+        if (FEBsIsSMA && FEBActive && (sma_febs < N_FEBS_SMA)) {
+            // reset counter addr
+            feb_sc->FEB_write(febIDx, SMA_CTRL_REGISTER_W, 1);
+            feb_sc->FEB_write(febIDx, SMA_CTRL_REGISTER_W, 0);
+            // readout counters
+            std::vector<uint32_t> counters(offset + (2*N_INPUT_SMA*N_CHAINS_SMA+2*N_INPUT_SMA));
+
+            feb_sc->FEB_read(febIDx, SMA_COUNTER_REGISTER_R, counters, true);
+            for (uint32_t trigger = 0; trigger < N_INPUT_SMA; trigger++) {
+                sma_counter_banks.push_back(counters[2*N_INPUT_SMA*N_CHAINS_SMA+trigger]); // mux rate
+                sma_counter_banks.push_back(counters[2*N_INPUT_SMA*N_CHAINS_SMA+trigger+4]); // mux skip
+                for (uint32_t chain = 0; chain < N_CHAINS_SMA; chain++) {
+                    sma_counter_banks.push_back(counters[trigger*N_CHAINS_SMA+chain]); // hit rate
+                    sma_counter_banks.push_back(counters[trigger*N_CHAINS_SMA+chain+N_INPUT_SMA*N_CHAINS_SMA]); // hit skip
+                }
+            }
+            sma_febs++;
+        } 
+    }
+    if (sma_febs < N_FEBS_SMA) {
+        for (uint32_t trigger = 0; trigger < N_INPUT_SMA; trigger++) {
+            sma_counter_banks.push_back(0);
+            sma_counter_banks.push_back(0);
+            for (uint32_t chain = 0; chain < N_CHAINS_SMA; chain++) {
+                sma_counter_banks.push_back(0);
+                sma_counter_banks.push_back(0);
+            }
+        }
+    }
 
     // create bank, pdata
     bk_init32a(pevent);
@@ -1072,6 +1200,11 @@ int read_sc_event(char* pevent, int off) {
     // create a bank with the TMB status
     bk_create(pevent, "MTSM", TID_DWORD, (void**)&pdata);
     for (auto data : values_XXSM) *pdata++ = data;
+    bk_close(pevent, pdata);
+
+    // create a bank with the SMA counter
+    bk_create(pevent, "SMCR", TID_DWORD, (void**)&pdata);
+    for (auto data : sma_counter_banks) *pdata++ = data;
     bk_close(pevent, pdata);
 
     return bk_size(pevent);

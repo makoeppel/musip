@@ -674,8 +674,8 @@ begin
             i_pcie_refclk           => i_pcie0_refclk,
 
             readregs                => pcie0_rregs,
-            writeregs               => pcie0_wregs,
-            regwritten              => o_pcie0_regwritten,
+            o_writeregs             => pcie0_wregs,
+            o_regwritten            => o_pcie0_regwritten,
 
             i_clk_B                 => clk_156,
             o_writeregs_B           => pcie0_wregs_B,

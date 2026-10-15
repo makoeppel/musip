@@ -30,6 +30,7 @@ derived from the equipment name
 #include "device/mscbhvr.h"
 #include "GenesysDriver.h"
 #include "HMP4040Driver.h"
+#include "NGP824Driver.h"
 #include "Keithley2611BDriver.h"
 #include "Keithley2612ADriver.h"
 #include "Keithley2450Driver.h"
@@ -468,6 +469,9 @@ INT frontend_init() {
             if (driver_name == "HMP4040")
                 drivers.emplace_back(
                     new HMP4040Driver(equipment[eqID].name, &equipment[eqID].info));
+            else if (driver_name == "NGP824")
+                drivers.emplace_back(
+                    new NGP824Driver(equipment[eqID].name, &equipment[eqID].info));
             else {
                 std::cout << "Driver name " << driver_settings["DriverName"]
                           << " not recognized. Set to default = HMP4040\n";
