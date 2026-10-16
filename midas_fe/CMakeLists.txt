@@ -3,6 +3,7 @@
 add_subdirectory(libmudaq)
 add_subdirectory(power)
 add_subdirectory(hv_control)
+add_subdirectory(omega_scfe)
 
 add_executable(quads_config_fe quads_config_fe.cpp)
 add_executable(readout_fe readout_fe.cpp)
