@@ -6,6 +6,7 @@
 const alignment = [[0,0], [1,0], [0,1], [1,1]];
 
 //Sensor IDs (depend on cabling of the data cables, default --> consecutive but due to FEB sync issue, soemtimes also cables differently
+//const sensor_ids = [[0,1, 2,3], [4,5, 6,7], [8,9, 10,11], [12,13, 14,15], [16,17, 18,19], [20,21, 22,23]];
 // Re-cabled
 const sensor_ids = [[16,17, 18,19], [2,3, 10,11], [8,9, 20,21], [4,5, 6,7], [0,1, 22,23], [12,13, 14,15]];
 
