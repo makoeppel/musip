@@ -1,0 +1,40 @@
+#!/bin/bash
+
+ONLINE="@PROJECT_SOURCE_DIR@/online"
+INSTALL_PREFIX="@CMAKE_INSTALL_PREFIX@"
+
+# midas
+export MIDASSYS=${MIDASSYS:-@MIDASSYS@}
+export MIDAS_EXPT_NAME="${MIDAS_EXPT_NAME:-MuSR}"
+export MIDAS_EXPTAB="${MIDAS_EXPTAB:-$ONLINE/exptab}"
+if [ ! -f "$MIDAS_EXPTAB" ] ; then
+    echo "'$MIDAS_EXPTAB' does not exist -> create default exptab with experiment name '$MIDAS_EXPT_NAME'"
+    echo "#Exptname    Expt Directory    Username" >> $MIDAS_EXPTAB
+    echo "$MIDAS_EXPT_NAME    $ONLINE    $USER" >> $MIDAS_EXPTAB
+fi
+
+# PATH, LD_LIBRARY_PATH, etc.
+BINDIR="$INSTALL_PREFIX/@CMAKE_INSTALL_BINDIR@"
+PATH="$MIDASSYS/bin:$PATH"
+PATH="$BINDIR:$PATH"
+LIBDIR="$INSTALL_PREFIX/@CMAKE_INSTALL_LIBDIR@"
+LD_LIBRARY_PATH="$MIDASSYS/lib:$LD_LIBRARY_PATH"
+LD_LIBRARY_PATH="$LIBDIR:$LD_LIBRARY_PATH"
+if [[ "$OSTYPE" == "darwin"* ]] ; then
+    export DYLD_LIBRARY_PATH="$LIBDIR${DYLD_LIBRARY_PATH:+:$DYLD_LIBRARY_PATH}";
+fi
+export PYTHONPATH="PYTHONPATH:$MIDASSYS/python"
+
+# remove duplicate and export
+PATH=$(printf %s "$PATH" | awk -v RS=: '!a[$0]++ { if(n++) printf(":"); printf("%s", $0) }')
+export PATH
+LD_LIBRARY_PATH=$(printf %s "$LD_LIBRARY_PATH" | awk -v RS=: '!a[$0]++ { if(n++) printf(":"); printf("%s", $0) }')
+export LD_LIBRARY_PATH
+
+# rehash new commands
+hash -r
+
+alias git-mk='env GIT_AUTHOR_NAME="Marius Koeppel" GIT_AUTHOR_EMAIL="koeppel.ma@googlemail.com" git'
+alias git-tr='env GIT_AUTHOR_NAME="Thomas Rudzki" GIT_AUTHOR_EMAIL="rudzki@physi.uni-heidelberg.de" git'
+alias git-kb='env GIT_AUTHOR_NAME="Konrad Briggl" GIT_AUTHOR_EMAIL="konrad.briggl@kip.uni-heidelberg.de" git'
+alias git-lm='env GIT_AUTHOR_NAME="Lukas Mandok" GIT_AUTHOR_EMAIL="mandok@physi.uni-heidelberg.de" git'

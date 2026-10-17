@@ -128,3 +128,7 @@ if(MKDOCS_EXECUTABLE)
 else()
     message(STATUS "Mkdocs not found, skipping documentation target")
 endif()
+
+configure_file(set_env.sh.in set_env.sh @ONLY)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/set_env.sh DESTINATION .)
+
