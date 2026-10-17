@@ -396,13 +396,9 @@ int ConfigureMuTRiGASICs(FEBSlowcontrolInterface& feb_sc, midas::odb m_settings,
         const bool febIsMutrig = m_settings["DAQ"]["Links"]["FEBsMutrig"][febIDx];
         const uint16_t asicMask = m_settings["DAQ"]["Links"]["ASICMask"][febIDx];
 
-        if (!febIsMutrig) {
+        if (!febIsMutrig || !febActive)
             continue;
-        }
-	febSSIDx++;
-        if (!febActive) {
-            continue;
-        }
+	    febSSIDx++;
 
         for (uint32_t localAsic = 0; localAsic < N_MUTRIGS_PER_FEB; ++localAsic) {
             const uint32_t globalAsic = febSSIDx * N_MUTRIGS_PER_FEB + localAsic;

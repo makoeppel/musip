@@ -418,7 +418,7 @@ int begin_of_run() {
         timeout_cnt--;
         link_active_from_register = mup->read_register_ro(RUN_NR_ACK_REGISTER_R);
         printf("%u  %u %u\n", timeout_cnt, link_active_from_odb, link_active_from_register);
-        usleep(10000);
+        usleep(1000);
     } while ((link_active_from_register & link_active_from_odb) != link_active_from_odb &&
              (timeout_cnt > 0));
 
@@ -435,7 +435,7 @@ int begin_of_run() {
         return CM_TRANSITION_CANCELED;
     }
     write_command_by_name("Sync");
-    usleep(500000);  // we sleep here to wait until the command is processed
+    // usleep(500000);  // we sleep here to wait until the command is processed
     write_command_by_name("Start Run");
 #endif
 
@@ -771,16 +771,16 @@ int frontend_init() {
     // create watch
     settings["DAQ/Commands"].watch(sc_settings_changed);
 
-    midas::odb custom("/Custom", true);
-    struct passwd *pw = getpwuid(getuid());
-    const char *homedir = pw->pw_dir;
-    if(getenv("MIDAS_EXPTAB"))
-        custom["Path"] = std::string (dirname(getenv("MIDAS_EXPTAB"))).append("/../custom");
-    else
-    	custom["Path"] = std::string (homedir).append("/musip/custom");
-    custom["Quads"] = "Quads/quad_basics.html";
-    custom["MuTRiG"] = "Mutrig/TimingScint.html";
-    custom["LVDS"] = "lvds.html";
+    // midas::odb custom("/Custom", true);
+    // struct passwd *pw = getpwuid(getuid());
+    // const char *homedir = pw->pw_dir;
+    // if(getenv("MIDAS_EXPTAB"))
+    //     custom["Path"] = std::string (dirname(getenv("MIDAS_EXPTAB"))).append("/../custom");
+    // else
+    // 	custom["Path"] = std::string (homedir).append("/musip/custom");
+    // custom["Quads"] = "Quads/quad_basics.html";
+    // custom["MuTRiG"] = "Mutrig/TimingScint.html";
+    // custom["LVDS"] = "lvds.html";
 
     return SUCCESS;
 }
@@ -1260,7 +1260,7 @@ int read_sc_event(char* pevent, [[maybe_unused]] int off) {
 
 EQUIPMENT equipment[] = {{
                              "Quads",                           /* equipment name */
-                             {1, 0,                             /* event ID, trigger mask */
+                             {300, 0,                             /* event ID, trigger mask */
                               "SYSTEM",                         /* event buffer */
                               EQ_PERIODIC,                      /* equipment type */
                               0,                                /* event source */
