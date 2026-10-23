@@ -11,6 +11,7 @@ set(minalyzer_analyzers_headers
     AnaTriggerHistos.h
     json.h
     root_helpers.h
+    geofiles/futuremeg2026.h
 )
 
 set(minalyzer_analyzers_sources

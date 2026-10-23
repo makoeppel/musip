@@ -4,6 +4,13 @@
 #include <stdint.h>
 #include <cstdio>
 
+#include <geofiles/futuremeg2026.h>
+
+// One telescope geometry shared by all hits. Default = orientations from run 342;
+// call load_telescope_geometry("geometry_aligned.txt") once at start-up to use a fitted file.
+inline quadtel::Geometry& telescope_geometry() { static quadtel::Geometry g; return g; }
+inline bool load_telescope_geometry(const std::string& fn) { return telescope_geometry().load(fn); }
+
 struct pixelhit {
     pixelhit() noexcept : hitdata(0x0) {}
     pixelhit(uint64_t h) noexcept : hitdata(h) {}
@@ -23,6 +30,17 @@ struct pixelhit {
     [[nodiscard]] uint8_t ts_sorterhit() const { return hitdata & 0xF; }
     [[nodiscard]] uint64_t time8ns() const { return (hitdata & 0x1FFFFFFFFFULL); }
     [[nodiscard]] uint64_t time() const { return time8ns() * 8; }
+
+    // ---- telescope coordinates (via telescope_geometry()) ----
+    // layer(): 0,1,2 or -1 if the chip is not in the geometry
+    [[nodiscard]] int layer() const { return telescope_geometry().layer_of_chip(chipid()); }
+    // globalcol(): 0..nx-1 (512), globalrow(): 0..ny-1 (500); -1 if unmapped
+    [[nodiscard]] int globalcol() const { int l, c, r; return telescope_geometry().map_pixel(chipid(), col(), row(), l, c, r) ? c : -1; }
+    [[nodiscard]] int globalrow() const { int l, c, r; return telescope_geometry().map_pixel(chipid(), col(), row(), l, c, r) ? r : -1; }
+    // all three at once (one lookup)
+    bool global(int& layer, int& gcol, int& grow) const { return telescope_geometry().map_pixel(chipid(), col(), row(), layer, gcol, grow); }
+    // aligned position in mm (uses dx, dy, rot from the loaded geometry)
+    [[nodiscard]] quadtel::GlobalPixel global_mm() const { return telescope_geometry().map(chipid(), col(), row()); }
 
     void Print() const {
         std::printf(
