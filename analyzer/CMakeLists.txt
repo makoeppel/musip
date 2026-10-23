@@ -4,6 +4,7 @@ set(minalyzer_analyzers_headers
     hits.h
     HitVectorFlowEvent.h
     AnaFillHits.h
+    AnaHitTree.h
     #AnaMusip.h
     AnaQuadHistos.h
     AnaHitTree.h
@@ -17,6 +18,7 @@ set(minalyzer_analyzers_headers
 set(minalyzer_analyzers_sources
     HitVectorFlowEvent.cpp
     AnaFillHits.cpp
+    AnaHitTree.cpp
     #AnaMusip.cpp
     AnaQuadHistos.cpp
     AnaHitTree.cpp

@@ -262,33 +262,21 @@ int create_midas_events(const uint64_t* hits, size_t nHits, int rbh) {
     uint64_t* data = nullptr;
     std::string bank_name = "H000";
     bk_create(bankHeader, bank_name.c_str(), TID_UINT32, reinterpret_cast<void**>(&data));
-    size_t nFF = 0, nSH = 0, nH = 0;
+    size_t nFF = 0, nH = 0;
     for(size_t i = 0; i < nHits; i++) {
         auto hit = hits[i];
 
         if(hit == UINT64_MAX) {
-            // filler
+            // filler or strange SMA hits
             nFF += 1;
             continue;
         }
-        if((hit >> 62) == 0b11) {
-            // debug
-            nFF += 1;
-            //continue;
-        }
-        if((hit >> 62) == 0b00) {
-            // subheaders
-            nSH += 1;
-            //continue;
-        }
-        else {
-            nH += 1;
-        }
+        nH += 1;
 
         *data = hit;
         data += 1;
     }
-    if(nSH > 0 || nH > 0) printf("create_midas_events: nFF = %d, nSH = %d, nHits = %d\n", nFF, nSH, nH);
+    if(nH > 0) printf("create_midas_events: nFF = %d, nHits = %d\n", nFF, nH);
     bk_close(bankHeader, data);
 
     eventHeader->data_size = bk_size(bankHeader);
@@ -328,10 +316,8 @@ int read_stream_thread(void*) {
         int readout_enabled_cur = is_readout_thread_enabled() && readout_enabled();
         if(readout_enabled_prev == 1 && readout_enabled_cur == 0) {
             // stop generator
-            printf("read_stream_thread: stop generator\n");
-            //mu.write_register(SWB_READOUT_STATE_REGISTER_W, 0);
-            //mu.write_register(DATAGENERATOR_DIVIDER_REGISTER_W, 0);
-            //mu.write_register(SWB_GENERIC_MASK_REGISTER_W, 0);
+            printf("read_stream_thread: end of run\n");
+            readout_enabled_prev = readout_enabled_cur;
         }
         if(!readout_enabled() || !is_readout_thread_enabled()) {
             // wait for dma flush
@@ -352,6 +338,7 @@ int read_stream_thread(void*) {
         if(readout_enabled_prev == 0 && readout_enabled_cur == 1) {
             // enable dma while running
             printf("read_stream_thread: enable DMA\n");
+            rb_wptr = rb_rptr = 0;
             mu.write_register(DMA_REGISTER_W, 1);
         }
         readout_enabled_prev = readout_enabled_cur;
