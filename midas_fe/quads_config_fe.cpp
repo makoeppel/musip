@@ -773,7 +773,8 @@ int frontend_init() {
     adcContinuousReadout(*feb_sc, m_settings);
 
     // create watch
-    settings["DAQ/Commands"].watch(sc_settings_changed);
+    odb commands("/Equipment/Quads/Settings/", true);
+    commands["DAQ/Commands"].watch(sc_settings_changed);
 
     // midas::odb custom("/Custom", true);
     // struct passwd *pw = getpwuid(getuid());
