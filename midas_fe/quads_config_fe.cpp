@@ -60,8 +60,6 @@ BOOL equipment_common_overwrite = TRUE;
 
 // configuration variables
 FEBSlowcontrolInterface* feb_sc;
-midas::odb m_settings;
-midas::odb m_variables;
 
 uint8_t bitpattern_mupix[N_BYTES_MUPIX] = {};
 uint8_t bitpattern_mutrig[N_BYTES_MUTRIG] = {};
@@ -388,6 +386,7 @@ void setup_history() {
 int begin_of_run() {
 // bring the FEBs into running
 #ifndef NO_A10_BOARD
+    odb m_settings("/Equipment/Quads/Settings", true);
     midas::odb r("/Runinfo/Run number");
     uint32_t run_number = r;
     mup->write_register(RUN_NR_REGISTER_W, run_number);
@@ -514,6 +513,8 @@ void sc_settings_changed(midas::odb o) {
 
         cm_msg1(MINFO, "quads", "sc_settings_changed", "Setting changed (%s)", name.c_str());
 
+        odb m_settings("/Equipment/Quads/Settings", true);
+
         if (name == "MupixConfig" && o) {
             ConfigureASICs(*feb_sc, m_settings, bitpattern_mupix);
         }
@@ -564,8 +565,8 @@ void sc_settings_changed(midas::odb o) {
             usleep(500000);  // we sleep here to wait until the command is processed
             write_command_by_name("Start Run");
         }
-    // MUPIX Commands //
-	// ************** //
+        // MUPIX Commands //
+        // ************** //
         if (name == "MupixTDACConfig" && o) {
             ConfigureTDACs(*feb_sc, m_settings);
         }
@@ -612,14 +613,16 @@ void sc_settings_changed(midas::odb o) {
         }
 
             if (name == "Load Firmware" && o) {
+                odb m_variables("/Equipment/Quads/Variables", true);
                 const int status = LoadFirmwareAll(*feb_sc, m_settings, m_variables, false);
                 if (status != FE_SUCCESS)
                 cm_msg1(MERROR, "Quads", "sc_settings_changed", "Firmware loading failed");
             }
 
-    // MUTRIG Commands //
-	// *************** //
+        // MUTRIG Commands //
+        // *************** //
         if(name == "init_tmb" && o){
+            odb m_variables("/Equipment/Quads/Variables", true);
             TBinit(*feb_sc, m_settings, m_variables);
         }
 
@@ -631,8 +634,10 @@ void sc_settings_changed(midas::odb o) {
             UpdatePower(*feb_sc, m_settings);
         }
 
-        if (name == "temperature_IDs_read" && o)
+        if (name == "temperature_IDs_read" && o) {
+            odb m_variables("/Equipment/Quads/Variables", true);
             MuTRiG_temperature_IDs_read(*feb_sc, m_settings, m_variables);
+        }
         if (name == "dummy_data" || name == "dummy_data_n" || name == "dummy_data_fast")
             MuTRiG_dummy_data(*feb_sc, m_settings);
         if (name == "lapse_boundary" || name == "lapse_delay" || name == "lapse_replace_latency")
@@ -664,8 +669,8 @@ void sc_settings_changed(midas::odb o) {
         }
         
 
-    // DAQ Commands //
-	// ************ //
+        // DAQ Commands //
+        // ************ //
         if (name == "DataGenEnable" && o) {
             midas::odb commands = m_settings["DAQ"]["Commands"];
             for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
@@ -706,9 +711,8 @@ void sc_settings_changed(midas::odb o) {
 
 int frontend_init() {
     // create ODB copy for settings
-    settings.connect_and_fix_structure("/Equipment/Quads/Settings/");
-    m_settings.connect("/Equipment/Quads/Settings");
-    m_variables.connect("/Equipment/Quads/Variables");
+    //settings.connect_and_fix_structure("/Equipment/Quads/Settings/");
+    odb m_settings("/Equipment/Quads/Settings", true);
 
     // end and start of run
     install_begin_of_run(begin_of_run);
@@ -786,6 +790,8 @@ int frontend_init() {
 }
 
 int read_sc_event(char* pevent, [[maybe_unused]] int off) {
+
+    odb m_settings("/Equipment/Quads/Settings", true);
 
 // *************************************
 // ************* DAQ BANKS  ************
