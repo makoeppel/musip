@@ -67,7 +67,7 @@ uint32_t cnt_loop = 0;
 mudaq::DmaMudaqDevice* mup = nullptr;
 mudaq::DmaMudaqDevice::DataBlock block;
 std::vector<uint32_t> lvds_banks;
-midas::odb m_settings;
+
 
 static void print_swb_counters(mudaq::DmaMudaqDevice& mu) {
     // counter / rate
@@ -168,7 +168,7 @@ int begin_of_run() {
     readout_state_regs = 0;
 
     // get copy of setting
-    m_settings.connect("/Equipment/Quads/Settings");
+    midas::odb m_settings("/Equipment/Quads/Settings", true);
 
 #ifdef NO_A10_BOARD
 
@@ -408,7 +408,7 @@ int read_stream_thread(void*) {
             auto clock_end_create_event = std::chrono::steady_clock::now();
             auto dma_time = std::chrono::duration<double>(clock_end - clock_start).count();
             printf("nHits %i time %i\n", sizeof(hits)/sizeof(hits[0]), dma_time);
-            m_settings["Readout"]["HitRate"] = (double) sizeof(hits)/sizeof(hits[0]) / (dma_time / 1e6);
+            //m_settings["Readout"]["HitRate"] = (double) sizeof(hits)/sizeof(hits[0]) / (dma_time / 1e6);
         }
     }
 
@@ -421,9 +421,6 @@ int read_stream_thread(void*) {
 }
 
 int frontend_init() {
-
-    // get copy of setting
-    m_settings.connect("/Equipment/Quads/Settings");
 
     // setup max event size
     set_max_event_size(2*1024*1024);
