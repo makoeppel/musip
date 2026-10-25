@@ -24,7 +24,6 @@ void AnaHitTree::BeginRun(TARunInfo* runinfo) {
     if(!enabled_) return;
 
     printf("HitTree::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
-
     runinfo->fRoot->fOutputFile->cd();
     tree_ = new TTree("hits", "MuPix and Trigger hits");
 
@@ -81,6 +80,8 @@ TAFlowEvent* AnaHitTree::AnalyzeFlowEvent(TARunInfo*, TAFlags* flags, TAFlowEven
     l1_s1_time_.clear();
 
     for(const auto& currentHit : hitEvent->hits) {
+        if (!currentHit.is_good())
+            continue;
         if(write_pixelhits_ && currentHit.is_pixel()) {
             auto spHit = currentHit.as_pixel();
             pixel_chipid_.push_back(spHit.chipid());

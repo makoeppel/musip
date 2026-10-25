@@ -7,7 +7,7 @@ import json
 import mutrig.base_variables as cfg
 
 import mutrig.effective_threshold as efftth
-import mutrig.Mutrig_basic_functions as m
+#import mutrig.Mutrig_basic_functions as m
 
 # defined values for the cuts:
 ratecut = 100
@@ -87,12 +87,11 @@ def read_tthscan(filename):
         rates = module_data[f'rates']
         # try to determine what were the dimensions for tth and offset
         counter_tth = 0
-        start_tth = 0
-        if(tths[0][0] != 0):
-            start_tth = tths[0][0]
+        start_tth = tths[0][0]
         for i in range(len(tths[0])):
             if(tths[0][i]<64):
                 counter_tth = counter_tth + 1;
+        
         counter_off = (len(tths[0]) - counter_tth)/counter_tth;
         print("The range for tth is: (", start_tth,",",counter_tth-1,"), for offset: ( 0,",int(counter_off),")")
     return start_tth, counter_tth, int(counter_off)
@@ -103,9 +102,7 @@ def read_tth_calib_odb(filename):
         # read json based on how it was written in write_config_odb       
     tths_calib = module_data[f'tthresh']
     tths_offsets = module_data[f'tthresh_offset']
-    tths = []    
-    for i in range(416):
-        tths.append(63 - tths_calib[i])
+    tths = [63 - i for i in tths_calib]    
     return tths, tths_offsets
     
 def select_tth(filename,constrate,constrate_value,high_to_low,debug):

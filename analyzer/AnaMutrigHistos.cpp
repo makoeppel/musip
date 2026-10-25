@@ -15,9 +15,10 @@
 
 AnaMutrigHistos::AnaMutrigHistos(const boost::property_tree::ptree& config, TARunInfo* runinfo)
     : TARunObject(runinfo)
+    , enabled_(config.get<bool>("enabled", true))
 {
     fModuleName = "MutrigHistos";
-    
+    if (!enabled_) return;
 
     //printf("<Beginning of %s Module configuration>\n", fModuleName.c_str());
     //boost::property_tree::write_json(std::cout, config);
@@ -106,6 +107,7 @@ AnaMutrigHistos::AnaMutrigHistos(const boost::property_tree::ptree& config, TARu
 AnaMutrigHistos::~AnaMutrigHistos() {};
 
 void AnaMutrigHistos::BeginRun(TARunInfo* runinfo) {
+    if (!enabled_) return;
 
     printf("MutrigHistos::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
 
@@ -203,12 +205,14 @@ void AnaMutrigHistos::BeginRun(TARunInfo* runinfo) {
 }
 
 void AnaMutrigHistos::EndRun(TARunInfo* runinfo) {
+    if (!enabled_) return;
     printf("MutrigHistos::EndRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
 }
 
 TAFlowEvent* AnaMutrigHistos::AnalyzeFlowEvent(TARunInfo*, TAFlags* flags, TAFlowEvent* flow) {
 
     if(!flow) return flow;
+    if (!enabled_) return flow;
 
     HitVectorFlowEvent* hitevent = flow->Find<HitVectorFlowEvent>();
     if(!hitevent) return flow;
