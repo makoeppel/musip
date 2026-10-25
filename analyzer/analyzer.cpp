@@ -162,8 +162,9 @@ public:
         // First see if the module has any kind of config. If there is one, then we enable
         // it even if it does not have an "enabled" entry.
         const bool hasConfig = config.get_child_optional(moduleName_).has_value();
-        std::cout << "Module " << moduleName_ << " has config: " << hasConfig << " enabled_by_default: " << enabledByDefault << std::endl;
-        const bool enabled = config.get<bool>(moduleName_ + ".enabled", hasConfig || enabledByDefault);
+
+        bool enabled = config.get<bool>(moduleName_ + ".enabled", hasConfig || enabledByDefault);
+        std::cout << "Module " << moduleName_ << " has config: " << hasConfig << " enabled_by_default: " << enabledByDefault << " --> "<<enabled<< std::endl;
 
         // We write this back into the config, so that the child entry exists if it didn't before.
         config.put(moduleName_ + ".enabled", enabled);
@@ -365,8 +366,8 @@ int main(int argc, char* argv[]) {
     TARegister fillhits(new TAFactoryTemplateWithConfig<AnaFillHits>("fillhits", true));
     TARegister hitTree(new TAFactoryTemplateWithConfig<AnaHitTree>("hitTree", false));
     TARegister quad(new TAFactoryTemplateWithConfig<AnaQuadHistos>("quad", true));
-    //(new TAFactoryTemplateWithConfig<AnaMutrigHistos>("mutrig", true));
-    TARegister trigger(new TAFactoryTemplateWithConfig<AnaTriggerHistos>("trigger", true));
+    TARegister mutrig(new TAFactoryTemplateWithConfig<AnaMutrigHistos>("mutrig", true));
+    TARegister trigger(new TAFactoryTemplateWithConfig<AnaTriggerHistos>("trigger", false));
     //TARegister musip(new TAFactoryWrapper<AnaMusipFactory>("musip", true));
 
     // We want to save all plots at the end of each run. So create a new TARunObject

@@ -15,6 +15,7 @@ using json = nlohmann::json;
 
 AnaQuadHistos::AnaQuadHistos(const boost::property_tree::ptree& config, TARunInfo* runinfo)
     : TARunObject(runinfo)
+    , enabled_(config.get<bool>("enabled", true))
 {
     fModuleName = "QuadHistos";
 

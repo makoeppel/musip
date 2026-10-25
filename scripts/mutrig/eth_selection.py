@@ -57,6 +57,3 @@ def select_rate(data,constrate_value, ratecut, skip=0):
 
     return tths_arr, bad_channels, channels_details
 
-#def select_rate(filename,constrate_value, ratecut, skip=0):
-#    data=read_data(filename)
-#    return select_rate(data,constrate_value, ratecut, skip)

@@ -64,7 +64,7 @@ struct mutrighit {
 
     void Print() const {
         std::printf(
-            "x64:%016llx chipid:%u channel:%u et:%u rem:%u fine:%u \t timestamp:%llx\n",
+            "x64:%016llx chipid:%u channel:%u et:%u rem:%u fine:%u \t timestamp:%lx\n",
             (unsigned long long)hitdata,
             chipid(),
             channel(),
@@ -96,7 +96,7 @@ struct triggerhit {
         const uint32_t fine   = time_1ns();
 
         const uint32_t coarse_ns = coarse * 8;
-        const uint32_t coarse_ns_in_fine_range = coarse_ns & 0xFFFFF;
+        //const uint32_t coarse_ns_in_fine_range = coarse_ns & 0xFFFFF;
 
         // std::printf(
         //     "8ns:%u 1ns:%u\n",
@@ -132,6 +132,8 @@ struct hit {
     [[nodiscard]] bool is_good() const  { return (hitdata != 0xffffffffffffffff) ; }
     [[nodiscard]] bool is_pixel() const  { return is_good() && (((hitdata >> 63) & 0x1) == 0); }
     [[nodiscard]] bool is_mutrig() const { return is_good() && (((hitdata >> 63) & 0x1) == 1); }
+    //TODO: this makes no sense
+    [[nodiscard]] bool is_trigger() const { return is_good() && (((hitdata >> 63) & 0x1) == 1); }
 
     // Convert to typed views
     [[nodiscard]] pixelhit as_pixel() const { return pixelhit(hitdata); }
