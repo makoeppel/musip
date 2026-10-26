@@ -206,9 +206,9 @@
          style="font-size:18.6667px;writing-mode:lr-tb;direction:ltr;white-space:pre;shape-inside:url(#rect2);fill:#5f3f0e;stroke:#2b0000;stroke-width:0;stroke-opacity:0"><tspan
            x="107.5957"
            y="116.14261"
-           id="tspan26267"><tspan
+           id="tspan1726"><tspan
              style="fill:#000000"
-             id="tspan26265">11</tspan></tspan></text>
+             id="tspan1724">11</tspan></tspan></text>
     </pattern>
     <pattern
        xlink:href="#pattern2-0"
@@ -229,9 +229,9 @@
          style="font-size:18.6667px;writing-mode:lr-tb;direction:ltr;white-space:pre;shape-inside:url(#rect2-3);fill:#5f3f0e;stroke:#2b0000;stroke-width:0;stroke-opacity:0"><tspan
            x="107.5957"
            y="116.14261"
-           id="tspan26271"><tspan
+           id="tspan1730"><tspan
              style="fill:#000000"
-             id="tspan26269">11</tspan></tspan></text>
+             id="tspan1728">11</tspan></tspan></text>
     </pattern>
     <rect
        x="107.59652"
@@ -341,7 +341,7 @@
   <path
      class="channel"
      data-name="SIG_X_6_B"
-     d="M 75.058578,62.542203 V 74.998259 H 99.67147 V 62.542203 Z"
+     d="M 85.641912,62.542203 V 74.998259 H 110.25481 V 62.542203 Z"
      style="fill:#bab6a8;stroke:#2b0000;stroke-width:0.386663"
      id="SIG_X_6_B"
      onclick="top.showMessage(evt)">
@@ -352,7 +352,7 @@
      class="channel"
      data-name="SIG_X_1_A"
      style="fill:#bab6a8;stroke:#2b0000;stroke-width:0.548699"
-     d="M 0.21848059,0.34451184 H 49.944972 V 12.759745 H 0.21848059 Z"
+     d="M 10.801814,0.34451184 H 60.528306 V 12.759745 H 10.801814 Z"
      id="SIG_X_1_A"
      onclick="top.showMessage(evt)">
     <title
@@ -362,7 +362,7 @@
      class="channel"
      data-name="SIG_X_3_B"
      style="fill:#bab6a8;stroke:#2b0000;stroke-width:0.386663"
-     d="M 75.058136,25.174975 H 99.67147 V 37.630717 H 75.058136 Z"
+     d="m 85.64147,25.174975 h 24.61334 V 37.630717 H 85.64147 Z"
      id="SIG_X_3_B"
      onclick="top.showMessage(evt)">
     <title
@@ -372,7 +372,7 @@
      class="channel"
      data-name="SIG_X_3_A"
      style="fill:#bab6a8;stroke:#2b0000;stroke-width:0.386663"
-     d="M 0.13746069,25.093961 H 24.750793 V 37.549703 H 0.13746069 Z"
+     d="M 10.720794,25.093961 H 35.334127 V 37.549703 H 10.720794 Z"
      id="SIG_X_3_A"
      onclick="top.showMessage(evt)">
     <title
@@ -382,7 +382,7 @@
      class="channel"
      data-name="SIG_X_6_A"
      style="fill:#bab6a8;stroke:#2b0000;stroke-width:0.386663"
-     d="M 0.13746069,62.461501 H 24.750796 V 74.917245 H 0.13746069 Z"
+     d="M 10.720794,62.461501 H 35.33413 V 74.917245 H 10.720794 Z"
      id="SIG_X_6_A"
      onclick="top.showMessage(evt)">
     <title
@@ -392,7 +392,7 @@
      class="channel"
      data-name="SIG_X_7_B"
      style="fill:#bab6a8;stroke:#2b0000;stroke-width:0.548699"
-     d="M 49.944978,74.836227 H 99.67147 V 87.25146 H 49.944978 Z"
+     d="M 60.528312,74.836227 H 110.25481 V 87.25146 H 60.528312 Z"
      id="SIG_X_7_B"
      onclick="top.showMessage(evt)">
     <title
@@ -402,7 +402,7 @@
      class="channel"
      data-name="SIG_X_2_A"
      style="fill:#bab6a8;stroke:#2b0000;stroke-width:0.548699"
-     d="M 0.21848059,12.759745 H 49.944978 V 25.174979 H 0.21848059 Z"
+     d="M 10.801814,12.759745 H 60.528312 V 25.174979 H 10.801814 Z"
      id="SIG_X_2_A"
      onclick="top.showMessage(evt)">
     <title
@@ -412,7 +412,7 @@
      class="channel"
      data-name="SIG_X_2_B"
      style="fill:#bab6a8;stroke:#2b0000;stroke-width:0.548699"
-     d="M 49.944978,12.759741 H 99.67147 V 25.174975 H 49.944978 Z"
+     d="M 60.528312,12.759741 H 110.25481 V 25.174975 H 60.528312 Z"
      id="SIG_X_2_B"
      onclick="top.showMessage(evt)">
     <title
@@ -422,7 +422,7 @@
      class="channel"
      data-name="SIG_X_5_B"
      style="fill:#bab6a8;stroke:#2b0000;stroke-width:0.386663"
-     d="M 75.058133,50.08646 H 99.67147 V 62.542203 H 75.058133 Z"
+     d="M 85.641467,50.08646 H 110.25481 V 62.542203 H 85.641467 Z"
      id="SIG_X_5_B"
      onclick="top.showMessage(evt)">
     <title
@@ -432,7 +432,7 @@
      class="channel"
      data-name="SIG_X_8_B"
      style="fill:#bab6a8;stroke:#2b0000;stroke-width:0.548699"
-     d="M 49.944978,87.25146 H 99.67147 V 99.666692 H 49.944978 Z"
+     d="M 60.528312,87.25146 H 110.25481 V 99.666692 H 60.528312 Z"
      id="SIG_X_8_B"
      onclick="top.showMessage(evt)">
     <title
@@ -442,7 +442,7 @@
      class="channel"
      data-name="SIG_X_1_B"
      style="fill:#bab6a8;stroke:#2b0000;stroke-width:0.548699"
-     d="M 49.944972,0.34451184 H 99.67147 V 12.759741 H 49.944972 Z"
+     d="M 60.528306,0.34451184 H 110.25481 V 12.759741 H 60.528306 Z"
      id="SIG_X_1_B"
      onclick="top.showMessage(evt)">
     <title
@@ -452,7 +452,7 @@
      class="channel"
      data-name="SIG_X_4_A"
      style="fill:#bab6a8;stroke:#2b0000;stroke-width:0.386663"
-     d="M 0.13745874,37.549703 H 24.750796 V 50.005446 H 0.13745874 Z"
+     d="M 10.720792,37.549703 H 35.33413 V 50.005446 H 10.720792 Z"
      id="SIG_X_4_A"
      onclick="top.showMessage(evt)">
     <title
@@ -462,7 +462,7 @@
      class="channel"
      data-name="SIG_X_5_A"
      style="fill:#bab6a8;stroke:#2b0000;stroke-width:0.386663"
-     d="M 0.13746069,50.005446 H 24.750796 V 62.461189 H 0.13746069 Z"
+     d="M 10.720794,50.005446 H 35.33413 V 62.461189 H 10.720794 Z"
      id="SIG_X_5_A"
      onclick="top.showMessage(evt)">
     <title
@@ -472,7 +472,7 @@
      class="channel"
      data-name="SIG_X_8_A"
      style="fill:#bab6a8;stroke:#2b0000;stroke-width:0.548699"
-     d="M 0.21848059,87.25146 H 49.944972 V 99.666692 H 0.21848059 Z"
+     d="M 10.801814,87.25146 H 60.528306 V 99.666692 H 10.801814 Z"
      id="SIG_X_8_A"
      onclick="top.showMessage(evt)">
     <title
@@ -482,7 +482,7 @@
      class="channel"
      data-name="SIG_X_7_A"
      style="fill:#bab6a8;stroke:#2b0000;stroke-width:0.548699"
-     d="M 0.21848059,74.836227 H 49.944978 V 87.25146 H 0.21848059 Z"
+     d="M 10.801814,74.836227 H 60.528312 V 87.25146 H 10.801814 Z"
      id="SIG_X_7_A"
      onclick="top.showMessage(evt)">
     <title
@@ -492,7 +492,7 @@
      class="channel"
      data-name="SIG_X_4_B"
      style="fill:#bab6a8;stroke:#2b0000;stroke-width:0.386663"
-     d="M 75.058136,37.630717 H 99.67147 V 50.08646 H 75.058136 Z"
+     d="m 85.64147,37.630717 h 24.61334 V 50.08646 H 85.64147 Z"
      id="SIG_X_4_B"
      onclick="top.showMessage(evt)">
     <title
@@ -500,7 +500,7 @@
   </path>
   <g
      id="g26141"
-     transform="rotate(90,173.89955,50.005602)">
+     transform="rotate(90,168.60789,44.713936)">
     <path
        class="channel"
        data-name="SIG_X_6_B"
@@ -665,7 +665,7 @@
   <path
      id="M:2"
      style="fill:#bab6a8;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0"
-     d="M 52.061422,26.121403 V 73.716945 A 24.176433,23.925901 0 0 0 73.819265,49.925633 24.176433,23.925901 0 0 0 52.061422,26.121403 Z"
+     d="M 62.644756,26.121403 V 73.716945 A 24.176433,23.925901 0 0 0 84.402599,49.925633 24.176433,23.925901 0 0 0 62.644756,26.121403 Z"
      onclick="top.showMessage(evt)">
     <title
        id="title25718">M:2</title>
@@ -673,9 +673,23 @@
   <path
      id="M:1"
      style="fill:#bab6a8;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0"
-     d="M 47.82831,26.141764 V 73.737306 A 24.176433,23.925901 0 0 1 26.070466,49.945994 24.176433,23.925901 0 0 1 47.82831,26.141764 Z"
+     d="M 58.411644,26.141764 V 73.737306 A 24.176433,23.925901 0 0 1 36.6538,49.945994 24.176433,23.925901 0 0 1 58.411644,26.141764 Z"
      onclick="top.showMessage(evt)">
     <title
        id="title25720">M:1</title>
   </path>
+  <rect
+     style="fill:none;stroke:#000000;stroke-width:1;stroke-linecap:round;stroke-linejoin:round"
+     id="rect1596"
+     width="99.452995"
+     height="99.322182"
+     x="10.801813"
+     y="0.34451184" />
+  <rect
+     style="fill:none;stroke:#000000;stroke-width:1;stroke-linecap:round;stroke-linejoin:round"
+     id="rect1598"
+     width="99.322182"
+     height="99.452988"
+     x="113.65514"
+     y="0.27910599" />
 </svg>
