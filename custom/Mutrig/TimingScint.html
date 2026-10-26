@@ -178,10 +178,9 @@
         <table class="mtable" id="sensorSelection">
             <tr><th colspan="3" class="mtableheader">Sensor selection</th></tr>
             <td>
-	            <object type="image/svg+xml" data="Mutrig/setup.svg" id="svg-object" height=300px aria-label="Scintillators diagram">
-                    <!-- Fallback content for browsers that don't support <object> or SVG -->
+                <div id="svg-container" style="display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start;">
                     <p>Your browser does not support inline SVG.</p>
-                </object>
+                </div>
             </td>
             <td>
                 <div class="chip_settings_container"><!-- class="container" style="justify-content: space-between; width: 100%;">-->
@@ -283,10 +282,10 @@
                     </div>
                 </th>
                 <th>
-                </th>
-                    <div class="mjshistory" data-group="MuTRiG" data-panel="FEB 0 CRC Rate" style="width: 500px; height: 300px;" ></div>
-                <th>
                     <div class="mjshistory" data-group="MuTRiG" data-panel="FEB 0 ASIC Rate" style="width: 500px; height: 300px;" ></div>
+                </th>
+                <th>
+                    <div class="mjshistory" data-group="MuTRiG" data-panel="FEB 0 CRC Rate" style="width: 500px; height: 300px;" ></div>
                 </th>
                 <!-- <th>
                     <div class="mjshistory" data-group="MuTRiG" data-panel="HV Currents" style="width: 500px; height: 300px;" ></div>
@@ -320,15 +319,6 @@
     <script src="Mutrig/BoardControl.js"></script>
     <script src="Mutrig/DQM-PlotManager.js"></script>
 
-    <!-- <script src="Quads/quad_configuration.js" defer></script>
-    
-    <script src="Quads/quad_basics.js" defer></script>
-    <script src="Quads/quad_selection.js" defer></script>
-    <script src="Quads/quad_actions.js" defer></script>
-    <script src="Quads/quad_general_container.js" defer></script>
-    <script src="Quads/quad_hitmap.js" defer></script>
-    <script src="Quads/quad_masking.js" defer></script>
-    <script src="Quads/quad_dacs.js" defer></script>-->
     <script defer>
         mappingfile='Mutrig/setup.json';
 
@@ -380,4 +370,3 @@
 
 </body>
 </html>
-
