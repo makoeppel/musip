@@ -1,34 +1,39 @@
 {
-  "channelmap": {
-    "matrix:00": 16,
-    "matrix:01": 17,
-    "matrix:02": 18,
-    "matrix:03": 19,
-    "matrix:04": 20,
-    "matrix:05": 21,
-    "matrix:06": 22,
-    "matrix:07": 23,
-    "matrix:08": 24,
-    "matrix:09": 25,
-    "matrix:10": 26,
-    "matrix:11": 27,
-    "matrix:12": 28,
-    "matrix:13": 29,
-    "matrix:14": 30,
-    "matrix:15": 31
-  },
-  "LV" : [
+  "svgs": [
     {
-       "device"  : "LVSUPPLY1",
-       "indices" : [0,1,2,3]
+      "name": "svg-object",
+      "path": "Mutrig/matrix.svg"
     }
   ],
-  "HV" : [
+  "channelmap": {
+    "svg-object:matrix:00": 16,
+    "svg-object:matrix:01": 17,
+    "svg-object:matrix:02": 18,
+    "svg-object:matrix:03": 19,
+    "svg-object:matrix:04": 20,
+    "svg-object:matrix:05": 21,
+    "svg-object:matrix:06": 22,
+    "svg-object:matrix:07": 23,
+    "svg-object:matrix:08": 24,
+    "svg-object:matrix:09": 25,
+    "svg-object:matrix:10": 26,
+    "svg-object:matrix:11": 27,
+    "svg-object:matrix:12": 28,
+    "svg-object:matrix:13": 29,
+    "svg-object:matrix:14": 30,
+    "svg-object:matrix:15": 31
+  },
+  "LV": [
     {
-       "device"  : "HV Scintillators",
-       "setStateName" : "Settings/Output On",
-       "indices" : [0]
+      "device": "LVSUPPLY0",
+      "indices": [0, 1, 2, 3]
+    }
+  ],
+  "HV": [
+    {
+      "device": "HV Supplies",
+      "setStateName": "Settings/Output On",
+      "indices": [0]
     }
   ]
-
 }
