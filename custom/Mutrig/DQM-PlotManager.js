@@ -109,11 +109,13 @@ window.updateChannelPlots = function(objectId, channelName) {
     let placeholder = document.getElementById("anaPlotsChannelPlaceholder");
     let templates = window.channelPairPlotTemplates || [];
     let match = /^SIG_([XY])_(\d+)_([AB])$/.exec(channelName || "");
+    let detectorName = objectId === "forward" || objectId === "backward" ?
+        objectId : "";
 
-    if (!container || !match) {
+    if (!container || !match || !detectorName) {
         if (placeholder) {
             placeholder.hidden = false;
-            placeholder.textContent = "Select a channel ending in _A or _B to display its pair plots.";
+            placeholder.textContent = "Select a forward or backward detector channel ending in _A or _B to display its pair plots.";
         }
         if (container) window.dqmInit("anaPlotsChannel", []);
         return;
@@ -126,7 +128,7 @@ window.updateChannelPlots = function(objectId, channelName) {
     let channelB = match[3] === "B" ? channelMapping[objectId + ":" + channelName] :
         channelMapping[objectId + ":" + partnerName];
 
-    if (channelA === undefined || channelB === undefined) {
+    if (!Number.isInteger(channelA) || !Number.isInteger(channelB)) {
         if (placeholder) {
             placeholder.hidden = false;
             placeholder.textContent = "The selected channel has no matching _A/_B partner.";
@@ -136,10 +138,10 @@ window.updateChannelPlots = function(objectId, channelName) {
     }
 
     let channelPair = [
-        {name: "SIG_" + match[1] + "_" + match[2] + "_A", number: channelA},
-        {name: "SIG_" + match[1] + "_" + match[2] + "_B", number: channelB}
+        {name: detectorName + "_SIG_" + match[1] + "_" + match[2] + "_A", number: channelA},
+        {name: detectorName + "_SIG_" + match[1] + "_" + match[2] + "_B", number: channelB}
     ];
-    let pairName = "SIG_" + match[1] + "_" + (parseInt(match[2], 10) - 1);
+    let pairName = detectorName + "_SIG_" + match[1] + "_" + match[2];
     let plotSources = [];
 
     function makePlot(template, source, title) {
