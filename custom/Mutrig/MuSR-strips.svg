@@ -1,0 +1,672 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="223.84453mm"
+   height="100.0112mm"
+   viewBox="0 0 223.84448 100.01118"
+   version="1.1"
+   id="svg1"
+   sodipodi:docname="MuSR-strips.svg"
+   inkscape:version="1.1.1 (3bf5ae0d25, 2021-09-20)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview98"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="mm"
+     showgrid="false"
+     inkscape:zoom="1.0560818"
+     inkscape:cx="429.41749"
+     inkscape:cy="176.59617"
+     inkscape:window-width="1920"
+     inkscape:window-height="1009"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg1"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0" />
+  <defs
+     id="defs1">
+    <marker
+       style="overflow:visible"
+       id="Arrow1Mend"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Arrow1Mend"
+       inkscape:isstock="true">
+      <path
+         transform="matrix(-0.4,0,0,-0.4,-4,0)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 0,0 5,-5 -12.5,0 5,5 Z"
+         id="path11583" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="Arrow1Mstart"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Arrow1Mstart"
+       inkscape:isstock="true">
+      <path
+         transform="matrix(0.4,0,0,0.4,4,0)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 0,0 5,-5 -12.5,0 5,5 Z"
+         id="path11580" />
+    </marker>
+    <linearGradient
+       id="linearGradient2956"
+       inkscape:swatch="solid">
+      <stop
+         style="stop-color:#999999;stop-opacity:1;"
+         offset="0"
+         id="stop2954" />
+    </linearGradient>
+    <pattern
+       xlink:href="#pattern2"
+       preserveAspectRatio="xMidYMid"
+       id="pattern1"
+       patternTransform="matrix(0.08647157,0,0,0.09993456,35.600503,36.354742)" />
+    <rect
+       x="293.39978"
+       y="290.41098"
+       width="36.36364"
+       height="27.895395"
+       id="rect37" />
+    <rect
+       x="230.63515"
+       y="289.41473"
+       width="39.352432"
+       height="27.895395"
+       id="rect36" />
+    <rect
+       x="169.86304"
+       y="289.91284"
+       width="35.367374"
+       height="31.382318"
+       id="rect35" />
+    <rect
+       x="105.10586"
+       y="288.41846"
+       width="37.359905"
+       height="28.891659"
+       id="rect34" />
+    <rect
+       x="292.40353"
+       y="219.1781"
+       width="43.33749"
+       height="31.382318"
+       id="rect33" />
+    <rect
+       x="230.13701"
+       y="228.64261"
+       width="37.858036"
+       height="21.419678"
+       id="rect32" />
+    <rect
+       x="168.36864"
+       y="229.14075"
+       width="32.876717"
+       height="26.400999"
+       id="rect31" />
+    <rect
+       x="108.09466"
+       y="228.64261"
+       width="27.895395"
+       height="27.895395"
+       id="rect30" />
+    <rect
+       x="298.3811"
+       y="167.37238"
+       width="39.850563"
+       height="28.393526"
+       id="rect29" />
+    <rect
+       x="234.62019"
+       y="168.36864"
+       width="37.858036"
+       height="29.887922"
+       id="rect28" />
+    <rect
+       x="169.3649"
+       y="168.86678"
+       width="39.850563"
+       height="31.880451"
+       id="rect27" />
+    <rect
+       x="112.07971"
+       y="167.37238"
+       width="34.869244"
+       height="33.374847"
+       id="rect26" />
+    <rect
+       x="299.37735"
+       y="102.11707"
+       width="31.880451"
+       height="24.906603"
+       id="rect25" />
+    <rect
+       x="233.62393"
+       y="102.11707"
+       width="37.359905"
+       height="29.389791"
+       id="rect24" />
+    <rect
+       x="168.36864"
+       y="101.12081"
+       width="39.850567"
+       height="39.850563"
+       id="rect23" />
+    <rect
+       x="107.59652"
+       y="99.626411"
+       width="29.389791"
+       height="26.899132"
+       id="rect2" />
+    <!-- Add CSS styles for interactivity -->
+    <style
+       type="text/css"
+       id="style1"><![CDATA[
+        .channel {
+          cursor: pointer;
+          transition: filter 0.2s ease;
+        }
+        .channel:hover {
+          filter: drop-shadow(0 0 6px rgba(96,165,250,0.7));
+        }
+        .masked {
+          fill: #ff0000 !important;
+          opacity: 0.5 !important;
+        }
+      ]]></style>
+    <pattern
+       patternUnits="userSpaceOnUse"
+       width="19.979203"
+       height="13.608097"
+       patternTransform="translate(111.63901,105.02517)"
+       preserveAspectRatio="xMidYMid"
+       id="pattern2">
+      <text
+         xml:space="preserve"
+         transform="translate(-109.64649,-102.53451)"
+         id="text1"
+         style="font-size:18.6667px;writing-mode:lr-tb;direction:ltr;white-space:pre;shape-inside:url(#rect2);fill:#5f3f0e;stroke:#2b0000;stroke-width:0;stroke-opacity:0"><tspan
+           x="107.5957"
+           y="116.14261"
+           id="tspan26704"><tspan
+             style="fill:#000000"
+             id="tspan26702">11</tspan></tspan></text>
+    </pattern>
+    <pattern
+       xlink:href="#pattern2-0"
+       preserveAspectRatio="xMidYMid"
+       id="pattern1-3"
+       patternTransform="matrix(0.08647157,0,0,0.09993456,182.67588,57.740529)" />
+    <pattern
+       patternUnits="userSpaceOnUse"
+       width="19.979203"
+       height="13.608097"
+       patternTransform="translate(111.63901,105.02517)"
+       preserveAspectRatio="xMidYMid"
+       id="pattern2-0">
+      <text
+         xml:space="preserve"
+         transform="translate(-109.64649,-102.53451)"
+         id="text1-9"
+         style="font-size:18.6667px;writing-mode:lr-tb;direction:ltr;white-space:pre;shape-inside:url(#rect2-3);fill:#5f3f0e;stroke:#2b0000;stroke-width:0;stroke-opacity:0"><tspan
+           x="107.5957"
+           y="116.14261"
+           id="tspan26708"><tspan
+             style="fill:#000000"
+             id="tspan26706">11</tspan></tspan></text>
+    </pattern>
+    <rect
+       x="107.59652"
+       y="99.626411"
+       width="29.389791"
+       height="26.899132"
+       id="rect2-3" />
+    <rect
+       x="168.36864"
+       y="101.12081"
+       width="39.850567"
+       height="39.850563"
+       id="rect23-8" />
+    <rect
+       x="233.62393"
+       y="102.11707"
+       width="37.359905"
+       height="29.389791"
+       id="rect24-2" />
+    <rect
+       x="299.37735"
+       y="102.11707"
+       width="31.880451"
+       height="24.906603"
+       id="rect25-6" />
+    <rect
+       x="112.07971"
+       y="167.37238"
+       width="34.869244"
+       height="33.374847"
+       id="rect26-2" />
+    <rect
+       x="169.3649"
+       y="168.86678"
+       width="39.850563"
+       height="31.880451"
+       id="rect27-0" />
+    <rect
+       x="234.62019"
+       y="168.36864"
+       width="37.858036"
+       height="29.887922"
+       id="rect28-5" />
+    <rect
+       x="298.3811"
+       y="167.37238"
+       width="39.850563"
+       height="28.393526"
+       id="rect29-9" />
+    <rect
+       x="108.09466"
+       y="228.64261"
+       width="27.895395"
+       height="27.895395"
+       id="rect30-6" />
+    <rect
+       x="168.36864"
+       y="229.14075"
+       width="32.876717"
+       height="26.400999"
+       id="rect31-5" />
+    <rect
+       x="230.13701"
+       y="228.64261"
+       width="37.858036"
+       height="21.419678"
+       id="rect32-2" />
+    <rect
+       x="292.40353"
+       y="219.1781"
+       width="43.33749"
+       height="31.382318"
+       id="rect33-4" />
+    <rect
+       x="105.10586"
+       y="288.41846"
+       width="37.359905"
+       height="28.891659"
+       id="rect34-2" />
+    <rect
+       x="169.86304"
+       y="289.91284"
+       width="35.367374"
+       height="31.382318"
+       id="rect35-1" />
+    <rect
+       x="230.63515"
+       y="289.41473"
+       width="39.352432"
+       height="27.895395"
+       id="rect36-8" />
+    <rect
+       x="293.39978"
+       y="290.41098"
+       width="36.36364"
+       height="27.895395"
+       id="rect37-0" />
+  </defs>
+  <g
+     id="layer1"
+     transform="translate(1.2394921,-13.114946)">
+    <!-- Background elements (non-interactive) -->
+    <!-- REMOVED the interfering rectangle (rect20) -->
+    <!-- Matrix Channels (Interactive) -->
+    <!-- Note: onclick handlers are removed - JavaScript will bind them -->
+  </g>
+  <g
+     id="g3912"
+     transform="matrix(0.65610558,0,0,1.0346028,-41.806499,-4.5901186)">
+    <path
+       class="channel"
+       data-name="SIG_X_6_B"
+       d="m 139.84391,64.76959 v 12.000302 h 75.78902 V 64.76959 Z"
+       style="fill:#bab6a8;stroke:#2b0000;stroke-width:0.665979"
+       id="SIG_X_6_B"
+       onclick="top.showMessage(evt)">
+      <title
+         id="title1">SIG_X_6_B</title>
+    </path>
+    <path
+       class="channel"
+       data-name="SIG_X_1_A"
+       style="fill:#bab6a8;stroke:#2b0000;stroke-width:0.665979"
+       d="m 64.05216,4.7695893 h 75.79038 V 16.769589 H 64.05216 Z"
+       id="SIG_X_1_A"
+       onclick="top.showMessage(evt)">
+      <title
+         id="title2">SIG_X_1_A</title>
+    </path>
+    <path
+       class="channel"
+       data-name="SIG_X_3_B"
+       style="fill:#bab6a8;stroke:#2b0000;stroke-width:0.665979"
+       d="m 139.84255,28.769589 h 75.79038 v 12 h -75.79038 z"
+       id="SIG_X_3_B"
+       onclick="top.showMessage(evt)">
+      <title
+         id="title3">SIG_X_3_B</title>
+    </path>
+    <path
+       class="channel"
+       data-name="SIG_X_3_A"
+       style="fill:#bab6a8;stroke:#2b0000;stroke-width:0.665979"
+       d="m 64.05216,28.769589 h 75.79038 v 12 H 64.05216 Z"
+       id="SIG_X_3_A"
+       onclick="top.showMessage(evt)">
+      <title
+         id="title4">SIG_X_3_A</title>
+    </path>
+    <path
+       class="channel"
+       data-name="SIG_X_6_A"
+       style="fill:#bab6a8;stroke:#2b0000;stroke-width:0.665979"
+       d="m 64.05216,64.769891 h 75.79039 V 76.769892 H 64.05216 Z"
+       id="SIG_X_6_A"
+       onclick="top.showMessage(evt)">
+      <title
+         id="title5">SIG_X_6_A</title>
+    </path>
+    <path
+       class="channel"
+       data-name="SIG_X_7_B"
+       style="fill:#bab6a8;stroke:#2b0000;stroke-width:0.665979"
+       d="m 139.84255,76.769892 h 75.79038 v 12 h -75.79038 z"
+       id="SIG_X_7_B"
+       onclick="top.showMessage(evt)">
+      <title
+         id="title6">SIG_X_7_B</title>
+    </path>
+    <path
+       class="channel"
+       data-name="SIG_X_2_A"
+       style="fill:#bab6a8;stroke:#2b0000;stroke-width:0.665979"
+       d="m 64.05216,16.769589 h 75.79039 v 12 H 64.05216 Z"
+       id="SIG_X_2_A"
+       onclick="top.showMessage(evt)">
+      <title
+         id="title7">SIG_X_2_A</title>
+    </path>
+    <path
+       class="channel"
+       data-name="SIG_X_2_B"
+       style="fill:#bab6a8;stroke:#2b0000;stroke-width:0.665979"
+       d="m 139.84255,16.769585 h 75.79038 v 12 h -75.79038 z"
+       id="SIG_X_2_B"
+       onclick="top.showMessage(evt)">
+      <title
+         id="title8">SIG_X_2_B</title>
+    </path>
+    <path
+       class="channel"
+       data-name="SIG_X_5_B"
+       style="fill:#bab6a8;stroke:#2b0000;stroke-width:0.665979"
+       d="m 139.84254,52.76959 h 75.79039 v 12 h -75.79039 z"
+       id="SIG_X_5_B"
+       onclick="top.showMessage(evt)">
+      <title
+         id="title9">SIG_X_5_B</title>
+    </path>
+    <path
+       class="channel"
+       data-name="SIG_X_8_B"
+       style="fill:#bab6a8;stroke:#2b0000;stroke-width:0.665979"
+       d="m 139.84255,88.769892 h 75.79038 v 11.999998 h -75.79038 z"
+       id="SIG_X_8_B"
+       onclick="top.showMessage(evt)">
+      <title
+         id="title10">SIG_X_8_B</title>
+    </path>
+    <path
+       class="channel"
+       data-name="SIG_X_1_B"
+       style="fill:#bab6a8;stroke:#2b0000;stroke-width:0.665979"
+       d="m 139.84254,4.7695893 h 75.79039 V 16.769585 h -75.79039 z"
+       id="SIG_X_1_B"
+       onclick="top.showMessage(evt)">
+      <title
+         id="title11">SIG_X_1_B</title>
+    </path>
+    <path
+       class="channel"
+       data-name="SIG_X_4_A"
+       style="fill:#bab6a8;stroke:#2b0000;stroke-width:0.665979"
+       d="M 64.052154,40.769589 H 139.84255 V 52.76959 H 64.052154 Z"
+       id="SIG_X_4_A"
+       onclick="top.showMessage(evt)">
+      <title
+         id="title12">SIG_X_4_A</title>
+    </path>
+    <path
+       class="channel"
+       data-name="SIG_X_5_A"
+       style="fill:#bab6a8;stroke:#2b0000;stroke-width:0.665979"
+       d="m 64.05216,52.76959 h 75.79039 v 12 H 64.05216 Z"
+       id="SIG_X_5_A"
+       onclick="top.showMessage(evt)">
+      <title
+         id="title13">SIG_X_5_A</title>
+    </path>
+    <path
+       class="channel"
+       data-name="SIG_X_8_A"
+       style="fill:#bab6a8;stroke:#2b0000;stroke-width:0.665979"
+       d="m 64.05216,88.769892 h 75.79038 V 100.76989 H 64.05216 Z"
+       id="SIG_X_8_A"
+       onclick="top.showMessage(evt)">
+      <title
+         id="title14">SIG_X_8_A</title>
+    </path>
+    <path
+       class="channel"
+       data-name="SIG_X_7_A"
+       style="fill:#bab6a8;stroke:#2b0000;stroke-width:0.665979"
+       d="m 64.05216,76.769892 h 75.79039 v 12 H 64.05216 Z"
+       id="SIG_X_7_A"
+       onclick="top.showMessage(evt)">
+      <title
+         id="title15">SIG_X_7_A</title>
+    </path>
+    <path
+       class="channel"
+       data-name="SIG_X_4_B"
+       style="fill:#bab6a8;stroke:#2b0000;stroke-width:0.665979"
+       d="m 139.84255,40.769589 h 75.79038 V 52.76959 h -75.79038 z"
+       id="SIG_X_4_B"
+       onclick="top.showMessage(evt)">
+      <title
+         id="title16">SIG_X_4_B</title>
+    </path>
+  </g>
+  <g
+     id="g3912-9"
+     transform="matrix(0,0.65610558,-1.0346028,0,228.49527,-41.74587)">
+    <g
+       id="g4730">
+      <path
+         class="channel"
+         data-name="SIG_X_6_B"
+         d="m 139.84391,64.76959 v 12.000302 h 75.78902 V 64.76959 Z"
+         style="fill:#bab6a8;stroke:#2b0000;stroke-width:0.665979"
+         id="SIG_Y_6_B"
+         onclick="top.showMessage(evt)">
+        <title
+           id="title1-6">SIG_Y_6_B</title>
+      </path>
+      <path
+         class="channel"
+         data-name="SIG_X_1_A"
+         style="fill:#bab6a8;stroke:#2b0000;stroke-width:0.665979"
+         d="m 64.05216,4.7695893 h 75.79038 V 16.769589 H 64.05216 Z"
+         id="SIG_Y_1_A"
+         onclick="top.showMessage(evt)">
+        <title
+           id="title2-9">SIG_Y_1_A</title>
+      </path>
+      <path
+         class="channel"
+         data-name="SIG_X_3_B"
+         style="fill:#bab6a8;stroke:#2b0000;stroke-width:0.665979"
+         d="m 139.84255,28.769589 h 75.79038 v 12 h -75.79038 z"
+         id="SIG_Y_3_B"
+         onclick="top.showMessage(evt)">
+        <title
+           id="title3-4">SIG_Y_3_B</title>
+      </path>
+      <path
+         class="channel"
+         data-name="SIG_X_3_A"
+         style="fill:#bab6a8;stroke:#2b0000;stroke-width:0.665979"
+         d="m 64.05216,28.769589 h 75.79038 v 12 H 64.05216 Z"
+         id="SIG_Y_3_A"
+         onclick="top.showMessage(evt)">
+        <title
+           id="title4-8">SIG_Y_3_A</title>
+      </path>
+      <path
+         class="channel"
+         data-name="SIG_X_6_A"
+         style="fill:#bab6a8;stroke:#2b0000;stroke-width:0.665979"
+         d="m 64.05216,64.769891 h 75.79039 V 76.769892 H 64.05216 Z"
+         id="SIG_Y_6_A"
+         onclick="top.showMessage(evt)">
+        <title
+           id="title5-1">SIG_Y_6_A</title>
+      </path>
+      <path
+         class="channel"
+         data-name="SIG_X_7_B"
+         style="fill:#bab6a8;stroke:#2b0000;stroke-width:0.665979"
+         d="m 139.84255,76.769892 h 75.79038 v 12 h -75.79038 z"
+         id="SIG_Y_7_B"
+         onclick="top.showMessage(evt)">
+        <title
+           id="title6-5">SIG_Y_7_B</title>
+      </path>
+      <path
+         class="channel"
+         data-name="SIG_X_2_A"
+         style="fill:#bab6a8;stroke:#2b0000;stroke-width:0.665979"
+         d="m 64.05216,16.769589 h 75.79039 v 12 H 64.05216 Z"
+         id="SIG_Y_2_A"
+         onclick="top.showMessage(evt)">
+        <title
+           id="title7-4">SIG_Y_2_A</title>
+      </path>
+      <path
+         class="channel"
+         data-name="SIG_X_2_B"
+         style="fill:#bab6a8;stroke:#2b0000;stroke-width:0.665979"
+         d="m 139.84255,16.769585 h 75.79038 v 12 h -75.79038 z"
+         id="SIG_Y_2_B"
+         onclick="top.showMessage(evt)">
+        <title
+           id="title8-5">SIG_Y_2_B</title>
+      </path>
+      <path
+         class="channel"
+         data-name="SIG_X_5_B"
+         style="fill:#bab6a8;stroke:#2b0000;stroke-width:0.665979"
+         d="m 139.84254,52.76959 h 75.79039 v 12 h -75.79039 z"
+         id="SIG_Y_5_B"
+         onclick="top.showMessage(evt)">
+        <title
+           id="title9-5">SIG_Y_5_B</title>
+      </path>
+      <path
+         class="channel"
+         data-name="SIG_X_8_B"
+         style="fill:#bab6a8;stroke:#2b0000;stroke-width:0.665979"
+         d="m 139.84255,88.769892 h 75.79038 v 11.999998 h -75.79038 z"
+         id="SIG_Y_8_B"
+         onclick="top.showMessage(evt)">
+        <title
+           id="title10-2">SIG_Y_8_B</title>
+      </path>
+      <path
+         class="channel"
+         data-name="SIG_X_1_B"
+         style="fill:#bab6a8;stroke:#2b0000;stroke-width:0.665979"
+         d="m 139.84254,4.7695893 h 75.79039 V 16.769585 h -75.79039 z"
+         id="SIG_Y_1_B"
+         onclick="top.showMessage(evt)">
+        <title
+           id="title11-0">SIG_Y_1_B</title>
+      </path>
+      <path
+         class="channel"
+         data-name="SIG_X_4_A"
+         style="fill:#bab6a8;stroke:#2b0000;stroke-width:0.665979"
+         d="M 64.052154,40.769589 H 139.84255 V 52.76959 H 64.052154 Z"
+         id="SIG_Y_4_A"
+         onclick="top.showMessage(evt)">
+        <title
+           id="title12-4">SIG_Y_4_A</title>
+      </path>
+      <path
+         class="channel"
+         data-name="SIG_X_5_A"
+         style="fill:#bab6a8;stroke:#2b0000;stroke-width:0.665979"
+         d="m 64.05216,52.76959 h 75.79039 v 12 H 64.05216 Z"
+         id="SIG_Y_5_A"
+         onclick="top.showMessage(evt)">
+        <title
+           id="title13-9">SIG_Y_5_A</title>
+      </path>
+      <path
+         class="channel"
+         data-name="SIG_X_8_A"
+         style="fill:#bab6a8;stroke:#2b0000;stroke-width:0.665979"
+         d="m 64.05216,88.769892 h 75.79038 V 100.76989 H 64.05216 Z"
+         id="SIG_Y_8_A"
+         onclick="top.showMessage(evt)">
+        <title
+           id="title14-1">SIG_Y_8_A</title>
+      </path>
+      <path
+         class="channel"
+         data-name="SIG_X_7_A"
+         style="fill:#bab6a8;stroke:#2b0000;stroke-width:0.665979"
+         d="m 64.05216,76.769892 h 75.79039 v 12 H 64.05216 Z"
+         id="SIG_Y_7_A"
+         onclick="top.showMessage(evt)">
+        <title
+           id="title15-4">SIG_Y_7_A</title>
+      </path>
+      <path
+         class="channel"
+         data-name="SIG_X_4_B"
+         style="fill:#bab6a8;stroke:#2b0000;stroke-width:0.665979"
+         d="m 139.84255,40.769589 h 75.79038 V 52.76959 h -75.79038 z"
+         id="SIG_Y_4_B"
+         onclick="top.showMessage(evt)">
+        <title
+           id="title16-3">SIG_Y_4_B</title>
+      </path>
+    </g>
+  </g>
+</svg>
