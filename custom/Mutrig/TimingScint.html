@@ -178,6 +178,10 @@
         <table class="mtable" id="sensorSelection">
             <tr><th colspan="3" class="mtableheader">Sensor selection</th></tr>
             <td>
+                <label for="channel-rate-max">Rate bar maximum (Hz):</label>
+                <input id="channel-rate-max" type="number" min="1" step="any" value="10000"
+                    style="width: 100px;">
+                <span id="channel-rate-status" role="status"></span>
                 <div id="svg-container" style="display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start;">
                     <p>Your browser does not support inline SVG.</p>
                 </div>
@@ -298,15 +302,24 @@
         <table class="mtable" id="anaPlotsTable">
             <tr><th class="mtableheader">Analyzer Plots</th></tr>
             <tr>
-                <td>
+                <th>Fixed plots</th>
+                <th>Selected channel pair</th>
+            </tr>
+            <tr>
+                <td id="anaPlotsFixed">
+                    <!-- Fixed plots are configured in setup.json. -->
+                </td>
+                <td id="anaPlotsChannel">
+                    <span id="anaPlotsChannelPlaceholder">Select a channel ending in _A or _B to display its pair plots.</span>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
                     <input type=button value='Refresh' id='refresh' onClick='onRefreshClicked()'/>
                     Auto refresh<input type=checkbox id='autoRefresh' onClick='onAutoRefreshClicked()'/>
                     <input type=button value='Clear all' onClick='onClearAll()'/>
                 </td>
             </tr>
-            <td id="anaPlotsMutrig">
-                <!-- Global plots will be populated here by init_DQM() -->
-            </td>
         </table>
     </div>
 
@@ -315,6 +328,7 @@
     <script src="Mutrig/LVSuppliesTable.js"></script>
     <script src="Mutrig/ChipConfiguration.js"></script>
     <script src="Mutrig/ChannelSelection.js"></script>
+    <script src="Mutrig/ChannelRates.js"></script>
     <script src="Mutrig/Actions.js"></script>
     <script src="Mutrig/BoardControl.js"></script>
     <script src="Mutrig/DQM-PlotManager.js"></script>
@@ -329,43 +343,9 @@
         boardcontrol_init();
 
         init_channelSelection(mappingfile);
+        initChannelRateOverlay();
         init_LVTable(mappingfile);
         init_HVTable(mappingfile);
-        plots = [
-            {source: "mutrig/ChannelID", title: "Hits per channel", xTitle: "channel" , yTitle: "Entries"},
-        /* 
-            {source: "mutrig/h_tot_0", title: "Matrix CH 0", xTitle: "ToT" , yTitle: "Entries", },
-            {source: "mutrig/h_tot_1", title: "Matrix CH 1", xTitle: "ToT" , yTitle: "Entries", },
-            {source: "mutrig/h_tot_2", title: "Matrix CH 2", xTitle: "ToT" , yTitle: "Entries", },
-            {source: "mutrig/h_tot_3", title: "Matrix CH 3", xTitle: "ToT" , yTitle: "Entries", },
-            {source: "mutrig/h_tot_4", title: "Matrix CH 4", xTitle: "ToT" , yTitle: "Entries", },
-            {source: "mutrig/h_tot_5", title: "Matrix CH 5", xTitle: "ToT" , yTitle: "Entries", },
-            {source: "mutrig/h_tot_6", title: "Matrix CH 6", xTitle: "ToT" , yTitle: "Entries", },
-            {source: "mutrig/h_tot_7", title: "Matrix CH 7", xTitle: "ToT" , yTitle: "Entries", },
-            {source: "mutrig/h_tot_8", title: "Matrix CH 8", xTitle: "ToT" , yTitle: "Entries", },
-            {source: "mutrig/h_tot_9", title: "Matrix CH 9", xTitle: "ToT" , yTitle: "Entries", },
-            {source: "mutrig/h_tot_10", title: "Matrix CH 10", xTitle: "ToT" , yTitle: "Entries", },
-            {source: "mutrig/h_tot_11", title: "Matrix CH 11", xTitle: "ToT" , yTitle: "Entries", },
-            {source: "mutrig/h_tot_12", title: "Matrix CH 12", xTitle: "ToT" , yTitle: "Entries", },
-            {source: "mutrig/h_tot_13", title: "Matrix CH 13", xTitle: "ToT" , yTitle: "Entries", },
-            {source: "mutrig/h_tot_14", title: "Matrix CH 14", xTitle: "ToT" , yTitle: "Entries", },
-            {source: "mutrig/h_tot_15", title: "Matrix CH 15", xTitle: "ToT" , yTitle: "Entries", },
-            {source: "mutrig/h_tot_32", title: "ToT M.1 (32)", xTitle: "ToT" , yTitle: "Entries", },
-            {source: "mutrig/h_tot_34", title: "ToT UP.1 (34)", xTitle: "ToT" , yTitle: "Entries", },
-            {source: "mutrig/h_tot_35", title: "ToT UP.2 (35)", xTitle: "ToT" , yTitle: "Entries", },
-            {source: "mutrig/h_tot_36", title: "ToT BW.1 (36)", xTitle: "ToT" , yTitle: "Entries", },
-            {source: "mutrig/h_tot_37", title: "ToT BW.2 (37)", xTitle: "ToT" , yTitle: "Entries", },
-            
-            {source: "mutrig/TimeStampDelta_bw", title: "Backward coincidences timing", xTitle: "dT [ns]" , yTitle: "Entries", logY:"True", minY:"0.1"},
-            {source: "mutrig/TimeStampDelta_up", title: "Upward coincidences timing", xTitle: "dT [ns]" , yTitle: "Entries", logY:"True", minY:"0.1"},
-            {source: "mutrig/TimeStampDelta_m1_up1", title: "M - UP.1 coincidences timing", xTitle: "dT [ns]" , yTitle: "Entries",  logY:"True", minY:"0.1"},
-            {source: "mutrig/TimeStampDelta_m1_bw1", title: "M - BW.1 coincidences timing", xTitle: "dT [ns]" , yTitle: "Entries",  logY:"True", minY:"0.1"},
-	 */
-            //{source: "mutrig/TimeStampDelta_backward_internal", title: "Backward intra timing", xTitle: "dT [ns]" , yTitle: "Entries", },
-            //{source: "mutrig/TimeStampDelta_forward_internal", title: "Forward intra timing", xTitle: "dT [ns]" , yTitle: "Entries", },
-            //{source: "mutrig/TimeStampDelta_det2_internal", title: "Detector 2 intra timing", xTitle: "dT [ns]" , yTitle: "Entries", },
-        ];
-        dqmInit("anaPlotsMutrig", plots);
     </script>
 
 </body>
