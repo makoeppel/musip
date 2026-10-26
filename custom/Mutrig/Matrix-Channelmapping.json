@@ -77,6 +77,32 @@
     "backward:M:1": 64,
     "backward:M:2": 65
   },
+  "fixedPlots": [
+    {
+      "source": "mutrig/ChannelID",
+      "title": "Hits per channel",
+      "xTitle": "channel",
+      "yTitle": "Entries"
+    }
+  ],
+  "channelPairPlots": [
+    {
+      "source": "mutrig/h_tot_{}",
+      "title": "{}: Channel {}",
+      "xTitle": "ToT",
+      "yTitle": "Entries",
+      "perChannel": true
+    },
+    {
+      "source": "mutrig/TimeStampDelta_{}",
+      "title": "dT {}",
+      "xTitle": "dT [ns]",
+      "yTitle": "Entries",
+      "logY": true,
+      "minY": 0.1,
+      "perChannel": false
+    }
+  ],
   "LV": [
     {
       "device": "LVSUPPLY0",

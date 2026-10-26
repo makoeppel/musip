@@ -1,4 +1,5 @@
 let allPlots = [];
+let plotGroups = {};
 let updateInterval = 2000; // milliseconds
 let timeoutID = undefined;
 let runNumbers = [0]; // Default to the current run. Zero means the current run.
@@ -9,121 +10,174 @@ autoUpdater.runNumbers = runNumbers; // Initialize with the default run numbers
 
 // Start the update loop for the histograms. They will be updated sequentially every
 // `updateInterval` milliseconds.
-window.dqmInit = function (divElementID, globalPlotSources){
-    let divElement = document.getElementById(divElementID);
-    console.log("Initializing DQM plots in div:", divElement, "with sources:", globalPlotSources);
-    //let globalPlotSources = [
-    //    {source: "tile/Zphi_TileHitmap_DS", title: "hitmap DS", xTitle: "z" , yTitle: "phi", logZ: "true", minZ: "0.1"},
-    //];
+function isPlotOptionEnabled(value) {
+    return value === true || (typeof value === "string" && value.toLowerCase() === "true");
+}
 
-    for(let plotIndex = 0; plotIndex < globalPlotSources.length; plotIndex++) {
-        let plotSource = globalPlotSources[plotIndex];
-        let table = document.createElement("table");
-        table.style.display = "inline-block";
+function applyPlotOptions(record, plotSource) {
+    record.titleCell.textContent = plotSource.title || "";
+    record.logXCheckbox.checked = isPlotOptionEnabled(plotSource.logX);
+    record.logYCheckbox.checked = isPlotOptionEnabled(plotSource.logY);
+    record.logZCheckbox.checked = isPlotOptionEnabled(plotSource.logZ);
 
-        let titleCell = table.insertRow().insertCell();
-        titleCell.appendChild(document.createTextNode(plotSource.title));
-        // }
+    record.graph.param.xAxis.log = record.logXCheckbox.checked;
+    record.graph.param.yAxis.log = record.logYCheckbox.checked;
+    record.graph.param.zAxis.log = record.logZCheckbox.checked;
+    record.graph.param.xAxis.title.text = plotSource.xTitle || "";
+    record.graph.param.yAxis.title.text = plotSource.yTitle || "";
+    record.graph.param.yAxis.min = plotSource.minY;
+    record.graph.param.zAxis.min = plotSource.minZ;
+    record.graph.param.overlay = plotSource.overlay;
+}
 
-        let plotDiv = document.createElement("div");
-        table.insertRow().insertCell().appendChild(plotDiv);
+function createPlotRecord(container, plotSource) {
+    let table = document.createElement("table");
+    table.style.display = "inline-block";
 
-        let mPlotGraph = new MPlotGraph(plotDiv);
+    let titleCell = table.insertRow().insertCell();
+    titleCell.appendChild(document.createTextNode(plotSource.title || ""));
 
-        // Add this line to register with autoUpdater
-        autoUpdater.addPlot(mPlotGraph);
+    let plotDiv = document.createElement("div");
+    table.insertRow().insertCell().appendChild(plotDiv);
 
-        // Add log controls for this specific plot
-        let controlsRow = table.insertRow();
-        let controlsCell = controlsRow.insertCell();
-        controlsCell.style.textAlign = "center";
+    let graph = new MPlotGraph(plotDiv);
+    autoUpdater.addPlot(graph);
 
-        // Create unique IDs for each checkbox using the plot index
-        let logXId = `logXAxis_${plotIndex}`;
-        let logYId = `logYAxis_${plotIndex}`;
-        let logZId = `logZAxis_${plotIndex}`;
+    let plotIndex = allPlots.length;
+    let controlsCell = table.insertRow().insertCell();
+    controlsCell.style.textAlign = "center";
+    let controls = [];
+    [["x", "Log x"], ["y", "Log y"], ["z", "Log z"]].forEach(function(axis) {
+        let checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.id = `log${axis[0].toUpperCase()}Axis_${plotIndex}`;
+        checkbox.dataset.plotIndex = plotIndex;
+        checkbox.onchange = function() { onAxis(this.id, plotIndex); };
+        controls.push(checkbox);
+        controlsCell.appendChild(checkbox);
+        controlsCell.appendChild(document.createTextNode(" " + axis[1] + " "));
+    });
 
-        // Create the checkboxes with event handlers
-        let logXCheckbox = document.createElement("input");
-        logXCheckbox.type = "checkbox";
-        logXCheckbox.id = logXId;
-        logXCheckbox.dataset.plotIndex = plotIndex; // Store the plot index as data attribute
-        logXCheckbox.onchange = function() { onAxis(this.id, plotIndex); };
+    container.appendChild(table);
+    allPlots.push(graph);
+    return {
+        table: table,
+        titleCell: titleCell,
+        graph: graph,
+        logXCheckbox: controls[0],
+        logYCheckbox: controls[1],
+        logZCheckbox: controls[2]
+    };
+}
 
-        let logYCheckbox = document.createElement("input");
-        logYCheckbox.type = "checkbox";
-        logYCheckbox.id = logYId;
-        logYCheckbox.dataset.plotIndex = plotIndex;
-        logYCheckbox.onchange = function() { onAxis(this.id, plotIndex); };
+window.dqmInit = function (divElementID, plotSources) {
+    let container = document.getElementById(divElementID);
+    if (!container) return;
 
-        let logZCheckbox = document.createElement("input");
-        logZCheckbox.type = "checkbox";
-        logZCheckbox.id = logZId;
-        logZCheckbox.dataset.plotIndex = plotIndex;
-        logZCheckbox.onchange = function() { onAxis(this.id, plotIndex); };
-
-        // Set initial checkbox states based on plot configuration
-        if(Object.hasOwn(plotSource, "logX")) {
-            logXCheckbox.checked = true;
-            mPlotGraph.param.xAxis.log = true;
-        }
-        if(Object.hasOwn(plotSource, "logY")) {
-            logYCheckbox.checked = true;
-            mPlotGraph.param.yAxis.log = true;
-        }
-        if(Object.hasOwn(plotSource, "logZ")) {
-            logZCheckbox.checked = true;
-            mPlotGraph.param.zAxis.log = true;
-        }
-
-        // Add checkboxes and labels to the controls cell
-        controlsCell.appendChild(logXCheckbox);
-        controlsCell.appendChild(document.createTextNode(" Log x "));
-
-        controlsCell.appendChild(logYCheckbox);
-        controlsCell.appendChild(document.createTextNode(" Log y "));
-
-        controlsCell.appendChild(logZCheckbox);
-        controlsCell.appendChild(document.createTextNode(" Log z "));
-
-        divElement.appendChild(table);
-
-        // record on the plot itself where the data comes from, so that we can update it again at
-        // set time intervals.
-        mPlotGraph.dqmSource = plotSource.source;
-
-        if(Object.hasOwn(plotSource, "overlay")) mPlotGraph.param.overlay = plotSource.overlay;
-        if(Object.hasOwn(plotSource, "xTitle")) {
-            mPlotGraph.param.xAxis.title.text = plotSource.xTitle;
-//                    mPlotGraph.param.xAxis.title.textSize /= 2;
-        }
-        if(Object.hasOwn(plotSource, "yTitle")) {
-            mPlotGraph.param.yAxis.title.text = plotSource.yTitle;
-//                    mPlotGraph.param.yAxis.title.textSize /= 2;
-        }
-        if(Object.hasOwn(plotSource, "logX")) {
-            mPlotGraph.param.xAxis.log = true;
-        }
-        if(Object.hasOwn(plotSource, "logY")) {
-            mPlotGraph.param.yAxis.log = true;
-        }
-        if(Object.hasOwn(plotSource, "logZ")) {
-            mPlotGraph.param.zAxis.log = true;
-        }
-        if(Object.hasOwn(plotSource, "minY")) {
-            mPlotGraph.param.yAxis.min = plotSource.minY;
-        }
-        if(Object.hasOwn(plotSource, "minZ")) {
-            mPlotGraph.param.zAxis.min = plotSource.minZ;
+    let records = plotGroups[divElementID] || [];
+    let createdPlot = false;
+    let sourceChanged = false;
+    plotSources.forEach(function(plotSource, index) {
+        let record = records[index];
+        if (!record) {
+            record = createPlotRecord(container, plotSource);
+            records[index] = record;
+            createdPlot = true;
+        } else {
+            record.table.hidden = false;
         }
 
-        allPlots[allPlots.length] = mPlotGraph;
+        applyPlotOptions(record, plotSource);
+        if (record.graph.dqmSource !== plotSource.source) {
+            record.graph.dqmSource = plotSource.source;
+            sourceChanged = true;
+        }
+    });
+
+    records.slice(plotSources.length).forEach(function(record) {
+        record.table.hidden = true;
+        record.graph.dqmSource = undefined;
+        autoUpdater.changeSource(record.graph, undefined);
+    });
+    plotGroups[divElementID] = records;
+
+    if (createdPlot || sourceChanged) autoUpdater.refreshAll();
+}
+
+window.updateChannelPlots = function(objectId, channelName) {
+    let container = document.getElementById("anaPlotsChannel");
+    let placeholder = document.getElementById("anaPlotsChannelPlaceholder");
+    let templates = window.channelPairPlotTemplates || [];
+    let match = /^SIG_([XY])_(\d+)_([AB])$/.exec(channelName || "");
+
+    if (!container || !match) {
+        if (placeholder) {
+            placeholder.hidden = false;
+            placeholder.textContent = "Select a channel ending in _A or _B to display its pair plots.";
+        }
+        if (container) window.dqmInit("anaPlotsChannel", []);
+        return;
     }
 
-    // Comment out or remove this line
-    // updateHistograms();
-    autoUpdater.refreshAll();
-}
+    let partnerSuffix = match[3] === "A" ? "B" : "A";
+    let partnerName = "SIG_" + match[1] + "_" + match[2] + "_" + partnerSuffix;
+    let channelA = match[3] === "A" ? channelMapping[objectId + ":" + channelName] :
+        channelMapping[objectId + ":" + partnerName];
+    let channelB = match[3] === "B" ? channelMapping[objectId + ":" + channelName] :
+        channelMapping[objectId + ":" + partnerName];
+
+    if (channelA === undefined || channelB === undefined) {
+        if (placeholder) {
+            placeholder.hidden = false;
+            placeholder.textContent = "The selected channel has no matching _A/_B partner.";
+        }
+        window.dqmInit("anaPlotsChannel", []);
+        return;
+    }
+
+    let channelPair = [
+        {name: "SIG_" + match[1] + "_" + match[2] + "_A", number: channelA},
+        {name: "SIG_" + match[1] + "_" + match[2] + "_B", number: channelB}
+    ];
+    let pairName = "SIG_" + match[1] + "_" + (parseInt(match[2], 10) - 1);
+    let plotSources = [];
+
+    function makePlot(template, source, title) {
+        let plot = {source: source, title: title};
+        ["xTitle", "yTitle", "logX", "logY", "logZ", "minY", "minZ", "overlay"].forEach(function(key) {
+            if (Object.hasOwn(template, key)) plot[key] = template[key];
+        });
+        return plot;
+    }
+
+    templates.forEach(function(template) {
+        if (template.perChannel) {
+            channelPair.forEach(function(channel) {
+                plotSources.push(makePlot(
+                    template,
+                    template.source.replace("{}", channel.number),
+                    template.title.replace("{}", objectId).replace("{}", channel.name)
+                ));
+            });
+        } else {
+            plotSources.push(makePlot(
+                template,
+                template.source.replace("{}", pairName),
+                template.title.replace("{}", pairName)
+            ));
+        }
+    });
+
+    if (placeholder) placeholder.hidden = true;
+    window.dqmInit("anaPlotsChannel", plotSources);
+};
+
+window.initConfiguredPlots = function(config) {
+    window.channelPairPlotTemplates = Array.isArray(config.channelPairPlots) ?
+        config.channelPairPlots : [];
+    let fixedPlots = Array.isArray(config.fixedPlots) ? config.fixedPlots : [];
+    window.dqmInit("anaPlotsFixed", fixedPlots);
+};
 
 
 // Replace the current setRunNumbers implementation with this one:

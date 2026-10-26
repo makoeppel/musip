@@ -2,6 +2,7 @@
 
 var channelMapping = {};
 var svgObjects = [];
+var plotConfiguration = {};
 var selectedChannel = null;
 var selectedASIC = 0;
 
@@ -12,7 +13,9 @@ function init_channelSelection(url) {
   }).then(function(json) {
     channelMapping = json.channelmap || {};
     svgObjects = Array.isArray(json.svgs) ? json.svgs : [];
+    plotConfiguration = json;
     renderConfiguredSvgs();
+    if (window.initConfiguredPlots) window.initConfiguredPlots(json);
     console.log('Channel map table loaded:', channelMapping);
   }).catch(function(err) {
     console.warn('Could not load configuration:', err.message);
@@ -93,6 +96,7 @@ function showMessage(nameOrEvent) {
     selSpan.textContent = selectedChannel !== null ? String(selectedChannel) : 'None';
   }
   map_indices(true, selectedASIC, selectedChannel);
+  if (window.updateChannelPlots) window.updateChannelPlots(objectId, name);
 }
 
 function attachHandlersToEmbeddedSvg(obj) {
