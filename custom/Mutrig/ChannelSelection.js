@@ -31,17 +31,31 @@ function renderConfiguredSvgs() {
       return;
     }
 
+    var wrapper = document.createElement('div');
+    wrapper.style.display = 'flex';
+    wrapper.style.flexDirection = 'column';
+    wrapper.style.gap = '6px';
+
+    var titleEl = document.createElement('div');
+    titleEl.textContent = svgConfig.name;
+    titleEl.style.fontWeight = 'bold';
+    titleEl.style.textTransform = 'capitalize';
+
     var obj = document.createElement('object');
     obj.type = 'image/svg+xml';
     obj.data = svgConfig.path;
     obj.id = svgConfig.name;
     obj.height = '300px';
     obj.setAttribute('aria-label', svgConfig.name);
+    obj.setAttribute('title', svgConfig.name);
     obj.innerHTML = '<p>Your browser does not support inline SVG.</p>';
     obj.addEventListener('load', function() {
       attachHandlersToEmbeddedSvg(obj);
     });
-    container.appendChild(obj);
+
+    wrapper.appendChild(titleEl);
+    wrapper.appendChild(obj);
+    container.appendChild(wrapper);
     setTimeout(function() {
       attachHandlersToEmbeddedSvg(obj);
     }, 700);
@@ -62,8 +76,9 @@ function showMessage(nameOrEvent) {
     name = nameOrEvent;
   } else if (nameOrEvent && nameOrEvent.target) {
     var element = nameOrEvent.currentTarget || nameOrEvent.target;
-    name = (element.getAttribute && element.getAttribute('data-name')) ||
-      element.id || nameOrEvent.target.id || '';
+    name = element.id ||
+      (element.getAttribute && element.getAttribute('data-name')) ||
+      nameOrEvent.target.id || '';
     objectId = getSvgObjectId(nameOrEvent);
   }
 
