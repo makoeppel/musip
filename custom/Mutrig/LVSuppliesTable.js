@@ -111,7 +111,7 @@ function init_HVTable(config_url){
         }
         var demandVPath = '/Equipment/' + device + '/Variables/Demand[' + index + ']';
         var voltagePath = '/Equipment/' + device + '/Variables/Measured[' + index + ']';
-        var voltagePath = '/Equipment/' + device + '/Variables/Voltage[' + index + ']';
+        //var voltagePath = '/Equipment/' + device + '/Variables/Voltage[' + index + ']';
         var currentLimitPath = '/Equipment/' + device + '/Settings/Current Limit[' + index + ']';
         var currentPath = '/Equipment/' + device + '/Variables/Current[' + index + ']';
         var descPath = '/Equipment/' + device + '/Settings/Names[' + index + ']';
