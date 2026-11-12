@@ -3,3 +3,5 @@ install/
 quartus-build*/
 __pycache__/
 online/
+root_output_files/
+*.root

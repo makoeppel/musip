@@ -434,7 +434,7 @@ TAFlowEvent* AnaQuadHistos::AnalyzeFlowEvent(TARunInfo*, TAFlags* flags, TAFlowE
         // fill timing histogram
         uint32_t ckdivend = 0;
         uint32_t ckdivend2 = 31;
-        uint32_t localTime = hit.time() % (1 << 11);  // local pixel time is first 11 bits of the global time
+        uint32_t localTime = hit.timestamp() % (1 << 11);  // local pixel time is first 11 bits of the global time
         uint32_t cur_hitToA = localTime * 8/*ns*/ * (ckdivend + 1);
         uint32_t cur_hitToT = ( ( (0x1F+1) + hit.tot() -  ( (localTime * (ckdivend+1) / (ckdivend2+1) ) & 0x1F) ) & 0x1F);//  * 8 * (ckdivend2+1) ;
         hitToT[hit.chipid()]->Fill(cur_hitToT);

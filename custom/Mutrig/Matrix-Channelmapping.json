@@ -1,21 +1,21 @@
 {
   "channelmap": {
-    "matrix:00": 0,
-    "matrix:01": 1,
-    "matrix:02": 2,
-    "matrix:03": 3,
-    "matrix:04": 4,
-    "matrix:05": 5,
-    "matrix:06": 6,
-    "matrix:07": 7,
-    "matrix:08": 8,
-    "matrix:09": 9,
-    "matrix:10": 10,
-    "matrix:11": 11,
-    "matrix:12": 12,
-    "matrix:13": 13,
-    "matrix:14": 14,
-    "matrix:15": 15
+    "matrix:00": 16,
+    "matrix:01": 17,
+    "matrix:02": 18,
+    "matrix:03": 19,
+    "matrix:04": 20,
+    "matrix:05": 21,
+    "matrix:06": 22,
+    "matrix:07": 23,
+    "matrix:08": 24,
+    "matrix:09": 25,
+    "matrix:10": 26,
+    "matrix:11": 27,
+    "matrix:12": 28,
+    "matrix:13": 29,
+    "matrix:14": 30,
+    "matrix:15": 31
   },
   "LV" : [
     {
@@ -24,6 +24,11 @@
     }
   ],
   "HV" : [
+    {
+       "device"  : "HV Supplies",
+       "setStateName" : "ChState",
+       "indices" : [0,1]
+    }
   ]
 
 }

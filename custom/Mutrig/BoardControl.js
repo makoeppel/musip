@@ -284,7 +284,7 @@ function initASICMaskCB(){
         value = document.getElementsByName("ASICMask")[feb].value;
         mask = 1<<board;
         bvalue = (value & mask) >> board;
-        console.log("Index:", index, "FEB-ID:", feb, " Board:", board, " Value:", value, " Mask:", mask, " Result:", bvalue);
+        //console.log("Index:", index, "FEB-ID:", feb, " Board:", board, " Value:", value, " Mask:", mask, " Result:", bvalue);
         object.checked = bvalue;
         index += 1;
     }
@@ -298,7 +298,7 @@ function initLVDSMaskCB(){
         value = document.getElementsByName("LVDSMask")[feb].value;
         mask = 1<<board;
         bvalue = (value & mask) >> board;
-        console.log("Index:", index, "FEB-ID:", feb, " Board:", board, " Value:", value, " Mask:", mask, " Result:", bvalue);
+        //console.log("Index:", index, "FEB-ID:", feb, " Board:", board, " Value:", value, " Mask:", mask, " Result:", bvalue);
         object.checked = bvalue;
         index += 1;
     }
