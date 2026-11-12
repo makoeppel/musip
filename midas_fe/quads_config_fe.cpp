@@ -474,16 +474,7 @@ void sc_settings_changed(midas::odb o) {
         "DataGenEnable",
         "DataGenDisable",
         "debug_readout_feb",
-        "energy_scale",
-        "energy_offset",
-        "temperature_IDs_read",
-        "dummy_data",
-        "dummy_data_n",
-        "dummy_data_fast",
-        "lapse_boundary",
-        "lapse_delay",
-        "lapse_replace_latency",
-        "resetskew"
+        "Load Firmware"
     };
 
     std::vector<std::string> names_no_reset{
