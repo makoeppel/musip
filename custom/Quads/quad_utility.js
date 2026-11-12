@@ -1,4 +1,6 @@
-// General UTILITIES //
+// --------------------------------------------------------------------------------------
+// General Utilities
+// --------------------------------------------------------------------------------------
 
 /**
  * Function to pause execution for a specific amount of tme
@@ -13,13 +15,15 @@ function sort_array(array) {
     return array.slice().sort(function(a, b){return a-b});
 }
 
+// Used for output text
 function list_to_string(list) {
     let formattedString = sort_array(list).join(', ');
     return formattedString
 }
 
-
-// Retrieve Sensor information:
+// --------------------------------------------------------------------------------------
+// Sensor Information
+// --------------------------------------------------------------------------------------
 
 function getSensorId(module, sensor){
     return sensor_ids[module][sensor];

@@ -130,13 +130,9 @@ def scan(seq, start_threshold, stop_threshold, step_threshold, wait_time, start_
         if do_start_run_on_step:
             # === MIDAS Run start if requested ===
             run_number = seq.odb_get("/RunInfo/Run number")
-            seq.msg(f"Starting Run {run_number} for E-Threshold {current_ethreshold}")
+            seq.msg(f"Starting Run {run_number} for T-Threshold {current_tthreshold}")
             seq.odb_exec(f"/RunControl/start now")
-
-            # Warten, damit Hitdaten gesammelt werden
             time.sleep(wait_time)
-
-            # Run stoppen
             seq.msg(f"Stopping Run {run_number}")
             seq.odb_exec("/RunControl/stop")
         else:
@@ -314,7 +310,7 @@ def write_json(path, th, rates, temperatures, original_settings):
         })
 
 
-# Readout e-threshold scan results
+# Readout t-threshold scan results
 
 # Read in Data from json
 def read_json(path, **kwargs):
@@ -385,9 +381,8 @@ def read_odb(seq, **kwargs):
 # Parameters:
 # tthresh : list or np.array of T-Thresholds per channel 
 # tthresh_offset : list or np.array of T-Threshold offsets per channel 
-# Optional Parameters:
-# path : specify output path and filename (default: tth_calib_ODB_DD-MM-YYYY_HH-MM-SS.json)
-def write_config_odb(tthresh, tth_offsets=None, **kwargs):
+# path : specify output path and filename
+def assemble_config(tthresh, tth_offsets=None, output_path=None, **kwargs):
     '''
     Create a JSON configuration file formatted for ODB import.
 
@@ -403,9 +398,8 @@ def write_config_odb(tthresh, tth_offsets=None, **kwargs):
         Per-channel offset indices (integer indices, each representing
         an additional +64 multiplier for the effective threshold).
         If None, offsets will not be included in the output.
-    path : str, optional
-        If provided, use this filename. Otherwise a timestamped file
-        `tth_calib_ODB_DD-MM-YYYY_HH-MM-SS.json` is used.
+    output_path : str
+        Output filename to write. If omitted or None, no file is written
 
     Returns
     -------
@@ -431,18 +425,19 @@ def write_config_odb(tthresh, tth_offsets=None, **kwargs):
 
         offsets = {"tthresh_offset": [f"0x{x:02X}" for x in np.array(tth_offsets).astype(int)]}
         output.update(offsets)
+    if output_path is not None:
+        try:
+            print("Saving the configuration into a file: ", output_path)
+            with open(output_path, 'w') as f_out:
+                json.dump(output, f_out, indent=2)
+            f_out.close()
 
-    try:
-        print("Saving the configuration into a file: ", output_path)
-        with open(output_path, 'w') as f_out:
-            json.dump(output, f_out, indent=2)
-        f_out.close()
+        except:
+            output_path = now.strftime("tth_calib_ODB_%d-%m-%Y_%H-%M-%S.json")
+            print("-- File Path not found, saving to", output_path, "--")
+            with open(output_path, 'w') as f_out:
+                json.dump(output, f_out, indent=2)
+            f_out.close()
 
-    except:
-        output_path = now.strftime("tth_calib_ODB_%d-%m-%Y_%H-%M-%S.json")
-        print("-- File Path not found, saving to", output_path, "--")
-        with open(output_path, 'w') as f_out:
-            json.dump(output, f_out, indent=2)
-        f_out.close()
-
+    del(output["/ODB path"])
     return output

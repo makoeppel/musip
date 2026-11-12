@@ -1,3 +1,0 @@
-#
-
-KERNEL=="mudaq*", OWNER="root", GROUP="users", MODE="0666"

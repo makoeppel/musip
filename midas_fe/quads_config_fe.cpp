@@ -61,8 +61,9 @@ BOOL equipment_common_overwrite = TRUE;
 // configuration variables
 FEBSlowcontrolInterface* feb_sc;
 midas::odb m_settings;
+midas::odb m_variables;
+
 uint8_t bitpattern_mupix[N_BYTES_MUPIX] = {};
-uint8_t bitpattern_mutrig[N_BYTES_MUTRIG] = {};
 mudaq::DmaMudaqDevice* mup = nullptr;
 std::vector<uint32_t> readout_banks = {};
 std::vector<uint32_t> feb_hits = {0,0,0,0};
@@ -227,10 +228,12 @@ void init_banks() {
     std::string nameMTCH = std::string("Names MTCH");
     std::string nameMTCF = std::string("Names MTCF");
     std::string nameMTCE = std::string("Names MTCE");
+    std::string nameMTTM = std::string("Names MTTM");
     std::vector<std::string> namesMTCR;
     std::vector<std::string> namesMTCH;
     std::vector<std::string> namesMTCF;
     std::vector<std::string> namesMTCE;
+    std::vector<std::string> namesMTTM;
     int globalch = 0;
     int globalasic = 0;
     for (uint32_t i = 0; i < N_FEBS; i++) {
@@ -243,12 +246,15 @@ void init_banks() {
                 namesMTCR.push_back("rate channel " + std::to_string(globalch));
                 globalch++;
             }
+            namesMTTM.push_back("Scinti Temp A" + std::to_string(globalasic) + " M0");
+            namesMTTM.push_back("Scinti Temp A" + std::to_string(globalasic) + " M1");
         }
     }
     quads_settings[nameMTCR] = namesMTCR;
     quads_settings[nameMTCH] = namesMTCH;
     quads_settings[nameMTCF] = namesMTCF;
     quads_settings[nameMTCE] = namesMTCE;
+    quads_settings[nameMTTM] = namesMTTM;
 
     std::string nameSMCR = std::string("Names SMCR");
     std::vector<std::string> namesSMCR;
@@ -272,30 +278,27 @@ void setup_history() {
     std::vector<std::string> swb_hit_rate;
     std::vector<std::string> swb_sop_rate;
     std::vector<std::string> swb_sub_rate;
-    std::vector<std::string> swb_eop_rate;
     for ( int i= 0; i < N_FEBS; i++ ) {
         feb_hit_rate.push_back("Quads/RCNT:FEB HIT " + std::to_string(i) + " RATE");
         swb_hit_rate.push_back("Quads/RCNT:HIT " + std::to_string(i) + " RATE");
         swb_sop_rate.push_back("Quads/RCNT:SOP " + std::to_string(i) + " RATE");
-        swb_sub_rate.push_back("Quads/RCNT:SUP " + std::to_string(i) + " RATE");
-        swb_eop_rate.push_back("Quads/RCNT:EOP " + std::to_string(i) + " RATE");
+        swb_sub_rate.push_back("Quads/RCNT:SUB " + std::to_string(i) + " RATE");
     }
     hs_define_panel("Readout", "FEB Hit Rates", feb_hit_rate);
     hs_define_panel("Readout", "SWB Hit Rates", swb_hit_rate);
     hs_define_panel("Readout", "SWB SOP Rates", swb_sop_rate);
     hs_define_panel("Readout", "SWB SUB Rates", swb_sub_rate);
-    hs_define_panel("Readout", "SWB EOP Rates", swb_eop_rate);
 
     std::vector<std::string> readout_rate;
     readout_rate.push_back("Quads/RCNT:MUX RATE");
     readout_rate.push_back("Quads/RCNT:DMA RATE");
     readout_rate.push_back("Quads/RCNT:READOUT RATE");
-    hs_define_panel("Readout", "SWB DMA/Event Rate", swb_eop_rate);
+    hs_define_panel("Readout", "SWB DMA RATE", readout_rate);
 
     std::vector<std::string> readout_error;
     readout_error.push_back("Quads/RCNT:DMA FULL");
     readout_error.push_back("Quads/RCNT:DMA SKIP");
-    hs_define_panel("Readout", "SWB DMA/Event Errors", readout_error);
+    hs_define_panel("Readout", "SWB DMA Errors", readout_error);
 
     // lvds
     for (uint32_t i = 0; i < N_FEBS; i++) {
@@ -458,6 +461,7 @@ void sc_settings_changed(midas::odb o) {
         "Configure injection",
         "Trigger injection loop",
         "Full chip Injection",
+        "Load Firmware",
         "init_tmb",
         "TestPulsesTDC",
         "override_power_moduleid",
@@ -470,7 +474,17 @@ void sc_settings_changed(midas::odb o) {
         "reset_counters",
         "DataGenEnable",
         "DataGenDisable",
-        "debug_readout_feb"
+        "debug_readout_feb",
+        "energy_scale",
+        "energy_offset",
+        "temperature_IDs_read",
+        "dummy_data",
+        "dummy_data_n",
+        "dummy_data_fast",
+        "lapse_boundary",
+        "lapse_delay",
+        "lapse_replace_latency",
+        "resetskew"
     };
 
     std::vector<std::string> names_no_reset{
@@ -478,6 +492,15 @@ void sc_settings_changed(midas::odb o) {
         "module_power",
         "TestPulsesTDC",
         "debug_readout_feb",
+        "dummy_data",
+        "dummy_data_n",
+        "dummy_data_fast",
+        "lapse_boundary",
+        "lapse_delay",
+        "lapse_replace_latency",
+        "resetskew",
+        "energy_scale",
+        "energy_offset"
     };
 
     if( (name == "module_power_mask" || name == "module_power") ){
@@ -487,7 +510,7 @@ void sc_settings_changed(midas::odb o) {
     bool found = (std::find(names.begin(), names.end(), name) != names.end());
     bool no_reset = (std::find(names_no_reset.begin(), names_no_reset.end(), name) != names_no_reset.end());
 
-    if (found && (o || no_reset)){
+    if (found && (no_reset || o)){
 
         cm_msg1(MINFO, "quads", "sc_settings_changed", "Setting changed (%s)", name.c_str());
 
@@ -541,7 +564,7 @@ void sc_settings_changed(midas::odb o) {
             usleep(500000);  // we sleep here to wait until the command is processed
             write_command_by_name("Start Run");
         }
-        // MUPIX Commands //
+    // MUPIX Commands //
 	// ************** //
         if (name == "MupixTDACConfig" && o) {
             ConfigureTDACs(*feb_sc, m_settings);
@@ -588,21 +611,41 @@ void sc_settings_changed(midas::odb o) {
                 cm_msg1(MINFO, "quads", "on_settings_changed", "injection configuration failed!");
         }
 
-        // MUTRIG Commands //
+            if (name == "Load Firmware" && o) {
+                const int status = LoadFirmwareAll(*feb_sc, m_settings, m_variables, false);
+                if (status != FE_SUCCESS)
+                cm_msg1(MERROR, "Quads", "sc_settings_changed", "Firmware loading failed");
+            }
+
+    // MUTRIG Commands //
 	// *************** //
         if(name == "init_tmb" && o){
-            TBinit(*feb_sc, m_settings);
+            TBinit(*feb_sc, m_settings, m_variables);
         }
+
         if(name == "TestPulsesTDC"){
             ChangeTDCTest(*feb_sc, m_settings);
         }
+
+        if( name == "module_power"  && o){
+            UpdatePower(*feb_sc, m_settings);
+        }
+
+        if (name == "temperature_IDs_read" && o)
+            MuTRiG_temperature_IDs_read(*feb_sc, m_settings, m_variables);
+        if (name == "dummy_data" || name == "dummy_data_n" || name == "dummy_data_fast")
+            MuTRiG_dummy_data(*feb_sc, m_settings);
+        if (name == "lapse_boundary" || name == "lapse_delay" || name == "lapse_replace_latency")
+            MuTRiG_lapse_update(*feb_sc, m_settings);
+        if (name == "resetskew")
+            MuTRiG_resetskew(*feb_sc, m_settings);
 
         if( name == "override_power_moduleid" && o){
             UpdatePowerOverride(*feb_sc, m_settings);
         }
 
         if ( name == "MutrigConfig" && o) {
-            ConfigureMuTRiGASICs(*feb_sc, m_settings, bitpattern_mutrig);
+            ConfigureMuTRiGASICs(*feb_sc, m_settings);
         }
         if ( name == "reset_datapath" && o) {
             MuTRiG_reset_datapath(*feb_sc, m_settings);
@@ -616,10 +659,12 @@ void sc_settings_changed(midas::odb o) {
         if ( name == "reset_counters" && o) {
             MuTRiG_reset_counters(*feb_sc, m_settings);
         }
+        if (( name == "energy_scale") || ( name == "energy_offset")) {
+            MuTRiG_energy_update(*feb_sc, m_settings);
+        }
+        
 
-
-
-        // DAQ Commands //
+    // DAQ Commands //
 	// ************ //
         if (name == "DataGenEnable" && o) {
             midas::odb commands = m_settings["DAQ"]["Commands"];
@@ -652,6 +697,10 @@ void sc_settings_changed(midas::odb o) {
             cm_msg1(MINFO, "quads", "on_settings_changed()" , "disable data generator on the FPGA");
 
         }
+        if (name == "Load Firmware" && o) {
+            cm_msg1(MINFO, "quads", "on_settings_changed()" , "Load Firmware");
+            LoadFirmwareAll(*feb_sc,m_settings,m_variables,false);
+        }
 
         if(!no_reset)
             o = false;
@@ -663,6 +712,7 @@ int frontend_init() {
     // create ODB copy for settings
     settings.connect_and_fix_structure("/Equipment/Quads/Settings/");
     m_settings.connect("/Equipment/Quads/Settings");
+    m_variables.connect("/Equipment/Quads/Variables");
 
     // end and start of run
     install_begin_of_run(begin_of_run);
@@ -736,8 +786,13 @@ int frontend_init() {
     return SUCCESS;
 }
 
-int read_sc_event(char* pevent, int off) {
+int read_sc_event(char* pevent, [[maybe_unused]] int off) {
+    // read error for mux
+    m_settings["Readout"]["MUX_ERROR"] = mup->read_register_ro(MUSIP_MUX_ERROR_REGISTER_R);
 
+// *************************************
+// ************* DAQ BANKS  ************
+// *************************************
     // fill SSFE bank
     ssfe_banks.clear();
     for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
@@ -950,9 +1005,9 @@ int read_sc_event(char* pevent, int off) {
     }
 
 
-    // *************************************
-    // ************ MUTRIG BANKS ***********
-    // *************************************
+// *************************************
+// ************ MUTRIG BANKS ***********
+// *************************************
 
     // fill counter banks
     counters_XXCH.clear();
@@ -1039,14 +1094,14 @@ int read_sc_event(char* pevent, int off) {
             for (size_t idx=0; idx < N_TMB_MATRIX_TEMPERATURES-1; idx++) {
                 printf("XXTM idx = %lu : %x\n",idx,rval[idx+1]);
                 float fval = TMB_TEMPERATURE_FACTOR * to_signed_16b(rval[idx+1]);
-                if( ((rval[0]>>(idx)) & 0x01) == 0)
-                    fval = 0;
-                //printf("XXTM idx = %lu gid=%lu : %x --> %f\n",idx,gID,rval[idx+1],fval);
+                if( (((rval[0]>>(idx)) & 0x01) == 0) || ((rval[idx+1]&0xffff)==0x8fff))
+                    fval = NAN;
+                //printf("XXTM idx = %lu : %x --> %f\n",idx,rval[idx+1],fval);
                 values_XXTM.push_back(fval);
             }
         } else {
             for (size_t idx=0; idx < N_TMB_MATRIX_TEMPERATURES; idx++)
-                values_XXTM.push_back(0xFFFFFFFF);
+                values_XXTM.push_back(NAN);
         }
     }
 
@@ -1181,7 +1236,7 @@ int read_sc_event(char* pevent, int off) {
 
     // create a bank with temperatures of the TMB
     float* pfloat = NULL;
-    bk_create(pevent, "MTTM", TID_DWORD, (void**)&pfloat);
+    bk_create(pevent, "MTTM", TID_FLOAT, (void**)&pfloat);
     for (auto data : values_XXTM) *pfloat++ = data;
     bk_close(pevent, pfloat);
 

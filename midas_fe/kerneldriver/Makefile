@@ -1,20 +1,19 @@
-#
+# SPDX-License-Identifier: GPL-2.0
+# DKMS-friendly Makefile for the mudaq kernel module.
 
-KERNELDIR := /lib/modules/$(shell uname -r)/build
-MODULEDIR := $(CURDIR)
+KERNELRELEASE ?= $(shell uname -r)
+KERNELDIR ?= /lib/modules/$(KERNELRELEASE)/build
+MODULEDIR ?= $(CURDIR)
 
-all :
-	$(MAKE) -C $(KERNELDIR) M=$(MODULEDIR)
+all:
+	$(MAKE) -C $(KERNELDIR) M=$(MODULEDIR) modules
 
-clean :
+clean:
 	$(MAKE) -C $(KERNELDIR) M=$(MODULEDIR) clean
 
-install : install_udev
-# disable for now to not break the system to easily
-#	$(MAKE) -C $(KERNELDIR) M=$(MODULEDIR) modules_install
+install_udev:
+	install -o root -g root -m 0644 99-mudaq.rules /etc/udev/rules.d/99-mudaq.rules
+	udevadm control --reload-rules
+	udevadm trigger --subsystem-match=misc || true
 
-install_udev :
-	install -o root -g root -m 0644 99-mudaq.rules /etc/udev/rules.d
-	udevadm control --reload
-
-.PHONY : all, clean, install, install_udev
+.PHONY: all clean install_udev

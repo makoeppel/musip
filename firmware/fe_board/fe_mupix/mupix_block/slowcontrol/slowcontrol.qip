@@ -1,0 +1,16 @@
+#
+
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "mupix_ctrl.vhd"]
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "mupix_ctrl_config_storage.vhd"]
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "mupix_ctrl_dummy.vhd"]
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "mp_conf_splitter.vhd"]
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "mp_ctrl_direct_spi.vhd"]
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "mp_ctrl_spi.vhd"]
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "TDAC_memory.vhd"]
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "mupix_slowcontrol.vhd"]
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "mp_sc_command_assembler.vhd"]
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "mp_sc_lane_controller.vhd"]
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "mp_sc_ticker.vhd"]
+set_global_assignment -name VHDL_FILE [file join $::quartus(qip_path) "tdac_dp_fifo.vhd"]
+
+set_global_assignment -name SDC_FILE [file join $::quartus(qip_path) "mupix_sc.sdc"]

@@ -240,9 +240,8 @@ def read_odb(seq, **kwargs):
 # Create configuration database from threshold scan results (same for module DB and for ODB)
 # Parameters:
 # ethresh : list or np.array of E-Thresholds per channel
-# Optional Parameters:
-# path : specify output path and filename (default: eth_calib_DD-MM-YYYY_HH-MM-SS.json)
-def write_config_odb(ethresh, settings, **kwargs):
+# path : specify output path and filename
+def assemble_config(ethresh, settings, output_path=None, **kwargs):
     '''
     Create a JSON configuration file containing e-threshold and related channel settings.
 
@@ -257,8 +256,8 @@ def write_config_odb(ethresh, settings, **kwargs):
     settings : dict
         Original ODB settings snapshot from `m.Store_Settings(seq)` or similar.
         Used to preserve `ebias`, `energy_c_en`, and `energy_r_en` values.
-    path : str, optional
-        Output filename to write. If omitted, a timestamped filename is used.
+    output_path : str
+        Output filename to write. If omitted or None, no file is written
 
     Returns
     -------
@@ -266,13 +265,6 @@ def write_config_odb(ethresh, settings, **kwargs):
         JSON object that was written to disk. Includes `/ODB path`, `ethresh`,
         `ebias`, `energy_c_en`, and `energy_r_en` fields.
     '''
-    now = datetime.now()
-    # Format the string
-    if "path" in kwargs:
-        output_path = kwargs.get("path")
-    else:
-        output_path = now.strftime("eth_calib_DB_%d-%m-%Y_%H-%M-%S.json")
-        print("No valid filename specified, setting it to", output_path)
     
     # Add e-thresholds to output dict, converting from threshold to actual e-threshold value (255-x)
     if (cfg.polarity_inverted == True):
@@ -289,18 +281,20 @@ def write_config_odb(ethresh, settings, **kwargs):
     output.update(energy_c_en_dict)
     output.update(energy_r_en_dict)
 
-    try:    
-        print("Saving the configuration into a file: ", output_path)
-        with open(output_path, 'w') as f_out:
-            json.dump(output, f_out, indent=2)
-        f_out.close()
-    
-    except:
-        output_path = now.strftime("eth_calib_DB_%d-%m-%Y_%H-%M-%S.json")
-        print("-- File Path not found, saving to", output_path, "--")
-        with open(output_path, 'w') as f_out:
-            json.dump(output, f_out, indent=2)
-        f_out.close()
-    
+    if output_path is not None:
+        try:    
+            print("Saving the configuration into a file: ", output_path)
+            with open(output_path, 'w') as f_out:
+                json.dump(output, f_out, indent=2)
+            f_out.close()
+        
+        except:
+            output_path = now.strftime("eth_calib_DB_%d-%m-%Y_%H-%M-%S.json")
+            print("-- File Path not found, saving to", output_path, "--")
+            with open(output_path, 'w') as f_out:
+                json.dump(output, f_out, indent=2)
+            f_out.close()
+
+    del(output["/ODB path"])
     return output
 

@@ -1,21 +1,12 @@
-
+KERNELRELEASE ?= $(shell uname -r)
+KERNELDIR ?= /lib/modules/$(KERNELRELEASE)/build
+MODULEDIR ?= $(CURDIR)
 MODULE_NAME := dmabuf
 
-KDIR := /lib/modules/`uname -r`/build
+all:
+	$(MAKE) -C $(KERNELDIR) M=$(MODULEDIR) MODULE_NAME=$(MODULE_NAME) modules
 
-all : .cache
-	$(MAKE) -C $(KDIR) modules M=$(PWD)/.cache src=$(PWD) MODULE_NAME=$(MODULE_NAME)
+clean:
+	$(MAKE) -C $(KERNELDIR) M=$(MODULEDIR) MODULE_NAME=$(MODULE_NAME) clean
 
-clean : .cache
-	$(MAKE) -C $(KDIR) clean M=$(PWD)/.cache src=$(PWD) MODULE_NAME=$(MODULE_NAME)
-
-insmod : | all rmmod
-	sudo insmod .cache/$(MODULE_NAME).ko
-#	$(MAKE) -C $(KDIR) M=$(PWD)/.cache modules_install
-
-rmmod :
-	sudo rmmod $(MODULE_NAME) || true
-
-.cache :
-	mkdir -p .cache
-	cp Kbuild .cache/
+.PHONY: all clean

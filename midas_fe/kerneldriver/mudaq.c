@@ -2,7 +2,7 @@
 
 #include "mudaq.h"
 
-#include "../registers.h"
+#include "registers.h"
 
 #include "dmabuf/dmabuf.h"
 

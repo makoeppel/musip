@@ -23,6 +23,7 @@
 
 AnaTriggerHistos::AnaTriggerHistos(const boost::property_tree::ptree& config, TARunInfo* runinfo)
     : TARunObject(runinfo)
+    , enabled_(config.get<bool>("enabled", false))
 {
     fModuleName = "TriggerHistos";
 
@@ -33,7 +34,9 @@ AnaTriggerHistos::~AnaTriggerHistos() {};
 
 void AnaTriggerHistos::BeginRun(TARunInfo* runinfo) {
 
-    printf("TriggerHistos::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+    printf("TriggerHistos::BeginRun, run %d, file %s. Enabled=%u\n", runinfo->fRunNo, runinfo->fFileName.c_str(),enabled_);
+    if(!enabled_)
+        return;
 
     // Note: This error_code isn't checked anywhere yet, but we need it for DQM API.
     std::error_code error; // TODO: actually check this error code and print warnings
@@ -81,6 +84,9 @@ void AnaTriggerHistos::BeginRun(TARunInfo* runinfo) {
 }
 
 void AnaTriggerHistos::EndRun(TARunInfo* runinfo) {
+    if(!enabled_)
+        return;
+
     auto rootHist = h_timewalk_l1_vs_time_s1->asRootObject("timewalk", "C1-S1 time walk;#Deltat [ns];ToT");
     auto time_diff_corrected = l1_s1_time_corrected->asRootObject("histo", "C1-S1 time corrected;#Deltat [ns];#");
 
@@ -162,7 +168,7 @@ void AnaTriggerHistos::EndRun(TARunInfo* runinfo) {
 
 TAFlowEvent* AnaTriggerHistos::AnalyzeFlowEvent(TARunInfo*, TAFlags* flags, TAFlowEvent* flow) {
 
-    if(!flow) return flow;
+    if(!flow || !enabled_) return flow;
 
     HitVectorFlowEvent* hitevent = flow->Find<HitVectorFlowEvent>();
     if(!hitevent) return flow;

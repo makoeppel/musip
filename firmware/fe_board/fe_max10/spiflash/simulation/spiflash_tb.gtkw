@@ -1,0 +1,10 @@
+[*]
+@28
+top.spiflash_tb.clk
+top.spiflash_tb.reset_n
+top.spiflash_tb.spi_strobe
+top.spiflash_tb.spi_ack
+@22
+#{top.spiflash_tb.spi_command[7:0]} top.spiflash_tb.spi_command[7] top.spiflash_tb.spi_command[6] top.spiflash_tb.spi_command[5] top.spiflash_tb.spi_command[4] top.spiflash_tb.spi_command[3] top.spiflash_tb.spi_command[2] top.spiflash_tb.spi_command[1] top.spiflash_tb.spi_command[0]
+#{top.spiflash_tb.spi_addr[23:0]} top.spiflash_tb.spi_addr[23] top.spiflash_tb.spi_addr[22] top.spiflash_tb.spi_addr[21] top.spiflash_tb.spi_addr[20] top.spiflash_tb.spi_addr[19] top.spiflash_tb.spi_addr[18] top.spiflash_tb.spi_addr[17] top.spiflash_tb.spi_addr[16] top.spiflash_tb.spi_addr[15] top.spiflash_tb.spi_addr[14] top.spiflash_tb.spi_addr[13] top.spiflash_tb.spi_addr[12] top.spiflash_tb.spi_addr[11] top.spiflash_tb.spi_addr[10] top.spiflash_tb.spi_addr[9] top.spiflash_tb.spi_addr[8] top.spiflash_tb.spi_addr[7] top.spiflash_tb.spi_addr[6] top.spiflash_tb.spi_addr[5] top.spiflash_tb.spi_addr[4] top.spiflash_tb.spi_addr[3] top.spiflash_tb.spi_addr[2] top.spiflash_tb.spi_addr[1] top.spiflash_tb.spi_addr[0]
+#{top.spiflash_tb.spi_data[7:0]} top.spiflash_tb.spi_data[7] top.spiflash_tb.spi_data[6] top.spiflash_tb.spi_data[5] top.spiflash_tb.spi_data[4] top.spiflash_tb.spi_data[3] top.spiflash_tb.spi_data[2] top.spiflash_tb.spi_data[1] top.spiflash_tb.spi_data[0]

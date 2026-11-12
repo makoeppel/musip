@@ -1,0 +1,19 @@
+#
+
+This directory contains a set of do files to compile mutrig into a separate library,
+as well as forcing scripts to force a valid configuration vector and simulation related values into the ASIC.
+The source if the ASIC is not included in this repo, the path to the repo has to be given in the files for compilation.
+
+For performing the compilation run in the vsim shell from your testbench directory:
+do `${path_to_here}/compile_asic.do ${path_to_mutrig_repo}/units/`
+
+In a testbench instanciating the asics with instance names "asic0,1", run
+```
+do force_asic.do asic0 0
+do force_config.do asic0
+do force_asic.do asic1 1
+do force_config.do asic1
+```
+
+in order to force a configuration vector and simulation constants (such as asic number (=1) and channel, required for text output) at the beginnning of the simulation.
+There will be some warnings about unbound instances when running the simulation, this can be ignored because they are all analog blocks.

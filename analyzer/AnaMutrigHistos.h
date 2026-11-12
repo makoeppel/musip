@@ -28,10 +28,10 @@ public:
     TAFlowEvent* AnalyzeFlowEvent(TARunInfo*, TAFlags* flags, TAFlowEvent* flow);
 
 private:
-    bool enabled_;
     static const int n_ASICs = 2;
     static const int n_CHANNELS = n_ASICs * 32;
     const double binsize_ns = 50e-3; //50ps
+    bool enabled_;
 
     musip::dqm::PlotCollection* pPlotCollection_ {};
 

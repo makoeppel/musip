@@ -243,9 +243,10 @@ $(POF) : $(SOF)
 	( cd "$(BUILD_DIR)" && quartus_cpf -c ./pof.cof )
 
 .PHONY : app_upload
+NIOS_APP_UPLOAD_COMMAND ?= nios2-gdb-server --cable "$$CABLE" -r -w 1 -g "$(APP_DIR)/main.srec"
 app_upload : $(APP_DIR)/main.srec
 	CABLE=$$($(call find_file,jtagconfig_match.sh) "$(CABLE)" "$(CABLE_DEVICE)")
-	nios2-gdb-server --cable "$$CABLE" -r -w 1 -g "$(APP_DIR)/main.srec"
+	$(NIOS_APP_UPLOAD_COMMAND)
 
 app_gdb :
 	CABLE=$$($(call find_file,jtagconfig_match.sh) "$(CABLE)" "$(CABLE_DEVICE)")

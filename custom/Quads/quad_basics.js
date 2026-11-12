@@ -19,6 +19,11 @@ function load_sequencer_script(script_name, script_path="/home/mu3e/musip/online
     })
 }
 
+// --------------------------------------------------------------------------------------
+// Confirmation routines
+// --------------------------------------------------------------------------------------
+
+// TODO: needs some clean up, since non of them is used
 
 function confirmSequencerLoadDACs() {
     dlgConfirm("Are you sure to load the default DACs for all chips?", sequencerLoadDACs);
@@ -40,7 +45,11 @@ function confirmSequencerSetThresholds() {
     dlgConfirm("Configure chip with new thresholds?", sequencerSetThresholds);
 }
 
+// --------------------------------------------------------------------------------------
+// Sequencer calls
+// --------------------------------------------------------------------------------------
 
+// TODO: remove all? obsolete?
 
 function sequencerLoadDACs(flag) {
     if (flag) {
@@ -81,6 +90,12 @@ function sequencerSetThresholds(flag) {
         modbset(['/Sequencer/Command/Start script'],[1]);
     }
 }
+
+// --------------------------------------------------------------------------------------
+// Drawing routine
+// --------------------------------------------------------------------------------------
+
+// TODO: only funtion remaining used from this .js file, move somewhere else?
 
 function draw() {
     selection_draw();

@@ -27,3 +27,17 @@ jobs:
 
       - name: Build MkDocs
         run: mkdocs build
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "Gitea Actions"
+          git config --global user.email "actions@gitea.local"
+
+      - name: Push to gitea-pages branch
+        run: |
+          git checkout --orphan gitea-pages
+          git reset --hard
+          mv site/* .
+          git add .
+          git commit -m "Update site - $(date)"
+          git push -f https://${{ secrets.GITHUB_TOKEN }}@gitea.psi.ch/${{ github.repository }}.git gitea-pages

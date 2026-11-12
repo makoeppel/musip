@@ -1,10 +1,8 @@
-#
-
-*.cmd
 *.o
-*.order
 *.ko
-*.symvers
-.tmp_versions/
-mudaq.mod
+*.cmd
+Module.symvers
+modules.order
 mudaq.mod.c
+mudaq.mod
+

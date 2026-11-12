@@ -81,6 +81,8 @@ TAFlowEvent* AnaHitTree::AnalyzeFlowEvent(TARunInfo*, TAFlags* flags, TAFlowEven
     l1_s1_time_.clear();
 
     for(const auto& currentHit : hitEvent->hits) {
+        if (!currentHit.is_good())
+            continue;
         if(write_pixelhits_ && currentHit.is_pixel()) {
             auto spHit = currentHit.as_pixel();
             pixel_chipid_.push_back(spHit.chipid());
@@ -88,6 +90,14 @@ TAFlowEvent* AnaHitTree::AnalyzeFlowEvent(TARunInfo*, TAFlags* flags, TAFlowEven
             pixel_row_.push_back(spHit.row());
             pixel_tot_.push_back(spHit.tot());
             pixel_time_.push_back(spHit.time()*8); //convert to nano seconds
+            pixel_timestamp_.push_back(spHit.time8ns());
+        }
+        if(write_mutrighits_ && currentHit.is_mutrig()) {
+            auto spHit = currentHit.as_mutrig();
+            mutrig_channel_.push_back(spHit.channel());
+            mutrig_tot_.push_back(spHit.tot());
+            mutrig_time_.push_back(spHit.time());
+            mutrig_timestamp_.push_back(spHit.timestamp());
         }
         if(write_triggerhits_ && currentHit.is_trigger()) {
             auto spHit = currentHit.as_trigger();

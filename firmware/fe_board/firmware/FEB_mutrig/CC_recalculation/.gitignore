@@ -1,0 +1,4 @@
+vsim/work/
+*.txt
+vsim/transcript
+vsim/vsim.wlf

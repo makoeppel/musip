@@ -28,6 +28,7 @@ public:
     TAFlowEvent* AnalyzeFlowEvent(TARunInfo*, TAFlags* flags, TAFlowEvent* flow);
 
 protected:
+    bool enabled_ {};
 
     musip::dqm::PlotCollection* pPlotCollection_ {};
 

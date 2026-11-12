@@ -33,6 +33,7 @@ function getSensorStatus(feb, link){
     return [ready, disper1, disper2, disper3, A0, B0, C0, A1, B1, C1, A2, B2, C2];
 }
 
+//TODO: not used anywhere, remove?
 function areAllSelected(){
     if (selected.length == sensor_ids.flat().length){
         return true;

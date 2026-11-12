@@ -70,6 +70,10 @@ class FEBSlowcontrolInterface {
 
     static constexpr uint32_t MIN_SC_MESSAGE_SIZE = 4;
 
+    static constexpr uint32_t EMERGENCY_IMAGE_START_ADDRESS = 0xC00000;
+    static constexpr uint32_t FLASH_MAX_ADDRESS = 0xFFFFFF;
+
+
    protected:
     mudaq::MudaqDevice& mdev;
 

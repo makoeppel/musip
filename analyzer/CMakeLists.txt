@@ -4,6 +4,7 @@ set(minalyzer_analyzers_headers
     hits.h
     HitVectorFlowEvent.h
     AnaFillHits.h
+    AnaHitTree.h
     #AnaMusip.h
     AnaQuadHistos.h
     AnaHitTree.h
@@ -16,6 +17,7 @@ set(minalyzer_analyzers_headers
 set(minalyzer_analyzers_sources
     HitVectorFlowEvent.cpp
     AnaFillHits.cpp
+    AnaHitTree.cpp
     #AnaMusip.cpp
     AnaQuadHistos.cpp
     AnaHitTree.cpp
@@ -39,6 +41,8 @@ target_link_libraries(minalyzer_analyzers PUBLIC
     ROOT::Hist
     ROOT::ROOTNTuple
     ROOT::ROOTNTupleUtil
+    ROOT::Graf
+    ROOT::Gpad
 )
 
 # I'm not entirely convinced these defines are necessary, but I don't want

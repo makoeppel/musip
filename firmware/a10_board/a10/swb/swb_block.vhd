@@ -376,6 +376,7 @@ begin
         o_hit_rate      => rate_mux(7 downto 4),
         o_package_rate  => rate_mux(11 downto 8),
         o_word_rate     => rate_mux(12),
+        o_error         => o_readregs(MUSIP_MUX_ERROR_REGISTER_R),
 
         o_data          => hits_256,
         o_valid         => hits_256_valid,

@@ -45,8 +45,9 @@ struct mutrighit {
 
     [[nodiscard]] bool is_mutrig() const { return ((hitdata >> 63) & 0x1) == 1; }
     [[nodiscard]] uint8_t chipid() const { return (hitdata >> 61) & 0x3; }
+    [[nodiscard]] uint8_t channelid() const { return (hitdata >> 56) & 0x1F;}
     [[nodiscard]] uint8_t asic() const { return chipid(); }
-    [[nodiscard]] uint8_t channel() const { return (hitdata >> 56) & 0x3F; }
+    [[nodiscard]] uint16_t channel() const { return chipid() << 5 | channelid(); }
     [[nodiscard]] uint16_t et() const { return (hitdata >> 47) & 0x1FF; }
     [[nodiscard]] bool eflag() const { return et() == 0x1FF; }
     [[nodiscard]] uint16_t tot() const { return et(); }
@@ -59,17 +60,61 @@ struct mutrighit {
     [[nodiscard]] uint64_t time8ns() const { return hitdata & 0x7FFFFFFFFFULL; }
     [[nodiscard]] uint8_t finetime_extended() const {return (hitdata >> 39) & 0xFF;}
     [[nodiscard]] uint64_t timestamp() const {return time8ns()*160 + finetime_extended();} //returns time in units of 50ps
-    [[nodiscard]] uint32_t time() const {return timestamp()*50e-3;} //returns time in ns
+    [[nodiscard]] double time() const {return timestamp()*50e-3;} //returns time in ns
 
     void Print() const {
         std::printf(
-            "x64:%016llx chipid:%u channel:%u et:%u rem:%u fine:%u time:%010llx\n",
+            "x64:%016llx chipid:%u channel:%u et:%u rem:%u fine:%u \t timestamp:%lx\n",
             (unsigned long long)hitdata,
             chipid(),
             channel(),
             et(),
             time_remainder(),
             fine_time(),
+            time8ns()
+        );
+    }
+
+};
+
+
+struct triggerhit {
+    triggerhit() noexcept : hitdata(0x0) {}
+    triggerhit(uint64_t h) noexcept : hitdata(h) {}
+
+    uint64_t hitdata;
+
+    [[nodiscard]] bool is_trigger() const { return ((hitdata >> 63) & 0x1) == 1; }
+    [[nodiscard]] uint8_t channel() const { return (hitdata >> 56) & 0xF; }
+    [[nodiscard]] uint8_t tot() const { return (hitdata >> 48) & 0xFF; }
+    [[nodiscard]] uint32_t time_8ns() const { return (hitdata >> 20) & 0xFFFFFFF; }
+    [[nodiscard]] uint32_t ts_header() const { return (hitdata >> 20) & 0x3FFFFFF; }
+    [[nodiscard]] uint32_t time_1ns() const { return hitdata & 0xFFFFF; }
+    //[[nodiscard]] uint64_t time() const {return (time_8ns()*8) + time_1ns();} //returns time in ns
+    [[nodiscard]] uint64_t time() const {
+        const uint32_t coarse = time_8ns();
+        const uint32_t fine   = time_1ns();
+
+        const uint32_t coarse_ns = coarse * 8;
+        //const uint32_t coarse_ns_in_fine_range = coarse_ns & 0xFFFFF;
+
+        // std::printf(
+        //     "8ns:%u 1ns:%u\n",
+        //     coarse_ns_in_fine_range,
+        //     fine
+        // );
+
+        return (coarse_ns & 0xFFFF00000) + fine;
+    }
+
+    void Print() const {
+        std::printf(
+            "x64:%016llx channel:%u tot:%u 8ns:%u 1ns:%u time:%010llx\n",
+            (unsigned long long)hitdata,
+            channel(),
+            tot(),
+            time_8ns(),
+            time_1ns(),
             (unsigned long long)time()
         );
     }
@@ -128,9 +173,11 @@ struct hit {
     uint64_t hitdata;
 
     // Common discriminator
-    [[nodiscard]] bool is_pixel() const  { return ((hitdata >> 63) & 0x1) == 0; }
-    [[nodiscard]] bool is_mutrig() const { return ((hitdata >> 63) & 0x1) == 1; }
-    [[nodiscard]] bool is_trigger() const { return ((hitdata >> 63) & 0x1) == 1; }
+    [[nodiscard]] bool is_good() const  { return (hitdata != 0xffffffffffffffff) ; }
+    [[nodiscard]] bool is_pixel() const  { return is_good() && (((hitdata >> 63) & 0x1) == 0); }
+    [[nodiscard]] bool is_mutrig() const { return is_good() && (((hitdata >> 63) & 0x1) == 1); }
+    //TODO: this makes no sense
+    [[nodiscard]] bool is_trigger() const { return is_good() && (((hitdata >> 63) & 0x1) == 1); }
 
     // Convert to typed views
     [[nodiscard]] pixelhit as_pixel() const { return pixelhit(hitdata); }

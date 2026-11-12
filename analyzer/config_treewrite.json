@@ -1,0 +1,17 @@
+{   
+    "hitTree": {
+        "enabled": true,
+        "write_mutrighits": true,
+        "write_pixelhits": true,
+        "write_triggerhits": false
+    },
+    "mutrig": {
+        "enabled": false
+    },
+    "quad": {
+        "enabled": false
+    },
+    "trigger": {
+        "enabled": false
+    }
+}
