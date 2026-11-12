@@ -4,6 +4,13 @@
 #include <stdint.h>
 #include <cstdio>
 
+#include <geofiles/futuremeg2026.h>
+
+// One telescope geometry shared by all hits. Default = orientations from run 342;
+// call load_telescope_geometry("geometry_aligned.txt") once at start-up to use a fitted file.
+inline quadtel::Geometry& telescope_geometry() { static quadtel::Geometry g; return g; }
+inline bool load_telescope_geometry(const std::string& fn) { return telescope_geometry().load(fn); }
+
 struct pixelhit {
     pixelhit() noexcept : hitdata(0x0) {}
     pixelhit(uint64_t h) noexcept : hitdata(h) {}
@@ -23,6 +30,17 @@ struct pixelhit {
     [[nodiscard]] uint8_t ts_sorterhit() const { return hitdata & 0xF; }
     [[nodiscard]] uint64_t time8ns() const { return (hitdata & 0x1FFFFFFFFFULL); }
     [[nodiscard]] uint64_t time() const { return time8ns() * 8; }
+
+    // ---- telescope coordinates (via telescope_geometry()) ----
+    // layer(): 0,1,2 or -1 if the chip is not in the geometry
+    [[nodiscard]] int layer() const { return telescope_geometry().layer_of_chip(chipid()); }
+    // globalcol(): 0..nx-1 (512), globalrow(): 0..ny-1 (500); -1 if unmapped
+    [[nodiscard]] int globalcol() const { int l, c, r; return telescope_geometry().map_pixel(chipid(), col(), row(), l, c, r) ? c : -1; }
+    [[nodiscard]] int globalrow() const { int l, c, r; return telescope_geometry().map_pixel(chipid(), col(), row(), l, c, r) ? r : -1; }
+    // all three at once (one lookup)
+    bool global(int& layer, int& gcol, int& grow) const { return telescope_geometry().map_pixel(chipid(), col(), row(), layer, gcol, grow); }
+    // aligned position in mm (uses dx, dy, rot from the loaded geometry)
+    [[nodiscard]] quadtel::GlobalPixel global_mm() const { return telescope_geometry().map(chipid(), col(), row()); }
 
     void Print() const {
         std::printf(
@@ -64,58 +82,14 @@ struct mutrighit {
 
     void Print() const {
         std::printf(
-            "x64:%016llx chipid:%u channel:%u et:%u rem:%u fine:%u \t timestamp:%lx\n",
+            "x64:%016llx chipid:%u channel:%u et:%u rem:%u fine:%u \t timestamp:%llx\n",
             (unsigned long long)hitdata,
             chipid(),
             channel(),
             et(),
             time_remainder(),
             fine_time(),
-            time8ns()
-        );
-    }
-
-};
-
-
-struct triggerhit {
-    triggerhit() noexcept : hitdata(0x0) {}
-    triggerhit(uint64_t h) noexcept : hitdata(h) {}
-
-    uint64_t hitdata;
-
-    [[nodiscard]] bool is_trigger() const { return ((hitdata >> 63) & 0x1) == 1; }
-    [[nodiscard]] uint8_t channel() const { return (hitdata >> 56) & 0xF; }
-    [[nodiscard]] uint8_t tot() const { return (hitdata >> 48) & 0xFF; }
-    [[nodiscard]] uint32_t time_8ns() const { return (hitdata >> 20) & 0xFFFFFFF; }
-    [[nodiscard]] uint32_t ts_header() const { return (hitdata >> 20) & 0x3FFFFFF; }
-    [[nodiscard]] uint32_t time_1ns() const { return hitdata & 0xFFFFF; }
-    //[[nodiscard]] uint64_t time() const {return (time_8ns()*8) + time_1ns();} //returns time in ns
-    [[nodiscard]] uint64_t time() const {
-        const uint32_t coarse = time_8ns();
-        const uint32_t fine   = time_1ns();
-
-        const uint32_t coarse_ns = coarse * 8;
-        //const uint32_t coarse_ns_in_fine_range = coarse_ns & 0xFFFFF;
-
-        // std::printf(
-        //     "8ns:%u 1ns:%u\n",
-        //     coarse_ns_in_fine_range,
-        //     fine
-        // );
-
-        return (coarse_ns & 0xFFFF00000) + fine;
-    }
-
-    void Print() const {
-        std::printf(
-            "x64:%016llx channel:%u tot:%u 8ns:%u 1ns:%u time:%010llx\n",
-            (unsigned long long)hitdata,
-            channel(),
-            tot(),
-            time_8ns(),
-            time_1ns(),
-            (unsigned long long)time()
+            timestamp()
         );
     }
 
@@ -173,11 +147,9 @@ struct hit {
     uint64_t hitdata;
 
     // Common discriminator
-    [[nodiscard]] bool is_good() const  { return (hitdata != 0xffffffffffffffff) ; }
-    [[nodiscard]] bool is_pixel() const  { return is_good() && (((hitdata >> 63) & 0x1) == 0); }
-    [[nodiscard]] bool is_mutrig() const { return is_good() && (((hitdata >> 63) & 0x1) == 1); }
-    //TODO: this makes no sense
-    [[nodiscard]] bool is_trigger() const { return is_good() && (((hitdata >> 63) & 0x1) == 1); }
+    [[nodiscard]] bool is_pixel() const  { return ((hitdata >> 63) & 0x1) == 0; }
+    [[nodiscard]] bool is_mutrig() const { return ((hitdata >> 63) & 0x1) == 1; }
+    [[nodiscard]] bool is_trigger() const { return ((hitdata >> 63) & 0x1) == 1; }
 
     // Convert to typed views
     [[nodiscard]] pixelhit as_pixel() const { return pixelhit(hitdata); }

@@ -60,8 +60,6 @@ BOOL equipment_common_overwrite = TRUE;
 
 // configuration variables
 FEBSlowcontrolInterface* feb_sc;
-midas::odb m_settings;
-midas::odb m_variables;
 
 uint8_t bitpattern_mupix[N_BYTES_MUPIX] = {};
 mudaq::DmaMudaqDevice* mup = nullptr;
@@ -384,6 +382,7 @@ void setup_history() {
 int begin_of_run() {
 // bring the FEBs into running
 #ifndef NO_A10_BOARD
+    odb m_settings("/Equipment/Quads/Settings", true);
     midas::odb r("/Runinfo/Run number");
     uint32_t run_number = r;
     mup->write_register(RUN_NR_REGISTER_W, run_number);
@@ -414,7 +413,7 @@ int begin_of_run() {
         timeout_cnt--;
         link_active_from_register = mup->read_register_ro(RUN_NR_ACK_REGISTER_R);
         printf("%u  %u %u\n", timeout_cnt, link_active_from_odb, link_active_from_register);
-        usleep(10000);
+        usleep(1000);
     } while ((link_active_from_register & link_active_from_odb) != link_active_from_odb &&
              (timeout_cnt > 0));
 
@@ -431,7 +430,7 @@ int begin_of_run() {
         return CM_TRANSITION_CANCELED;
     }
     write_command_by_name("Sync");
-    usleep(500000);  // we sleep here to wait until the command is processed
+    // usleep(500000);  // we sleep here to wait until the command is processed
     write_command_by_name("Start Run");
 #endif
 
@@ -514,6 +513,8 @@ void sc_settings_changed(midas::odb o) {
 
         cm_msg1(MINFO, "quads", "sc_settings_changed", "Setting changed (%s)", name.c_str());
 
+        odb m_settings("/Equipment/Quads/Settings", true);
+
         if (name == "MupixConfig" && o) {
             ConfigureASICs(*feb_sc, m_settings, bitpattern_mupix);
         }
@@ -564,8 +565,8 @@ void sc_settings_changed(midas::odb o) {
             usleep(500000);  // we sleep here to wait until the command is processed
             write_command_by_name("Start Run");
         }
-    // MUPIX Commands //
-	// ************** //
+        // MUPIX Commands //
+        // ************** //
         if (name == "MupixTDACConfig" && o) {
             ConfigureTDACs(*feb_sc, m_settings);
         }
@@ -612,14 +613,16 @@ void sc_settings_changed(midas::odb o) {
         }
 
             if (name == "Load Firmware" && o) {
+                odb m_variables("/Equipment/Quads/Variables", true);
                 const int status = LoadFirmwareAll(*feb_sc, m_settings, m_variables, false);
                 if (status != FE_SUCCESS)
                 cm_msg1(MERROR, "Quads", "sc_settings_changed", "Firmware loading failed");
             }
 
-    // MUTRIG Commands //
-	// *************** //
+        // MUTRIG Commands //
+        // *************** //
         if(name == "init_tmb" && o){
+            odb m_variables("/Equipment/Quads/Variables", true);
             TBinit(*feb_sc, m_settings, m_variables);
         }
 
@@ -631,8 +634,10 @@ void sc_settings_changed(midas::odb o) {
             UpdatePower(*feb_sc, m_settings);
         }
 
-        if (name == "temperature_IDs_read" && o)
+        if (name == "temperature_IDs_read" && o) {
+            odb m_variables("/Equipment/Quads/Variables", true);
             MuTRiG_temperature_IDs_read(*feb_sc, m_settings, m_variables);
+        }
         if (name == "dummy_data" || name == "dummy_data_n" || name == "dummy_data_fast")
             MuTRiG_dummy_data(*feb_sc, m_settings);
         if (name == "lapse_boundary" || name == "lapse_delay" || name == "lapse_replace_latency")
@@ -664,8 +669,8 @@ void sc_settings_changed(midas::odb o) {
         }
         
 
-    // DAQ Commands //
-	// ************ //
+        // DAQ Commands //
+        // ************ //
         if (name == "DataGenEnable" && o) {
             midas::odb commands = m_settings["DAQ"]["Commands"];
             for (uint32_t febIDx = 0; febIDx < m_settings["DAQ"]["Links"]["FEBsActive"].size(); febIDx++) {
@@ -710,9 +715,8 @@ void sc_settings_changed(midas::odb o) {
 
 int frontend_init() {
     // create ODB copy for settings
-    settings.connect_and_fix_structure("/Equipment/Quads/Settings/");
-    m_settings.connect("/Equipment/Quads/Settings");
-    m_variables.connect("/Equipment/Quads/Variables");
+    //settings.connect_and_fix_structure("/Equipment/Quads/Settings/");
+    odb m_settings("/Equipment/Quads/Settings", true);
 
     // end and start of run
     install_begin_of_run(begin_of_run);
@@ -773,7 +777,8 @@ int frontend_init() {
     adcContinuousReadout(*feb_sc, m_settings);
 
     // create watch
-    settings["DAQ/Commands"].watch(sc_settings_changed);
+    odb commands("/Equipment/Quads/Settings/", true);
+    commands["DAQ/Commands"].watch(sc_settings_changed);
 
     midas::odb custom("/Custom", true);
     struct passwd *pw = getpwuid(getuid());
@@ -789,6 +794,8 @@ int frontend_init() {
 int read_sc_event(char* pevent, [[maybe_unused]] int off) {
     // read error for mux
     m_settings["Readout"]["MUX_ERROR"] = mup->read_register_ro(MUSIP_MUX_ERROR_REGISTER_R);
+
+    odb m_settings("/Equipment/Quads/Settings", true);
 
 // *************************************
 // ************* DAQ BANKS  ************
@@ -1255,7 +1262,7 @@ int read_sc_event(char* pevent, [[maybe_unused]] int off) {
 
 EQUIPMENT equipment[] = {{
                              "Quads",                           /* equipment name */
-                             {1, 0,                             /* event ID, trigger mask */
+                             {300, 0,                             /* event ID, trigger mask */
                               "SYSTEM",                         /* event buffer */
                               EQ_PERIODIC,                      /* equipment type */
                               0,                                /* event source */

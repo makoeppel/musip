@@ -16,7 +16,6 @@ public:
     ~AnaQuadHistos();
     void BeginRun(TARunInfo* runinfo);
     void EndRun(TARunInfo* runinfo);
-    std::tuple<uint32_t, uint32_t> get_quad_global_col_row(pixelhit hit);
     std::vector<uint8_t> create_mask_file(const TH2F* hitmap, uint32_t chipID, float noiseThreshold);
     std::pair<double, double> CalculateMeanAndSigma(const TH2F* hitmap);
     TAFlowEvent* Analyze(TARunInfo*, TMEvent*, TAFlags* flags, TAFlowEvent* flow) {
