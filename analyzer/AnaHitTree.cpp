@@ -24,6 +24,7 @@ void AnaHitTree::BeginRun(TARunInfo* runinfo) {
     if(!enabled_) return;
 
     printf("HitTree::BeginRun, run %d, file %s\n", runinfo->fRunNo, runinfo->fFileName.c_str());
+
     runinfo->fRoot->fOutputFile->cd();
     tree_ = new TTree("hits", "MuPix and Trigger hits");
 

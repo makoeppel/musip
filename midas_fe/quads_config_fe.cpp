@@ -898,9 +898,6 @@ int read_sc_event(char* pevent, [[maybe_unused]] int off) {
     readout_banks.push_back(dma_full);
     readout_banks.push_back(m_settings["Readout"]["HitRate"]);
 
-// *************************************
-// ************ MUPIX BANKS  ***********
-// *************************************
     // TODO: this is a hack from the pioneer beamtime
     vector<uint32_t> sorterdata(12*7+3);
     feb_sc->FEB_read(0, SORTER_COUNTER_REGISTER_R, sorterdata);
@@ -925,6 +922,10 @@ int read_sc_event(char* pevent, [[maybe_unused]] int off) {
     readout_banks.push_back(nouttime);
     readout_banks.push_back(noverflow);
     readout_banks.push_back(nout);
+
+    // *************************************
+    // ************ MUPIX BANKS  ***********
+    // *************************************
 
     // fill matrix bank
     matrix_banks.clear();

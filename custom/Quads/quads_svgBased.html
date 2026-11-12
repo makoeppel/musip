@@ -7,13 +7,106 @@
    <script src="midas.js"></script>
    <script src="mhttpd.js"></script>
    <script src="mhistory.js"></script>
+   <script src="Quads/config_quads_svgBased.js"></script>
    <title>Quads SVG</title>
 
    <style>
       .mtable td { padding: 2px; }
+
+      .chip-action-cell {
+          text-align: left;
+      }
+
+      .chip-action-sequence {
+          display: flex;
+          align-items: center;
+	  justify-content: flex-start;
+          gap: 8px;
+      }
+
+      .chip-action-arrow {
+          font-size: 1.4em;
+      }
+
+      #htmlTooltip {
+          position: fixed;
+          background-color: rgba(0, 0, 0, 0.5);
+          color: white;
+          padding: 3px 6px;
+	  border-radius: 2px;
+          font-size: 16px;
+          font-family: sans-serif;
+          pointer-events: none;
+          z-index: 1000;
+          visibility: hidden;
+	  white-space: pre-line;
+          max-width: 250px;
+      }
+
    </style>
 
    <script>
+
+	// TODO list:
+	// DONE1. Labels (maybe tooltip) for quad/chip selection
+	// DONE2. Define actions properly with confirmation/busy routine
+	// DONE3. Mask visualization 
+	// DONE4. Mask creation via python?
+	// 5. DQM
+	// DONE6. Config file for PIONEER vs. muSR
+
+        // ------------------------------------------------------------------------------
+	// Initialization
+        // ------------------------------------------------------------------------------
+	// Get setup from config file (config_quads_svgBased.js)
+	const n_quads = cfg.n_quads;
+        console.log("This setup has: ", n_quads, "quads");        
+
+        function applySetup() {
+
+            document.querySelectorAll("[data-setup]").forEach(element => {
+                //console.log("found one data setup", cfg.features);
+                element.style.display =
+                    cfg.features.includes(element.dataset.setup) ? "" : "none";
+            });
+
+	    // Add History Panel for Musip setup (with cooling)
+	    if (cfg.features.includes("cooling")) {
+        	document.getElementById("coolingHistory").innerHTML = `
+                    <div class="mjshistory"
+                         data-group="Quads"
+                         data-panel="BlockTemp"
+                         style="width: 500px; height: 300px; margin:0 auto;">
+                    </div>
+        	`;
+            }
+        }
+
+	// Get setup from config file (config_quads_svgBased.js)
+	document.addEventListener("DOMContentLoaded", function () {   
+	    applySetup();
+	    setupQuads();
+	    // Set some titles:
+            document.getElementById("lvSupply0Title").textContent = cfg.lv_supply_0_title;
+ 	    document.getElementById("lvSupply1Title").textContent = cfg.lv_supply_1_title;
+	    document.getElementById("hvSupplyTitle").textContent = cfg.hv_supply_title;
+	    // Set some channels:
+            document.getElementById("node_hv0").value = cfg.node_hv0_def;
+            document.getElementById("node_hv0").max = cfg.node_hv_max;
+	    document.getElementById("node_hv1").value = cfg.node_hv1_def;
+            document.getElementById("node_hv1").max = cfg.node_hv_max;
+            document.getElementById("channel_hv0").value = cfg.channel_hv0_def;
+            document.getElementById("channel_hv1").value = cfg.channel_hv1_def;
+            document.getElementById("channel_hv0_name").textContent = cfg.channel_hv0_name;
+            document.getElementById("channel_hv1_name").textContent = cfg.channel_hv1_name;
+	    document.getElementById("hv0_supplyChannel").dataset.odbPath = cfg.hvBox_supplyChannel;
+            document.getElementById("hv0_supplyChannelSet").dataset.odbPath = cfg.hvBox_supplyChannelSet;
+            document.getElementById("hv1_supplyChannel").dataset.odbPath = cfg.hvBox_supplyChannel;
+            document.getElementById("hv1_supplyChannelSet").dataset.odbPath = cfg.hvBox_supplyChannelSet;
+	    // TODO: Below should depennd on config file aka. how many HV cannels we have
+	    updateHV(0);
+	    updateHV(1);
+	});
 
         // Update the ODB path for the HV box based on the selected node and channel
         function updateHV(row){
@@ -39,32 +132,61 @@
 	                    h.resize();
 	            });
 	        }, 50);
+
+		applySetup();
 	    }
 	});
 
+	// Dynamic creation of quad display, depending on n_quads
+	function setupQuads() {
+	    const container = document.getElementById('quad_container');
+	    container.innerHTML = '';
+
+	    for (let i = 0; i < n_quads; i++) {
+	        if (i > 0) {
+	            const gap = document.createElement('div');
+	            gap.style.width = '20px';
+	            container.appendChild(gap);
+	        }
+
+	        const quad = document.createElement('object');
+	        quad.id = 'quad' + i;
+	        quad.type = 'image/svg+xml';
+	        quad.className = 'svgObject';
+	        quad.data = 'Quads/Quad_sketch.svg';
+	        quad.style.width = '250px';
+
+	        container.appendChild(quad);
+	    }
+	}
+
 	// ------------------------------------------------------------------------------
 	// Chip selection routines 
-	// -------------------------------------------------------------------------------
+	// ------------------------------------------------------------------------------
 
-        color_sel = 'black';
+        color_sel = 'lightblue'; //'black';
 	color_unsel = '#c8c8c8';
 
         function color_chips(mask, feb) {
             //console.log('mask:', mask, 'feb:', feb);
+	    //if (feb > 0) return; //TODO: add other quads here
 
             // Determine the base quad ID based on the value of feb
             const baseQuadId = 'quad';
- 	    // Loop over the two relevant quads
+ 	    // Loop over the two relevant quads // TODO: 2 should not be hardcoded!
             for (let i = 0; i < 2; i++) {
                 const address_byte = (mask >> (0+i*4)) & 0xF; // Extract the correct byte
-		const quadIdNum = i + feb*2;    
+		const quadIdNum = i + feb*2; //2 quads per FEB
                 const quadId = baseQuadId + quadIdNum;
-		console.log(quadId);
-                const svgDoc = document.getElementById(quadId).contentDocument;
+		//console.log(quadId);
+
+		const quad = document.getElementById(quadId);
+        	if (!quad?.contentDocument) continue;
+	        const svgDoc = quad.contentDocument;
 
                 // Loop over the four chips in each quad
                 for (let j = 0; j < 4; j++) {
-                    const chipId = 'chip' + (j + (feb * 4));
+                    const chipId = 'chip' + j;
                     const chip = svgDoc.getElementById(chipId);
 
                     if (chip) {
@@ -74,6 +196,25 @@
                         } else {
                             chip.style.fill = color_unsel;
                         }
+
+	                // Add tooltip only once, otherwise mulitple redundant eventListeners
+        	        if (!chip.dataset.tooltipInitialized) {
+
+                	    chip.dataset.tooltip = "Quad " + quadIdNum + " - Chip " + j;
+
+	                    chip.addEventListener("mouseenter", function (event) {
+	                        showHtmlTooltip(event, chip.dataset.tooltip);
+	                    });
+
+	                    chip.addEventListener("mousemove", function (event) {
+	                        showHtmlTooltip(event, chip.dataset.tooltip);
+	                    });
+
+	                    chip.addEventListener("mouseleave", hideHtmlTooltip);
+
+	                    chip.dataset.tooltipInitialized = "true";
+	                }
+
                     } else {
                         console.error('Element with id ' + chipId + ' not found.');
                     }
@@ -81,35 +222,560 @@
             }
         }
 
+	// ASIC mask selection, not individual chip masking
+	function mask_selection(asicMaskIndex, quad, chip) {
+	    //console.log('Quad clicked!');
+	    const tmp_path = `/Equipment/Quads/Settings/DAQ/Links/ASICMask[${asicMaskIndex}]`
+	    mjsonrpc_db_get_value(tmp_path).then(function (rpc) {
+                let mask = rpc.result.data[0];
+
+                // Position of the chip bit in the complete mask
+                const bit = quad * 4 + chip;
+
+	        // Toggle the bit
+                mask ^= (1 << bit);
+
+		modbset(tmp_path, mask);
+		color_chips(mask, asicMaskIndex);
+            });
+	}
+
+        function selectAll(bool_sel) {
+	    return function(button) {
+                // count quads:
+	        const svgObjects = document.querySelectorAll(".svgObject");
+	        const nQuads = svgObjects.length;
+	        console.log(nQuads, bool_sel);
+
+		if (bool_sel == 0) {
+		    // Assume max. 3 pixel FEBs
+		    modbset("/Equipment/Quads/Settings/DAQ/Links/ASICMask[0]", "0x0000");
+                    modbset("/Equipment/Quads/Settings/DAQ/Links/ASICMask[1]", "0x0000");
+                    modbset("/Equipment/Quads/Settings/DAQ/Links/ASICMask[2]", "0x0000");
+		}
+		else {
+		    const nMasks = Math.ceil(nQuads / 2);
+
+		    for (let i = 0; i < nMasks; i++) {
+		        const nQuadsInMask = Math.min(2, nQuads - 2 * i);
+		        const mask = (1 << (4 * nQuadsInMask)) - 1;
+
+		        modbset(
+		            `/Equipment/Quads/Settings/DAQ/Links/ASICMask[${i}]`,
+		            `0x${mask.toString(16).padStart(4, "0").toUpperCase()}`
+		        );
+		    }
+		}
+
+	    };
+
+	}
+
+	function updateThreshold(thArray) {
+
+            for (let i = 0; i < n_quads; i++) {
+		const quad = document.getElementById('quad' + i);
+                if (!quad?.contentDocument) continue;
+                const svgDoc = quad.contentDocument;
+
+                for (let j = 0; j < 4; j++) {
+                    const chipIndex = i * 4 + j;
+		    if (thArray[chipIndex] == null) continue;
+
+                    const chipThreshold = parseInt(thArray[chipIndex], 16);
+                    const thElement = svgDoc.getElementById('th_chip' + j);
+
+                    if (thElement && !Number.isNaN(chipThreshold)) {
+                        thElement.textContent = chipThreshold;
+                    }
+                }
+            }
+        }
+
+
+        // ------------------------------------------------------------------------------
+        // Chip actions
+        // ------------------------------------------------------------------------------
+
+	// 1) Check if configuration or masking isn't executed at the same time
+
+	let mupixBusy = false;
+
+	let mupixConfigRunning = false;
+	let mupixTDACConfigRunning = false;
+
+	function oc_mupixconfig(value, element) {
+	    const path = element.dataset.odbPath;
+
+	    if (path.endsWith("/MupixConfig")) {
+	        mupixConfigRunning = value;
+	    }
+	    else if (path.endsWith("/MupixTDACConfig")) {
+	        mupixTDACConfigRunning = value;
+	    }
+
+	    mupixBusy = mupixConfigRunning || mupixTDACConfigRunning;
+	}
+
+	// 2) Actions
+
+	let chipOriginalThreshold = null;
+	const ThHigh_highValue = 200;
+
+	function chipAction(command) {
+ 
+	    if (mupixBusy) {
+	        console.log("MuPix configuration is busy.");
+	        return;
+	    }
+
+	    const paths = {
+	        configure: "/Equipment/Quads/Settings/DAQ/Commands/MupixConfig",
+        	uploadTDACs: "/Equipment/Quads/Settings/DAQ/Commands/MupixTDACConfig",
+                highThreshold: "/Equipment/Quads/Settings/Config/VDACS/ThHigh",
+		nomThreshold: "/Equipment/Quads/Settings/Config/VDACS/ThHigh",
+		alwaysEnable: "/Equipment/Quads/Settings/Config/CONFDACS/AlwaysEnable",
+		disablePLL: "/Equipment/Quads/Settings/Config/CONFDACS/EnPLL",
+		enablePLL: "/Equipment/Quads/Settings/Config/CONFDACS/EnPLL",
+		biasBlockOn: "/Equipment/Quads/Settings/Config/BIASDACS/BiasBlock_on",
+                biasBlockOff: "/Equipment/Quads/Settings/Config/BIASDACS/BiasBlock_on",
+		setThreshold: "/Equipment/Quads/Settings/Config/VDACS/ThHigh"
+	    };
+
+	    const tmp_path = paths[command];
+ 	    const message = document.getElementById("stringAction");
+	    const timeoutMessage = 2500;
+
+	    if (!tmp_path) {
+	        console.error("Unknown chip action:", command);
+	        return;
+	    }
+	    if (command === "configure" || command === "uploadTDACs") {
+	        modbset(tmp_path, true);
+    		message.textContent = command === "configure" ? "Chips configured" : "TDACs uploaded";
+    		setTimeout(() => message.textContent = "", timeoutMessage);
+	    }
+
+	    else if (command === "disablePLL" || command === "enablePLL") {
+	         mjsonrpc_db_get_value(tmp_path).then(function (rpc) {
+                        let value = rpc.result.data[0];
+			let enPLLValue = Array(value.length).fill(command === "enablePLL" ? 0 : 1);
+			modbset(tmp_path, enPLLValue);
+
+                        message.textContent = command === "enablePLL" ? "Reset PLL" : "Disabled PLL";
+                        setTimeout(() => message.textContent = "", timeoutMessage);
+		});
+	    }
+
+            else if (command === "biasBlockOff" || command === "biasBlockOn") {
+                 mjsonrpc_db_get_value(tmp_path).then(function (rpc) {
+                        let value = rpc.result.data[0];
+                        let biasBlockValue = Array(value.length).fill(command === "biasBlockOff" ? 0 : 5);
+                        modbset(tmp_path, biasBlockValue);
+
+                        message.textContent = command === "biasBlockOff" ? "Turned off bias block" : "Turned on bias block";
+                        setTimeout(() => message.textContent = "", timeoutMessage);
+                });
+            }
+
+	    else if (command === "highThreshold" || command === "setThreshold") {
+		let newThHigh = document.getElementById("newThHigh").value;
+
+		mjsonrpc_db_get_value(tmp_path).then(function (rpc) {
+                        let value = rpc.result.data[0];
+
+			chipOriginalThreshold = [...value];
+		        let highValue = Array(value.length).fill(command === "highThreshold" ? ThHigh_highValue : newThHigh);
+			console.log(tmp_path, highValue);
+		        modbset(tmp_path, highValue);
+
+			// Set also ThLow (also ThHigh - 1)
+			let lowValue = highValue.map(value => value -1);
+			let lowPath = tmp_path.replace("/ThHigh", "/ThLow");
+			modbset(lowPath, lowValue);
+
+			// Ensure that always enable is off since masking will happen next
+			let alwaysEnableArray = Array(value.length).fill(0);
+			modbset(paths["alwaysEnable"], alwaysEnableArray);
+
+			// Set a message text which visualizes that this was executed
+			message.textContent = command === "highThreshold" ? "Applied high threshold" : "Applied custom threshold";
+			setTimeout(() => message.textContent = "", timeoutMessage);
+		});
+	    }
+
+	    else if (command === "nomThreshold") {
+	        if (chipOriginalThreshold === null) {
+	            console.warn("No original threshold stored.");
+	            return;
+	        }
+
+	        modbset(tmp_path, chipOriginalThreshold);
+
+                // Set also ThLow (also ThHigh - 1)
+                let lowValue = chipOriginalThreshold.map(value => value -1);
+                let lowPath = tmp_path.replace("/ThHigh", "/ThLow");
+                modbset(lowPath, lowValue);
+
+                // Set a message text which visualizes that this was executed
+                message.textContent = "Applied nominal threshold";
+                setTimeout(() => message.textContent = "", timeoutMessage);
+
+	    }
+
+	    console.log("Executed chips action: " + command);
+	}
+
+	// Testing ground for masking maps
+	document.addEventListener("DOMContentLoaded", function () {
+
+    	    const svgObjects = document.querySelectorAll(".svgObjectMask");
+	    svgObjects.forEach(function (obj, index) {
+		obj.addEventListener("load", function() {
+		    setupMask(obj, index);
+		});
+	    });
+	});
+
+	function setupMask(obj, index) {
+	    const svgDoc = obj.contentDocument;
+	    const numbOfFirstChip = index * 4;
+
+	    for (let chip = 0; chip < 4; chip++) {
+
+	        const chipElement = svgDoc.getElementById(`chip${chip}`);
+
+	        if (!chipElement)
+	            continue;
+
+	        // Get the position and size of the chip rectangle
+	        const x = chipElement.getAttribute("x");
+	        const y = chipElement.getAttribute("y");
+	        const width = chipElement.getAttribute("width");
+	        const height = chipElement.getAttribute("height");
+
+	        // Create an SVG image
+	        const image = svgDoc.createElementNS(
+	            "http://www.w3.org/2000/svg",
+	            "image"
+	        );
+
+              	image.setAttribute("x", x);
+       		image.setAttribute("y", y);
+	        image.setAttribute("width", width);
+     		image.setAttribute("height", height);
+
+	        // Store chip number
+	    	const globalChipNumber = numbOfFirstChip + chip;
+		image.setAttribute("data-chip", globalChipNumber);
+
+	        // Load the binary mask
+	        loadMask(image, globalChipNumber);
+
+		// Put image on top of the rectangle
+	        chipElement.parentNode.appendChild(image);
+	    }
+	}
+
+
+	function loadMask(image, chip) {
+	    mjsonrpc_db_get_value(`/Equipment/Quads/Settings/Config/TDACS/TDACFILE`).then(function (rpc) {
+	        let paths = rpc.result.data[0];
+
+    		let paths_short = paths.map(path =>
+	            path.replace("/home/pinky/online/", "")
+		    //TODO: replace with path from config
+		);	
+
+		fetch(paths_short[chip] + "?v=" + Date.now())  //userfiles/maskfiles/mask_${chip}.bin`)
+	        .then(r => r.arrayBuffer())
+	        .then(buffer => {
+
+	            const data = new Uint8Array(buffer);
+
+	            // Create temporary canvas for the 256 x 250 mask
+	            const canvas = document.createElement("canvas");
+	            canvas.width = 256;
+	            canvas.height = 250;
+
+	            const ctx = canvas.getContext("2d");
+	            const img = ctx.createImageData(256, 250);
+
+	            for (let y = 0; y < 256; y++) {
+	                for (let x = 0; x < 256; x++) {
+
+	                    const value = data[y * 256 + x] ? 0 : 255;
+
+	                    // Rotate 90° counter-clockwise
+	                    let nx = y;
+	                    let ny = 255 - x;
+			    let newY;
+
+   			    if (chip === 0 || chip === 1 || chip === 4 || chip === 5) {
+			        nx = 255 - y;
+				ny = x;
+				if (ny > 249)
+				    continue;
+				newY = ny;
+			    } else {
+	                    // Remove the 6 non-existing rows
+	                        if (ny < 6)
+	                            continue;
+				newY = ny - 6;
+			    }
+
+	                    const i = (newY * 256 + nx) * 4;
+
+	                    img.data[i]     = value; //R
+	                    img.data[i + 1] = value; //G
+	                    img.data[i + 2] = value; //B
+	                    img.data[i + 3] = 255;   //Fill
+	                }
+	            }
+
+	            ctx.putImageData(img, 0, 0);
+
+	            // Convert canvas to an image
+	            image.setAttribute("href", canvas.toDataURL());
+
+	        });
+	    });
+	}
+
+	// PySenquencer is used here to copy/generate mask files
+	async function pysequencerAction(command) {
+            const pySeqRunning = "/PySequencer/State/Running";
+	    const rpc = await mjsonrpc_db_get_value(pySeqRunning);
+
+	    let running = rpc.result.data[0];
+	    if (running == true) {
+	        dlgAlert("PySequencer is already running! Can not execute demanded action.");
+		return
+	    }
+
+	    const pySeqPath = "/PySequencer/State/Filename";
+	    const pySeqStart = "/PySequencer/Command/Start script";
+	    const pySeqLoad = "/PySequencer/Command/Load new file";
+	
+	    const runNumber = document.getElementById("runNumberForMasking").value; 
+	    const flag_merge = document.getElementById("runMaskMerge").checked ? 1 : 0;
+
+	    console.log("Flag to merge masks: " + flag_merge);
+
+	    const pySeqParamPaths = [
+                "/PySequencer/Param/Value/source",
+	        "/PySequencer/Param/Value/destination",
+        	"/PySequencer/Param/Value/action",
+		"/PySequencer/Param/Value/runNumber",
+		"/PySequencer/Param/Value/flag_merge"
+    	    ];
+
+	    // TODO: hardoced paths!!! need to replaced by config file input
+            const params = {
+                SelEdgeMask: [
+		    "/home/pinky/online/userfiles/maskfiles/edge_masks",
+		    "/home/pinky/online/userfiles/maskfiles/",
+		    "mask copy"
+		],
+		SelEmptyMask: [
+                    "/home/pinky/online/userfiles/maskfiles/empty_masks",
+                    "/home/pinky/online/userfiles/maskfiles/",
+                    "mask copy"
+		],
+		SelBackupPiE5: [
+		    "/home/pinky/online/userfiles/maskfiles/backup_pie5_2026",
+		    "/home/pinky/online/userfiles/maskfiles/",
+		    "mask copy"
+		],
+                SelCornerChip0: [
+                    "/home/pinky/online/userfiles/maskfiles/chip0_corner",
+                    "/home/pinky/online/userfiles/maskfiles/",
+                    "mask copy"
+                ],
+		SelRunMask: [
+		    "/home/pinky/bt2026/musip/output/maskfiles_analyzer",
+		    "/home/pinky/online/userfiles/maskfiles/",
+		    "mask run"
+		]
+            };
+
+            console.log("Run number for masking: " + runNumber + ", merge flag: " + flag_merge);
+	    const tmp_params = [...params[command], runNumber, flag_merge];	
+
+	    // 1. Set the script filename
+	    await mjsonrpc_db_paste(
+	        [pySeqPath],
+	        ["masking_pioneer_2.py"]
+	    );
+
+	    // 2. Load the new file
+	    await mjsonrpc_db_paste(
+	        [pySeqLoad],
+	        [true]
+	    );
+
+	    // 3. Set the three parameter values
+	    await mjsonrpc_db_paste(
+	        pySeqParamPaths,
+	        tmp_params
+	    );
+	    //console.log(tmp_params);
+
+	    await mjsonrpc_db_paste(
+		[pySeqStart],
+		[true]
+	    );
+	    
+            await waitForPySequencerFinished();
+
+	    if (command === "SelEdgeMask"  || command === "SelEmptyMask" || command === "SelRunMask" || command === "SelBackupPiE5" || command === "SelCornerChip0") {
+	        const svgObjects = document.querySelectorAll(".svgObjectMask");
+                svgObjects.forEach(function (obj, index) {
+                    setupMask(obj, index);
+                });
+            }
+        }	
+
+	// Helper Function to tell me that PySenquer was executed:
+	async function waitForPySequencerFinished() {
+	    while (true) {
+	        const rpc = await mjsonrpc_db_get_value(
+	            "/PySequencer/State/Finished"
+	        );
+
+	        const finished = rpc.result.data[0];
+
+	        if (finished === true || finished === 1)
+	            return;
+
+	        await new Promise(resolve => setTimeout(resolve, 1000));
+	    }
+	}
+
+	// Link quality monitoring:
+	// TODO: This function is currently only working for one FEB
+	// TODO: Proper initialization missing
+	var previous = [];
+
+	function update_pcls(value) {
+	    const svgObjects = document.querySelectorAll(".svgObject");
+	    var quadOffset = 0;	
+	    svgObjects.forEach(function (obj, index) {
+		const svgDoc = obj.contentDocument;
+		const febindex = Math.floor(index / 2);
+	        var febIDfromPCLS = value[0]; // <-- not used so far (needed for general purpose)
+	        //var nlinks = value[1]; //not needed for now
+	        const nlinks = 12;
+
+		for (var chip=0; chip<4; chip++) {
+		    var nhits_chip = 0;
+		    
+   		    for (var i=0; i<3; i++) {
+			var link = chip * 3 + i;
+
+  		        var nhits = parseInt(value[2 + quadOffset + 4 * link + 3], 16);
+
+			var disp  = parseInt(value[2 + quadOffset + 4 * link + 1], 16);
+			var err   = parseInt(value[2 + quadOffset + 4 * link + 2], 16);
+
+			// Previous values for this individual link
+                        var prev = previous[index]?.[link] || {
+                            nhits: 0,
+                            disp: 0,
+                            err: 0
+                        };
+
+	                // Differences for this link
+        	        var new_nhits = nhits - prev.nhits;
+                	var new_disp  = disp  - prev.disp;
+                	var new_err   = err   - prev.err;
+
+			nhits_chip += new_nhits;
+			
+			//console.log(index, chip, link, 2 + quadOffset + 4 * link + 3, parseInt(value[2 + quadOffset + 4 * link + 3], 16));
+
+			var linkLetter = ["A", "B", "C"][i];
+
+			if (svgDoc) {
+			    const disRate = svgDoc.getElementById(`link${linkLetter}_dispErr_chip${chip}`);
+			    const errRate = svgDoc.getElementById(`link${linkLetter}_8b10bErr_chip${chip}`);
+
+			    if (disRate)
+			        disRate.style.fill = new_disp === 0 ? "green" : new_disp < 100 ? "yellow" : "red";
+
+			    if (errRate)
+			        errRate.style.fill = new_err === 0 ? "green" : new_err < 100 ? "yellow" : "red";
+			}
+
+			// Store current values for next update
+                	if (!previous[index]) {
+	                    previous[index] = [];
+        	        }
+
+                	previous[index][link] = {
+	                    nhits: nhits,
+        	            disp: disp,
+                	    err: err
+	                };
+
+		    }
+		
+		    //console.log(index, chip, nhits_chip);
+		    
+		    // Only nhits currently gets an SVG update
+		    if (svgDoc) {
+	                const chipRate = svgDoc.getElementById(`rate_chip${chip}`);
+        	        if (chipRate) {
+	                    chipRate.textContent = `${nhits_chip} Hz`;
+	                }
+		    }
+		}
+
+		quadOffset += nlinks*4;
+	    });
+	}
+
         // ------------------------------------------------------------------------------
         // SVG Page loader
-        // -------------------------------------------------------------------------------
+        // ------------------------------------------------------------------------------
 
         document.addEventListener("DOMContentLoaded", function () {
+
             // Get all <object> elements with the class 'svgObject'
             const svgObjects = document.querySelectorAll(".svgObject");
 
             // Iterate over each <object> element
             svgObjects.forEach(function (obj, index) {
+		console.log(obj, index);
                 // Add a load event listener to each <object>
                 obj.addEventListener("load", function () {
                     // Check for pairs (=2) since two quads connect to one FEB
+		    const asicMaskIndex = Math.floor(index / 2);
 		    const svgDoc = obj.contentDocument;
-		    const quadTest = svgDoc.getElementById("chip0");
-		    console.log(quadTest);
-		    if (quadTest) {
-                        quadTest.setAttribute("onclick", "console.log('Quad clicked!');");
-                    }
-                    if (index % 2 === 0) {
+
+                    for (let chip = 0; chip < 4; chip++) {
+			const chipElement = svgDoc.getElementById(`chip${chip}`);
+			if (chipElement) {
+			    chipElement.addEventListener("click", () => {
+			        mask_selection(asicMaskIndex, index, chip);
+			    });
+			}
+		    }
+
+		    // Initialize thresholds
+	            mjsonrpc_db_get_value(`/Equipment/Quads/Settings/Config/VDACS/ThHigh`).then(function (rpc) {
+  	                let value = rpc.result.data[0];
+        	        updateThreshold(value);
+            	    });
+		 
+                    if (index % 2 === 0) { 
+			// Pairs of quads have one mask
                         // Get the internal document of the loaded SVG
 			// TODO: check that asicMaskIndex is number!!!
-                        const asicMaskIndex = Math.floor(index / 2);
-			console.log("asic Mask Index: ", asicMaskIndex);
                	        mjsonrpc_db_get_value(`/Equipment/Quads/Settings/DAQ/Links/ASICMask[${asicMaskIndex}]`).then(function (rpc) {
 	                    let value = rpc.result.data[0];
-			    console.log(asicMaskIndex, value);
 		            color_chips(value, asicMaskIndex);
-	                 });
+	                });
 		    }	    
 		});
             });
@@ -120,7 +786,7 @@
    </script>
 </head>
 
-<body class="mcss" onload="mhttpd_init('Quads SVG'); mhistory_init();">
+<body class="mcss" onload="mhttpd_init('Quad SVG'); mhistory_init();">
 
 <!-- header and side navigation will be filled in mhttpd_init -->
 <div id="mheader"></div>
@@ -130,28 +796,37 @@
 
     <!-- Values to be monitored (modb values with onchange or onload commands) -->
 
+    <div class="modb" data-odb-path="/Equipment/Quads/Settings/DAQ/Commands/MupixConfig" 
+	    onload="oc_mupixconfig(this.value, this)" onchange="oc_mupixconfig(this.value, this)">
+    <div class="modb" data-odb-path="/Equipment/Quads/Settings/DAQ/Commands/MupixTDACConfig"
+            onload="oc_mupixconfig(this.value, this)" onchange="oc_mupixconfig(this.value, this)">
+
     <!-- Should become a tab for power-->
 
     <div class="mtabs">
-        <div class="mtab"
+        <div class="mtab active"
              data-target="quad_power">
             Power
         </div>
-        <div class="mtab"
+        <div class="mtab" data-setup="cooling"
              data-target="quad_cooling">
             Cooling
         </div>
-	<div class="mtab active"
+	<div class="mtab"
              data-target="quad_control">
             Chip control
         </div>
+        <div class="mtab"
+             data-target="quad_masks">
+            Chip masks
+        </div>
     </div>
     
-    <div id="quad_power" class="mpanel">
+    <div id="quad_power" class="mpanel active">
 
     <table class="mtable">
         <tr>
-            <th colspan="8" class="mtableheader">LV SUPPLY 0: FEB und MuTrig</th>
+            <th colspan="8" class="mtableheader" id="lvSupply0Title"></th>
         </tr>
         <tr>
             <th colspan="2"> Channel: </th>
@@ -206,7 +881,7 @@
 
     <table class="mtable">
         <tr>
-            <th colspan="8" class="mtableheader">LV SUPPLY 1: Quads & HV Box</th>
+            <th colspan="8" class="mtableheader" id="lvSupply1Title">LV SUPPLY 1: Quads & HV Box</th>
         </tr>
         <tr>
             <th colspan="2"> Channel: </th>
@@ -260,7 +935,7 @@
     </table>
 
     <table class="mtable">
-        <tr><th colspan="10" class="mtableheader">HV Box & Keithley HV supplies</th></tr>
+        <tr><th colspan="10" class="mtableheader" id="hvSupplyTitle">HV Box & Keithley HV supplies</th></tr>
         <tr>
             <th colspan="2">Node</th>
             <td>State</td>
@@ -272,64 +947,68 @@
             <th>Description</th>
         </tr>
         <tr>
-            <th><input type="number" id="node_hv0" value="2" min="1" max="2" onchange="updateHV(0)"></th>
-            <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/LVSUPPLY1/Variables/State[3]" data-color="lightgreen" data-background-color="red"></div></td>
-            <td style="text-align: center"><input type="checkbox" name="CheckboxPixels" class="modbcheckbox" data-odb-path="/Equipment/LVSUPPLY1/Variables/Set State[3]"></input></td>
-            <th><input type="number" id="channel_hv0" value="2" min="0" max="3" onchange="updateHV(0)"></th>
+            <th><input type="number" id="node_hv0" min="1" onchange="updateHV(0)"></th>
+            <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/LVSUPPLY1/Variables/State[3]" data-color="lightgreen" data-background-color="red"
+		id="hv0_supplyChannel"></div></td>
+            <td style="text-align: center"><input type="checkbox" name="CheckboxPixels" class="modbcheckbox" data-odb-path="/Equipment/LVSUPPLY1/Variables/Set State[3]"
+		id="hv0_supplyChannelSet"></input></td>
+            <th><input type="number" id="channel_hv0" min="0" max="3" onchange="updateHV(0)"></th>
             <td style="text-align: center">
                 <div class="modbbox" style="width: 20px; height: 20px;"
                      data-hvrow="0" data-odb-template="/Equipment/Quad HV/Variables/Demand[%i]"
-                     data-odb-path="/Equipment/Quad HV/Variables/Demand[6]" 
+                     data-odb-path="" 
                      data-color="lightgreen" data-background-color="red">
                 </div></td>
             <td><div class="modbvalue" 
                      data-hvrow="0" data-odb-template="/Equipment/Quad HV/Variables/Demand[%i]"
-                     data-odb-path="/Equipment/Quad HV/Variables/Demand[6]" 
+                     data-odb-path="" 
                      data-formula="-x" data-odb-editable="1">
                 </div></td>
             <td><div class="modbvalue" data-format="f2" 
                      data-hvrow="0" data-odb-template="/Equipment/Quad HV/Variables/Measured[%i]"
-                     data-odb-path="/Equipment/Quad HV/Variables/Measured[6]" 
+                     data-odb-path="" 
                      data-formula="-x">
                 </div></td>
             <td>none</td>
             <td><div id="hv_curr" data-format="f3" class="modbvalue" 
                      data-hvrow="0" data-odb-template="/Equipment/Quad HV/Variables/Current[%i]"
-                     data-odb-path="/Equipment/Quad HV/Variables/Current[6]" 
+                     data-odb-path="" 
                      data-formula="-x">
                 </div></td>
-            <td id="HVSUPPLY0_0" style="text-align: center">MSCB382 - Layer 5</td>
+            <td id="channel_hv0_name" style="text-align: center"></td>
         </tr>
         <tr>
-            <th><input type="number" id="node_hv1" value="2" min="1" max="2" onchange="updateHV(1)"></th>
-            <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/LVSUPPLY1/Variables/State[3]" data-color="lightgreen" data-background-color="red"></div></td>
-            <td style="text-align: center"><input type="checkbox" name="CheckboxPixels" class="modbcheckbox" data-odb-path="/Equipment/LVSUPPLY1/Variables/Set State[3]"></input></td>
-            <th><input type="number" id="channel_hv1" value="3" min="0" max="3" onchange="updateHV(1)"></th>
+            <th><input type="number" id="node_hv1" min="1" onchange="updateHV(1)"></th>
+            <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/LVSUPPLY1/Variables/State[3]" data-color="lightgreen" data-background-color="red"
+		id="hv1_supplyChannel"></div></td>
+            <td style="text-align: center"><input type="checkbox" name="CheckboxPixels" class="modbcheckbox" data-odb-path="/Equipment/LVSUPPLY1/Variables/Set State[3]"
+		id="hv1_supplyChannelSet"></input></td>
+            <th><input type="number" id="channel_hv1" min="0" max="3" onchange="updateHV(1)"></th>
             <td style="text-align: center">
                 <div class="modbbox" style="width: 20px; height: 20px;" 
                      data-hvrow="1" data-odb-template="/Equipment/Quad HV/Variables/Demand[%i]"
-                     data-odb-path="/Equipment/Quad HV/Variables/Demand[7]" 
+                     data-odb-path=""  
                      data-color="lightgreen" data-background-color="red">
                 </div></td>
             <td><div class="modbvalue" 
                 data-hvrow="1" data-odb-template="/Equipment/Quad HV/Variables/Demand[%i]"
-                data-odb-path="/Equipment/Quad HV/Variables/Demand[7]" 
+                data-odb-path="" 
                 data-formula="-x" data-odb-editable="1">
             </div></td>
             <td><div class="modbvalue" data-format="f2" 
                 data-hvrow="1" data-odb-template="/Equipment/Quad HV/Variables/Measured[%i]"
-                data-odb-path="/Equipment/Quad HV/Variables/Measured[7]" 
+                data-odb-path="" 
                 data-formula="-x">
             </div></td>
             <td>none</td>
             <td><div id="hv_curr" data-format="f3" class="modbvalue" 
                 data-hvrow="1" data-odb-template="/Equipment/Quad HV/Variables/Current[%i]"
-                data-odb-path="/Equipment/Quad HV/Variables/Current[7]" 
+                data-odb-path="/Equipment/Quad HV/Variables/Current[0]" 
                 data-formula="-x">
             </div></td>
-            <td id="HVSUPPLY0_1" style="text-align: center">MSCB382 - Layer 1</td>
+            <td id="channel_hv1_name" style="text-align: center"></td>
         </tr>
-        <tr>
+        <tr data-setup="keithley">
             <th>Keithley</th>
             <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/K2450/Variables/Output[0]" data-color="lightgreen" data-background-color="red"></div></td>
             <td style="text-align: center"><input type="checkbox" name="CheckboxHVNewPixels" class="modbcheckbox" data-odb-path="/Equipment/K2450/Variables/Output[0]"></input></td>
@@ -341,7 +1020,7 @@
             <td><div id="keithley_curr" data-format="f3" class="modbvalue" data-odb-path="/Equipment/K2450/Variables/Input[4]" data-formula="x*1000000"></div></td>
             <td id="HVSUPPLY1_0" style="text-align: center">New quads HV</td>
         </tr>
-        <tr>
+        <tr data-setup="keithley">
             <th>Keithley B</th>
             <td style="text-align: center"><div class="modbbox" style="width: 20px; height: 20px;" data-odb-path="/Equipment/K2450B/Variables/Output[0]" data-color="lightgreen" data-background-color="red"></div></td>
             <td style="text-align: center"><input type="checkbox" name="CheckboxHVNewPixels2" class="modbcheckbox" data-odb-path="/Equipment/K2450B/Variables/Output[0]"></input></td>
@@ -359,7 +1038,7 @@
 
     <!-- 2nd tab: Cooling ---------------------------------------------------->
 
-    <div id="quad_cooling" class="mpanel">
+    <div id="quad_cooling" class="mpanel" data-setup="cooling">
 
     <table class="mtable" id="chillerMonitor">
         <tr><th colspan="6" class="mtableheader">Chiller</th></tr>
@@ -388,39 +1067,315 @@
         </tr>
     </table>
 
-    <div class="mjshistory" 
-	    data-group="Quads" data-panel="BlockTemp" 
-	    style="width: 500px; height: 300px; margin:0 auto;">
-    </div>
+    <div id="coolingHistory"></div>
 
     </div>
 
     <!-- 3rd tab: Chip control ------------------------------------------------>
 
-    <div id="quad_control" class="mpanel active">
+    <div id="quad_control" class="mpanel">
 
     <div class="modb" id="feb0_chipMask" data-odb-path="/Equipment/Quads/Settings/DAQ/Links/ASICMask[0]" onchange="color_chips(this.value, 0);"></div>
+    <div class="modb" id="feb1_chipMask" data-odb-path="/Equipment/Quads/Settings/DAQ/Links/ASICMask[1]" onchange="color_chips(this.value, 1);"></div>
+    <div class="modb" id="thHigh_values" data-odb-path="/Equipment/Quads/Settings/Config/VDACS/ThHigh" onchange="updateThreshold(this.value);"></div>
 
     <table class="mtable">
-	<tr><th class="mtableheader">Chip selection</th></tr>
-	<tr><td>
-	    <div style="position:relative;width:100%;margin_auto">
+	<tr><th colspan="3" class="mtableheader">Chip selection &amp; control</th></tr>
+	<tr><td colspan="3">
+	    <div style="display:flex;justify-content:center;" id="quad_container">
+                <!-- SVG objects added dynamically -->
+            </div>
+	    </td>
+	</tr>
+	<tr>
+	    <td colspan="3" style="text-align:center">
+		    <button class="modbbutton mbutton"
+			    data-validate='selectAll(1)'>
+			    Select All!</button>
+                    <button class="modbbutton mbutton"
+			    data-validate='selectAll(0)'>
+			    Unselect All!</button>
+            </td>
+	</tr>
+	<tr>
+       	    <td>Last Action:</td>
+	    <td colspan="2" id="stringAction"></td>
+	</tr>
+	<tr>
+	    <td>Configure:</td>
+	    <td colspan="2" class="chip-action-cell">
+                <div>
+                    <button class="mbutton"
+                            onclick="chipAction('configure')">
+                        Configure
+                    </button>
+                </div>
+	    </td>
+	</tr>
+
+	<tr>
+	    <td>Masking:</td>
+	    <td colspan="2" class="chip-action-cell">
+	        <div class="chip-action-sequence">
+
+		    <div>
+                        <button class="mbutton"
+                                onclick="chipAction('highThreshold')">
+                            High Threshold
+                        </button>
+                    </div>
+
+                    <span class="chip-action-arrow">→</span>
+
+	            <div>
+	                <button class= "mbutton"
+	                        onclick="chipAction('configure')">
+	                    Configure
+	                </button>
+	            </div>
+  
+                    <span class="chip-action-arrow">→</span>
+
+	            <div>
+	                <button class="mbutton"
+	                        onclick="chipAction('uploadTDACs')">
+	                    Mask
+	                </button>
+	            </div>
+
+                    <span class="chip-action-arrow">→</span>
+
+	            <div>
+	                <button class="mbutton"
+	                        onclick="chipAction('nomThreshold')">
+	                    Nominal Threshold
+	                </button>
+	            </div>
+
+                    <span class="chip-action-arrow">→</span>
+
+	            <div>
+	                <button class="mbutton"
+	                        onclick="chipAction('configure')">
+	                    Configure
+	                </button>
+	            </div>
+
+	        </div>
+	    </td>
+	</tr>
+        <tr>
+            <td>Reset PLL:</td>
+            <td colspan="2" class="chip-action-cell">
+               <div class="chip-action-sequence">
+
+                    <div>
+                        <button class= "mbutton"
+                                onclick="chipAction('disablePLL')">
+                            Disable PLL
+                        </button>
+                    </div>
+
+                    <span class="chip-action-arrow">→</span>
+
+                    <div>
+                        <button class="mbutton"
+                                onclick="chipAction('configure')">
+                            Configure
+                        </button>
+                    </div>
+
+                    <span class="chip-action-arrow">→</span>
+
+                    <div>
+                        <button class="mbutton"
+                                onclick="chipAction('enablePLL')">
+                            Enable PLL
+                        </button>
+                    </div>
+
+                    <span class="chip-action-arrow">→</span>
+
+                    <div>
+                        <button class="mbutton"
+                                onclick="chipAction('configure')">
+                            Configure
+                        </button>
+                    </div>
+		</div>
+	    </td>
+	</tr>
+        <tr>
+            <td>Reset BiasBlock:</td>
+            <td colspan="2" class="chip-action-cell">
+               <div class="chip-action-sequence">
+
+                    <div>
+                        <button class= "mbutton"
+                                onclick="chipAction('biasBlockOff')">
+                            BiasBlock Off
+                        </button>
+                    </div>
+
+                    <span class="chip-action-arrow">→</span>
+
+                    <div>
+                        <button class="mbutton"
+                                onclick="chipAction('configure')">
+                            Configure
+                        </button>
+                    </div>
+
+                    <span class="chip-action-arrow">→</span>
+
+                    <div>
+                        <button class="mbutton"
+                                onclick="chipAction('biasBlockOn')">
+                            BiasBlock On
+                        </button>
+                    </div>
+
+                    <span class="chip-action-arrow">→</span>
+
+                    <div>
+                        <button class="mbutton"
+                                onclick="chipAction('configure')">
+                            Configure
+                        </button>
+                    </div>
+		</div>
+	    </td>
+        </tr>
+        <tr>
+            <td>New global ThHigh:</td>
+            <td colspan="2" class="chip-action-cell">
+
+		<div>
+	            <input type="number" id="newThHigh" value="125">
+                    <button class="mbutton"
+                            onclick="chipAction('setThreshold')">
+                        Set Threshold
+                    </button>
+                    <button class="mbutton"
+                            onclick="chipAction('nomThreshold')">
+                        Back to previous Threshold
+		    </button>
+                </div>
+	    </td>
+	</tr>
+
+    </table>
+
+    <div name="modb" data-odb-path="/Equipment/Quads/Variables/PCLS" onchange="update_pcls(this.value)"></div>
+
+    </div>
+
+    <!-- 4th tab: Chip masks ------------------------------------------------>
+
+    <div id="quad_masks" class="mpanel">
+
+    <table class="mtable">
+        <tr><th colspan="2" class="mtableheader">Chip masks</th></tr>
+        <tr><td colspan="2">
+	    <!-- TODO: Make this adjustable for n_quads -->
+            <div style="position:relative;width:100%;margin_auto">
                 <div style="display:flex;justify-content:center;">
                 <!-- Layer 0 -->
-		<object id="quad0" type="image/svg+xml" class="svgObject"
-			data="Quads/Quad_sketch.svg" style="width:250px;"></object>
-	        <!-- Gap between Layers -->
-		<div style="width:20px;"></div>
-		<!-- Layer 1 -->
-                <object id="quad1" type="image/svg+xml" class="svgObject"
-			data="Quads/Quad_sketch.svg" style="width:250px;"></object>
-	    </div>
+		<div id="quad0_container" style="position:relative; width:400px;">
+                    <object id="quad0_mask" type="image/svg+xml" class="svgObjectMask"
+                            data="Quads/Quad_sketch.svg" style="width:400px;">
+	            </object>
+                </div>
+                <!-- Gap between Layers -->
+                <div style="width:20px;"></div>
+                <!-- Layer 1 -->
+                <object id="quad1_mask" type="image/svg+xml" class="svgObjectMask"
+                        data="Quads/Quad_sketch.svg" style="width:400px;"></object>
+            </div>
+            </td>
+        </tr>
+	<tr>
+	    <td>Select edge masks:</td>
+	    <td>
+                <button class="mbutton"
+                        onclick="pysequencerAction('SelEdgeMask')">
+                    Run Pysequencer (Edge Masks)
+                </button>
+	    </td>
+	</tr>
+        <tr>
+            <td>Select empty masks:</td>
+            <td>
+                <button class="mbutton"
+                        onclick="pysequencerAction('SelEmptyMask')">
+                    Run Pysequencer (Empty Masks)
+                </button>
+            </td>
+        </tr>
+        <tr>
+            <td>Select Backup masks (PiE5):</td>
+            <td>
+                <button class="mbutton"
+                        onclick="pysequencerAction('SelBackupPiE5')">
+                    Run Pysequencer (BackUp Masks)
+                </button>
+            </td>
+        </tr>
+        <tr>
+            <td>Select Chip0 Left Top corner:</td>
+            <td>
+                <button class="mbutton"
+                        onclick="pysequencerAction('SelCornerChip0')">
+                    Run Pysequencer (Chip 0 corner Mask)
+                </button>
+            </td>
+        </tr>
+        <tr>
+            <td>Select run-based masks:</td>
+            <td>
+                <button class="mbutton"
+                        onclick="pysequencerAction('SelRunMask')">
+                    Run Pysequencer (Run Masks)
+                </button>
+		<input type="number" id="runNumberForMasking" value="0">
+		<input type="checkbox" id="runMaskMerge"> Merge with existing mask</input>
             </td>
         </tr>
     </table>
 
     </div>
 </div>
+
+<!-- Toopltip implementation -->
+<!-- Tooltip container -->
+<div id="htmlTooltip"></div>
+<script>
+
+    function runTest() {
+        mhttpd_exec_script("/CustomScript/Test");
+    }
+
+    const htmlTooltip = document.getElementById("htmlTooltip");
+
+    function showHtmlTooltip(event, text) {
+
+        const svgObject = event.target.ownerDocument.defaultView.frameElement;
+        const objectRect = svgObject.getBoundingClientRect();
+
+        htmlTooltip.textContent = text;
+
+        htmlTooltip.style.left = (objectRect.left + event.clientX + 10) + "px";
+        htmlTooltip.style.top  = (objectRect.top  + event.clientY + 10) + "px";
+
+        htmlTooltip.style.visibility = "visible";
+    }
+
+    function hideHtmlTooltip() {
+        htmlTooltip.style.visibility = "hidden";
+    }
+
+</script>
+
 
 </body>
 </html>
